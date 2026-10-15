@@ -30,6 +30,7 @@ public:
         vk::ImageView view;
         u32 width, height;
         vk::Format format{vk::Format::eUndefined};
+        vk::ImageAspectFlags aspect{vk::ImageAspectFlagBits::eColor};
     };
     struct Frame {
         vk::CommandBuffer cmdbuf;

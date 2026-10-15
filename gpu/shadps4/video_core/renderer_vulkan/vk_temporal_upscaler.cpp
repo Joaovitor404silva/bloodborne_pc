@@ -444,7 +444,8 @@ bool TemporalUpscaler::EnsureResources(u32 w, u32 h, u32 ow, u32 oh, bool hdr) {
         .arrayLayers = 1,
         .samples = vk::SampleCountFlagBits::e1,
         .tiling = vk::ImageTiling::eOptimal,
-        .usage = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled,
+        .usage = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled |
+                 vk::ImageUsageFlagBits::eTransferSrc,
         .initialLayout = vk::ImageLayout::eUndefined,
     });
     output_image = VideoCore::UniqueImage(device, allocator);
@@ -457,7 +458,7 @@ bool TemporalUpscaler::EnsureResources(u32 w, u32 h, u32 ow, u32 oh, bool hdr) {
         .samples = vk::SampleCountFlagBits::e1,
         .tiling = vk::ImageTiling::eOptimal,
         .usage = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled |
-                 vk::ImageUsageFlagBits::eTransferSrc,
+                 vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst,
         .initialLayout = vk::ImageLayout::eUndefined,
     });
     output_view = Check(device.createImageViewUnique({
@@ -735,7 +736,7 @@ void TemporalUpscaler::ExtraSharpen(vk::CommandBuffer cmdbuf, vk::Image target, 
     const auto& settings = BbSettings::Get();
     // fsr4vk has no internal RCAS. Its full sharpening range is applied here.
     const bool host_sharpen = settings.upscaler == BbSettings::UpscalerFsr411 &&
-        instance.IsFsr4VkSupported() && UseFsr4();
+        UseFsr4() && (instance.IsFsr4VkSupported() || instance.IsFsr411NativeSupported());
     const float extra = std::clamp(settings.sharpness.load(), 0.0f, 2.0f) - (host_sharpen ? 0.0f : 1.0f);
     if (!settings.sharpen || extra <= 0.0f) {
         return;
@@ -1093,7 +1094,7 @@ void TemporalUpscaler::Run() {
         dispatched = true;
     } else if (UseFsr4()) {
         dispatched = RecordFsr4(cmdbuf, {input_color, input_color_view, w, h, color.info.pixel_format},
-                                {input_depth, input_depth_view, w, h, depth_format},
+                                {input_depth, input_depth_view, w, h, depth_format, vk::ImageAspectFlagBits::eDepth},
                                 w, h, ow, oh, frame_ms);
     } else if (UseDlss()) {
         dispatched = RecordDlss(
@@ -1672,7 +1673,7 @@ void TemporalUpscaler::RunScaled() {
                              w, h, ow, oh, frame_ms, false);
         } else {
             ok4 = RecordFsr4(cmdbuf, {color_image, color_view, source_width, source_height, color.info.pixel_format},
-                            {depth_image, depth_view, source_width, source_height, depth_format},
+                            {depth_image, depth_view, source_width, source_height, depth_format, vk::ImageAspectFlagBits::eDepth},
                             w, h, ow, oh, frame_ms, false);
         }
         if (ok4) {

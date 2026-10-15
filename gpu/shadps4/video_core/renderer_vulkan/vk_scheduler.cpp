@@ -426,10 +426,18 @@ void Scheduler::SubmitExecution(SubmitInfo& info) {
     const vk::Semaphore timeline = work_semaphore.Handle();
     info.AddSignal(timeline, signal_value);
 
-    static constexpr std::array<vk::PipelineStageFlags, 2> wait_stage_masks = {
+    std::array<vk::PipelineStageFlags, 4> wait_stage_masks = {
         vk::PipelineStageFlagBits::eAllCommands,
         vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits::eAllCommands,
+        vk::PipelineStageFlagBits::eAllCommands,
     };
+    if (pending_external_wait) {
+        ASSERT(info.num_wait_semas < info.wait_semas.size());
+        wait_stage_masks[info.num_wait_semas] = vk::PipelineStageFlagBits::eAllCommands;
+        info.AddWait(pending_external_wait, pending_external_value);
+        pending_external_wait = nullptr;
+    }
 
     const vk::TimelineSemaphoreSubmitInfo timeline_si = {
         .waitSemaphoreValueCount = info.num_wait_semas,

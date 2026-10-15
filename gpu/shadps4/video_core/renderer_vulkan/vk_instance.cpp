@@ -20,6 +20,9 @@
 
 #include <atomic>
 #include <cstdio>
+#ifdef _WIN32
+#include "native_fsr411.h"
+#endif
 
 namespace Vulkan {
 
@@ -378,6 +381,24 @@ bool Instance::CreateDevice() {
         feature_chain.get<vk::PhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE>()
             .shaderMixedFloatDotProductFloat16AccFloat32 &&
         add_extension(VK_VALVE_SHADER_MIXED_FLOAT_DOT_PRODUCT_EXTENSION_NAME);
+#ifdef _WIN32
+    const char* native_setting = std::getenv("BB_FSR411_NATIVE");
+    const char* fsr411_backend = std::getenv("BB_FSR411_BACKEND");
+    const bool native_requested = (native_setting && native_setting[0] == '1') ||
+        (fsr411_backend && std::string_view{fsr411_backend} == "dx12");
+    native_fsr411 = GetVendorID() == 0x1002 && native_requested &&
+        NativeFsr411::Available() && add_extension("VK_KHR_external_memory_win32");
+    native_fsr411_async = native_fsr411 && add_extension("VK_KHR_external_semaphore_win32");
+    if (native_fsr411_async) {
+        const vk::SemaphoreTypeCreateInfo timeline{.semaphoreType = vk::SemaphoreType::eTimeline};
+        const auto support = physical_device.getExternalSemaphoreProperties(
+            vk::PhysicalDeviceExternalSemaphoreInfo{.pNext = &timeline,
+                .handleType = vk::ExternalSemaphoreHandleTypeFlagBits::eD3D12Fence});
+        native_fsr411_async = bool(support.externalSemaphoreFeatures & vk::ExternalSemaphoreFeatureFlagBits::eImportable);
+    }
+    std::printf("FSR411 GPU fence interop: %s\n", native_fsr411_async ? "available" : "unavailable");
+    if (native_fsr411) std::printf("FSR 4.1.1: native Windows DX12 backend available\n");
+#endif
     if (compute_shader_derivatives) {
         compute_shader_derivatives_features =
             feature_chain.get<vk::PhysicalDeviceComputeShaderDerivativesFeaturesKHR>();
