@@ -1,119 +1,209 @@
-# FSR 4.1.1 on Windows through fsr4vk
+# FSR 4.1.1 on Windows
 
-In **Graphics**, press **Download FSR 4.1.1**, select **FSR 4.1.1 (experimental)**
-in the existing Upscaler control, and press the normal **PLAY** button. No Linux,
-Proton, shader extraction, OptiScaler injection or additional game starter is needed.
+Select **FSR 4.1.1 (experimental)** in **Upscaler**, then choose the method in
+**Graphics > FSR 4.1.1 backend** or the **Play** page's quick settings. Press the
+normal **PLAY** button. `Play Bloodborne.exe` uses the same saved selection.
+A method change takes effect on the next game start.
 
-This uses [fsr4vk](https://github.com/dvj5411/fsr4vk)'s **INT8 4.1.1 model**.
-It is a different implementation from executing AMD's original DX12 DLL; the
-images are not claimed to be identical. The ordinary FSR 4 choice remains v07.
+| Method | Provider | Installation |
+|---|---|---|
+| AMD DX12 | AMD's original FSR 4.1.1 runtime through a Vulkan/DX12 shared-buffer bridge | Included in the Windows package |
+| Vulkan (fsr4vk) | fsr4vk's INT8 FSR 4.1.1 implementation/model | Press **Download fsr4vk** in Graphics |
 
-## Download and lifetime
+The launcher remembers the method independently of the upscaler. When another
+upscaler is selected, both method controls show a disabled dash; returning to
+FSR 4.1.1 restores the saved method. The controls stay synchronized. Existing
+profiles without `fsr411_backend` keep Vulkan (`vk`), rather than silently
+switching providers. All new controls and status messages cover the 13 launcher
+languages; `vk` and `dx12` are language-independent stored values.
+
+Neither method needs Linux, shader extraction or an additional game starter.
+The pre-existing **FSR 4 assets** controls and `fsr4_shaders/` are for the older
+FSR 4 v07 path, independent of these two providers.
+
+## AMD DX12: runtime and packaging
+
+`packaging/windows/package.sh` includes the unmodified
+`bin/amd_fidelityfx_upscaler_dx12.dll` **4.1.1.2740**, from the official
+[AMD FSR SDK v2.3.0 release](https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK/releases/tag/v2.3.0).
+The DLL must be beside `bb-probe.exe`, not beside the launcher. No binary or
+model file is committed to this repository.
+
+`packaging/windows/fetch_fsr411_dx12.py` prepares a verified build cache under
+`out/fsr411-dx12/`. The first package build downloads the official prebuilt SDK
+archive (about 127 MB); subsequent builds reuse the verified DLL. It checks the
+archive and exact member size/SHA-256 before replacing a cached runtime:
+
+- Archive: `FidelityFX-Samples-v2.3.0-prebuilt.zip`
+- Archive SHA-256: `f90890b9323bb2f4f2404ac4cdc9395e8495ecdac6f7aa0bcdf1ad1848422273`
+- Member: `Samples/Upscalers/FidelityFX_FSR/dx12/x64/Release/amd_fidelityfx_upscaler_dx12.dll`
+- DLL SHA-256: `d0dcccc74a43c44ba435b7a369b456e0970d8a4464e4bd683119b374f2c9fb46`
+
+The package includes the full, unmodified SDK license, third-party notices and
+source/download note under `licenses/AMD-FSR-SDK-*`. The runtime has AMD's
+binary redistribution terms; it is **not** covered by the MIT notice on the
+vendored API headers. The C headers under `gpu/fsr411_dx12/sdk/` are from the
+same SDK release and retain AMD's MIT notices. Only the required headers are
+vendored. The bridge is compiled with MSYS2 CLANG64 and system DX12/DXGI APIs;
+it does not require an additional MSVC-built bridge DLL.
+
+For a source build, prepare and copy the runtime beside the source loader:
+
+```bash
+python packaging/windows/fetch_fsr411_dx12.py
+cp out/fsr411-dx12/amd_fidelityfx_upscaler_dx12.dll out/
+```
+
+## Vulkan: download and lifetime
 
 The optional provider is installed into `<data>/fsr4vk` (the port folder by
-default). `run.py` passes this folder as `BB_FSR4VK_DIR`. Both the launcher updater
-and the package refresh preserve it. Downloading is disabled while the game runs.
+default). `run.py` passes this folder as `BB_FSR4VK_DIR`. Both the launcher
+updater and package refresh preserve it. Downloading and replacement are
+disabled while the game runs.
 
 The pinned download is **fsr4vk v0.4.3 with the AMD Windows fix**, published by
 [0xCydral](https://github.com/0xCydral/bloodborne_pc/releases/tag/windows-v1.7.0-beta.2).
-Upstream v0.4.3 fails on this RX 9070 with `descriptor binding exceeds queried
-layout size`; the fixed build removes the variable descriptor count flags from
-the three fixed-size descriptor heaps. See [upstream issue #1](https://github.com/dvj5411/fsr4vk/issues/1).
+Unpatched v0.4.3 fails on the tested RX 9070 with
+`descriptor binding exceeds queried layout size`; the fix removes variable
+descriptor count flags from three fixed-size descriptor heaps. See
+[upstream issue #1](https://github.com/dvj5411/fsr4vk/issues/1).
 
-`scripts/fetch_fsr4vk.py` verifies the archive SHA-256 and every installed DLL and
-license file, supports interrupted downloads, and replaces each file atomically.
-The archive SHA-256 is
-`049e81577dd0836fd6fb24a2d7fb07d1276951987519d11251905b9e60456ebb`;
-the DLL SHA-256 is
-`60a90b24f6789cd52c467471d5a66a0fa6d04e1b8af41095242f50367904f8b2`.
-The download contains the provider licenses and a source/provenance note. No
-provider binary, extracted model, game data or proprietary AMD DX12 DLL is added
-to this repository. The provider is GPLv3, AMD-derived data MIT, and zstd BSD.
+`scripts/fetch_fsr4vk.py` verifies the archive and every installed DLL/license,
+supports interrupted downloads, and replaces files atomically:
 
-From a source tree:
+- Archive SHA-256: `049e81577dd0836fd6fb24a2d7fb07d1276951987519d11251905b9e60456ebb`
+- DLL SHA-256: `60a90b24f6789cd52c467471d5a66a0fa6d04e1b8af41095242f50367904f8b2`
 
-```sh
+The download includes provider licenses and a source/patch provenance note.
+fsr4vk is GPLv3, its AMD-derived data MIT licensed, and zstd BSD licensed.
+It is downloaded by the player rather than bundled into the release.
+
+```bash
 python scripts/fetch_fsr4vk.py
 python scripts/fetch_fsr4vk.py --check
 ```
 
-`BB_FSR4VK_DIR` overrides the provider directory; `BB_FSR4VK=0` disables this
-provider. Direct `bb-probe.exe` users can set the directory explicitly (without
-`run.py`, the fallback directory is `fsr4vk` beside the executable).
+`BB_FSR4VK_DIR` overrides the directory; `BB_FSR4VK=0` disables this provider.
+For direct `bb-probe.exe` use, set the directory explicitly; otherwise it looks
+for `fsr4vk` beside the executable. The adapter/downloader build on
+[0xCydral's integration at 66576ef](https://github.com/0xCydral/bloodborne_pc/tree/66576efbbd272d0c97e04a9bdb5631455d530eae),
+with input normalization, scheduler handoff and persistent asset storage here.
 
-## Renderer integration
+## Renderer integration and requirements
 
-The DLL is loaded through its FFX API. Only when it is installed and the device
-supports the complete [integration contract](https://github.com/dvj5411/fsr4vk/blob/v0.4.3/provider/INTEGRATION-CONTRACT.md)
-does device creation enable the additional descriptor-buffer, mutable-descriptor
-and descriptor-indexing features. This route does not require
-`VK_VALVE_shader_mixed_float_dot_product`. The existing replay remains available
-when this optional provider is absent, including on Linux.
+The launcher sets `BB_FSR411_BACKEND=dx12` or `vk` for the normal game-start
+path, overriding inherited values. `BB_FSR411_NATIVE` is set consistently for
+the native feature probe. The renderer chooses the requested Windows provider;
+it does not silently change the saved method when it fails.
 
-A GPU compute pass converts the game's color input to RGBA16F and its forward
-depth to R32F reverse depth. It crops aligned scene targets to the actual render
-extent and preserves the original RG16F motion vectors. HDR scene inputs and
-tonemapped sRGB inputs use their respective FFX color modes. The existing host
-RCAS pass supplies the complete sharpening range because fsr4vk has no internal
-sharpening. HUD composition remains after reconstruction.
+**AMD DX12** matches the Vulkan adapter's LUID to the DXGI adapter. It requires
+an AMD adapter, the original DLL, shared device-local D3D12/Vulkan buffer
+memory and importable D3D12 fences as Vulkan timeline semaphores. It explicitly
+selects the DLL's non-INT8 **4.1.1** provider, rejecting its legacy FSR 3
+provider. DLL presence alone does not prove hardware/driver support: provider
+enumeration and context creation must succeed. This route has been tested on
+RX 9070; other adapters are not validated by these results.
 
-The provider owns eight frame slots. The wrapper waits for their completion
-before reusing them and propagates any replacement command buffer to its callers.
-Output changes retire the previous context safely. Missing features, a load
-failure or a rejected frame follow the existing FSR 3.1 fallback, with the reason
-in the log/menu. The provider is experimental and limited to output dimensions
-from 64x64 through 3840x2160. Prefer the launcher's standard, even-sized outputs;
-upstream documents an unwritten final row/column at odd output dimensions.
+Inputs/output cross APIs through one shared buffer, GPU copies and explicit
+external queue-family ownership transfers. Vulkan signals an input fence;
+the D3D12 queue waits on it, executes FSR and signals an output fence. The next
+Vulkan submission waits before consuming the result. There is no unconditional
+per-frame CPU completion wait at either API boundary. Three DX12 allocator/list
+slots wait before reusing an occupied slot; resource changes and teardown still
+wait for completion. The synchronous bridge remains available only in the
+headless comparison test as a control, not as a launcher method.
 
-The adapter and downloader are adapted from
-[0xCydral/bloodborne_pc at 66576ef](https://github.com/0xCydral/bloodborne_pc/tree/66576efbbd272d0c97e04a9bdb5631455d530eae).
-This integration adds input normalization, the scheduler handoff, persistent
-asset storage, and Supermedo's launcher controls. It does not need the large
-0.3/0.4 merge in Supermedo PR #50, whose replay still requires the VALVE feature.
+**Vulkan (fsr4vk)** enables the provider's complete
+[device-feature contract](https://github.com/dvj5411/fsr4vk/blob/v0.4.3/provider/INTEGRATION-CONTRACT.md)
+only when its optional DLL is installed. It normalizes color to RGBA16F and
+forward depth to reverse R32F, retains motion vectors, and retires the provider's
+eight frame slots safely. Both paths propagate replacement command buffers to
+callers after splitting a submission. Both support HDR/nonlinear scene inputs
+and use the same existing host RCAS sharpening pass, followed by HUD composition.
 
-## Validation and comparison
+Neither Windows provider needs `VK_VALVE_shader_mixed_float_dot_product`.
+The existing replay remains available when no Windows provider is selected or
+installed, including on Linux; the older FSR 4 path is unchanged. A rejected
+requested provider follows the existing FSR 3.1 fallback with the reason in the
+log/menu. Selection, quality preset and output setting remain intact. fsr4vk is
+limited to standard outputs up to 3840x2160 (minimum 64x64); upstream documents
+an unwritten final row/column at odd output sizes. Prefer the standard even sizes.
 
-Test machine: Windows 11, **Radeon RX 9070 16 GB**, AMD **26.9.2** (LLPC;
-Vulkan 1.4.355). Base: Supermedo `windows` at `bee7ec1` / windows-v1.8.1.
+## Uncapped game comparison: Hunter's Dream
 
-The same port was also tested with a native Vulkan/DX12 shared-buffer bridge to
-AMD's original `amd_fidelityfx_upscaler_dx12.dll` **4.1.1.2740**. Both routes
-used the same game, output/preset, motion vectors and a common host RCAS pass at
-0.50. The game used a copy of the saves and a separate configuration. Stealth and
-no-death were enabled in that test configuration to keep the scene stationary.
+Measured on **15 October 2026** in the same stationary view in **Hunter's Dream**,
+with no enemies in view and no character/camera input. Windows 11, **RX 9070
+16 GB**, AMD **26.9.2** (LLPC; Vulkan 1.4.355). Based on Supermedo `windows`
+at `bee7ec1` / v1.8.1. These game measurements precede the packaging/code cleanup;
+the final wrappers were rechecked for output correctness, not rebenchmarked in-game.
 
-Four static phases, DX12 / Vulkan / Vulkan / DX12, each measured for 30 seconds
-after 15 seconds of warmup, at **2560x1440 -> 3840x2160, Quality**:
+- Fullscreen, SDR, **2560x1440 -> 3840x2160, Quality**, host RCAS **0.50**.
+- FPS cap and VSync disabled: `BB_FPS=uncap`, `BB_FPS_LIMIT=0`,
+  `BB_PRESENT_MODE=Immediate`, `BB_VBLANK_HZ=0`. Startup reported
+  `vblank 480 Hz, frame limit 0 FPS`; display mode was 4K at 60 Hz.
+- Copied saves and isolated settings; stealth/no-death enabled in the test copy.
+- Order: old bridge / GPU-fence bridge / fsr4vk / fsr4vk / GPU-fence bridge /
+  old bridge. Each phase settled for 15 seconds, then measured for 40 seconds.
+- Six phases, 48 five-second reports: 80 measured seconds per method. No shader
+  or pipeline compilation in those reports; similar draw counts (1126-1135/frame).
 
-| Backend | Mean reported FPS | Phase means |
-|---|---:|---|
-| fsr4vk with AMD fix | 59.9 | 59.88 / 59.87 |
-| Original AMD DLL through the shared-buffer DX12 bridge | 49.6 | 49.72 / 49.52 |
+| Method | First phase mean FPS | Second phase mean FPS | Combined mean FPS |
+|---|---:|---:|---:|
+| Old DX12 bridge, CPU completion waits (control) | 54.663 | 54.725 | 54.69 |
+| AMD DX12, GPU-fence bridge | 98.025 | 97.625 | 97.83 |
+| Vulkan (fsr4vk with AMD fix) | 70.862 | 70.775 | 70.82 |
 
-These are means of the port's five-second FPS reports, not 1%-low measurements.
-fsr4vk reaches the approximately 60 Hz presentation ceiling here; this is not its
-maximum uncapped throughput. No FSR 3.1 fallback, device loss or frame-slot error
-occurred in these phases. Brief camera pans and captured frames were also checked;
-this is not a complete play-through or an image-quality equivalence test.
+These are arithmetic means of the port's five-second FPS reports, **not 1% lows**
+or a latency measurement. The GPU-fence bridge was **78.9% faster than the old
+bridge** and **38.1% faster than fsr4vk** in this scene on this GPU. The old
+bridge's measured DX12 CPU-fence wait was about 3.71 ms/frame; the new bridge
+recorded no additional DX12 CPU-fence waits in its two phases. Other renderer
+CPU waits still exist. No dispatch failure, device loss or FSR 3.1 fallback was
+reported in the comparison.
 
-The isolated 4K synthetic test favored the original DLL (about 3.08 ms versus
-6.75 ms including the necessary wrapper work and completion waits). The opposite
-result in the full game is consistent with the DX12 bridge's per-frame Vulkan
-completion and DX12 fence waits serializing the renderer. The native Vulkan
-provider is therefore the proposed integration for this tested configuration.
+The earlier PR comparison (49.6 FPS DX12, 59.9 FPS fsr4vk) used the old blocking
+bridge and hit the presentation ceiling on the Vulkan route. It cannot establish
+a general DX12 performance disadvantage; the uncapped comparison above replaces
+it for evaluating this bridge. These results do not predict other scenes or GPUs.
 
-Additional checks:
+## Validation and reproduction
 
-- MSYS2 CLANG64 build of the renderer and `bb-probe.exe`.
-- `fsr4vk-test`: finite, nonconstant GPU output with real RGBA8-sRGB / D32S8
-  inputs, 720p -> 1080p HDR inputs, 1440p -> 4K sRGB inputs, and 1080p Native AA.
-- Eight downloader tests: interruption/resume, archive/member corruption,
-  outdated files, refused replacement, license extraction, persistent paths.
-- `upscaler-support-test`: independently available providers and fallback while
-  preserving the startup choice, quality preset and output resolution.
+- Windows CLANG64 renderer, loader and capability-tool build.
+- Frozen Windows launcher and release package, including the pinned native DLL,
+  license/notices and this document; fsr4vk remains a separate verified download.
+- Downloader tests cover interrupted/corrupt Vulkan downloads, pinned archive
+  and native member rejection, cache reuse and replacement protection.
+- Launcher tests cover both methods, inherited environment overrides, preserved
+  settings and complete translations in all 13 languages.
+- `upscaler-support-test` checks independent availability/fallback without
+  changing startup choice, preset or output resolution.
+- Both methods were launched through the packaged launcher's normal PLAY path
+  into the game world using copied saves. Logs confirmed the requested 4.1.1
+  provider rather than an FSR 3.1 fallback.
+- Headless production-wrapper checks produce finite, nonconstant SDR/HDR output.
+  Synchronous and GPU-fence DX12 output matched byte-for-byte at 1080p and 4K,
+  including changing inputs and jitter, over 272 frames per test (16 warmup).
+  This compares the two native synchronization paths; it does **not** establish
+  image equivalence between AMD's provider and fsr4vk's INT8 implementation/model.
 
-The final source launcher downloaded the provider over HTTPS, saved the FSR 4.1.1
-choice, and launched the normal game-start path into the world. Its log confirmed
-the 4.1.1 VK INT8 Quality model at 4K, with no FSR 3.1 fallback.
-Other GPUs, full game coverage, odd/custom outputs and a rebuilt public release
-package are not established by these results.
+To rebuild and exercise the production wrappers without game files in CLANG64:
+
+```bash
+bash build.sh
+python packaging/windows/fetch_fsr411_dx12.py
+cp out/fsr411-dx12/amd_fidelityfx_upscaler_dx12.dll out/gpu/
+python scripts/fetch_fsr4vk.py
+ninja -C out/gpu fsr411-compare upscaler-support-test
+out/gpu/upscaler-support-test.exe
+BB_FSR4VK_DIR="$PWD/fsr4vk" BB_FSR411_NATIVE=1 \
+  BB_FSR411_PIPELINE_TEST=1 BB_FSR411_VARY_INPUT=1 \
+  out/gpu/fsr411-compare.exe async 2560x1440 3840x2160 ldr 256
+```
+
+Use `dx12` for the synchronous control, `vk` for fsr4vk; use `hdr` instead of
+`ldr` for HDR inputs. `BB_FSR411_BENCH_DUMP=<file>` saves raw RGBA16F output for
+byte comparison. `BB_FSR4VK_DIR` can point to an existing verified provider.
+The synthetic timing is a diagnostic, not a substitute for game measurements.
+
+Full-game stability, other GPUs/drivers, odd/custom outputs and identical image
+quality between the two different providers are not established by these tests.

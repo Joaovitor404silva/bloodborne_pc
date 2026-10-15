@@ -41,12 +41,15 @@ game directly with the saved settings.
 From a source tree it adds `C:\msys64\clang64\bin` (or `$MSYS2_ROOT`) to `PATH` for the DLLs.
 `bash tools/fetch_fsr4_assets.sh` works in the CLANG64 shell as on Linux.
 
-FSR 4.1.1 (optional): the Windows launcher's Graphics page downloads the verified
-fsr4vk provider with the AMD Windows fix. Select it in the existing Upscaler
-control and start normally. See [FSR411_WINDOWS.md](../../docs/FSR411_WINDOWS.md)
-for the pinned source, feature requirements, validation and comparison with the
-original AMD DX12 DLL. The optional provider is downloaded by the player; it is
-not bundled into the release by this package script.
+FSR 4.1.1 (experimental): choose **AMD DX12** or **Vulkan (fsr4vk)** in Graphics
+or Play's quick settings. `package.sh` prepares AMD's original 4.1.1 runtime from
+the pinned official SDK archive (about 127 MB on the first build), verifies its
+hash, and includes the DLL with AMD's license/notices. The cached runtime is in
+`out/fsr411-dx12/`. Vulkan's optional fsr4vk provider with the AMD Windows fix is
+downloaded by the player in Graphics and preserved through updates. Both use
+the normal PLAY path. See [FSR411_WINDOWS.md](../../docs/FSR411_WINDOWS.md) for
+source setup, requirements, synchronization and the uncapped Hunter's Dream
+comparison. The package also ships that document under `docs/`.
 
 DLSS (optional): `DLSS_SDK_ROOT=<checkout of github.com/NVIDIA/DLSS> bash
 packaging/windows/build_dlss.sh` builds `bbport_dlss.dll` (`gpu/dlss_bridge`, the only code that
@@ -57,7 +60,9 @@ FSR 3 (scene color, depth, render-pixel motion vectors, jitter). `BB_DLSS=0` tur
 
 The launcher texts are written in English with the Russian beside them; the other languages
 are in `launcher/bbport_lang.py` (one list per language in the order of `KEYS`; a missing or
-empty text falls back to English). The icon (`launcher/bloodborne.ico`/`.png`) is drawn by
+empty text falls back to English). The FSR 4.1.1 controls/status texts are merged from
+`launcher/bbport_lang_fsr411.py`, with complete entries for all 13 languages.
+The icon (`launcher/bloodborne.ico`/`.png`) is drawn by
 `packaging/windows/make_icon.py` and built into `Bloodborne.exe`, `bb-probe.exe` (the game
 window) and `bb-gpu-capabilities.exe`.
 
