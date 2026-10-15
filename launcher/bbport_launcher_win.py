@@ -199,6 +199,7 @@ INI_DEFAULTS = {'upscaler': 'fsr4', 'preset': '1', 'sharpen': '1', 'sharpness': 
                 'live_resolution': 'auto', 'hud_position': '100',
                 **{key: '1' if on else '0' for key, _t, on in EFFECTS + EXTRAS + CHEATS + TWEAKS}}
 APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'), 'user_dir': '', 'dlc_dir': '',
+                'fsr411_backend': 'vk',
                 'mods_dir': '', 'mods_enabled': True, 'patches_dir': '', 'language': '1',
                 'voice_language': 'auto',
                 'player_name': '', 'fullscreen': False, 'hdr': False, 'present_mode': 'Mailbox',
@@ -219,6 +220,19 @@ UPSCALERS = [('dlss', ('DLSS (NVIDIA GeForce RTX)',)),
              ('off', ('Off', 'Выключен'))]
 PRESETS = [('0', ('Native AA (×1.0)',)), ('1', ('Quality (×1.5)',)), ('2', ('Balanced (×1.7)',)),
            ('3', ('Performance (×2)',)), ('4', ('Ultra Performance (×3)',))]
+FSR411_BACKENDS = [('vk', ('Vulkan (fsr4vk)',)), ('dx12', ('AMD DX12',))]
+
+
+def fsr411_backend(settings):
+    # The persisted value is independent of the translated display label.
+    return 'dx12' if settings.get('fsr411_backend') == 'dx12' else 'vk'
+
+
+def native_fsr411_present():
+    dll = PORT_DIR / 'bin' / 'amd_fidelityfx_upscaler_dx12.dll'
+    return dll.is_file() and dll.stat().st_size > 0
+
+
 OUTPUTS = [('1280x720', ('1280 × 720 (Steam Deck)',)), ('1920x1080', ('1920 × 1080',)),
            ('2560x1440', ('2560 × 1440',)), ('3840x2160', ('3840 × 2160 (4K)',)),
            ('2560x1080', ('2560 × 1080 (21:9)',)), ('3440x1440', ('3440 × 1440 (21:9)',)),
@@ -455,6 +469,8 @@ def server_check_hunters_dream():
 
 def game_environment(s):
     env = dict(os.environ)
+    env['BB_FSR411_BACKEND'] = fsr411_backend(s)
+    env['BB_FSR411_NATIVE'] = '1' if fsr411_backend(s) == 'dx12' else '0'
     env['BB_GAME_DIR'] = s['game_dir']
     if s['user_dir']:
         env['BB_USER_DIR'] = s['user_dir']
@@ -695,6 +711,34 @@ class Launcher:
         var.trace_add('write', show)
         return box
 
+    def fsr411_choice(self, parent, width=38):
+        backend = self.var('fsr411_backend', 'app')
+        upscaler = self.var('upscaler', 'ini')
+        values = [value for value, _text in FSR411_BACKENDS]
+        box = self.ttk.Combobox(parent, values=[_(*text) for _value, text in FSR411_BACKENDS],
+                               state='readonly', width=width)
+        if backend.get() not in values:
+            backend.set(values[0])
+
+        def refresh(*_args):
+            if upscaler.get() == 'fsr411':
+                box.configure(state='readonly')
+                box.current(values.index(backend.get()) if backend.get() in values else 0)
+            else:
+                # Placeholder is display-only: retain the last method for FSR 4.1.1.
+                box.set('—')
+                box.configure(state='disabled')
+
+        def choose(_event):
+            index = box.current()
+            if upscaler.get() == 'fsr411' and 0 <= index < len(values):
+                backend.set(values[index])
+        box.bind('<<ComboboxSelected>>', choose)
+        backend.trace_add('write', refresh)
+        upscaler.trace_add('write', refresh)
+        refresh()
+        return box
+
     def next_row(self, parent):
         return parent.grid_size()[1]
 
@@ -874,6 +918,7 @@ class Launcher:
             row=0, column=0, columnspan=2, sticky='w', pady=(0, 2))
         self.row(quick, _('Frame rate', 'Частота кадров'), self.choice(quick, 'fps_mode', 'app', FPS_MODES, 26))
         self.row(quick, _('Upscaler', 'Апскейлер'), self.choice(quick, 'upscaler', 'ini', UPSCALERS, 26))
+        self.row(quick, 'FSR 4.1.1', self.fsr411_choice(quick, 26))
         self.row(quick, _('Preset', 'Пресет'), self.choice(quick, 'preset', 'ini', PRESETS, 26))
         self.row(quick, _('Output', 'Разрешение'), self.choice(quick, 'output_res', 'ini', OUTPUTS, 26))
         ttk.Checkbutton(quick, text=_('Fullscreen', 'Полный экран'), variable=self.var('fullscreen', 'app')).grid(
@@ -941,6 +986,8 @@ class Launcher:
         self.row(f, _('Quality preset', 'Пресет'), self.choice(f, 'preset', 'ini', PRESETS),
                  _('Render scale per axis: Quality renders at 1/1.5 of the output size.',
                    'Масштаб рендера по каждой оси: Quality рисует в 1/1.5 размера вывода.'))
+        self.row(f, _('FSR 4.1.1 backend'), self.fsr411_choice(f),
+                 _("AMD DX12 uses AMD's FSR library. Vulkan uses fsr4vk. Switching applies the next time the game starts."))
         self.row(f, _('Output resolution', 'Разрешение вывода'), self.choice(f, 'output_res', 'ini', OUTPUTS),
                  _('What the upscaler produces; the HUD is drawn at this size too.',
                    'Что выдаёт апскейлер; интерфейс рисуется в этом же размере.'))
@@ -984,18 +1031,18 @@ class Launcher:
         self.section(f, _('FSR 4.1.1 (experimental)', 'FSR 4.1.1 (экспериментально)'))
         self.fsr411_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left')
         self.fsr411_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        self.fsr411_native_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left')
+        self.fsr411_native_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(8, 0))
-        self.fsr411_button = ttk.Button(holder, text=_('Download FSR 4.1.1', 'Скачать FSR 4.1.1'),
+        self.fsr411_button = ttk.Button(holder, text=_('Download fsr4vk'),
                                         command=self.download_fsr411)
         self.fsr411_button.pack(side='left')
         self.fsr411_progress = ttk.Progressbar(holder, length=280, maximum=100)
         self.fsr411_progress.pack(side='left', padx=12)
-        self.note(f, _('Works on Windows without Linux or shader extraction. Downloads about 14 MB. '
-                       'Then choose FSR 4.1.1 above. Supports output sizes up to 3840 x 2160.',
-                       'Работает в Windows без Linux и извлечения шейдеров. Загрузка около 14 МБ. '
-                       'Затем выберите FSR 4.1.1 выше. Вывод до 3840 x 2160.'), top=6)
+        self.note(f, _('Download fsr4vk here. AMD DX12 is included.'), top=6)
         self.refresh_fsr411()
+        self.vars['fsr411_backend'].trace_add('write', lambda *_a: (self.refresh_fsr411(), self.refresh_status()))
         self.section(f, _('Detail', 'Детализация'))
         self.row(f, _('Model detail (LOD)', 'Детализация моделей'), self.choice(f, 'model_lod', 'ini', LODS),
                  _('A game patch (game version 1.09).', 'Патч игры (версия 1.09).'))
@@ -1754,8 +1801,10 @@ class Launcher:
                 _('• FSR 4 assets missing (Graphics); FSR 3.1 is used meanwhile',
                   '• Нет ассетов FSR 4 («Графика»); пока используется FSR 3.1'))
         if self.var('upscaler', 'ini').get() == 'fsr411':
+            available = (native_fsr411_present() if self.var('fsr411_backend', 'app').get() == 'dx12'
+                         else getattr(self, 'fsr411_verified', False))
             fsr4 = (_('✓ FSR 4.1.1 files installed', '✓ Файлы FSR 4.1.1 установлены')
-                    if getattr(self, 'fsr411_verified', False) else
+                    if available else
                     _('• FSR 4.1.1 files missing (Graphics)', '• Нет файлов FSR 4.1.1 («Графика»)'))
         for key, text in (('game', game), ('saves', save), ('gpu', self.gpu_text), ('fsr4', fsr4)):
             self.checks[key].configure(text=text, foreground=MUTED if text.startswith('•') else
@@ -1777,6 +1826,8 @@ class Launcher:
         if info and info[1] != PATCH_VERSION:
             fps = ('30 FPS',)
         upscaler = dict(UPSCALERS).get(self.var('upscaler', 'ini').get(), ('?',))[0].split(' (')[0]
+        if self.var('upscaler', 'ini').get() == 'fsr411':
+            upscaler += ' · ' + ('DX12' if self.var('fsr411_backend', 'app').get() == 'dx12' else 'fsr4vk')
         output = self.var('output_res', 'ini').get().replace('x', ' × ')
         online = _('Online') if self.var('online', 'app').get() else _('Offline')
         if self.var('online', 'app').get() and self.var('online_pool', 'app').get() == 'huntersdream':
@@ -1821,10 +1872,10 @@ class Launcher:
         folder = fetch_fsr4vk.default_dir(DATA_DIR)
         installed = fetch_fsr4vk.files_ok(folder)
         self.fsr411_verified = installed
-        self.fsr411_label.configure(text=(
-            _('Installed in {}. Select FSR 4.1.1 in Upscaler above.',
-              'Установлено в {}. Выберите FSR 4.1.1 выше.').format(folder)
-            if installed else _('Not installed, or files need updating.', 'Не установлено, или файлы требуют обновления.')))
+        self.fsr411_label.configure(text=(_('Vulkan (fsr4vk): installed.') if installed else
+                                         _('Vulkan (fsr4vk): files missing or need updating.')))
+        self.fsr411_native_label.configure(text=(_('AMD DX12: installed.') if native_fsr411_present() else
+                                                _('AMD DX12: files missing.')))
         self.fsr411_button.configure(state='normal' if not installed and not self.fsr411_downloading and not self.process else 'disabled')
         if installed:
             self.fsr411_progress.configure(value=100)
