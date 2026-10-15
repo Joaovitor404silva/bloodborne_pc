@@ -52,6 +52,10 @@ ldd "$dest/bin/bb-probe.exe" "$dest/bin/bb-gpu-capabilities.exe" |
         cp -u "$dll" "$dest/bin/"
     done
 cp -r scripts patches "$dest/"
+# FSR 4.1.1: the original AMD DX12 runtime, loaded dynamically beside bb-probe.exe.
+# The first build downloads AMD's SDK archive; subsequent builds verify the cached DLL.
+out/pyenv/Scripts/python.exe packaging/windows/fetch_fsr411_dx12.py
+cp out/fsr411-dx12/amd_fidelityfx_upscaler_dx12.dll "$dest/bin/"
 # Legacy CPU (Intel 3rd generation and older): the translation plan scripts/cpu_compat.py applies.
 mkdir -p "$dest/tools" && cp tools/legacy-cpu-plan.json "$dest/tools/"
 cp run.py LICENSE README.md packaging/windows/README-Windows.txt "$dest/"
@@ -70,6 +74,10 @@ mkdir -p "$dest/licenses"
 cp gpu/third_party/wepoll/LICENSE "$dest/licenses/wepoll-LICENSE.txt"
 cp gpu/third_party/httplib/LICENSE "$dest/licenses/cpp-httplib-LICENSE.txt"
 cp packaging/windows/licenses/*.txt "$dest/licenses/"
+cp packaging/windows/licenses/AMD-FSR-SDK-*.md "$dest/licenses/"
+# Setup and provider requirements must be available in the downloaded package too.
+mkdir -p "$dest/docs"
+cp docs/FSR411_WINDOWS.md "$dest/docs/"
 # Where the online code comes from (shadPS4 0.20, Awaken's port, bbhost's protocol).
 cp gpu/bbnet/SHADNET-PORT.md "$dest/licenses/online-code-NOTICE.md"
 for package in protobuf abseil-cpp openssl miniupnpc zlib; do
@@ -79,8 +87,10 @@ done
 find "$dest" -name __pycache__ -prune -exec rm -r {} +
 mkdir -p dist
 rm -f dist/bbport-windows.zip
-(cd out/stage && powershell -NoProfile -Command \
-    "Compress-Archive -Path bbport-windows -DestinationPath ../../dist/bbport-windows.zip")
+# Use the same Python as the frozen launcher build; no PowerShell Archive module
+# dependency (and no Compress-Archive 2 GiB per-file limit).
+out/pyenv/Scripts/python.exe -c \
+    "import shutil; shutil.make_archive('dist/bbport-windows', 'zip', 'out/stage')"
 
 # Refresh dist/bbport-windows, keeping what players create there (saves, settings, mods), and
 # only while nothing runs from it: deleting a running launcher's files breaks it.
