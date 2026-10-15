@@ -31,6 +31,7 @@ import zipfile
 FROZEN = getattr(sys, 'frozen', False)
 PORT_DIR = Path(sys.executable).resolve().parent if FROZEN else Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PORT_DIR / 'scripts'))
+import fetch_fsr4vk
 DATA_DIR = Path(os.environ.get('BB_DATA_DIR', PORT_DIR))
 # Co-op test build: its own settings, and no updates (a public release would replace it).
 COOP_TEST = False
@@ -47,7 +48,7 @@ RELEASES_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases/la
 RELEASES_PAGE = 'https://github.com/Supermedo/bloodborne_pc/releases/latest'
 UPDATE_DIR = Path(tempfile.gettempdir()) / 'bbport-update'
 # Never copied over an installation by an update (the package does not hold them either).
-USER_FILES = ('user', 'out', 'mods', 'bbport.ini', 'input.ini', 'mods.json', 'patches.json', 'last_run.log')
+USER_FILES = ('user', 'out', 'mods', 'fsr4vk', 'bbport.ini', 'input.ini', 'mods.json', 'patches.json', 'last_run.log')
 
 
 # ---------------------------------------------------------------------------------------------
@@ -212,7 +213,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
 
 UPSCALERS = [('dlss', ('DLSS (NVIDIA GeForce RTX)',)),
              ('fsr4', ('FSR 4 (best quality)', 'FSR 4 (лучшее качество)')),
-             ('fsr411', ('FSR 4.1.1 (needs fsr4_411 assets)', 'FSR 4.1.1 (нужны ассеты fsr4_411)')),
+             ('fsr411', ('FSR 4.1.1 (experimental)', 'FSR 4.1.1 (экспериментально)')),
              ('fsr3', ('FSR 3.1 (every GPU)', 'FSR 3.1 (любая видеокарта)')),
              ('taa', ('TAA (native resolution anti-aliasing)', 'TAA (нативное сглаживание)')),
              ('off', ('Off', 'Выключен'))]
@@ -548,6 +549,7 @@ class Launcher:
         self.process = self.job = None
         self.hidden = False  # closed while the game runs: it exits with the game
         self.downloading = False
+        self.fsr411_downloading = False
         self.output = queue.Queue()
         self.gpu_text = _('• Checking the graphics card…', '• Проверка видеокарты…')
         self.banner_source = self.banner_image = None
@@ -842,6 +844,7 @@ class Launcher:
             self.refresh_lists()
         elif name == 'graphics':
             self.refresh_fsr4()
+            self.refresh_fsr411()
         elif name == 'play':
             self.refresh_status()
         elif name == 'trophies':
@@ -978,6 +981,21 @@ class Launcher:
                        'about 30 MB, into the fsr4_shaders folder of the port.',
                        'С GitHub FireBurn/Q2RTX (собраны из MIT-исходников AMD FidelityFX), около 30 МБ, '
                        'в папку fsr4_shaders порта.'), top=6)
+        self.section(f, _('FSR 4.1.1 (experimental)', 'FSR 4.1.1 (экспериментально)'))
+        self.fsr411_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left')
+        self.fsr411_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        holder = ttk.Frame(f)
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(8, 0))
+        self.fsr411_button = ttk.Button(holder, text=_('Download FSR 4.1.1', 'Скачать FSR 4.1.1'),
+                                        command=self.download_fsr411)
+        self.fsr411_button.pack(side='left')
+        self.fsr411_progress = ttk.Progressbar(holder, length=280, maximum=100)
+        self.fsr411_progress.pack(side='left', padx=12)
+        self.note(f, _('Works on Windows without Linux or shader extraction. Downloads about 14 MB. '
+                       'Then choose FSR 4.1.1 above. Supports output sizes up to 3840 x 2160.',
+                       'Работает в Windows без Linux и извлечения шейдеров. Загрузка около 14 МБ. '
+                       'Затем выберите FSR 4.1.1 выше. Вывод до 3840 x 2160.'), top=6)
+        self.refresh_fsr411()
         self.section(f, _('Detail', 'Детализация'))
         self.row(f, _('Model detail (LOD)', 'Детализация моделей'), self.choice(f, 'model_lod', 'ini', LODS),
                  _('A game patch (game version 1.09).', 'Патч игры (версия 1.09).'))
@@ -1735,6 +1753,10 @@ class Launcher:
         fsr4 = (_('✓ FSR 4 assets installed', '✓ Ассеты FSR 4 установлены') if not missing else
                 _('• FSR 4 assets missing (Graphics); FSR 3.1 is used meanwhile',
                   '• Нет ассетов FSR 4 («Графика»); пока используется FSR 3.1'))
+        if self.var('upscaler', 'ini').get() == 'fsr411':
+            fsr4 = (_('✓ FSR 4.1.1 files installed', '✓ Файлы FSR 4.1.1 установлены')
+                    if getattr(self, 'fsr411_verified', False) else
+                    _('• FSR 4.1.1 files missing (Graphics)', '• Нет файлов FSR 4.1.1 («Графика»)'))
         for key, text in (('game', game), ('saves', save), ('gpu', self.gpu_text), ('fsr4', fsr4)):
             self.checks[key].configure(text=text, foreground=MUTED if text.startswith('•') else
                                        '#d9a441' if text.startswith('⚠') else '#d36b5c' if text.startswith('✗') else TEXT)
@@ -1745,7 +1767,7 @@ class Launcher:
             else:
                 label.grid_remove()
         if not self.process:
-            self.play_button.configure(state='normal' if info else 'disabled')
+            self.play_button.configure(state='normal' if info and not self.fsr411_downloading else 'disabled')
             self.status.configure(text=self.summary() if info else _('Choose the game folder first.',
                                                                      'Сначала выберите папку игры.'), fg=MUTED)
 
@@ -1794,6 +1816,46 @@ class Launcher:
             if not missing else _('{} of {} files missing in {}.', 'Нет {} из {} файлов в {}.').format(
                 missing, total, PORT_DIR / 'fsr4_shaders'))
         self.fsr4_button.configure(state='normal' if missing and not self.downloading else 'disabled')
+
+    def refresh_fsr411(self):
+        folder = fetch_fsr4vk.default_dir(DATA_DIR)
+        installed = fetch_fsr4vk.files_ok(folder)
+        self.fsr411_verified = installed
+        self.fsr411_label.configure(text=(
+            _('Installed in {}. Select FSR 4.1.1 in Upscaler above.',
+              'Установлено в {}. Выберите FSR 4.1.1 выше.').format(folder)
+            if installed else _('Not installed, or files need updating.', 'Не установлено, или файлы требуют обновления.')))
+        self.fsr411_button.configure(state='normal' if not installed and not self.fsr411_downloading and not self.process else 'disabled')
+        if installed:
+            self.fsr411_progress.configure(value=100)
+
+    def download_fsr411(self):
+        if self.process or self.fsr411_downloading:
+            return
+        self.fsr411_downloading = True
+        self.play_button.configure(state='disabled')
+        self.refresh_fsr411()
+        folder = fetch_fsr4vk.default_dir(DATA_DIR)
+
+        def progress(done, total):
+            percent = min(100, done * 100 // max(total, 1))
+            self.ui_calls.put(lambda p=percent: self.fsr411_progress.configure(value=p))
+
+        def work():
+            error = None
+            try:
+                fetch_fsr4vk.fetch(folder, progress)
+            except (OSError, fetch_fsr4vk.FetchError) as failure:
+                error = str(failure)
+
+            def done():
+                self.fsr411_downloading = False
+                self.refresh_fsr411()
+                self.refresh_status()
+                if error:
+                    self.messagebox.showerror('FSR 4.1.1', _('Download failed: {}', 'Не удалось скачать: {}').format(error))
+            self.ui_calls.put(done)
+        threading.Thread(target=work, daemon=True).start()
 
     def download_fsr4(self):
         self.downloading = True
@@ -1918,7 +1980,7 @@ class Launcher:
 
     # ---- game process ------------------------------------------------------------------------
     def play(self):
-        if self.process:
+        if self.process or self.fsr411_downloading:
             return
         online, npid = self.var('online', 'app'), self.var('online_npid', 'app')
         if not online.get() and npid.get().strip():
@@ -1967,6 +2029,7 @@ class Launcher:
         threading.Thread(target=self.read_output, args=(self.process,), daemon=True).start()
         self.play_button.configure(state='disabled')
         self.stop_button.configure(state='normal')
+        self.refresh_fsr411()
         self.status.configure(text=_('Preparing the game; it opens in its own window…',
                                      'Подготовка игры; она откроется в своём окне…'), fg=GOLD)
         if self.app.get('close_on_play'):
@@ -2007,6 +2070,7 @@ class Launcher:
                 if isinstance(item, tuple):
                     self.append(_('\n— the game exited (code {}) —\n', '\n— игра завершилась (код {}) —\n').format(item[0]))
                     self.process = None
+                    self.refresh_fsr411()
                     if self.job:
                         self.job.close()
                     self.stop_button.configure(state='disabled')

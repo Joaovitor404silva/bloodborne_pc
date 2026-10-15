@@ -13,6 +13,7 @@
 #include "video_core/renderer_vulkan/liverpool_to_vk.h"
 #include "video_core/renderer_vulkan/vk_dlss.h"
 #include "video_core/renderer_vulkan/vk_instance.h"
+#include "video_core/renderer_vulkan/vk_fsr4vk.h"
 #include "video_core/renderer_vulkan/vk_platform.h"
 
 #include <vk_mem_alloc.h>
@@ -234,7 +235,9 @@ bool Instance::CreateDevice() {
         vk::PhysicalDeviceWorkgroupMemoryExplicitLayoutFeaturesKHR,
         vk::PhysicalDeviceImage2DViewOf3DFeaturesEXT, vk::PhysicalDeviceShaderClockFeaturesKHR,
         vk::PhysicalDeviceComputeShaderDerivativesFeaturesKHR,
-        vk::PhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE>();
+        vk::PhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE,
+        vk::PhysicalDeviceMutableDescriptorTypeFeaturesEXT,
+        vk::PhysicalDeviceDescriptorBufferFeaturesEXT>();
     features = feature_chain.get().features;
 
     const vk::StructureChain properties_chain = physical_device.getProperties2<
@@ -418,6 +421,34 @@ bool Instance::CreateDevice() {
     const auto vk11_features = feature_chain.get<vk::PhysicalDeviceVulkan11Features>();
     vk12_features = feature_chain.get<vk::PhysicalDeviceVulkan12Features>();
     vk13_features = feature_chain.get<vk::PhysicalDeviceVulkan13Features>();
+    // bbport: FSR 4.1.1 through the fsr4vk provider DLL (vk_fsr4vk.cpp). Its device requirements
+    // (provider/INTEGRATION-CONTRACT.md) are standard features and two extensions; they are
+    // requested only when the DLL is installed and the device has all of them, so nothing changes
+    // for other paths.
+    const auto extension_available = [&](std::string_view extension) {
+        return std::find(available_extensions.begin(), available_extensions.end(), extension) !=
+               available_extensions.end();
+    };
+    fsr4vk = Fsr4Vk::FilesPresent() && features.shaderInt16 &&
+             features.shaderStorageImageReadWithoutFormat &&
+             features.shaderStorageImageWriteWithoutFormat && vk12_features.shaderFloat16 &&
+             vk12_features.shaderInt8 && vk12_features.storageBuffer8BitAccess &&
+             vk12_features.runtimeDescriptorArray &&
+             vk12_features.descriptorBindingVariableDescriptorCount &&
+             vk12_features.bufferDeviceAddress && vk13_features.synchronization2 &&
+             vk13_features.shaderIntegerDotProduct && compute_shader_derivatives &&
+             compute_shader_derivatives_features.computeDerivativeGroupLinear &&
+             feature_chain.get<vk::PhysicalDeviceMutableDescriptorTypeFeaturesEXT>()
+                 .mutableDescriptorType &&
+             feature_chain.get<vk::PhysicalDeviceDescriptorBufferFeaturesEXT>().descriptorBuffer &&
+             extension_available(VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME) &&
+             extension_available(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
+    if (fsr4vk) {
+        add_extension(VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME);
+        add_extension(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
+        LOG_INFO(Render_Vulkan, "fsr4vk: {} found, its device features are enabled",
+                 Fsr4Vk::LibraryPathUtf8());
+    }
     // bbport: DLSS (optional bridge DLL) needs its own device extensions on NVIDIA GPUs.
     const size_t renderer_extension_count = enabled_extensions.size();
     std::vector<const char*> dlss_extensions;
@@ -462,6 +493,7 @@ bool Instance::CreateDevice() {
                 .shaderStorageImageExtendedFormats = features.shaderStorageImageExtendedFormats,
                 .shaderStorageImageMultisample = features.shaderStorageImageMultisample,
                 // bbport: required by the FSR 3 accumulate shaders (vk_temporal_upscaler).
+                .shaderStorageImageReadWithoutFormat = fsr4vk,
                 .shaderStorageImageWriteWithoutFormat =
                     features.shaderStorageImageWriteWithoutFormat,
                 .shaderClipDistance = features.shaderClipDistance,
@@ -484,6 +516,8 @@ bool Instance::CreateDevice() {
             .shaderSharedInt64Atomics = vk12_features.shaderSharedInt64Atomics,
             .shaderFloat16 = vk12_features.shaderFloat16,
             .shaderInt8 = vk12_features.shaderInt8,
+            .descriptorBindingVariableDescriptorCount = fsr4vk,
+            .runtimeDescriptorArray = fsr4vk,
             .scalarBlockLayout = vk12_features.scalarBlockLayout,
             .uniformBufferStandardLayout = vk12_features.uniformBufferStandardLayout,
             .separateDepthStencilLayouts = vk12_features.separateDepthStencilLayouts,
@@ -501,6 +535,8 @@ bool Instance::CreateDevice() {
             .shaderIntegerDotProduct = vk13_features.shaderIntegerDotProduct,
             .maintenance4 = vk13_features.maintenance4,
         },
+        vk::PhysicalDeviceMutableDescriptorTypeFeaturesEXT{.mutableDescriptorType = fsr4vk},
+        vk::PhysicalDeviceDescriptorBufferFeaturesEXT{.descriptorBuffer = fsr4vk},
         // Extensions
         vk::PhysicalDeviceCustomBorderColorFeaturesEXT{
             .customBorderColors = true,
@@ -586,6 +622,10 @@ bool Instance::CreateDevice() {
         },
     };
 
+    if (!fsr4vk) {
+        device_chain.unlink<vk::PhysicalDeviceMutableDescriptorTypeFeaturesEXT>();
+        device_chain.unlink<vk::PhysicalDeviceDescriptorBufferFeaturesEXT>();
+    }
     if (!custom_border_color) {
         device_chain.unlink<vk::PhysicalDeviceCustomBorderColorFeaturesEXT>();
     }

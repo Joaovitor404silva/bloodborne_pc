@@ -15,6 +15,7 @@
 #include "bbport_settings.h"
 #include "video_core/renderer_vulkan/fsr411/fsr411.h"
 #include "video_core/renderer_vulkan/vk_instance.h"
+#include "video_core/renderer_vulkan/vk_fsr4vk.h"
 #include "video_core/renderer_vulkan/vk_scheduler.h"
 
 namespace Vulkan {
@@ -69,6 +70,7 @@ struct Fsr4Upscaler::Impl {
     std::deque<std::pair<u64, u64>> in_flight; ///< provider frame id, scheduler tick
     // bbport: FSR 4.1.1 (upscaler=fsr411): the replay of AMD's 4.1.1 DLL (fsr411/).
     std::unique_ptr<Fsr411::Upscaler> fsr411;
+    std::unique_ptr<Fsr4Vk> fsr4vk;
     std::deque<u64> fsr411_ticks; ///< scheduler ticks of its recent frames (constant ring)
     std::string fsr411_described;
 
@@ -231,7 +233,20 @@ struct Fsr4Upscaler::Impl {
         return ffxFsr4VkSetExternalImageState(&backend, &state);
     }
 
-    bool Record411(const Frame& f) {
+    bool Record411(Frame& f) {
+        if (instance.IsFsr4VkSupported()) {
+            if (!fsr4vk) fsr4vk = std::make_unique<Fsr4Vk>(instance, scheduler);
+            if (!fsr4vk->Record(f)) {
+                Fail(fsr4vk->Problem() ? fsr4vk->Problem() : "fsr4vk failed", fsr4vk->Fatal());
+                return false;
+            }
+            if (const auto description = fsr4vk->Describe(); description != fsr411_described) {
+                fsr411_described = description;
+                std::printf("Upscaler: FSR 4.1.1 through fsr4vk, %s\n", description.c_str());
+            }
+            problem.clear();
+            return true;
+        }
         if (!instance.IsFsr411Supported()) {
             Fail("FSR 4.1.1 needs INT8 dot products and VK_VALVE_shader_mixed_float_dot_product", true);
             return false;
@@ -275,7 +290,7 @@ struct Fsr4Upscaler::Impl {
         return true;
     }
 
-    bool Record(const Frame& f) {
+    bool Record(Frame& f) {
         if (BbSettings::Get().upscaler == BbSettings::UpscalerFsr411) {
             return Record411(f);
         }
@@ -383,7 +398,7 @@ Fsr4Upscaler::Fsr4Upscaler(const Instance& instance, Scheduler& scheduler)
 
 Fsr4Upscaler::~Fsr4Upscaler() = default;
 
-bool Fsr4Upscaler::Record(const Frame& frame) {
+bool Fsr4Upscaler::Record(Frame& frame) {
     return impl->Record(frame);
 }
 
