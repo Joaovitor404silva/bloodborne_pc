@@ -279,6 +279,10 @@ if (WIN32)
     add_executable(fsr411-compare EXCLUDE_FROM_ALL ../tests/test_fsr411_compare.cpp ${BB_RUNTIME} ../src/compat_win.c)
     target_include_directories(fsr411-compare PRIVATE .. ../src shim shadps4 third_party/gcn/include)
     target_link_libraries(fsr411-compare PRIVATE bbgpu atrac9 onecore bcrypt ws2_32 -pthread)
+    add_executable(object-motion-cache-test EXCLUDE_FROM_ALL ../tests/test_object_motion_cache.cpp
+        ${BB_RUNTIME} ../src/compat_win.c)
+    target_include_directories(object-motion-cache-test PRIVATE .. ../src shim shadps4 third_party/gcn/include)
+    target_link_libraries(object-motion-cache-test PRIVATE bbgpu atrac9 onecore bcrypt ws2_32 -pthread)
     # The PS4 range (64 GiB - 1 TiB) must stay free: no high-entropy ASLR for heaps and stacks.
     # The guest main thread runs on the process stack: 16 MiB, committed (no stack probes).
     target_link_options(bb-probe PRIVATE -Wl,--disable-high-entropy-va "SHELL:-Xlinker --stack -Xlinker 16777216,16777216")
@@ -304,6 +308,12 @@ target_link_libraries(fsr4vk-post-test PRIVATE PkgConfig::XXHASH)
 add_executable(motion-history-test EXCLUDE_FROM_ALL ../tests/test_motion_history.cpp)
 target_compile_options(motion-history-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
 target_include_directories(motion-history-test PRIVATE ..)
+if (NOT WIN32)
+    add_executable(object-motion-cache-test EXCLUDE_FROM_ALL ../tests/test_object_motion_cache.cpp
+        ../tests/test_gpu_runtime_stubs.cpp)
+    target_include_directories(object-motion-cache-test PRIVATE .. shim shadps4 third_party/gcn/include)
+    target_link_libraries(object-motion-cache-test PRIVATE bbgpu)
+endif()
 add_executable(motion-shader-test EXCLUDE_FROM_ALL ../tests/test_motion_shaders.cpp ../tests/test_gpu_runtime_stubs.cpp)
 target_include_directories(motion-shader-test PRIVATE shim shadps4 third_party/gcn/include)
 target_link_libraries(motion-shader-test PRIVATE bbgpu)

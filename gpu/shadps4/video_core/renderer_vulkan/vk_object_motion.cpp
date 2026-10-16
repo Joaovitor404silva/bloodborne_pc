@@ -177,6 +177,47 @@ void ObjectMotion::EnsureImage(u32 width, u32 height) {
     if (image && width == image_width && height == image_height) {
         return;
     }
+    const auto swap_target = [&](CachedImage &cached) {
+        // Swap every UniqueImage field explicitly: its upstream move constructor omits
+        // device/size_bytes, which are still kept consistent here.
+        std::swap(image.device, cached.image.device);
+        std::swap(image.allocator, cached.image.allocator);
+        std::swap(image.allocation, cached.image.allocation);
+        std::swap(image.image, cached.image.image);
+        std::swap(image.image_ci, cached.image.image_ci);
+        std::swap(image.size_bytes, cached.image.size_bytes);
+        view.swap(cached.view);
+        std::swap(image_width, cached.width);
+        std::swap(image_height, cached.height);
+        std::swap(image_layout, cached.layout);
+        // Legacy resize discards the previous contents, even when returning to a size
+        // used earlier in this frame. Preserve the existing clear/read behavior.
+        written = false;
+    };
+    for (auto &cached : cached_images) {
+        if (cached.image && cached.width == width && cached.height == height) {
+            swap_target(cached);
+            return;
+        }
+    }
+    if (image) {
+        auto *empty = static_cast<CachedImage *>(nullptr);
+        for (auto &cached : cached_images)
+            if (!cached.image) {
+                empty = &cached;
+                break;
+            }
+        if (!empty) {
+            // Unusual resolution churn: wait before retiring an old allocation.
+            scheduler.Finish();
+            empty = &cached_images[eviction_cursor++ % cached_images.size()];
+            empty->view.reset();
+            empty->image.Destroy();
+            empty->width = empty->height = 0;
+            empty->layout = vk::ImageLayout::eUndefined;
+        }
+        swap_target(*empty);
+    }
     const auto device = instance.GetDevice();
     if (image) {
         scheduler.Finish();
