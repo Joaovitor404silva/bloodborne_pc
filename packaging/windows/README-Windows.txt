@@ -78,6 +78,11 @@ Upscaling
   for hardware requirements and validation; these providers need no Linux setup.
 - DLSS: NVIDIA GeForce RTX 20 series or newer with a current driver (Graphics -> Upscaler ->
   DLSS, or the in-game menu). On other GPUs the option is greyed out.
+- Graphics -> "Motion-vector cache (experimental)" is off by default. With FSR and
+  object motion vectors enabled, it can reuse render targets to reduce GPU waits,
+  at the cost of additional VRAM. Applies at the next game start, including shortcuts.
+  See docs\OBJECT_MOTION_CACHE.md for comparison steps. The published test.2 build
+  retains its earlier automatic-cache behavior.
 - FSR 3.1 works on every GPU. FSR 4 needs its assets in fsr4_shaders\ (included in this
   package, or Graphics -> "Download FSR 4 assets"); GPUs without the required shader features
   fall back to FSR 3.1 by themselves.

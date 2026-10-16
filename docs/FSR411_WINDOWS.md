@@ -176,8 +176,14 @@ resident target. Evicting an inactive target when all slots are
 occupied still waits safely; teardown retains its completion wait. Per-size-change
 clear and validity behavior is preserved: returning to a cached size clears it
 according to the existing rules. Existing image barriers and motion shader math remain.
-This fix applies to all upscalers using object-motion vectors, including FSR 3.1
-and the older FSR 4. It operates automatically with the selected quality settings.
+This renderer is shared by upscalers using object-motion vectors, including
+FSR 3.1 and the older FSR 4. **Motion-vector cache (experimental)** in Graphics
+is **off by default**, preserving the existing allocation path. The checkbox
+is available with FSR and object motion enabled, retains its saved choice and
+applies at the next game start, including shortcut launches. Both FSR 4.1.1
+methods support it. Cached targets consume extra VRAM; moving gameplay,
+frame-pacing and memory-pressure comparisons remain follow-up work.
+[Cache controls and reproduction](OBJECT_MOTION_CACHE.md).
 
 **Vulkan (fsr4vk)** enables the provider's complete
 [device-feature contract](https://github.com/dvj5411/fsr4vk/blob/v0.4.3/provider/INTEGRATION-CONTRACT.md)
@@ -237,8 +243,11 @@ the four-method comparison above contains its own run's values.
 [A/B data](benchmarks/object-motion-cache-20261016.json).
 
 Both performance runs used experimental **1.8.2** integrations with developer-only
-live switches. The final source/package uses automatic optimizations and received
-the separate correctness and operation checks below. Values are **mean FPS from
+live switches. These cache-enabled results describe the optional experimental
+configuration; the current PR defaults to the existing target allocation path.
+The checkbox build received separate correctness and package checks.
+The preserved **test.2** download enables the cache automatically.
+Values are **mean FPS from
 five-second reports** for the recorded scene, CPU, GPU and settings. Informal
 gameplay checks covered several minutes on the RX 9070. The cache preserves the
 selected image-quality settings.
@@ -287,7 +296,8 @@ the eight-phase game benchmark applies to the experimental test build above.
   changing inputs/motion/jitter, batched work, overwritten output and resized inputs.
 - `object-motion-cache-test` checks all pixels and validity flags with repeated
   same-size/full/half-size targets and seven-size churn forcing eviction. Its
-  tiny, game-size and churn cases match the legacy readback hashes.
+  tiny, game-size and churn cases match the legacy readback hashes with the
+  variable unset, `0`, `1` and invalid. Allocation counts verify the chosen path.
 
 - Windows CLANG64 renderer, loader and capability-tool build.
 - `fsr4vk-post-test` checks device/mode guards, exact generated shader bytes,
@@ -303,7 +313,9 @@ the eight-phase game benchmark applies to the experimental test build above.
 - Downloader tests cover interrupted/corrupt Vulkan downloads, pinned archive
   and native member rejection, cache reuse and replacement protection.
 - Launcher tests cover both methods, inherited environment overrides, preserved
-  settings and complete translations in all 13 languages.
+  settings and complete translations in all 13 languages. Cache-control tests
+  cover the default-off migration, FSR/object-motion availability, retained
+  choice, saving, widget cleanup and shortcut application.
 - `upscaler-support-test` checks independent availability/fallback without
   changing startup choice, preset or output resolution.
 - Both methods were launched through the packaged launcher's normal PLAY path
@@ -323,9 +335,11 @@ cp out/fsr411-dx12/amd_fidelityfx_upscaler_dx12.dll out/gpu/
 python scripts/fetch_fsr4vk.py
 ninja -C out/gpu fsr411-compare object-motion-cache-test upscaler-support-test
 out/gpu/upscaler-support-test.exe
-out/gpu/object-motion-cache-test.exe tiny
-out/gpu/object-motion-cache-test.exe game
-out/gpu/object-motion-cache-test.exe churn
+for mode in 0 1; do
+    for scene in tiny game churn; do
+        BB_OBJECT_MOTION_CACHE=$mode out/gpu/object-motion-cache-test.exe "$scene"
+    done
+done
 BB_FSR4VK_DIR="$PWD/fsr4vk" BB_FSR411_NATIVE=1 \
   BB_FSR411_PIPELINE_TEST=1 BB_FSR411_VARY_INPUT=1 \
   out/gpu/fsr411-compare.exe async 2560x1440 3840x2160 ldr 256

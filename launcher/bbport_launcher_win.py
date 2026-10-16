@@ -200,6 +200,7 @@ INI_DEFAULTS = {'upscaler': 'fsr4', 'preset': '1', 'sharpen': '1', 'sharpness': 
                 **{key: '1' if on else '0' for key, _t, on in EFFECTS + EXTRAS + CHEATS + TWEAKS}}
 APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'), 'user_dir': '', 'dlc_dir': '',
                 'fsr411_backend': 'vk',
+                'object_motion_cache': False,
                 'mods_dir': '', 'mods_enabled': True, 'patches_dir': '', 'language': '1',
                 'voice_language': 'auto',
                 'player_name': '', 'fullscreen': False, 'hdr': False, 'present_mode': 'Mailbox',
@@ -467,7 +468,12 @@ def server_check_hunters_dream():
     return '\n'.join(lines)
 
 
-def game_environment(s):
+def motion_cache_available(graphics):
+    return graphics.get('upscaler', INI_DEFAULTS['upscaler']) in ('fsr3', 'fsr4', 'fsr411') and \
+        graphics.get('object_motion', INI_DEFAULTS['object_motion']) in ('1', True)
+
+
+def game_environment(s, graphics=None):
     env = dict(os.environ)
     env['BB_FSR411_BACKEND'] = fsr411_backend(s)
     env['BB_FSR411_NATIVE'] = '1' if fsr411_backend(s) == 'dx12' else '0'
@@ -503,6 +509,10 @@ def game_environment(s):
         if '=' in item:
             key, value = item.split('=', 1)
             env[key] = value
+    # The saved checkbox is authoritative for both PLAY and shortcut launches.
+    cache = s.get('object_motion_cache', False) and motion_cache_available(
+        graphics if graphics is not None else load_ini()[0])
+    env['BB_OBJECT_MOTION_CACHE'] = '1' if cache else '0'
     if s.get('online'):
         server = str(s['online_server']).strip() or APP_DEFAULTS['online_server']
         env['BB_ONLINE'] = '1'
@@ -741,6 +751,34 @@ class Launcher:
 
     def next_row(self, parent):
         return parent.grid_size()[1]
+
+    def motion_cache_check(self, parent):
+        upscaler = self.var('upscaler', 'ini')
+        object_motion = self.var('object_motion', 'ini')
+        button = self.ttk.Checkbutton(parent, text=_('Motion-vector cache (experimental)'),
+                                     variable=self.var('object_motion_cache', 'app'))
+        row = self.next_row(parent)
+        button.grid(row=row, column=0, columnspan=2, sticky='w', pady=(8, 0))
+        self.ttk.Label(parent, text=_(
+            'May improve FSR performance; uses extra VRAM. Requires object motion vectors. '
+            'Applies at next game start.'), style='Muted.TLabel', wraplength=self.px(640),
+            justify='left').grid(row=row + 1, column=0, columnspan=2, sticky='w', padx=(26, 0))
+
+        def refresh(*_args):
+            available = motion_cache_available({'upscaler': upscaler.get(),
+                                                'object_motion': object_motion.get()})
+            button.state(['!disabled' if available else 'disabled'])
+
+        traces = [(var, var.trace_add('write', refresh)) for var in (upscaler, object_motion)]
+
+        def cleanup(event):
+            if event.widget == button:
+                for var, trace in traces:
+                    var.trace_remove('write', trace)
+
+        button.bind('<Destroy>', cleanup)
+        refresh()
+        return button
 
     def row(self, parent, title, widget, hint=None):
         ttk = self.ttk
@@ -1014,6 +1052,7 @@ class Launcher:
         self.check(f, 'object_motion', 'ini', _('Object motion vectors', 'Векторы движения объектов'),
                    _('Less ghosting on characters, cloth and weapons; costs about 10% FPS.',
                      'Меньше гостинга на персонажах и одежде; стоит около 10% FPS.'))
+        self.motion_cache_check(f)
         self.section(f, _('FSR 4 assets', 'Ассеты FSR 4'))
         self.fsr4_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left')
         self.fsr4_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
@@ -2069,7 +2108,7 @@ class Launcher:
             return
         self.set_log('')
         try:
-            self.process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(self.app),
+            self.process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(self.app, self.ini),
                                             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT, creationflags=NO_WINDOW)
         except OSError as error:
