@@ -431,6 +431,13 @@ bool Fsr4Upscaler::Record(Frame& frame) {
     return impl->Record(frame);
 }
 
+void Fsr4Upscaler::ReleaseOutput(vk::CommandBuffer command) {
+#ifdef _WIN32
+    if (impl->native411)
+        impl->native411->ReleaseOutput(command);
+#endif
+}
+
 const char* Fsr4Upscaler::Problem() const noexcept {
     return impl->problem.empty() ? nullptr : impl->problem.c_str();
 }

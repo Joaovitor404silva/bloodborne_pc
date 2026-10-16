@@ -44,9 +44,12 @@ public:
         bool hdr{true};
     };
 
-    /// Records FSR 4 into `frame.cmdbuf`; the output stays in General. False when FSR 4
+    /// Records FSR 4 into `frame.cmdbuf`; output stays in General and may be replaced.
+    /// Consume the returned image/view, then ReleaseOutput before recording another frame.
+    /// False when FSR 4
     /// cannot run (Problem() says why; missing assets or device features are permanent).
     bool Record(Frame& frame);
+    void ReleaseOutput(vk::CommandBuffer command);
 
     /// Why the last Record failed, or null.
     [[nodiscard]] const char* Problem() const noexcept;

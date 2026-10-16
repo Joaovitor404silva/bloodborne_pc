@@ -12,6 +12,8 @@ public:
     Fsr411Native(const Instance& instance, Scheduler& scheduler);
     ~Fsr411Native();
     bool Record(Fsr4Upscaler::Frame& frame, bool asynchronous);
+    /// Return the shared result to DX12 after the last consumer; a no-op for buffer output.
+    void ReleaseOutput(vk::CommandBuffer command);
     const std::string& Error() const;
 private:
     struct Impl;

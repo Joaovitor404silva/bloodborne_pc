@@ -3,12 +3,14 @@
 #include <cstdint>
 
 // The native AMD backend has no Vulkan dependency. Images cross the API boundary
-// through one shared D3D12 buffer, using GPU copies and explicit ownership transfers.
+// through shared D3D12 textures (color, motion, output) and a depth buffer,
+// using GPU fences and explicit ownership transfers.
 struct NativeFsr411Config {
     uint32_t render_width, render_height, output_width, output_height;
     uint32_t color_format, depth_format; // DXGI_FORMAT
     bool hdr;
     uint8_t adapter_luid[8];
+    uint32_t shared_texture_mask{};
 };
 struct NativeFsr411Plane {
     uint64_t offset;
@@ -27,6 +29,7 @@ public:
     NativeFsr411& operator=(const NativeFsr411&) = delete;
     bool Ready() const;
     const char* Error() const;
+    void *SharedTextureHandle(unsigned index) const;
     void* SharedHandle() const;
     uint64_t SharedSize() const;
     void* InputFenceHandle() const;

@@ -7,6 +7,7 @@
 #include <array>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -81,12 +82,13 @@ struct NativeFsr411::Impl {
     uint64_t fence_value{}, size{};
     ID3D12Resource* shared{};
     std::array<ID3D12Resource*, 4> textures{};
+    std::array<HANDLE, 4> texture_handles{};
+    bool Shared(unsigned index) const { return (config.shared_texture_mask & (1u << index)) != 0; }
     std::array<NativeFsr411Plane, 4> planes{};
     std::array<D3D12_PLACED_SUBRESOURCE_FOOTPRINT, 4> footprints{};
     std::array<DXGI_FORMAT, 4> formats{};
     std::string error;
     bool ready{}, dispatched{};
-
     explicit Impl(const NativeFsr411Config& c) : config(c) {}
     ~Impl() {
         try { Wait(fence_value); } catch (const std::exception& e) {
@@ -94,6 +96,9 @@ struct NativeFsr411::Impl {
         }
         if (context && ffx.DestroyContext) ffx.DestroyContext(&context, nullptr);
         for (auto*& texture : textures) Release(texture);
+        for (auto handle : texture_handles)
+            if (handle)
+                CloseHandle(handle);
         Release(shared);
         if (shared_handle) CloseHandle(shared_handle);
         for (auto& s : slots) { Release(s.list); Release(s.allocator); }
@@ -239,9 +244,17 @@ struct NativeFsr411::Impl {
             desc.DepthOrArraySize = 1; desc.MipLevels = 1;
             desc.Format = formats[i]; desc.SampleDesc.Count = 1;
             desc.Flags = i == 3 ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_NONE;
-            const auto state = i == 3 ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS : D3D12_RESOURCE_STATE_COPY_DEST;
-            Check(device->CreateCommittedResource(&heap, D3D12_HEAP_FLAG_NONE, &desc, state, nullptr,
-                  IID_PPV_ARGS(&textures[i])), "Create FSR texture");
+            const auto state = Shared(i) ? D3D12_RESOURCE_STATE_COMMON
+                                         : (i == 3 ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+                                                   : D3D12_RESOURCE_STATE_COPY_DEST);
+            Check(device->CreateCommittedResource(
+                      &heap, Shared(i) ? D3D12_HEAP_FLAG_SHARED : D3D12_HEAP_FLAG_NONE, &desc,
+                      state, nullptr, IID_PPV_ARGS(&textures[i])),
+                  "Create FSR texture");
+            if (Shared(i))
+                Check(device->CreateSharedHandle(textures[i], nullptr, GENERIC_ALL, nullptr,
+                                                 &texture_handles[i]),
+                      "Share D3D12 texture");
             size = (size + 511) & ~uint64_t(511);
             UINT rows{}; UINT64 row_bytes{}, bytes{};
             device->GetCopyableFootprints(&desc, 0, 1, size, &footprints[i], &rows, &row_bytes, &bytes);
@@ -268,6 +281,11 @@ struct NativeFsr411::Impl {
     void Dispatch(const NativeFsr411Frame& frame, uint64_t input_value = 0) {
         Transition(list, shared, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_SOURCE);
         for (unsigned i = 0; i < 3; ++i) {
+            if (Shared(i)) {
+                Transition(list, textures[i], D3D12_RESOURCE_STATE_COMMON,
+                           D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                continue;
+            }
             D3D12_TEXTURE_COPY_LOCATION src{}, dst{};
             src.pResource = shared; src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
             src.PlacedFootprint = footprints[i];
@@ -275,6 +293,9 @@ struct NativeFsr411::Impl {
             list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
             Transition(list, textures[i], D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         }
+        if (Shared(3))
+            Transition(list, textures[3], D3D12_RESOURCE_STATE_COMMON,
+                       D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         ffxDispatchDescUpscale d{};
         d.header.type = FFX_API_DISPATCH_DESC_TYPE_UPSCALE;
         d.commandList = list;
@@ -295,17 +316,29 @@ struct NativeFsr411::Impl {
         const auto rc = ffx.Dispatch(&context, &d.header);
         if (rc != FFX_API_RETURN_OK)
             throw std::runtime_error("FSR 4.1.1 dispatch returned " + std::to_string(rc));
-        Transition(list, shared, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-        Transition(list, textures[3], D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        D3D12_TEXTURE_COPY_LOCATION src{}, dst{};
-        src.pResource = textures[3]; src.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-        dst.pResource = shared; dst.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-        dst.PlacedFootprint = footprints[3];
-        list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
-        Transition(list, shared, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON);
-        Transition(list, textures[3], D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        if (Shared(3)) {
+            Transition(list, shared, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON);
+            Transition(list, textures[3], D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+                       D3D12_RESOURCE_STATE_COMMON);
+        } else {
+            Transition(list, shared, D3D12_RESOURCE_STATE_COPY_SOURCE,
+                       D3D12_RESOURCE_STATE_COPY_DEST);
+            Transition(list, textures[3], D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+                       D3D12_RESOURCE_STATE_COPY_SOURCE);
+            D3D12_TEXTURE_COPY_LOCATION src{}, dst{};
+            src.pResource = textures[3];
+            src.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+            dst.pResource = shared;
+            dst.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+            dst.PlacedFootprint = footprints[3];
+            list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
+            Transition(list, shared, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON);
+            Transition(list, textures[3], D3D12_RESOURCE_STATE_COPY_SOURCE,
+                       D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        }
         for (unsigned i = 0; i < 3; ++i)
-            Transition(list, textures[i], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+            Transition(list, textures[i], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+                       Shared(i) ? D3D12_RESOURCE_STATE_COMMON : D3D12_RESOURCE_STATE_COPY_DEST);
         Submit(!input_value, input_value);
         if (!dispatched) std::printf("FSR 4.1.1 native: first AMD 4.1.1 dispatch submitted (%s)\n", input_value ? "GPU fences" : "CPU waits");
         dispatched = true;
@@ -322,6 +355,9 @@ NativeFsr411::NativeFsr411(const NativeFsr411Config& config) : impl(new Impl(con
 NativeFsr411::~NativeFsr411() { delete impl; }
 bool NativeFsr411::Ready() const { return impl->ready; }
 const char* NativeFsr411::Error() const { return impl->error.c_str(); }
+void *NativeFsr411::SharedTextureHandle(unsigned index) const {
+    return impl->texture_handles.at(index);
+}
 void* NativeFsr411::SharedHandle() const { return impl->shared_handle; }
 uint64_t NativeFsr411::SharedSize() const { return impl->size; }
 void* NativeFsr411::InputFenceHandle() const { return impl->input_handle; }
