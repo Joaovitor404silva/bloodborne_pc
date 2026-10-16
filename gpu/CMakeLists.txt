@@ -295,6 +295,12 @@ add_executable(command-buffer-test EXCLUDE_FROM_ALL ../tests/test_command_buffer
 target_compile_options(command-buffer-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
 target_include_directories(command-buffer-test PRIVATE ..)
 
+add_executable(fsr4vk-post-test EXCLUDE_FROM_ALL ../tests/test_fsr4vk_post.cpp
+    shadps4/video_core/renderer_vulkan/fsr4vk_post.cpp)
+target_include_directories(fsr4vk-post-test PRIVATE shadps4)
+target_compile_options(fsr4vk-post-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
+target_link_libraries(fsr4vk-post-test PRIVATE PkgConfig::XXHASH)
+
 add_executable(motion-history-test EXCLUDE_FROM_ALL ../tests/test_motion_history.cpp)
 target_compile_options(motion-history-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
 target_include_directories(motion-history-test PRIVATE ..)

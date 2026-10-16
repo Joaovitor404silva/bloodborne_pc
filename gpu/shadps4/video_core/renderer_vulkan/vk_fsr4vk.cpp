@@ -6,14 +6,19 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <deque>
+#include <mutex>
+#include <optional>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 #include "video_core/host_shaders/fsr4vk_prepare_comp.h"
+#include "video_core/renderer_vulkan/fsr4vk_post.h"
 #include "video_core/renderer_vulkan/vk_fsr4vk.h"
 #include "video_core/renderer_vulkan/vk_shader_util.h"
 #include "video_core/texture_cache/image.h"
@@ -218,6 +223,110 @@ const char *ReturnName(u32 code) {
     return code < names.size() ? names[code] : "unknown";
 }
 
+// v0.4.3 imports core Vulkan functions directly instead of using the supplied procedure
+// callback. Temporarily redirect only its shader-module import during first dispatch.
+// Neither the on-disk DLL nor the application's Vulkan dispatch table is modified.
+thread_local bool optimize_post_shader{};
+
+struct PostShaderScope {
+    bool previous;
+    explicit PostShaderScope(bool enabled) : previous{std::exchange(optimize_post_shader, enabled)} {}
+    ~PostShaderScope() { optimize_post_shader = previous; }
+};
+
+VKAPI_ATTR VkResult VKAPI_CALL CreateProviderShaderModule(
+    VkDevice device, const VkShaderModuleCreateInfo* info, const VkAllocationCallbacks* allocator,
+    VkShaderModule* module) noexcept {
+    // Forward through the same loader export as the provider's unmodified import,
+    // including calls on other threads/devices outside the optimization scope.
+    static const auto create_module = reinterpret_cast<PFN_vkCreateShaderModule>(
+        GetProcAddress(GetModuleHandleW(L"vulkan-1.dll"), "vkCreateShaderModule"));
+    if (optimize_post_shader && info && info->pCode && info->codeSize % sizeof(u32) == 0) {
+        try {
+            const auto code = Fsr4VkPost::Rewrite({info->pCode, info->codeSize / sizeof(u32)});
+            if (!code.empty()) {
+                auto optimized = *info;
+                optimized.pCode = code.data();
+                optimized.codeSize = code.size() * sizeof(u32);
+                if (create_module(device, &optimized, allocator, module) == VK_SUCCESS) {
+                    std::printf("Upscaler: fsr4vk coalesced output stores (4K Quality SDR)\n");
+                    return VK_SUCCESS;
+                }
+                std::printf("Upscaler: fsr4vk optimized module rejected; using original shader\n");
+            }
+        } catch (...) {
+            // Allocation/patch failure must not break an otherwise usable provider.
+            std::printf("Upscaler: fsr4vk post rewrite unavailable; using original shader\n");
+        }
+    }
+    return create_module(device, info, allocator, module);
+}
+
+class ProviderShaderPatch {
+    inline static std::mutex mutex;
+    std::unique_lock<std::mutex> lock{mutex};
+    void** slot{};
+    void* original{};
+
+    static void** FindImport(HMODULE module) {
+        auto* base = reinterpret_cast<unsigned char*>(module);
+        const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
+        if (dos->e_magic != IMAGE_DOS_SIGNATURE) return nullptr;
+        const auto* pe = reinterpret_cast<const IMAGE_NT_HEADERS*>(base + dos->e_lfanew);
+        if (pe->Signature != IMAGE_NT_SIGNATURE) return nullptr;
+        const auto directory = pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+        if (!directory.VirtualAddress || !directory.Size) return nullptr;
+        const auto* imports = reinterpret_cast<const IMAGE_IMPORT_DESCRIPTOR*>(base + directory.VirtualAddress);
+        // The module has already been validated/mapped by the Windows loader.
+        for (auto* dll = imports; dll->Name; ++dll) {
+            const char* name = reinterpret_cast<const char*>(base + dll->Name);
+            if (_stricmp(name, "vulkan-1.dll") != 0 || !dll->OriginalFirstThunk) continue;
+            auto* names = reinterpret_cast<const IMAGE_THUNK_DATA*>(base + dll->OriginalFirstThunk);
+            auto* addresses = reinterpret_cast<IMAGE_THUNK_DATA*>(base + dll->FirstThunk);
+            for (; names->u1.AddressOfData; ++names, ++addresses) {
+                if (IMAGE_SNAP_BY_ORDINAL(names->u1.Ordinal)) continue;
+                const auto* symbol = reinterpret_cast<const IMAGE_IMPORT_BY_NAME*>(base + names->u1.AddressOfData);
+                if (std::strcmp(symbol->Name, "vkCreateShaderModule") == 0) {
+                    auto** target = reinterpret_cast<void**>(&addresses->u1.Function);
+                    // Do not replace an existing third-party import hook.
+                    const auto expected = GetProcAddress(GetModuleHandleA(name), "vkCreateShaderModule");
+                    return *target == reinterpret_cast<void*>(expected) ? target : nullptr;
+                }
+            }
+        }
+        return nullptr;
+    }
+
+public:
+    explicit ProviderShaderPatch(HMODULE module) {
+        auto** target = FindImport(module);
+        DWORD protection{};
+        if (!target || !VirtualProtect(target, sizeof(void*), PAGE_READWRITE, &protection)) {
+            std::printf("Upscaler: fsr4vk post import unavailable; using original shader\n");
+            return;
+        }
+        original = InterlockedExchangePointer(target, reinterpret_cast<void*>(CreateProviderShaderModule));
+        slot = target;
+        DWORD ignored{};
+        VirtualProtect(target, sizeof(void*), protection, &ignored);
+    }
+
+    ~ProviderShaderPatch() {
+        if (!slot) return;
+        DWORD protection{};
+        if (VirtualProtect(slot, sizeof(void*), PAGE_READWRITE, &protection)) {
+            InterlockedExchangePointer(slot, original);
+            DWORD ignored{};
+            VirtualProtect(slot, sizeof(void*), protection, &ignored);
+        } else {
+            // The remaining wrapper forwards unchanged outside its thread-local scope.
+            std::printf("Upscaler: fsr4vk post import restoration failed\n");
+        }
+    }
+
+    explicit operator bool() const { return slot != nullptr; }
+};
+
 } // namespace
 
 struct Fsr4Vk::Impl {
@@ -233,6 +342,7 @@ struct Fsr4Vk::Impl {
     u32 out_width{}, out_height{};
     u32 input_width{}, input_height{};
     bool context_hdr{true};
+    bool context_post_enabled{};
     VideoCore::UniqueImage prepared_color, prepared_depth;
     vk::UniqueImageView prepared_color_view, prepared_depth_view;
     vk::UniqueDescriptorSetLayout prepare_descriptors;
@@ -244,6 +354,9 @@ struct Fsr4Vk::Impl {
     std::deque<u64> ticks; ///< scheduler ticks of the frames in flight (the provider's slot ring)
     std::string problem, described, provider_name;
     bool fatal{};
+    bool post_attempted{};
+    u64 recorded_frames{}, full_finishes{}, slot_waits{};
+    std::chrono::nanoseconds full_wait_time{}, slot_wait_time{};
 
     Impl(const Instance &instance_, Scheduler &scheduler_)
         : instance{instance_}, scheduler{scheduler_} {}
@@ -277,6 +390,7 @@ struct Fsr4Vk::Impl {
         context = nullptr;
         ticks.clear();
         configured_preset = -1;
+        post_attempted = false;
         described.clear();
     }
 
@@ -392,6 +506,7 @@ struct Fsr4Vk::Impl {
                         PresetName[size_t(preset)]);
         }
         configured_preset = preset;
+        post_attempted = false;
         described = provider_name + ", " + model + " model, output " + std::to_string(out_width) +
                     "x" + std::to_string(out_height);
         return true;
@@ -574,12 +689,57 @@ struct Fsr4Vk::Impl {
                 return false;
             }
         }
-        // The provider owns eight GPU completion events. Retire all before
-        // reusing a slot; Finish replaces the caller's command buffer.
+        // v0.4.3 reuses its eight descriptor/constant/view slots in FIFO order.
+        // A completed submission containing the oldest dispatch also guarantees
+        // that slot's completion event is set. Preserve overlap with later work;
+        // wait only for that slot, not for the command buffer being recorded.
+        // BB_FSR4VK_WAIT_ALL=1 selects the previous full-drain path
+        // for A/B tests. This does not change the model, inputs or GPU barriers.
+        static const bool force_full_wait = [] {
+            const char* value = std::getenv("BB_FSR4VK_WAIT_ALL");
+            return value && value[0] == '1';
+        }();
+        const bool full_wait = force_full_wait;
         if (ticks.size() >= FramesInFlight) {
+            if (full_wait) {
+                const auto started = std::chrono::steady_clock::now();
+                scheduler.Finish();
+                full_wait_time += std::chrono::steady_clock::now() - started;
+                ++full_finishes;
+                input.cmdbuf = scheduler.CommandBuffer();
+                ticks.clear();
+            } else {
+                const u64 oldest = ticks.front();
+                if (!scheduler.IsFree(oldest)) {
+                    const auto started = std::chrono::steady_clock::now();
+                    scheduler.Wait(oldest);
+                    slot_wait_time += std::chrono::steady_clock::now() - started;
+                    ++slot_waits;
+                    // Wait may flush if multiple dispatches share the current
+                    // submission. Never keep recording into a submitted buffer.
+                    input.cmdbuf = scheduler.CommandBuffer();
+                }
+                ticks.pop_front();
+            }
+        }
+        static const bool enable_post = [] {
+            const char* setting = std::getenv("BB_FSR4VK_POST");
+            return !setting || setting[0] != '0';
+        }();
+        const bool eligible_post = enable_post &&
+            Fsr4VkPost::Eligible(instance.GetVendorID(), instance.GetDeviceID(),
+                                input.output.width, input.output.height,
+                                input.render_width, input.render_height, input.preset, input.hdr);
+        const bool replace_context = context &&
+            (input.output.width != out_width || input.output.height != out_height ||
+             input.hdr != context_hdr || eligible_post != context_post_enabled);
+        const bool replace_inputs = input_width &&
+            (input_width != input.render_width || input_height != input.render_height);
+        // Complete even unsubmitted dispatches before replacing their resources. This
+        // happens only on a mode/size change, never during steady-state rendering.
+        if (replace_context || replace_inputs) {
             scheduler.Finish();
             input.cmdbuf = scheduler.CommandBuffer();
-            ticks.clear();
         }
         const auto f = Prepare(input);
         // The provider reads the render-size part from the origin of each input.
@@ -591,12 +751,13 @@ struct Fsr4Vk::Impl {
                  true);
             return false;
         }
-        if (!context || f.output.width != out_width || f.output.height != out_height ||
-            f.hdr != context_hdr) {
+        // Cached pipelines must not carry the rewrite into an unvalidated configuration.
+        if (!context || replace_context) {
             DestroyContextNow(true);
             if (!CreateContextNow(f.output.width, f.output.height, f.hdr)) {
                 return false;
             }
+            context_post_enabled = eligible_post;
         }
         if (!SelectPreset(std::clamp(f.preset, 0, 4))) {
             return false;
@@ -627,6 +788,12 @@ struct Fsr4Vk::Impl {
         d.camera_fov_vertical = f.vertical_fov;
         d.view_space_to_meters = 1.0f;
         Transition(f.cmdbuf, f, true);
+        std::optional<ProviderShaderPatch> post_patch;
+        if (eligible_post && !post_attempted) {
+            post_patch.emplace(module);
+            post_attempted = true;
+        }
+        const PostShaderScope post_scope{post_patch && bool(*post_patch)};
         const u32 result = dispatch(&context, &d.header);
         Transition(f.cmdbuf, f, false);
         if (result != ReturnOk) {
@@ -636,6 +803,16 @@ struct Fsr4Vk::Impl {
             return false;
         }
         ticks.push_back(scheduler.CurrentTick());
+        if (BbStats::enabled && ++recorded_frames % 300 == 0) {
+            std::printf("fsr4vk retirement: frames=%llu mode=%s full_finishes=%llu "
+                        "slot_waits=%llu full_wait_ms=%.3f slot_wait_ms=%.3f\n",
+                        static_cast<unsigned long long>(recorded_frames),
+                        full_wait ? "full" : "ring",
+                        static_cast<unsigned long long>(full_finishes),
+                        static_cast<unsigned long long>(slot_waits),
+                        std::chrono::duration<double, std::milli>(full_wait_time).count(),
+                        std::chrono::duration<double, std::milli>(slot_wait_time).count());
+        }
         problem.clear();
         return true;
     }

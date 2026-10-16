@@ -78,6 +78,43 @@ The download includes provider licenses and a source/patch provenance note.
 fsr4vk is GPLv3, its AMD-derived data MIT licensed, and zstd BSD licensed.
 It is downloaded by the player rather than bundled into the release.
 
+### Coalesced output stores
+
+On Navi 48 (`1002:7550`, tested on RX 9070), **3840x2160 Quality SDR**
+(`2560x1440` input) automatically uses coalesced output stores in the known
+v0.4.3 post shader. The host collects the four output pixels per invocation in
+workgroup memory, then writes contiguous blocks, following the idea used by the
+older FSR 4 post optimization. Original SPIR-V arithmetic, floating-point controls,
+and writes to recurrent/history images are retained. The provider DLL, embedded
+assets and verified download hashes are unchanged. There is no new download,
+sidecar asset directory, startup compiler or launcher setting.
+
+The v0.4.3 DLL imports core Vulkan functions directly rather than obtaining them
+through its backend callback. During the first eligible dispatch only, the host
+temporarily redirects its `vkCreateShaderModule` import in memory, then restores
+it. It does not alter the application's Vulkan dispatch table, patch the DLL on
+disk or change environment variables. An existing third-party import hook is
+left alone. A thread-local scope enables the rewrite only for the configuration
+above; an exact-size/128-bit content fingerprint rejects other shader revisions.
+An unavailable import or a rejected optimized module uses the original.
+Changing eligibility recreates the context so cached pipelines cannot carry the
+rewrite into other modes. Other GPUs, presets, outputs and HDR use the original
+shaders. `BB_FSR4VK_POST=0` disables it at process startup for comparisons.
+
+`tools/fsr411_post_lds.py` reproduces the small generated instruction-edit recipe
+in `fsr4vk_post_edits.inc` using SPIRV-Tools and the pinned upstream shader.
+Original shader SHA-256:
+`590d5a48eaf7390059249b59c0b61e664cb6e3198380f0f011b12d165260e7b6`.
+The recipe contains only added instructions and replaced stores, rather than a
+complete shader or model. GLSL round-tripping was rejected because it changed
+output values; the selected direct-SPIR-V rewrite passed full-image byte checks.
+
+Frame retirement also waits for the oldest of the eight provider slots rather
+than draining the entire GPU every eight frames. A wait that splits a submission
+refreshes the caller's command buffer. A separate in-game A/B test found no FPS
+gain from this lifetime change alone. The post-shader
+comparison below uses this same retirement behavior in both Vulkan variants.
+
 ```bash
 python scripts/fetch_fsr4vk.py
 python scripts/fetch_fsr4vk.py --check
@@ -129,46 +166,53 @@ log/menu. Selection, quality preset and output setting remain intact. fsr4vk is
 limited to standard outputs up to 3840x2160 (minimum 64x64); upstream documents
 an unwritten final row/column at odd output sizes. Prefer the standard even sizes.
 
-## Uncapped game comparison: Hunter's Dream
+## Vulkan post-shader comparison: Hunter's Dream
 
-Measured on **15 October 2026** in the same stationary view in **Hunter's Dream**,
-with no enemies in view and no character/camera input. Windows 11, **RX 9070
-16 GB**, AMD **26.9.2** (LLPC; Vulkan 1.4.355). Based on Supermedo `windows`
-at `bee7ec1` / v1.8.1. These game measurements precede the packaging/code cleanup;
-the final wrappers were rechecked for output correctness, not rebenchmarked in-game.
-
-- Fullscreen, SDR, **2560x1440 -> 3840x2160, Quality**, host RCAS **0.50**.
-- FPS cap and VSync disabled: `BB_FPS=uncap`, `BB_FPS_LIMIT=0`,
-  `BB_PRESENT_MODE=Immediate`, `BB_VBLANK_HZ=0`. Startup reported
-  `vblank 480 Hz, frame limit 0 FPS`; display mode was 4K at 60 Hz.
-- Copied saves and isolated settings; stealth/no-death enabled in the test copy.
-- Order: old bridge / GPU-fence bridge / fsr4vk / fsr4vk / GPU-fence bridge /
-  old bridge. Each phase settled for 15 seconds, then measured for 40 seconds.
-- Six phases, 48 five-second reports: 80 measured seconds per method. No shader
-  or pipeline compilation in those reports; similar draw counts (1126-1135/frame).
+Measured on **16 October 2026**, RX 9070, AMD 26.9.2 LLPC, Windows 11, same
+stationary Hunter's Dream view in one process. Fullscreen SDR,
+**2560x1440 -> 3840x2160 Quality**, host RCAS **0.50**, no FPS cap/VSync,
+Immediate presentation. The test build was based on `739e60d` / v1.8.1;
+these measurements are not a new in-game benchmark of the subsequent 1.8.2 merge.
 
 | Method | First phase mean FPS | Second phase mean FPS | Combined mean FPS |
 |---|---:|---:|---:|
-| Old DX12 bridge, CPU completion waits (control) | 54.663 | 54.725 | 54.69 |
-| AMD DX12, GPU-fence bridge | 98.025 | 97.625 | 97.83 |
-| Vulkan (fsr4vk with AMD fix) | 70.862 | 70.775 | 70.82 |
+| FSR 4.1.1 Vulkan (fsr4vk) | 81.45 | 80.74 | **81.09** |
+| FSR 4.1.1 AMD DX12, reference | 93.90 | 94.10 | **94.00** |
+| Existing FSR 4 Vulkan (v07), reference | 85.99 | 85.73 | **85.86** |
 
-These are arithmetic means of the port's five-second FPS reports, **not 1% lows**
-or a latency measurement. The GPU-fence bridge was **78.9% faster than the old
-bridge** and **38.1% faster than fsr4vk** in this scene on this GPU. The old
-bridge's measured DX12 CPU-fence wait was about 3.71 ms/frame; the new bridge
-recorded no additional DX12 CPU-fence waits in its two phases. Other renderer
-CPU waits still exist. No dispatch failure, device loss or FSR 3.1 fallback was
-reported in the comparison.
+The Vulkan row includes the new output-store optimization. An internal A/B
+control with the original shader reached **69.29 FPS** in the same run; the new
+shader raises it to **81.09 FPS (+17.0%)**. This improves the existing Vulkan
+method without adding a launcher choice. FSR 4 and DX12 remain faster here.
+Order: original / coalesced / FSR 4 / DX12 / DX12 / FSR 4 /
+coalesced / original. Each phase settled for 15 seconds then measured for 40:
+80 measured seconds and 16 five-second FPS reports per method, 64 reports total.
+No shader/pipeline compilations in the measured reports; similar draw counts
+(1126-1133/frame). Repeated phase means differ by less than 0.9% per method.
+These are means of FPS reports, not 1% lows or latency measurements. See the
+[measurement data](benchmarks/fsr411-vulkan-20261016.json).
 
-The earlier PR comparison (49.6 FPS DX12, 59.9 FPS fsr4vk) used the old blocking
-bridge and hit the presentation ceiling on the Vulkan route. It cannot establish
-a general DX12 performance disadvantage; the uncapped comparison above replaces
-it for evaluating this bridge. These results do not predict other scenes or GPUs.
+Six independent synthetic complete-output comparisons were byte-identical
+between original and coalesced shaders, including changing inputs/jitter and
+batched submissions; synthetic motion vectors were zero. The tester also reported no obvious issues after several minutes of
+gameplay; this is an informal observation, not full-game validation.
+
+The production integration performs the same rewrite in memory with preserved
+original numeric IDs instead of using the test's external asset directory.
+Final production-wrapper correctness and package checks are listed below;
+the eight-phase game benchmark applies to the experimental test build above.
 
 ## Validation and reproduction
 
 - Windows CLANG64 renderer, loader and capability-tool build.
+- `fsr4vk-post-test` checks device/mode guards, exact generated shader bytes,
+  and rejection of changed/truncated modules without a Vulkan device.
+- The final in-memory production rewrite passed six complete 4K SDR byte
+  comparisons, including changing color, jitter and nonzero motion vectors,
+  with submissions batched up to 16 frames. HDR and 1080p checks retained the
+  original shader. A 1,200-frame stress test and repeated Quality/Balanced
+  switches with unsubmitted work passed; switch-test output was byte-identical
+  with optimization disabled/enabled. No import-restoration error was reported.
 - Frozen Windows launcher and release package, including the pinned native DLL,
   license/notices and this document; fsr4vk remains a separate verified download.
 - Downloader tests cover interrupted/corrupt Vulkan downloads, pinned archive
@@ -204,6 +248,23 @@ Use `dx12` for the synchronous control, `vk` for fsr4vk; use `hdr` instead of
 `ldr` for HDR inputs. `BB_FSR411_BENCH_DUMP=<file>` saves raw RGBA16F output for
 byte comparison. `BB_FSR4VK_DIR` can point to an existing verified provider.
 The synthetic timing is a diagnostic, not a substitute for game measurements.
+
+To reproduce and validate the post rewrite (maintainer workflow; not required
+to play), download the pinned original shader from fsr4vk v0.4.3 and run with
+SPIRV-Tools on PATH:
+
+```bash
+curl -L --fail -o original-post.spv \
+  https://raw.githubusercontent.com/dvj5411/fsr4vk/7c04e511195bf4420a060d64df84d625a37457e0/assets/fsr411/colors/2160/quality/srgb/pass-27.spv
+python tools/fsr411_post_lds.py original-post.spv optimized-post.spv \
+  --header gpu/shadps4/video_core/renderer_vulkan/fsr4vk_post_edits.inc
+ninja -C out/gpu fsr4vk-post-test
+out/gpu/fsr4vk-post-test.exe original-post.spv optimized-post.spv
+```
+
+`BB_FSR411_BATCH_SIZE=16` exercises multiple dispatches in one command buffer.
+Use otherwise identical `vk 2560x1440 3840x2160 ldr` runs with
+`BB_FSR4VK_POST=0` and `BB_FSR4VK_POST=1` to compare raw RGBA16F dumps.
 
 Full-game stability, other GPUs/drivers, odd/custom outputs and identical image
 quality between the two different providers are not established by these tests.

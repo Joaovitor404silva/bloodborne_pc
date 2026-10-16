@@ -33,8 +33,14 @@ int main(int argc, char** argv) {
         const int count = argc > 5 ? std::atoi(argv[5]) : 180;
         if (count <= 0 || !rw || !rh || !ow || !oh || rw > 3840 || ow > 3840 || rh > 2160 || oh > 2160)
             throw std::runtime_error("use positive frame counts and dimensions up to 3840x2160");
-        const bool pipeline = std::getenv("BB_FSR411_PIPELINE_TEST") != nullptr;
+        const char* batch_setting = std::getenv("BB_FSR411_BATCH_SIZE");
+        const int batch_size = batch_setting ? std::atoi(batch_setting) : 1;
+        if (batch_size < 1 || batch_size > 64)
+            throw std::runtime_error("BB_FSR411_BATCH_SIZE must be 1..64");
+        const bool pipeline = std::getenv("BB_FSR411_PIPELINE_TEST") != nullptr || batch_size > 1;
         const bool vary = std::getenv("BB_FSR411_VARY_INPUT") != nullptr;
+        const bool vary_motion = std::getenv("BB_FSR411_VARY_MOTION") != nullptr;
+        const bool switch_preset = std::getenv("BB_FSR411_SWITCH_PRESET") != nullptr;
         Instance instance(0, false);
         VULKAN_HPP_DEFAULT_DISPATCHER.init(instance.GetInstance());
         VULKAN_HPP_DEFAULT_DISPATCHER.init(instance.GetDevice());
@@ -119,6 +125,7 @@ int main(int argc, char** argv) {
         std::vector<double> gpu_times, wall_times;
         for (int i = 0; i < count + 16; ++i) {
             frame.cmdbuf = scheduler.CommandBuffer(); frame.reset = i == 0;
+            if (switch_preset) frame.preset = (i / 24) % 2 == 0 ? 1 : 2;
             if (vary) {
                 // Alternate solid and patterned inputs on the GPU. No host-side staging
                 // writes race with queued reads, and a stale cross-API input is visible.
@@ -143,13 +150,31 @@ int main(int argc, char** argv) {
                 frame.jitter[0]=float(i%8)/8.f-.5f;
                 frame.jitter[1]=float(i%7)/7.f-.5f;
             }
+            if (vary_motion) {
+                const vk::ImageMemoryBarrier2 writable{
+                    .srcStageMask = vk::PipelineStageFlagBits2::eAllCommands,
+                    .srcAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite,
+                    .dstStageMask = vk::PipelineStageFlagBits2::eTransfer,
+                    .dstAccessMask = vk::AccessFlagBits2::eTransferWrite,
+                    .oldLayout = vk::ImageLayout::eGeneral, .newLayout = vk::ImageLayout::eGeneral,
+                    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                    .image = vk::Image(images[2]),
+                    .subresourceRange = {vk::ImageAspectFlagBits::eColor,0,1,0,1}};
+                frame.cmdbuf.pipelineBarrier2({.imageMemoryBarrierCount=1,.pImageMemoryBarriers=&writable});
+                const vk::ClearColorValue value{std::array<float,4>{
+                    float(i%5-2)*.75f, float(i%7-3)*.25f, 0.f, 0.f}};
+                frame.cmdbuf.clearColorImage(vk::Image(images[2]),vk::ImageLayout::eGeneral,value,writable.subresourceRange);
+            }
             const auto start = std::chrono::steady_clock::now();
             // Native dispatch submits this buffer, so only the all-Vulkan path uses these timestamps.
             if (!native && !pipeline) { frame.cmdbuf.resetQueryPool(*query, 0, 2); frame.cmdbuf.writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, *query, 0); }
             const bool ok = native ? fsr_dx.Record(frame, async) : fsr_vk.Record(frame);
             if (!ok) throw std::runtime_error(native ? fsr_dx.Error() : fsr_vk.Problem());
             if (!native && !pipeline) frame.cmdbuf.writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, *query, 1);
-            if (pipeline) scheduler.Flush();
+            if (pipeline) {
+                if ((i + 1) % batch_size == 0) scheduler.Flush();
+            }
             else scheduler.Finish();
             const double wall = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
             if (i >= 16) wall_times.push_back(wall);
