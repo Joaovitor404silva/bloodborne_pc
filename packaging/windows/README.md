@@ -29,6 +29,10 @@ python launcher/bbport_launcher_win.py
 bash packaging/windows/package.sh  # dist/bbport-windows/ and .zip: Bloodborne.exe + DLLs
 ```
 
+For build/CI checks, `bash packaging/windows/package.sh --zip-only` creates the
+ZIP from fresh staging files and leaves an existing playable
+`dist/bbport-windows/` copy untouched.
+
 `run.py` is the Windows `run.sh` (same variables; works from a plain Windows Python too).
 The package freezes the launcher with PyInstaller (a private venv in `out/pyenv`, from a
 python.org Python) into `Bloodborne.exe`, which also runs `run.py` (`--run`), the preparation

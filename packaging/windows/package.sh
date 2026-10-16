@@ -7,6 +7,13 @@
 set -euo pipefail
 cd -- "$(dirname -- "$0")/../.."
 source ./msys2-env.sh
+zip_only=0
+if [[ ${1:-} == --zip-only ]]; then
+    zip_only=1
+elif [[ $# != 0 ]]; then
+    echo 'Usage: bash packaging/windows/package.sh [--zip-only]' >&2
+    exit 1
+fi
 [[ -f out/bb-probe.exe && -f out/bb-gpu-capabilities.exe && -f out/bb-play.exe ]] || { echo 'Build first: bash build.sh' >&2; exit 1; }
 
 # A Windows Python (not MSYS2's) for PyInstaller.
@@ -78,6 +85,8 @@ cp packaging/windows/licenses/AMD-FSR-SDK-*.md "$dest/licenses/"
 # Setup and provider requirements must be available in the downloaded package too.
 mkdir -p "$dest/docs"
 cp docs/FSR411_WINDOWS.md "$dest/docs/"
+mkdir -p "$dest/docs/benchmarks"
+cp docs/benchmarks/fsr411-vulkan-20261016.json "$dest/docs/benchmarks/"
 # Where the online code comes from (shadPS4 0.20, Awaken's port, bbhost's protocol).
 cp gpu/bbnet/SHADNET-PORT.md "$dest/licenses/online-code-NOTICE.md"
 for package in protobuf abseil-cpp openssl miniupnpc zlib; do
@@ -91,6 +100,12 @@ rm -f dist/bbport-windows.zip
 # dependency (and no Compress-Archive 2 GiB per-file limit).
 out/pyenv/Scripts/python.exe -c \
     "import shutil; shutil.make_archive('dist/bbport-windows', 'zip', 'out/stage')"
+
+# Build/CI validation can create the ZIP without touching a playable copy.
+if [[ $zip_only == 1 ]]; then
+    du -sh "$dest" dist/bbport-windows.zip
+    exit 0
+fi
 
 # Refresh dist/bbport-windows, keeping what players create there (saves, settings, mods), and
 # only while nothing runs from it: deleting a running launcher's files breaks it.
