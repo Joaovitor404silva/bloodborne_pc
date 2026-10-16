@@ -27,7 +27,7 @@
   "dx12_variant": "Shared color/motion/output textures, cleaned buffer transfers, direct shared output",
   "fsr4_variant": "Existing Vulkan v07 INT8 with optimized passes enabled",
   "fsr4vk_variant": "Published optimized 4K Quality SDR post shader",
-  "method": "One process and same stationary camera across all eight phases. FSR4 / fsr4vk / DX12 / FSR3 / FSR3 / DX12 / fsr4vk / FSR4. Each 10 seconds settling and 25 seconds measured. Mean of five-second FPS reports; no 1% or 0.1% lows.",
+  "method": "One process and same stationary camera across all eight phases. FSR4 / fsr4vk / DX12 / FSR3 / FSR3 / DX12 / fsr4vk / FSR4. Each 10 seconds settling and 25 seconds measured. Mean FPS from five-second reports.",
   "phases": [
     {
       "phase": "fsr4-A",
@@ -1001,5 +1001,5 @@
   "runtime_errors": [],
   "log_file": "all-fixed-game.log",
   "log_sha256": "90aeb7c9eddafc5de1cdafe825a579a53d1ff6a162f3b8f405ca1409ffa385d2",
-  "scope": "Experimental 1.8.2 in-game build; the final source integration is validated separately. Mean FPS reports, no 1%/0.1% lows."
+  "scope": "Experimental 1.8.2 in-game build; the final source integration is validated separately. Mean FPS from five-second reports."
 }

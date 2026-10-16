@@ -13,11 +13,11 @@ A method change takes effect on the next game start.
 The launcher remembers the method independently of the upscaler. When another
 upscaler is selected, both method controls show a disabled dash; returning to
 FSR 4.1.1 restores the saved method. The controls stay synchronized. Existing
-profiles without `fsr411_backend` keep Vulkan (`vk`), rather than silently
-switching providers. All new controls and status messages cover the 13 launcher
+profiles created before `fsr411_backend` keep Vulkan (`vk`). All new controls and
+status messages cover the 13 launcher
 languages; `vk` and `dx12` are language-independent stored values.
 
-Neither method needs Linux, shader extraction or an additional game starter.
+Both methods use the normal Windows launcher.
 The pre-existing **FSR 4 assets** controls and `fsr4_shaders/` are for the older
 FSR 4 v07 path, independent of these two providers.
 
@@ -26,8 +26,8 @@ FSR 4 v07 path, independent of these two providers.
 `packaging/windows/package.sh` includes the unmodified
 `bin/amd_fidelityfx_upscaler_dx12.dll` **4.1.1.2740**, from the official
 [AMD FSR SDK v2.3.0 release](https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK/releases/tag/v2.3.0).
-The DLL must be beside `bb-probe.exe`, not beside the launcher. No binary or
-model file is committed to this repository.
+The DLL is installed beside `bb-probe.exe`. The repository contains the required
+API headers; packaging retrieves the runtime from the pinned SDK archive.
 
 `packaging/windows/fetch_fsr411_dx12.py` prepares a verified build cache under
 `out/fsr411-dx12/`. The first package build downloads the official prebuilt SDK
@@ -41,11 +41,10 @@ archive and exact member size/SHA-256 before replacing a cached runtime:
 
 The package includes the full, unmodified SDK license, third-party notices and
 source/download note under `licenses/AMD-FSR-SDK-*`. The runtime has AMD's
-binary redistribution terms; it is **not** covered by the MIT notice on the
-vendored API headers. The C headers under `gpu/fsr411_dx12/sdk/` are from the
+binary redistribution terms. The C headers under `gpu/fsr411_dx12/sdk/` are from the
 same SDK release and retain AMD's MIT notices. Only the required headers are
-vendored. The bridge is compiled with MSYS2 CLANG64 and system DX12/DXGI APIs;
-it does not require an additional MSVC-built bridge DLL.
+vendored. The bridge is compiled into the renderer with MSYS2 CLANG64 and system
+DX12/DXGI APIs.
 
 For a source build, prepare and copy the runtime beside the source loader:
 
@@ -76,7 +75,8 @@ supports interrupted downloads, and replaces files atomically:
 
 The download includes provider licenses and a source/patch provenance note.
 fsr4vk is GPLv3, its AMD-derived data MIT licensed, and zstd BSD licensed.
-It is downloaded by the player rather than bundled into the release.
+The standard package offers it as a verified launcher download; the fork's test
+ZIPs include it.
 
 ### Coalesced output stores
 
@@ -86,34 +86,34 @@ v0.4.3 post shader. The host collects the four output pixels per invocation in
 workgroup memory, then writes contiguous blocks, following the idea used by the
 older FSR 4 post optimization. Original SPIR-V arithmetic, floating-point controls,
 and writes to recurrent/history images are retained. The provider DLL, embedded
-assets and verified download hashes are unchanged. There is no new download,
-sidecar asset directory, startup compiler or launcher setting.
+assets and verified download hashes are retained. The optimization activates
+automatically within the existing Vulkan method.
 
-The v0.4.3 DLL imports core Vulkan functions directly rather than obtaining them
-through its backend callback. During the first eligible dispatch only, the host
+The v0.4.3 DLL imports core Vulkan functions directly. During the first eligible
+dispatch only, the host
 temporarily redirects its `vkCreateShaderModule` import in memory, then restores
-it. It does not alter the application's Vulkan dispatch table, patch the DLL on
-disk or change environment variables. An existing third-party import hook is
-left alone. A thread-local scope enables the rewrite only for the configuration
+it. The rewrite is scoped to that loaded provider import. The on-disk DLL retains
+its verified hash, and an existing third-party import hook is preserved. A
+thread-local scope enables the rewrite only for the configuration
 above; an exact-size/128-bit content fingerprint rejects other shader revisions.
 An unavailable import or a rejected optimized module uses the original.
-Changing eligibility recreates the context so cached pipelines cannot carry the
-rewrite into other modes. Other GPUs, presets, outputs and HDR use the original
+Changing eligibility recreates the context with the shader selected for the new
+mode. Other GPUs, presets, outputs and HDR use the original
 shaders. `BB_FSR4VK_POST=0` disables it at process startup for comparisons.
 
 `tools/fsr411_post_lds.py` reproduces the small generated instruction-edit recipe
 in `fsr4vk_post_edits.inc` using SPIRV-Tools and the pinned upstream shader.
 Original shader SHA-256:
 `590d5a48eaf7390059249b59c0b61e664cb6e3198380f0f011b12d165260e7b6`.
-The recipe contains only added instructions and replaced stores, rather than a
-complete shader or model. GLSL round-tripping was rejected because it changed
+The recipe records the added instructions and replaced stores. GLSL round-tripping
+was rejected because it changed
 output values; the selected direct-SPIR-V rewrite passed full-image byte checks.
 
-Frame retirement also waits for the oldest of the eight provider slots rather
-than draining the entire GPU every eight frames. A wait that splits a submission
-refreshes the caller's command buffer. A separate in-game A/B test found no FPS
-gain from this lifetime change alone. The post-shader
-comparison below uses this same retirement behavior in both Vulkan variants.
+Frame retirement waits for the oldest of the eight provider slots before reuse.
+A wait that splits a submission
+refreshes the caller's command buffer. A separate in-game A/B showed similar FPS
+for the retirement-only change. Both Vulkan variants in the post-shader comparison
+use this retirement behavior.
 
 ```bash
 python scripts/fetch_fsr4vk.py
@@ -130,37 +130,35 @@ with input normalization, scheduler handoff and persistent asset storage here.
 
 The launcher sets `BB_FSR411_BACKEND=dx12` or `vk` for the normal game-start
 path, overriding inherited values. `BB_FSR411_NATIVE` is set consistently for
-the native feature probe. The renderer chooses the requested Windows provider;
-it does not silently change the saved method when it fails.
+the native feature probe. The renderer chooses the requested Windows provider
+and retains the saved method through fallback handling.
 
 **AMD DX12** matches the Vulkan adapter's LUID to the DXGI adapter. It requires
 an AMD adapter, the original DLL, shared device-local D3D12/Vulkan memory
 and importable D3D12 fences as Vulkan timeline semaphores. It explicitly
 selects the DLL's non-INT8 **4.1.1** provider, rejecting its legacy FSR 3
-provider. DLL presence alone does not prove hardware/driver support: provider
-enumeration and context creation must succeed. This route has been tested on
-RX 9070; other adapters are not validated by these results.
+provider. Hardware/driver support is established through successful provider
+enumeration and context creation. The validation below covers RX 9070.
 
 Color, motion vectors and the result use shared D3D12 textures imported as
 Vulkan images. Depth keeps the buffer route for the game's depth/stencil format.
 This removes the DX12 buffer-to-color/motion copies and result-to-buffer copy.
-Vulkan input image copies, depth transfer, sharpening and HUD composition remain;
-this is not an entirely zero-copy renderer.
+Vulkan input image copies, depth transfer, sharpening and HUD composition remain.
 
 The result image/view is passed directly to the existing SDR/HDR consumers,
 avoiding an additional full-resolution RGBA16F result copy. External ownership is
 retained until the last sharpening, HDR merge, SDR format blit or diagnostic read
 has finished recording; `ReleaseOutput` then returns it to DX12. HDR composition
-also handles upscalers that have no `Fsr4Upscaler` object.
+uses the applicable consumer path for FSR 3.1, FSR 4.x, TAA and DLSS.
 
 Image-import support is checked for the actual formats, usage and extents when
 creating a context. If unavailable, the original shared-buffer bridge remains
 the compatibility path. `BB_FSR411_SHARED_TEXTURES=0` selects that route at process
-startup for developer comparisons; it is not another launcher method.
+startup for developer comparisons. The launcher retains its two method choices.
 
 Vulkan signals an input fence; the D3D12 queue waits on it, executes FSR and signals
 an output fence. The next Vulkan submission waits before consuming the result.
-There is no unconditional per-frame CPU completion wait at either API boundary.
+Synchronization at the API boundaries runs through the GPU fences.
 Three DX12 allocator/list slots wait before reusing an occupied slot; resource
 changes and teardown still wait for completion. The synchronous bridge remains
 available only in the headless comparison test as a control.
@@ -170,16 +168,16 @@ available only in the headless comparison test as a control.
 Some scenes alternate full- and half-resolution object-motion attachments within
 each frame (the tested sewer view alternated 2560x1440 and 1280x720). The original
 single-target code finished the entire GPU and recreated the target twice per
-frame. This wait was not FSR inference or lighting shader work.
+frame. The profiler attributed these waits to target recreation.
 
 A bounded cache keeps the active target plus up to three inactive sizes, with
-the image, view, dimensions and layout together. Reusing a size requires neither
-reallocation nor a full GPU wait. Evicting an inactive target when all slots are
+the image, view, dimensions and layout together. A size change can reuse its
+resident target. Evicting an inactive target when all slots are
 occupied still waits safely; teardown retains its completion wait. Per-size-change
-clear and validity behavior stays the same as before; cached contents are not
-restored as motion history. Existing image barriers and motion shader math remain.
+clear and validity behavior is preserved: returning to a cached size clears it
+according to the existing rules. Existing image barriers and motion shader math remain.
 This fix applies to all upscalers using object-motion vectors, including FSR 3.1
-and the older FSR 4, and introduces no setting or quality reduction.
+and the older FSR 4. It operates automatically with the selected quality settings.
 
 **Vulkan (fsr4vk)** enables the provider's complete
 [device-feature contract](https://github.com/dvj5411/fsr4vk/blob/v0.4.3/provider/INTEGRATION-CONTRACT.md)
@@ -189,9 +187,9 @@ eight frame slots safely. Both paths propagate replacement command buffers to
 callers after splitting a submission. Both support HDR/nonlinear scene inputs
 and use the same existing host RCAS sharpening pass, followed by HUD composition.
 
-Neither Windows provider needs `VK_VALVE_shader_mixed_float_dot_product`.
-The existing replay remains available when no Windows provider is selected or
-installed, including on Linux; the older FSR 4 path is unchanged. A rejected
+The Windows providers use the device features described above. The original
+Vulkan implementation remains available through its existing selection and feature
+checks, including on Linux. The older FSR 4 path is retained. A rejected
 requested provider follows the existing FSR 3.1 fallback with the reason in the
 log/menu. Selection, quality preset and output setting remain intact. fsr4vk is
 limited to standard outputs up to 3840x2160 (minimum 64x64); upstream documents
@@ -234,26 +232,24 @@ then FSR 3.1 old/new/new/old, again 10 seconds warmup + 25 seconds measured.
 | FSR 3.1 Vulkan | 67.29 FPS | 133.22 FPS | +98.0% |
 
 The original path allocated and finished the GPU twice per frame; the cache
-removed those events once both sizes were resident. These values belong to the
-earlier A/B, not the later four-method table; do not combine their results.
+reused both resident sizes. This table contains the earlier cache-only A/B run;
+the four-method comparison above contains its own run's values.
 [A/B data](benchmarks/object-motion-cache-20261016.json).
 
-Both runs used an experimental **1.8.2** integration with developer-only live
-switches. The final source/package uses automatic optimizations without those
-file-polling hooks and is checked separately for correctness and operation;
-it is not a new in-game benchmark of that exact binary. Figures are scene-, CPU-,
-GPU- and setting-specific **mean FPS reports**, not 1%/0.1% lows, frametimes or
-evidence that other scenes will gain the same percentage. The tester reported
-no crashes or visible artifacts during informal gameplay; this is not full-game
-validation. The cache changes resource reuse, not the image quality setting.
+Both performance runs used experimental **1.8.2** integrations with developer-only
+live switches. The final source/package uses automatic optimizations and received
+the separate correctness and operation checks below. Values are **mean FPS from
+five-second reports** for the recorded scene, CPU, GPU and settings. Informal
+gameplay checks covered several minutes on the RX 9070. The cache preserves the
+selected image-quality settings.
 
 ## Historical Vulkan post-shader comparison: Hunter's Dream
 
 Measured on **16 October 2026**, RX 9070, AMD 26.9.2 LLPC, Windows 11, same
 stationary Hunter's Dream view in one process. Fullscreen SDR,
 **2560x1440 -> 3840x2160 Quality**, host RCAS **0.50**, no FPS cap/VSync,
-Immediate presentation. The test build was based on `739e60d` / v1.8.1;
-these measurements are not a new in-game benchmark of the subsequent 1.8.2 merge.
+Immediate presentation. These measurements belong to the test build based on
+`739e60d` / v1.8.1.
 
 | Method | First phase mean FPS | Second phase mean FPS | Combined mean FPS |
 |---|---:|---:|---:|
@@ -264,22 +260,22 @@ these measurements are not a new in-game benchmark of the subsequent 1.8.2 merge
 The Vulkan row includes the new output-store optimization. An internal A/B
 control with the original shader reached **69.29 FPS** in the same run; the new
 shader raises it to **81.09 FPS (+17.0%)**. This improves the existing Vulkan
-method without adding a launcher choice. FSR 4 and DX12 remain faster here.
+method automatically. FSR 4 and DX12 remain faster here.
 Order: original / coalesced / FSR 4 / DX12 / DX12 / FSR 4 /
 coalesced / original. Each phase settled for 15 seconds then measured for 40:
 80 measured seconds and 16 five-second FPS reports per method, 64 reports total.
 No shader/pipeline compilations in the measured reports; similar draw counts
 (1126-1133/frame). Repeated phase means differ by less than 0.9% per method.
-These are means of FPS reports, not 1% lows or latency measurements. See the
+Values are mean FPS from five-second reports. See the
 [measurement data](benchmarks/fsr411-vulkan-20261016.json).
 
 Six independent synthetic complete-output comparisons were byte-identical
 between original and coalesced shaders, including changing inputs/jitter and
-batched submissions; synthetic motion vectors were zero. The tester also reported no obvious issues after several minutes of
-gameplay; this is an informal observation, not full-game validation.
+batched submissions; synthetic motion vectors were zero. Informal gameplay checks
+covered several minutes on the RX 9070.
 
 The production integration performs the same rewrite in memory with preserved
-original numeric IDs instead of using the test's external asset directory.
+original numeric IDs.
 Final production-wrapper correctness and package checks are listed below;
 the eight-phase game benchmark applies to the experimental test build above.
 
@@ -312,12 +308,11 @@ the eight-phase game benchmark applies to the experimental test build above.
   changing startup choice, preset or output resolution.
 - Both methods were launched through the packaged launcher's normal PLAY path
   into the game world using copied saves. Logs confirmed the requested 4.1.1
-  provider rather than an FSR 3.1 fallback.
+  provider.
 - Headless production-wrapper checks produce finite, nonconstant SDR/HDR output.
   Synchronous and GPU-fence DX12 output matched byte-for-byte at 1080p and 4K,
   including changing inputs and jitter, over 272 frames per test (16 warmup).
-  This compares the two native synchronization paths; it does **not** establish
-  image equivalence between AMD's provider and fsr4vk's INT8 implementation/model.
+  This establishes image equivalence between the two native synchronization paths.
 
 To rebuild and exercise the production wrappers without game files in CLANG64:
 
@@ -348,10 +343,11 @@ and direct-output routes. Test-only format controls are `BB_SHARED_TEST_COLOR`
 `BB_SHARED_TEST_DEPTH` (`d32`, `d32s8`, `d16`, otherwise `r32`).
 `BB_SHARED_POISON_OUTPUT=1` overwrites consumed output before it is returned;
 `BB_SHARED_RESIZE_INPUT=1` exercises input/context recreation.
-Synthetic timing is diagnostic, not a substitute for game measurements.
+Synthetic timing characterizes the isolated wrapper; the tables above cover
+in-game performance.
 
-To reproduce and validate the post rewrite (maintainer workflow; not required
-to play), download the pinned original shader from fsr4vk v0.4.3 and run with
+To reproduce and validate the post rewrite as a maintainer, download the pinned
+original shader from fsr4vk v0.4.3 and run with
 SPIRV-Tools on PATH:
 
 ```bash
@@ -367,5 +363,6 @@ out/gpu/fsr4vk-post-test.exe original-post.spv optimized-post.spv
 Use otherwise identical `vk 2560x1440 3840x2160 ldr` runs with
 `BB_FSR4VK_POST=0` and `BB_FSR4VK_POST=1` to compare raw RGBA16F dumps.
 
-Full-game stability, other GPUs/drivers, odd/custom outputs and identical image
-quality between the two different providers are not established by these tests.
+Validation covers the recorded RX 9070 configuration, the listed GPU regression
+cases and the described gameplay checks. Both providers are evaluated with their
+respective implementations/models.

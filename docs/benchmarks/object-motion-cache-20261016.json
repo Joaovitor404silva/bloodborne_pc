@@ -22,8 +22,8 @@
   "mods": false,
   "gpu_profiler": false,
   "debugger_attached": false,
-  "method": "One process and stationary camera; DX12 old/new/new/old, then FSR3 old/new/new/old. Each 10s settling + 25s measured. Means of five-second FPS reports, no 1%/0.1% lows.",
-  "change": "Bounded cache of four object-motion image allocations; retain legacy per-size-change clear and validity behavior. No shader math or quality-setting changes.",
+  "method": "One process and stationary camera; DX12 old/new/new/old, then FSR3 old/new/new/old. Each 10s settling + 25s measured. Mean FPS from five-second reports.",
+  "change": "Bounded cache of four object-motion image allocations; retain legacy per-size-change clear and validity behavior. Shader math and quality settings are preserved.",
   "phases": [
     {
       "phase": "dx12-old-A",
@@ -931,5 +931,5 @@
     "dx12": 85.19652884124555,
     "fsr3": 97.97889731015007
   },
-  "scope": "Experimental 1.8.2 in-game build; the final source integration is validated separately. Mean FPS reports, no 1%/0.1% lows."
+  "scope": "Experimental 1.8.2 in-game build; the final source integration is validated separately. Mean FPS from five-second reports."
 }
