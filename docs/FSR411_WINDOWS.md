@@ -7,7 +7,7 @@ A method change takes effect on the next game start.
 
 | Method | Provider | Installation |
 |---|---|---|
-| AMD DX12 | AMD's original FSR 4.1.1 runtime through a Vulkan/DX12 shared-buffer bridge | Included in the Windows package |
+| AMD DX12 | AMD's original FSR 4.1.1 runtime through a Vulkan/DX12 shared-texture bridge (buffer fallback) | Included in the Windows package |
 | Vulkan (fsr4vk) | fsr4vk's INT8 FSR 4.1.1 implementation/model | Press **Download fsr4vk** in Graphics |
 
 The launcher remembers the method independently of the upscaler. When another
@@ -134,21 +134,52 @@ the native feature probe. The renderer chooses the requested Windows provider;
 it does not silently change the saved method when it fails.
 
 **AMD DX12** matches the Vulkan adapter's LUID to the DXGI adapter. It requires
-an AMD adapter, the original DLL, shared device-local D3D12/Vulkan buffer
-memory and importable D3D12 fences as Vulkan timeline semaphores. It explicitly
+an AMD adapter, the original DLL, shared device-local D3D12/Vulkan memory
+and importable D3D12 fences as Vulkan timeline semaphores. It explicitly
 selects the DLL's non-INT8 **4.1.1** provider, rejecting its legacy FSR 3
 provider. DLL presence alone does not prove hardware/driver support: provider
 enumeration and context creation must succeed. This route has been tested on
 RX 9070; other adapters are not validated by these results.
 
-Inputs/output cross APIs through one shared buffer, GPU copies and explicit
-external queue-family ownership transfers. Vulkan signals an input fence;
-the D3D12 queue waits on it, executes FSR and signals an output fence. The next
-Vulkan submission waits before consuming the result. There is no unconditional
-per-frame CPU completion wait at either API boundary. Three DX12 allocator/list
-slots wait before reusing an occupied slot; resource changes and teardown still
-wait for completion. The synchronous bridge remains available only in the
-headless comparison test as a control, not as a launcher method.
+Color, motion vectors and the result use shared D3D12 textures imported as
+Vulkan images. Depth keeps the buffer route for the game's depth/stencil format.
+This removes the DX12 buffer-to-color/motion copies and result-to-buffer copy.
+Vulkan input image copies, depth transfer, sharpening and HUD composition remain;
+this is not an entirely zero-copy renderer.
+
+The result image/view is passed directly to the existing SDR/HDR consumers,
+avoiding an additional full-resolution RGBA16F result copy. External ownership is
+retained until the last sharpening, HDR merge, SDR format blit or diagnostic read
+has finished recording; `ReleaseOutput` then returns it to DX12. HDR composition
+also handles upscalers that have no `Fsr4Upscaler` object.
+
+Image-import support is checked for the actual formats, usage and extents when
+creating a context. If unavailable, the original shared-buffer bridge remains
+the compatibility path. `BB_FSR411_SHARED_TEXTURES=0` selects that route at process
+startup for developer comparisons; it is not another launcher method.
+
+Vulkan signals an input fence; the D3D12 queue waits on it, executes FSR and signals
+an output fence. The next Vulkan submission waits before consuming the result.
+There is no unconditional per-frame CPU completion wait at either API boundary.
+Three DX12 allocator/list slots wait before reusing an occupied slot; resource
+changes and teardown still wait for completion. The synchronous bridge remains
+available only in the headless comparison test as a control.
+
+### Object-motion target reuse
+
+Some scenes alternate full- and half-resolution object-motion attachments within
+each frame (the tested sewer view alternated 2560x1440 and 1280x720). The original
+single-target code finished the entire GPU and recreated the target twice per
+frame. This wait was not FSR inference or lighting shader work.
+
+A bounded cache keeps the active target plus up to three inactive sizes, with
+the image, view, dimensions and layout together. Reusing a size requires neither
+reallocation nor a full GPU wait. Evicting an inactive target when all slots are
+occupied still waits safely; teardown retains its completion wait. Per-size-change
+clear and validity behavior stays the same as before; cached contents are not
+restored as motion history. Existing image barriers and motion shader math remain.
+This fix applies to all upscalers using object-motion vectors, including FSR 3.1
+and the older FSR 4, and introduces no setting or quality reduction.
 
 **Vulkan (fsr4vk)** enables the provider's complete
 [device-feature contract](https://github.com/dvj5411/fsr4vk/blob/v0.4.3/provider/INTEGRATION-CONTRACT.md)
@@ -166,7 +197,57 @@ log/menu. Selection, quality preset and output setting remain intact. fsr4vk is
 limited to standard outputs up to 3840x2160 (minimum 64x64); upstream documents
 an unwritten final row/column at odd output sizes. Prefer the standard even sizes.
 
-## Vulkan post-shader comparison: Hunter's Dream
+## Current comparison: sewer scene with both optimizations
+
+Measured on **16 October 2026**, **Intel Core i7-11700B (11th Gen)**, **RX 9070
+16 GB**, AMD **26.9.2 LLPC**, Windows 11. A stationary sewer view confirmed by the
+tester, fullscreen **2560x1440 -> 3840x2160 Quality SDR**, host RCAS **0.50**,
+object motion enabled, FPS cap/VSync off (Immediate). Cheats, mods, GPU profiling
+and the live debugger were **off**. All rows below were measured in one process
+with the bounded target cache enabled throughout.
+
+| Upscaler / method | Mean FPS | Two phase means |
+|---|---:|---|
+| FSR 3.1 Vulkan, reference | **131.08** | 131.04 / 131.12 |
+| FSR 4.1.1 AMD DX12, shared textures/direct output | **106.50** | 106.68 / 106.32 |
+| FSR 4 Vulkan (v07), reference | **90.30** | 90.18 / 90.42 |
+| FSR 4.1.1 Vulkan (fsr4vk), coalesced post stores | **85.41** | 85.22 / 85.60 |
+
+Order: FSR 4 / fsr4vk / DX12 / FSR 3.1 / FSR 3.1 / DX12 / fsr4vk / FSR 4.
+Each phase had **10 seconds warmup and 25 seconds measured**, five five-second
+FPS reports per phase, two phases per method. Repeated phase means differed by
+less than 0.5%; measured windows had no shader compilations or reported bridge
+errors. Cache diagnostics confirmed two reuses per frame and no allocations or
+full GPU waits due to target-size changes during those windows.
+[Measurement data](benchmarks/fsr-sewer-20261016.json).
+
+### Cache-only A/B in the sewer (separate run)
+
+An earlier same-process comparison toggled **only** target reuse. DX12 already
+used shared textures/direct output in both sides of this A/B; the graphics and
+timing conditions above were otherwise the same. Order: DX12 old/new/new/old,
+then FSR 3.1 old/new/new/old, again 10 seconds warmup + 25 seconds measured.
+
+| Method | Without target reuse | With target reuse | Change |
+|---|---:|---:|---:|
+| FSR 4.1.1 AMD DX12 | 58.77 FPS | 108.84 FPS | +85.2% |
+| FSR 3.1 Vulkan | 67.29 FPS | 133.22 FPS | +98.0% |
+
+The original path allocated and finished the GPU twice per frame; the cache
+removed those events once both sizes were resident. These values belong to the
+earlier A/B, not the later four-method table; do not combine their results.
+[A/B data](benchmarks/object-motion-cache-20261016.json).
+
+Both runs used an experimental **1.8.2** integration with developer-only live
+switches. The final source/package uses automatic optimizations without those
+file-polling hooks and is checked separately for correctness and operation;
+it is not a new in-game benchmark of that exact binary. Figures are scene-, CPU-,
+GPU- and setting-specific **mean FPS reports**, not 1%/0.1% lows, frametimes or
+evidence that other scenes will gain the same percentage. The tester reported
+no crashes or visible artifacts during informal gameplay; this is not full-game
+validation. The cache changes resource reuse, not the image quality setting.
+
+## Historical Vulkan post-shader comparison: Hunter's Dream
 
 Measured on **16 October 2026**, RX 9070, AMD 26.9.2 LLPC, Windows 11, same
 stationary Hunter's Dream view in one process. Fullscreen SDR,
@@ -204,6 +285,14 @@ the eight-phase game benchmark applies to the experimental test build above.
 
 ## Validation and reproduction
 
+- Clean 1.8.2 shared-texture/direct-output integration: 16 complete output and
+  compute-consumer hash comparisons match the saved buffer/copy controls. Coverage
+  includes 4K SDR/HDR, FP16/RGBA8/BGRA8/sRGB/R11G11B10 color, D32/D32S8/D16 depth,
+  changing inputs/motion/jitter, batched work, overwritten output and resized inputs.
+- `object-motion-cache-test` checks all pixels and validity flags with repeated
+  same-size/full/half-size targets and seven-size churn forcing eviction. Its
+  tiny, game-size and churn cases match the legacy readback hashes.
+
 - Windows CLANG64 renderer, loader and capability-tool build.
 - `fsr4vk-post-test` checks device/mode guards, exact generated shader bytes,
   and rejection of changed/truncated modules without a Vulkan device.
@@ -237,8 +326,11 @@ bash build.sh
 python packaging/windows/fetch_fsr411_dx12.py
 cp out/fsr411-dx12/amd_fidelityfx_upscaler_dx12.dll out/gpu/
 python scripts/fetch_fsr4vk.py
-ninja -C out/gpu fsr411-compare upscaler-support-test
+ninja -C out/gpu fsr411-compare object-motion-cache-test upscaler-support-test
 out/gpu/upscaler-support-test.exe
+out/gpu/object-motion-cache-test.exe tiny
+out/gpu/object-motion-cache-test.exe game
+out/gpu/object-motion-cache-test.exe churn
 BB_FSR4VK_DIR="$PWD/fsr4vk" BB_FSR411_NATIVE=1 \
   BB_FSR411_PIPELINE_TEST=1 BB_FSR411_VARY_INPUT=1 \
   out/gpu/fsr411-compare.exe async 2560x1440 3840x2160 ldr 256
@@ -247,7 +339,16 @@ BB_FSR4VK_DIR="$PWD/fsr4vk" BB_FSR411_NATIVE=1 \
 Use `dx12` for the synchronous control, `vk` for fsr4vk; use `hdr` instead of
 `ldr` for HDR inputs. `BB_FSR411_BENCH_DUMP=<file>` saves raw RGBA16F output for
 byte comparison. `BB_FSR4VK_DIR` can point to an existing verified provider.
-The synthetic timing is a diagnostic, not a substitute for game measurements.
+The test consumes the returned image/view with a compute pass and releases it
+only after the last read. It prints raw-output and consumer-output hashes;
+`BB_FSR411_BENCH_DUMP` also saves an RGBA8 consumer dump. Repeat identical native
+runs with `BB_FSR411_SHARED_TEXTURES=0` and the default to compare the compatibility
+and direct-output routes. Test-only format controls are `BB_SHARED_TEST_COLOR`
+(`fp16`, `rgba8`, `rgba8-srgb`, `bgra8`, `bgra8-srgb`, `r11g11b10`) and
+`BB_SHARED_TEST_DEPTH` (`d32`, `d32s8`, `d16`, otherwise `r32`).
+`BB_SHARED_POISON_OUTPUT=1` overwrites consumed output before it is returned;
+`BB_SHARED_RESIZE_INPUT=1` exercises input/context recreation.
+Synthetic timing is diagnostic, not a substitute for game measurements.
 
 To reproduce and validate the post rewrite (maintainer workflow; not required
 to play), download the pinned original shader from fsr4vk v0.4.3 and run with

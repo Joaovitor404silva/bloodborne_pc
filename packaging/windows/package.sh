@@ -87,6 +87,7 @@ mkdir -p "$dest/docs"
 cp docs/FSR411_WINDOWS.md "$dest/docs/"
 mkdir -p "$dest/docs/benchmarks"
 cp docs/benchmarks/fsr411-vulkan-20261016.json "$dest/docs/benchmarks/"
+cp docs/benchmarks/object-motion-cache-20261016.json docs/benchmarks/fsr-sewer-20261016.json "$dest/docs/benchmarks/"
 # Where the online code comes from (shadPS4 0.20, Awaken's port, bbhost's protocol).
 cp gpu/bbnet/SHADNET-PORT.md "$dest/licenses/online-code-NOTICE.md"
 for package in protobuf abseil-cpp openssl miniupnpc zlib; do
