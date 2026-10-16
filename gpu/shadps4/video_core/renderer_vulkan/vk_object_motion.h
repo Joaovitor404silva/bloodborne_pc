@@ -99,6 +99,7 @@ private:
     };
     std::array<CachedImage, 3> cached_images;
     u32 eviction_cursor{};
+    bool cache_enabled = false; ///< opt-in, read once from BB_OBJECT_MOTION_CACHE
 };
 
 } // namespace Vulkan

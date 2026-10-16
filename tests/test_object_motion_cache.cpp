@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Full readback/validity regression across alternating sizes and cache eviction.
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -58,6 +60,11 @@ int main(int argc, char **argv) {
             ObjectMotion motion(instance, scheduler);
             if (!motion.Enabled())
                 throw std::runtime_error("object motion unavailable");
+            const char* cache_setting = std::getenv("BB_OBJECT_MOTION_CACHE");
+            const bool cache = cache_setting && std::strcmp(cache_setting, "1") == 0;
+            VmaTotalStatistics initial_stats{};
+            vmaCalculateStatistics(instance.GetAllocator(), &initial_stats);
+            std::set<std::pair<u32, u32>> observed_sizes;
             std::array<u32, 4> contents{};
             for (u32 i = 0; i < steps; ++i) {
                 if (i % 4 == 0)
@@ -68,6 +75,14 @@ int main(int argc, char **argv) {
                 state.height = h;
                 state.num_layers = 1;
                 motion.Attach(state, w, h);
+                observed_sizes.emplace(w, h);
+                VmaTotalStatistics stats{};
+                vmaCalculateStatistics(instance.GetAllocator(), &stats);
+                const u32 targets = stats.total.statistics.allocationCount -
+                                    initial_stats.total.statistics.allocationCount;
+                const u32 expected_targets = cache ? std::min<size_t>(observed_sizes.size(), 4) : 1;
+                if (targets != expected_targets)
+                    throw std::runtime_error("target allocation count differs from selected cache mode");
                 auto &attachment = state.color_attachments[Shader::MotionVectors::Output];
                 if (attachment.is_clear) {
                     contents = {std::bit_cast<u32>(float(i + 1) / 128),
