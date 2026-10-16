@@ -60,26 +60,6 @@ TextureCache::TextureCache(const Vulkan::Instance& instance_, Vulkan::Scheduler&
         std::max<u64>(std::min(device_local_memory - min_vacancy_critical, min_spacing_critical),
                       DEFAULT_CRITICAL_GC_MEMORY));
     trigger_gc_memory = static_cast<u64>((device_local_memory - mem_threshold) / 2);
-    // bbport: below 8 GB the marks above are 40% and 80% of the budget, and the usage they are
-    // compared with is all of our VRAM: on a 6 GB card ~2.4 GB of it is not images, so the
-    // cache was under pressure all game and evicted textures used a moment ago (hundreds every
-    // 5 s, uploaded again). Pressure 1 GB below the budget, critical at 90% of it there.
-    // BB_GC_SMALL_VRAM=0 keeps the upstream marks.
-    static const bool small_vram = [] {
-        const char* env = std::getenv("BB_GC_SMALL_VRAM");
-        return !(env && env[0] == '0');
-    }();
-    if (small_vram && !instance.IsIntegrated() && device_local_memory <= TARGET_GC_THRESHOLD) {
-        pressure_gc_memory =
-            static_cast<u64>(std::max<s64>(device_local_memory - 1_GB, DEFAULT_PRESSURE_GC_MEMORY));
-        critical_gc_memory = std::max<u64>(static_cast<u64>(device_local_memory) / 10 * 9,
-                                           pressure_gc_memory + 256_MB);
-        std::printf("Texture cache: %lld MiB VRAM budget; evictions under pressure from %llu MiB, "
-                    "critical %llu MiB (BB_GC_SMALL_VRAM=0: 40%% and 80%%)\n",
-                    static_cast<long long>(device_local_memory >> 20),
-                    static_cast<unsigned long long>(pressure_gc_memory >> 20),
-                    static_cast<unsigned long long>(critical_gc_memory >> 20));
-    }
 }
 
 TextureCache::~TextureCache() = default;
