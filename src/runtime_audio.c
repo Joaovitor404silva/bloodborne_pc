@@ -3,7 +3,7 @@
  * reads 256-frame slots out of its mixer's 512-frame ring, and returning in
  * bursts (whenever the device pulls a quantum) lets it overtake the mixer and
  * play stale halves - a click every 10.7 ms. The SDL queue itself is kept
- * about two device periods deep (at least 40 ms). Two game buffers (~10 ms)
+ * about four device periods deep (at least 80 ms). Two game buffers (~10 ms)
  * sit under one Windows shared-mode chunk, so the device underruns and the
  * hole is a crackle, loudest on high-pitched sounds; a busy 6-core CPU
  * delivers the mix late and makes it constant. The lowest level of each
@@ -112,15 +112,15 @@ static void audio_levels(void) {
            device_channels>0 ? device_channels : 0, device_period_frames,
            device_period_frames*1000.0/48000.0, master_gain);
 }
-/* Bytes of queued PCM to stay ahead of one device chunk. Floor is 40 ms:
- * Windows shared mode is often 10–20 ms and larger when the device format
- * is not 48 kHz, which is the crackle the format switch happens to hide. */
+/* Bytes of queued PCM to stay ahead of the device. Four chunks, and at least
+ * 80 ms. Two chunks still drain here: WASAPI reports a 1024-frame / 21 ms
+ * period, and one late mix on a 6-thread CPU empties that lead. */
 static int queue_low_bytes(const Port *p) {
     int bpf=p->out_channels*p->sample_bytes;
     if (bpf<1) bpf=1;
-    int frames=device_period_frames>0 ? device_period_frames*2 : 0;
-    if (frames<1920) frames=1920;
-    if (frames<p->frames*2) frames=p->frames*2;
+    int frames=device_period_frames>0 ? device_period_frames*4 : 0;
+    if (frames<3840) frames=3840;
+    if (frames<p->frames*4) frames=p->frames*4;
     if (frames>9600) frames=9600;
     return frames*bpf;
 }
@@ -320,15 +320,22 @@ static int32_t output_port(int32_t handle, const void *data, int pace) {
             int high=low+extra*bpf*2;
             int queued=SDL_GetAudioStreamQueued(p->stream);
             if (queued<0) queued=0;
-            if (!p->primed || queued<(int)out_bytes) {
-                /* Startup, or the device already ran dry. Fill the cushion
-                   with silence now: a 3% speedup would take a second to
-                   rebuild it, and that second is the crackle. */
+            if (!p->primed) {
+                /* Silence only before the first real buffer. Filling the whole
+                   cushion again after a hole mutes for the length of the lead. */
                 int fill=low-queued;
-                if (fill<(int)out_bytes) fill=(int)out_bytes;
                 if (bpf>1) fill-=fill%bpf;
                 if (fill>0) put_silence(p->stream,fill);
                 p->primed=1;
+                queued=SDL_GetAudioStreamQueued(p->stream);
+                if (queued<0) queued=0;
+            } else if (queued<(int)out_bytes) {
+                int quantum=device_period_frames>0 ? device_period_frames*bpf : (int)out_bytes;
+                int fill=quantum-queued;
+                if (fill<(int)out_bytes) fill=(int)out_bytes;
+                if (fill>low-queued) fill=low-queued;
+                if (bpf>1) fill-=fill%bpf;
+                if (fill>0) put_silence(p->stream,fill);
                 queued=SDL_GetAudioStreamQueued(p->stream);
                 if (queued<0) queued=0;
             }
