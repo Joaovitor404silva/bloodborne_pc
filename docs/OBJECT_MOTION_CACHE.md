@@ -72,5 +72,8 @@ variable unset and with an invalid value to check the default path.
 
 [test.2](https://github.com/rattensuppe/bloodborne_pc/releases/tag/v1.8.2-fsr411-test.2)
 is the preserved earlier build with automatic caching. Its tag, downloads and
-recorded results remain fixed. The current PR adds this default-off comparison
-control for review and further testing.
+recorded results remain fixed. The published
+[test.3](https://github.com/rattensuppe/bloodborne_pc/releases/tag/v1.8.2-fsr411-test.3)
+contains the default-off comparison control on Windows 1.8.2. The current PR
+incorporates upstream Windows 1.9 and keeps this control alongside the upstream
+frame-generation settings.

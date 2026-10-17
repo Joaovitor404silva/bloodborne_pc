@@ -21,6 +21,21 @@ Both methods use the normal Windows launcher.
 The pre-existing **FSR 4 assets** controls and `fsr4_shaders/` are for the older
 FSR 4 v07 path, independent of these two providers.
 
+## Windows 1.9 integration
+
+The PR incorporates upstream Windows 1.9 (`652f9a494c47cc8c1ab16f28b456372eaa8103f8`),
+including its shadPS4 0.20.1 GPU layer and frame-generation controls. The scheduler
+uses upstream's semaphore-sized wait-stage array together with the external DX12
+completion wait. Graphics retains both the experimental motion-vector cache
+checkbox and the upstream frame-generation section. Cache defaults and saved
+provider selections remain the same.
+
+The performance tables below record the earlier 1.8.2 integrations. The 1.9
+integration receives separate build, provider-output and extracted-package
+checks. The published
+[test.3](https://github.com/rattensuppe/bloodborne_pc/releases/tag/v1.8.2-fsr411-test.3)
+remains the 1.8.2 snapshot with the optional cache checkbox.
+
 ## AMD DX12: runtime and packaging
 
 `packaging/windows/package.sh` includes the unmodified

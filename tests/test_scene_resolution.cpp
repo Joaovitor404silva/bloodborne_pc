@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Exercises the production target/resolve path on Vulkan (Lavapipe works, no game/window).
-#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -11,6 +10,11 @@
 #include "video_core/renderer_vulkan/vk_scene_resolution.h"
 #include "video_core/texture_cache/blit_helper.h"
 #include <vk_mem_alloc.h>
+
+// Vulkan-Hpp's dispatcher layout depends on NDEBUG. Include the renderer with
+// the library's build flags, then enable assertions for the test body only.
+#undef NDEBUG
+#include <cassert>
 
 int main() {
     using namespace Vulkan;
@@ -25,21 +29,24 @@ int main() {
     dispatch.init(instance.GetDevice());
     Scheduler scheduler(instance);
     Runtime runtime(instance, scheduler);
-    Common::SlotVector<VideoCore::ImageView> views;
-    Common::SlotVector<VideoCore::Image> images;
-    VideoCore::ImageInfo ci;
+    Common::SlotVector<VideoCore::ImageView> views(512);
+    Common::SlotVector<VideoCore::Image> images(64);
+    VideoCore::ImageInfo ci{};
     ci.size = {1920,1080,1};
     ci.resources = {1,1};
     ci.type = AmdGpu::ImageType::Color2D;
     ci.pixel_format = vk::Format::eR8G8B8A8Unorm;
     ci.num_bits = 32;
-    const auto color_id = images.insert(instance, runtime, views, ci);
+    ci.num_samples = 1;
+    ci.pitch = ci.size.width;
+    ci.tile_mode = AmdGpu::TileMode::DisplayLinearAligned;
+    const auto color_id = images.Insert(instance, runtime, views, ci);
     auto di = ci;
     di.pixel_format = vk::Format::eD32SfloatS8Uint;
     di.props.is_depth = di.props.has_stencil = true;
-    const auto depth_id = images.insert(instance, runtime, views, di);
+    const auto depth_id = images.Insert(instance, runtime, views, di);
     SceneTargets targets(instance, scheduler, runtime, [&](VideoCore::ImageId id, u64 uid) {
-        if (!images.is_allocated(id)) return static_cast<VideoCore::Image*>(nullptr);
+        if (!images.IsAllocated(id)) return static_cast<VideoCore::Image*>(nullptr);
         return !uid || images[id].image_uid == uid ? &images[id] : nullptr;
     });
     const bool color_eligible = targets.Eligible(images[color_id]);
@@ -82,7 +89,7 @@ int main() {
         std::memcpy(&result, ai.pMappedData, 4);
         return result;
     };
-    VideoCore::ImageViewInfo cv;
+    VideoCore::ImageViewInfo cv{};
     cv.format = ci.pixel_format;
     auto dv = cv;
     dv.format = di.pixel_format;
@@ -154,7 +161,7 @@ int main() {
     auto hi = ci;
     hi.size = {960, 540, 1};
     hi.resources = {4, 1};
-    const auto half_id = images.insert(instance, runtime, views, hi);
+    const auto half_id = images.Insert(instance, runtime, views, hi);
     const auto scene = SceneResolution::ForPreset(4); // 640x360 (x3 of 1080p)
     targets.SetSize(scene);
     auto& half = images[half_id];
