@@ -59,7 +59,7 @@ static void test_binding_evaluation(void) {
     assert(cfg.warnings==0);
 
     bool keys[SDL_SCANCODE_COUNT]={0};
-    HostState host={keys,NULL,0,0};
+    HostState host={keys,NULL,0,0,0,0};
 
     /* MIX-002: cross has two bindings (j, a); holding either fires it, holding neither doesn't. */
     assert(!button_output_held(&host,&cfg,OUT_CROSS));
@@ -169,10 +169,24 @@ static void test_digital_stick_shape(void) {
     assert(x*x+y*y>=125*125);
     for (int i=0;i<2;++i) { x=-127; y=-127; now+=frame; shape_digital_stick(&t,&x,&y,1,900,now); }
     assert(x==-90 && y==-90);
-    /* reversal (more than 150 degrees): snaps, like a flick. */
+    /* reversal: turns as well (a jump of 45 degrees or more ends a sprint), one step per frame,
+     * on the circle. */
     x=127; y=127; now+=frame;
     shape_digital_stick(&t,&x,&y,1,900,now);
-    assert(x==90 && y==90);
+    assert(!(x==90 && y==90) && x*x+y*y>=125*125 && x*x+y*y<=129*129);
+    /* square gate (circular off): the larger axis stays 127 while turning, so a run stays a run. */
+    StickShapeState q={0,0,0};
+    uint64_t qn=1000000;
+    x=0; y=-127;
+    shape_digital_stick(&q,&x,&y,0,900,qn);
+    x=-127; y=-127; qn+=frame;
+    shape_digital_stick(&q,&x,&y,0,900,qn);
+    assert((abs(x)==127 || abs(y)==127) && x<0 && x>-127);
+    /* analog values pass untouched. */
+    StickShapeState a={0,0,0};
+    x=-60; y=-40;
+    shape_digital_stick(&a,&x,&y,0,900,qn);
+    assert(x==-60 && y==-40);
     /* neutral, then a new key: starts at that key's direction, no rotation from the old one. */
     x=0; y=0; now+=frame;
     shape_digital_stick(&t,&x,&y,1,900,now);
@@ -284,7 +298,7 @@ static void test_mouse_buttons_and_wheel(void) {
         "pad_up = mousewheelup\n");
     assert(cfg.warnings==0);
 
-    HostState host={NULL,NULL,0,0};
+    HostState host={NULL,NULL,0,0,0,0};
     assert(!button_output_held(&host,&cfg,OUT_R1));
 
     /* IN_MOUSE_BUTTON stores the SDL_BUTTON_* index (1=left); host.mouse_buttons must be

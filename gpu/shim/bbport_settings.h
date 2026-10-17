@@ -17,6 +17,8 @@ inline bool IsFsr4(int upscaler) {
 }
 enum Preset : int { NativeAA = 0, Quality, Balanced, Performance, UltraPerformance, PresetCount };
 enum DebugView : int { DebugNone = 0, DebugReactive = 1, DebugMotion = 2, DebugViewCount };
+/// Frame generation (vk_frame_generation.h): frames generated between two of the game's.
+enum FrameGen : int { FrameGenOff = 0, FrameGenFsr3 = 1, FrameGenDlss = 2, FrameGenCount };
 
 /// Game effects switched by the community patches at start (patches.py EFFECTS): ini key,
 /// menu label, default (the game's own behaviour).
@@ -47,13 +49,19 @@ inline constexpr Effect Effects[] = {
     {"tweak_easy_run", "Run with less stick tilt", false},
     {"tweak_ragdoll", "Dark Souls-style ragdoll physics", false},
     {"tweak_circle_confirm", "Japanese/Asian buttons (Circle confirms)", false},
+    {"quit_to_desktop", "Quit to Desktop in the title and System menus", true},
 };
 inline constexpr int EffectCount = int(sizeof(Effects) / sizeof(Effects[0]));
-/// Live output resolutions: the upscaler's output and the UI host targets.
-inline constexpr int OutputWidths[] = {1280, 1920, 2560, 3840};
-inline constexpr int OutputHeights[] = {720, 1080, 1440, 2160};
-inline constexpr int OutputCount = 4;
+/// Output resolutions: the upscaler's output and the UI host targets. The 16:9 ones change
+/// live; the ultrawide ones need the startup patch (patches.py ultrawide_writes, run.py).
+inline constexpr int OutputWidths[] = {1280, 1920, 2560, 3840, 2560, 3440, 3840, 5120, 3840, 5120};
+inline constexpr int OutputHeights[] = {720, 1080, 1440, 2160, 1080, 1440, 1600, 2160, 1080, 1440};
+inline constexpr int OutputCount = 10;
 inline constexpr int OutputDefault = 1; ///< 1920x1080, the game's own size
+/// Wider than 16:9: camera and HUD patched at startup.
+inline bool Ultrawide(int output) {
+    return OutputWidths[output] * 9 > OutputHeights[output] * 16;
+}
 
 struct Values {
     std::atomic<int> upscaler{UpscalerFsr3};
@@ -76,6 +84,9 @@ struct Values {
     std::atomic<bool> effects[EffectCount]{};
     std::atomic<int> model_lod{0}; ///< -2 highest .. 2 lowest, 0 the game's
     std::atomic<int> output_res{OutputDefault}; ///< index into OutputWidths
+    /// Ultrawide outputs: the HUD's corner groups, 0 centred in 16:9 .. 100 at the screen edges
+    /// (hud_layout.py at start).
+    std::atomic<int> hud_position{100};
     /// Live resolution and preset changes (run.sh): 0 off by default (startup patch, fastest
     /// on the Steam Deck and older GPUs), -1 auto (strong discrete GPUs), 1 on. On restart.
     std::atomic<int> live_resolution{0};
@@ -85,6 +96,26 @@ struct Values {
     /// DLSS (bbport_dlss.dll, NVIDIA RTX) is ready, or why not (null before the device exists).
     std::atomic<bool> dlss_supported{false};
     std::atomic<const char*> dlss_problem{nullptr};
+    /// Frame generation and the frames per game frame (2x with FSR 3.1, up to 4x with DLSS on
+    /// RTX 50). dlssg_max_multiplier: 1 without DLSS Frame Generation.
+    std::atomic<int> frame_gen{FrameGenOff};
+    std::atomic<int> frame_gen_multiplier{2};
+    /// At most the frames the display shows between two of the game's (an uncapped game then
+    /// gets fewer generated frames); off: the multiplier as chosen.
+    std::atomic<bool> frame_gen_fit_display{false};
+    std::atomic<int> dlssg_max_multiplier{1};
+    std::atomic<const char*> frame_gen_problem{nullptr};
+    /// Generated frames per game frame the display has room for now (0: paused), and its
+    /// refresh rate (the presenter's measure, for the menu).
+    std::atomic<int> frame_gen_now{0};
+    std::atomic<int> frame_gen_display_hz{0};
+    /// The game's own frame rate (presenter, game frames only), shown beside the total when
+    /// frame generation adds frames.
+    std::atomic<float> game_fps{0.0f};
+    /// The game's frame rate cap frame generation needs (VideoOut applies it), 0 for none: with
+    /// FIFO presentation (V-Sync; AMD has no Mailbox) at most refresh / (generated + 1), or each
+    /// extra frame waits for the display and generation pauses.
+    std::atomic<int> frame_gen_flip_limit{0};
 
     /// Startup settings for the explicit BB_RENDER_RES compatibility patch only.
     int startup_preset = NativeAA;
@@ -93,6 +124,7 @@ struct Values {
     bool startup_effects[EffectCount]{};
     int startup_model_lod = 0;
     int startup_output_res = OutputDefault;
+    int startup_hud_position = 100;
     int startup_live_resolution = 0;
 };
 
@@ -115,5 +147,6 @@ void Save();
 float PresetScale(int preset);
 const char* PresetName(int preset);
 const char* UpscalerName(int upscaler);
+const char* FrameGenName(int frame_gen);
 
 } // namespace BbSettings

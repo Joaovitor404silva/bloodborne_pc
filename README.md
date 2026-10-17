@@ -75,7 +75,9 @@ layout shadPS4 and bbport use).
 
 In the game, **Insert** (or **L3+R3** on a controller) opens the settings menu.
 Keyboard: WASD move, arrows camera, Space Cross, Left Shift Circle, E Square, V Triangle,
-1/3 L1/R1, R/F L2/R2, Z L3, Q/C R3 (lock-on), I/K/J/L d-pad, Enter Options, Tab touchpad.
+1/3 L1/R1, R/F L2/R2, Z L3, Q/C R3 (lock-on), I/K/J/L d-pad, Enter Options, Tab / Backspace
+left / right touchpad half. Xbox controllers: Back + d-pad left / right clicks the left / right
+touchpad half (gestures / key items), Back alone the left half.
 The keyboard now works together with a connected controller instead of only without one.
 All of this is configurable in `input.ini` (shadPS4's input config syntax: a Bloodborne file
 made for shadPS4 can be copied over it), including mouse look: see [docs/INPUT.md](docs/INPUT.md).
@@ -92,12 +94,9 @@ Everyone you want to play with needs game version 1.09 and the same co-op server
 shadNet server (from the [shadp2p](https://github.com/Wozzardman/shadp2p) project) works too:
 put its address in **Server address**.
 
-To play with the players of bbhost (The Hunter's Dream's own PC port) instead, choose
-**The Hunter's Dream** under **Co-op pool** and press **Sign in with Discord**: no shadNet
-account is needed. The game then goes online through
-[bbbridge](https://github.com/MaskZeus/bbbridge-bbport-online-tool) by MaskZeus, which the
-launcher starts with the game. Its account file is `user\bbbridge\bbbridge_state.json`: never
-share it.
+Playing with bbhost players on The Hunter's Dream's co-op pool is off in this port until it
+works properly with their server. Please don't ask The Hunter's Dream for help with bbport: use
+our [Discord server](https://discord.gg/yTMG8c4Bqm) instead.
 
 ## Known issues
 
@@ -122,8 +121,7 @@ Crashes on AMD RDNA2 cards, slow FSR 4 and online errors are collected in
 
 See [packaging/windows/README.md](packaging/windows/README.md): MSYS2 CLANG64, `bash build.sh`,
 then `bash packaging/windows/package.sh`. DLSS is built separately with
-`packaging/windows/build_dlss.sh`, bbbridge with `packaging/windows/build_bbbridge.sh` (both need
-Visual Studio 2022).
+`packaging/windows/build_dlss.sh` (needs Visual Studio 2022).
 
 ## Credits
 
@@ -131,13 +129,14 @@ Built on [bbport](https://github.com/deadinside28/bloodborne_pc), the native Lin
 Bloodborne by deadinside28, and on the [shadPS4](https://github.com/shadps4-emu/shadPS4)
 renderer. The original README is in [docs/original-readme](docs/original-readme/README.md).
 
-Online play uses the network and PSN code of [shadp2p](https://github.com/Wozzardman/shadp2p)
-by Wozzardman (the shadPS4 Bloodborne co-op project), the shadNet server of the
-[shadPS4](https://shadps4.net) team, and [The Hunter's Dream](https://thehuntersdream.com) server
-by droogie and its team. The Hunter's Dream co-op pool goes through
-[bbbridge](https://github.com/MaskZeus/bbbridge-bbport-online-tool) by MaskZeus (GPL-3.0-or-later,
-its source in [bbbridge/](bbbridge)), built on the protocol of
-[bbhost](https://github.com/droogie/bbhost) by droogie.
+Online play uses the network, NP and shadNet code of [shadPS4](https://github.com/shadps4-emu/shadPS4)
+0.20 and the shadNet server of the [shadPS4](https://shadps4.net) team, put together for this port
+by **Awaken** ([BloodBorneButPc](https://github.com/Awakenchan/BloodBorneButPc)), whose online code
+bbport now uses, including the backend for [The Hunter's Dream](https://thehuntersdream.com)
+adapted from [bbhost](https://github.com/droogie/bbhost) by droogie (GPL-3.0-or-later; see
+[gpu/bbnet/SHADNET-PORT.md](gpu/bbnet/SHADNET-PORT.md)). Thanks to Metr1k and The Hunter's Dream
+team for their guidance, and to Wozzardman's [shadp2p](https://github.com/Wozzardman/shadp2p),
+which bbport's first online version was built on.
 
 Also used: [FSR-Vulkan](https://github.com/FireBurn/FSR-Vulkan) and the AMD FidelityFX SDK
 (FSR), FSR 4 assets from [FireBurn/Q2RTX](https://github.com/FireBurn/Q2RTX), the DLSS bridge

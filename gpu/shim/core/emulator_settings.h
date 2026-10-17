@@ -58,6 +58,7 @@ public:
     bool IsHdrAllowed() { static const auto value = Flag("BB_HDR", false); return value; }
     // bbport: gamma 2.2 for the SDR picture when Windows runs the display in HDR (post_process.frag).
     bool IsHdrGammaEnabled() { static const auto value = Flag("BB_HDR_GAMMA", true); return value; }
+    bool IsInlineFetchShader() { return false; }
     bool IsNullGPU() { static const auto value = Flag("BB_NULL_GPU", false); return value; }
     bool IsPatchShaders() { return false; }
     bool IsPipelineCacheArchived() { return false; }

@@ -27,22 +27,6 @@ GAME_SERVER = 'https://ss4.scej-network.jp:20443'
 COMMUNITY_API_PORT = 18671
 
 
-def summon_service(webapi):
-    """True when a shadNet WebAPI answers Bloodborne's summon calls: the route exists there
-    (an empty request is refused with 400), where other servers answer 404."""
-    import urllib.error
-    import urllib.request
-    request = urllib.request.Request(webapi.rstrip('/') + '/summon_messenger/create', data=b'',
-                                     method='POST')
-    try:
-        urllib.request.urlopen(request, timeout=4).close()
-        return True
-    except urllib.error.HTTPError as error:
-        return error.code != 404
-    except (OSError, ValueError):
-        return False
-
-
 def online_overrides(env, user_dir):
     """Writes user/host_overrides.json for this launch. A player who needs other addresses
     puts them in user/host_overrides.custom.json, which is then used as it is."""
@@ -52,127 +36,47 @@ def online_overrides(env, user_dir):
         community = (env.get('BB_COMMUNITY_SERVER') or COMMUNITY_SERVER).rstrip('/')
         if '://' not in community:
             community = 'https://' + community
-        host = community.split('://', 1)[1]
-        webapi = env.get('BB_SHADNET_WEBAPI') or 'http://127.0.0.1:31315'
-        # Game server -> community server (same port, 20443). Summon signs -> the shadNet
-        # WebAPI when that server has the Bloodborne summon service (the shadp2p server),
-        # otherwise they stay with the community server.
+        scheme, host = community.split('://', 1)
+        # The game's own server functions (messages, bloodstains, summon signs) go over HTTP to
+        # the game server only, as bbhost and Awaken's port send them; never through a shadNet
+        # WebAPI (Metr1k, The Hunter's Dream). Play logs go to its API port instead of
+        # FromSoftware's old storage buckets.
         overrides = {GAME_SERVER: community}
-        if summon_service(webapi):
-            overrides.update({f'{scheme}://{host}:{COMMUNITY_API_PORT}/summon_messenger': webapi
-                              for scheme in ('https', 'http')})
-            print(f'Co-op: summon signs through {webapi}')
-        else:
-            print(f'Co-op: {webapi} has no summon service; summon signs through {community}')
+        overrides.update({f'https://{bucket}:443': f'{scheme}://{host}:{COMMUNITY_API_PORT}'
+                          for bucket in ('bb-playlog-prod.s3.amazonaws.com',
+                                         'bb-playlog-test.s3.amazonaws.com')})
+        print(f'Co-op: game server {community}')
         path.write_text(json.dumps(overrides, indent=2) + '\n', encoding='utf-8')
     env['SHADPS4_HTTP_HOST_OVERRIDES_JSON'] = str(path)
 
 
-# The Hunter's Dream co-op pool (BB_BRIDGE=1, with bbhost players): bbbridge (bbbridge/, by
-# MaskZeus) stands in for the shadNet server on this PC and talks to The Hunter's Dream the way
-# bbhost does. Its account (Discord sign-in) is in user/bbbridge/bbbridge_state.json.
-BRIDGE_PORT = 31313
-BRIDGE_SERVER = f'127.0.0.1:{BRIDGE_PORT}'
-BRIDGE_WEBAPI = 'http://127.0.0.1:31315'
-BRIDGE_P2P_PORT = '3658'   # the game's P2P UDP port, as bbbridge expects it
-# The game's own server traffic through the bridge (bbbridge/src/setup.cpp, overrides()).
-BRIDGE_OVERRIDES = {
-    GAME_SERVER: 'http://127.0.0.1:31316',
-    'https://thehuntersdream.com:20443': 'http://127.0.0.1:31316',
-    'https://thehuntersdream.com:18671': 'http://127.0.0.1:31317',
-    'http://thehuntersdream.com:18671': 'http://127.0.0.1:31317',
-    'https://bb-playlog-test.s3.amazonaws.com:443': 'http://127.0.0.1:31317',
-    'https://bb-playlog-prod.s3.amazonaws.com:443': 'http://127.0.0.1:31317',
-    'https://thehuntersdream.com:18671/summon_messenger': BRIDGE_WEBAPI,
-    'http://thehuntersdream.com:18671/summon_messenger': BRIDGE_WEBAPI,
-}
+# The Hunter's Dream co-op pool (BB_NET_BACKEND=thd, with bbhost players): the engine's own
+# backend for it (gpu/bbnet/thd, bbhost's protocol, from Awaken's port). The game's servers and
+# play logs go to the game server over HTTP; the account comes from the launcher's Discord sign-in.
 LIVE_MAP_PATCH = "Live map (The Hunter's Dream)"
+PLAY_LOG_HOSTS = ('bb-playlog-prod.s3.amazonaws.com', 'bb-playlog-test.s3.amazonaws.com')
 
 
-def bridge_files(user_dir):
-    """user/bbbridge: bbbridge's config, account and log. Returns (folder, config file)."""
-    folder = user_dir / 'bbbridge'
-    folder.mkdir(parents=True, exist_ok=True)
-    config = folder / 'bbbridge_config.json'
-    wanted = {'state_file': str(folder / 'bbbridge_state.json')}
-    try:
-        current = json.loads(config.read_text(encoding='utf-8'))
-    except (OSError, ValueError):
-        current = None
-    if not isinstance(current, dict) or any(current.get(k) != v for k, v in wanted.items()):
-        config.write_text(json.dumps({**(current if isinstance(current, dict) else {}), **wanted},
-                                     indent=2) + '\n', encoding='utf-8')
-    return folder, config
-
-
-def bridge_accounts(user_dir):
-    """The Hunter's Dream ids signed in with Discord (bbbridge's account file)."""
-    try:
-        state = json.loads((user_dir / 'bbbridge' / 'bbbridge_state.json').read_text(encoding='utf-8'))
-        return list(state.get('accounts', {}))
-    except (OSError, ValueError, AttributeError):
-        return []
-
-
-def bridge_listening():
-    import socket
-    try:
-        socket.create_connection(('127.0.0.1', BRIDGE_PORT), timeout=0.5).close()
-        return True
-    except OSError:
-        return False
-
-
-def start_bridge(env, user_dir):
-    """Points the game at bbbridge and starts bbbridge-cli.exe for this launch (none when a bridge
-    already listens: bbbridge's own app). Returns the process to stop when the game ends."""
-    import time
-    accounts = bridge_accounts(user_dir)
-    if env.get('BB_SHADNET_NPID') not in accounts:
-        if not accounts and not bridge_listening():
-            fail("The Hunter's Dream: not signed in. Sign in with Discord on the launcher's Online page.")
-        if accounts:
-            env['BB_SHADNET_NPID'] = accounts[0]
-    env.update(BB_SHADNET_SERVER=BRIDGE_SERVER, BB_SHADNET_WEBAPI=BRIDGE_WEBAPI)
-    # The game signs in only with a password; the bridge never reads it.
-    env['BB_SHADNET_PASSWORD'] = env.get('BB_SHADNET_PASSWORD') or 'bbbridge'
-    env.setdefault('SHADPS4_P2P_PORT', BRIDGE_P2P_PORT)
+def hunters_dream(env, user_dir):
+    if not env.get('BB_THD_TOKEN') or not env.get('BB_THD_ONLINE_ID'):
+        fail("The Hunter's Dream: not signed in. Sign in with Discord on the launcher's Online page.")
+    community = (env.get('BB_COMMUNITY_SERVER') or COMMUNITY_SERVER).rstrip('/')
+    if '://' not in community:
+        community = 'https://' + community
+    base = community
+    overrides = {'*.scej-network.jp': base}
+    overrides.update({host: f'{base}:{COMMUNITY_API_PORT}' for host in PLAY_LOG_HOSTS})
     path = user_dir / 'host_overrides.json'
-    path.write_text(json.dumps(BRIDGE_OVERRIDES, indent=2) + '\n', encoding='utf-8')
-    env['SHADPS4_HTTP_HOST_OVERRIDES_JSON'] = str(path)
-    if bridge_listening():
-        print(f"Co-op: The Hunter's Dream as {env.get('BB_SHADNET_NPID')}, through the bbbridge already running")
-        return None
-    cli = find_executable('bbbridge-cli.exe')
-    if not cli:
-        fail('bbbridge-cli.exe not found: build it with packaging/windows/build_bbbridge.sh.')
-    folder, config = bridge_files(user_dir)
-    log = folder / 'bbbridge.log'
-    process = subprocess.Popen([str(cli), '--config', str(config), '--log', str(log)], cwd=folder,
-                               stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
-    for _ in range(100):
-        if bridge_listening():
-            break
-        if process.poll() is not None:
-            tail = ''
-            try:
-                tail = ''.join(log.read_text(encoding='utf-8', errors='replace').splitlines(True)[-5:])
-            except OSError:
-                pass
-            fail(f'bbbridge stopped at start (exit code {process.returncode}):\n{tail}')
-        time.sleep(0.1)
-    print(f"Co-op: The Hunter's Dream as {env['BB_SHADNET_NPID']}, through bbbridge (log: {log})")
-    return process
-
-
-def stop_bridge(process):
-    if process and process.poll() is None:
-        process.terminate()
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            pass
+    path.write_text(json.dumps(overrides, indent=2) + '\n', encoding='utf-8')
+    for key in ('BB_SHADNET_SERVER', 'BB_SHADNET_WEBAPI', 'BB_SHADNET_NPID', 'BB_SHADNET_PASSWORD',
+                'BB_SHADNET_TOKEN'):
+        env.pop(key, None)
+    env.update(SHADPS4_HTTP_HOST_OVERRIDES_JSON=str(path), BB_THD_SERVER=f'{base}:{COMMUNITY_API_PORT}',
+               BB_THD_AUTH=base)
+    env.setdefault('BB_THD_RULESET', 'vanilla')
+    env.setdefault('BB_P2P_PORT', '3658')
+    env.setdefault('BB_SIGN_TIMEOUT', '30')
+    print(f"Co-op: The Hunter's Dream as {env['BB_THD_ONLINE_ID']} ({base})")
 
 
 # The 1.09 executable with Lance McDonald's 60 fps patch applied to it, as some dumps ship it
@@ -214,14 +118,22 @@ def no_console():
     return 0 if ctypes.windll.kernel32.GetConsoleWindow() else subprocess.CREATE_NO_WINDOW
 
 
-def run_script(name, *args, capture=False):
+def run_script(name, *args, capture=False, optional=False):
+    """Runs scripts/<name>. optional: a failure returns False instead of stopping the launch."""
     # Inside the packaged Bloodborne.exe (PyInstaller) the executable runs scripts itself.
     script = ['--script'] if getattr(sys, 'frozen', False) else []
     command = [sys.executable, *script, str(PORT / 'scripts' / name), *map(str, args)]
+    if optional and not capture:
+        try:
+            return subprocess.run(command, stdin=subprocess.DEVNULL, creationflags=no_console()).returncode == 0
+        except OSError:
+            return False
     if capture:
         result = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, text=True,
                                 creationflags=no_console())
         if result.returncode:
+            if optional:
+                return None
             sys.exit(result.returncode)
         return result.stdout
     # stdin given: the output handles are passed explicitly (a windowed Bloodborne.exe child would
@@ -290,12 +202,48 @@ def main():
                  'game when the gestures menu opens (the port has its own 60 fps): copy eboot.bin '
                  'from a clean dump of the 1.09 update into the game folder, replacing this one. '
                  'BB_SKIP_GAME_CHECK=1 starts it anyway.')
-    game = Path(run_script('mods.py', game, '--out', out,
-                           '--mods-dir', env.get('BB_MODS_DIR', data / 'mods'),
-                           '--config', env.get('BB_MODS_CONFIG', data / 'mods.json'),
-                           '--enabled', env.get('BB_MODS_ENABLED', '1'), capture=True).strip())
+    sys.path.insert(0, str(PORT / 'scripts'))
+    from patches import OUTPUT_SIZE, game_app_version, hud_canvas, output_size, read_settings
+    # Quit to Desktop (bbport.ini quit_to_desktop, patches.py): the entries' names in the menu
+    # texts of every language and six-row title and System menus, also a layer below the mods
+    # (before the ultrawide one, which builds on its menu movies).
+    text_layer = out / 'quit_text'
+    shutil.rmtree(text_layer, ignore_errors=True)
+    if ini_value(config, 'quit_to_desktop') != '0' and (game_app_version(game) in (None, '01.09') or env.get('BB_FORCE_PATCHES')):
+        # Optional: when its files cannot be written ("[WinError 5] Access is denied", an
+        # antivirus or the folder's permissions), the game starts without it.
+        if not run_script('quit_menu.py', game, '--out', text_layer, optional=True):
+            shutil.rmtree(text_layer, ignore_errors=True)
+            env['BB_QUIT_TO_DESKTOP'] = '0'  # patches.py: no menu entries without their texts
+            print('Quit to Desktop: its menu texts could not be written; the game starts without it')
+    # Ultrawide outputs: the menu movies with full-screen backdrops widened and the HUD's corner
+    # groups toward the screen edges (bbport.ini hud_position, 0 centred .. 100 edges), a layer
+    # below the mods. Only for the
+    # 01.09 game, whose camera and HUD canvas the patches widen (patches.py hud_canvas).
+    hud_layer = out / 'hud_layout'
+    shutil.rmtree(hud_layer, ignore_errors=True)
+    canvas = hud_canvas(output_size(read_settings(Path(config))))
+    if canvas != OUTPUT_SIZE and (game_app_version(game) in (None, '01.09') or env.get('BB_FORCE_PATCHES')):
+        position = ini_value(config, 'hud_position') or '100'
+        if not run_script('hud_layout.py', game, '--out', hud_layer, '--canvas-width', canvas[0],
+                          '--position', max(0, min(100, int(position) if position.isdigit() else 100)) / 100,
+                          '--source', text_layer, optional=True):
+            shutil.rmtree(hud_layer, ignore_errors=True)
+            print('HUD layout: its menu files could not be written; the HUD stays in the centre')
+    mod_args = [game, '--out', out, '--mods-dir', env.get('BB_MODS_DIR', data / 'mods'),
+                '--config', env.get('BB_MODS_CONFIG', data / 'mods.json'),
+                '--enabled', env.get('BB_MODS_ENABLED', '1')]
+    view = run_script('mods.py', *mod_args, '--layer', text_layer, '--layer', hud_layer,
+                      capture=True, optional=True)
+    if view is None:
+        # The game view could not be made with the port's own layers (Quit to Desktop's texts,
+        # the HUD layout); without them the game still starts, as it did before they existed.
+        print('Mods: the game view could not be made; starting without Quit to Desktop and the '
+              'HUD layout')
+        env['BB_QUIT_TO_DESKTOP'] = '0'
+        view = run_script('mods.py', *mod_args, capture=True)
+    game = Path(view.strip())
     mod_view = game if game.resolve() != original_game else None
-    bridge = None
     try:
         run_script('prepare.py', game, '--out', out)
         run_script('link_libc.py', game, '--out', out)
@@ -345,6 +293,15 @@ def main():
                                         text=True, creationflags=no_console())
                 live = result.stdout.strip() if result.returncode == 0 else '0'
             live = '1' if live == '1' or not patched else '0'
+            # Ultrawide: the camera and HUD need the startup patch (patches.py hud_canvas).
+            from patches import OUTPUT_SIZE, hud_canvas
+            canvas = hud_canvas(tuple(int(v) for v in scaled_output.split('x')))
+            if patched and canvas != OUTPUT_SIZE:
+                live = '0'
+                env['BB_UI_RES'] = f'{canvas[0]}x{canvas[1]}'
+                print(f'Output {scaled_output}: ultrawide, HUD {env["BB_UI_RES"]}')
+        if live == '1' or not scaled_output:
+            env.pop('BB_UI_RES', None)
         if live == '1':
             print(f'Output {scaled_output}: live resolution changes (live_resolution=0: startup patch)')
         elif scaled_output:
@@ -353,7 +310,7 @@ def main():
             print(f'Output {scaled_output}: scene {scaled_render}, direct memory {env["BB_DMEM_MB"]} MiB '
                   '(live_resolution=1: live changes)')
         extra = env.get('BB_PATCHES', '')
-        if env.get('BB_ONLINE') == '1' and env.get('BB_BRIDGE') == '1' and env.get('BB_BRIDGE_LIVE_MAP') == '1':
+        if env.get('BB_ONLINE') == '1' and env.get('BB_NET_BACKEND') == 'thd' and env.get('BB_BRIDGE_LIVE_MAP') == '1':
             extra = ';'.join(filter(None, (extra, LIVE_MAP_PATCH)))
         run_script('patches.py', '--out', out, '--fps', fps, '--extra', extra,
                    '--settings', config, '--game-dir', game, '--render-res', env.get('BB_RENDER_RES', ''),
@@ -368,8 +325,8 @@ def main():
         user_dir = Path(env.get('BB_USER_DIR', data / 'user')).resolve()
         user_dir.mkdir(parents=True, exist_ok=True)
         env.setdefault('BB_GPU_USER_DIR', str(user_dir))
-        if env.get('BB_ONLINE') == '1' and env.get('BB_BRIDGE') == '1':
-            bridge = start_bridge(env, user_dir)
+        if env.get('BB_ONLINE') == '1' and env.get('BB_NET_BACKEND') == 'thd':
+            hunters_dream(env, user_dir)
         elif env.get('BB_ONLINE') == '1':
             online_overrides(env, user_dir)
         this = ['--run'] if getattr(sys, 'frozen', False) else [str(Path(__file__).resolve())]
@@ -382,9 +339,13 @@ def main():
         # No stdin: an inherited pipe (shells such as Git Bash) cost the game its console output.
         return subprocess.run(command, stdin=subprocess.DEVNULL, creationflags=no_console()).returncode
     finally:
-        stop_bridge(bridge)
         if mod_view:
-            shutil.rmtree(mod_view, ignore_errors=True)
+            # Read-only game files leave read-only links (mods.remove_overlay clears them).
+            from mods import remove_overlay
+            try:
+                remove_overlay(mod_view, original_game)
+            except OSError:
+                pass
 
 
 if __name__ == '__main__':
