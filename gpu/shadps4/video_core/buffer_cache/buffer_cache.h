@@ -129,6 +129,12 @@ public:
     /// Mark region as modified from the GPU
     void MarkRegionAsGpuModified(VAddr addr, size_t size);
 
+    /// bbport: memory backing guest memory for the GPU (never freed), the reserve kept for it,
+    /// and the part of the reserve used (for the memory report).
+    [[nodiscard]] u64 ArenaBackedBytes() const { return arena_backed; }
+    [[nodiscard]] u64 ArenaReserveBytes() const { return reserve_size; }
+    [[nodiscard]] u64 ArenaReserveUsedBytes() const { return reserve_used; }
+
     /// Synchronizes all buffers needed for DMA.
     void SynchronizeDmaBuffers();
 
@@ -215,6 +221,11 @@ private:
 
     u32 arena_memory_type_index{};
     u32 arena_memory_type_bits{}; ///< bbport: the types the arena accepts (system memory fallback)
+    /// bbport: VRAM kept for the arena when the GPU has no other room (discrete GPUs).
+    vk::DeviceMemory reserve_memory{};
+    u64 reserve_size{};
+    u64 reserve_used{};
+    u64 arena_backed{};
     u32 block_size{};
     u32 block_shift{};
     u32 blocks_per_arena_page{};

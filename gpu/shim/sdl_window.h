@@ -44,6 +44,8 @@ public:
     /// Windows only: the window is on a display that Windows runs in HDR, where the desktop
     /// decodes an SDR swapchain with the sRGB curve instead of the display's gamma 2.2.
     bool IsOnHdrDisplay() const { return on_hdr_display.load(std::memory_order_relaxed); }
+    /// Any thread: whether the window has keyboard focus (mute_unfocused).
+    bool IsFocused() const { return window_focused.load(std::memory_order_relaxed); }
     /// Processes pending window events. Returns false once the user closed the window.
     bool PollEvents();
     /// Keyboard text entry for the system IME dialog; typed text shows in the title bar.
@@ -92,7 +94,7 @@ private:
     std::atomic<int32_t> toggle_scancode{0};
     std::atomic<int32_t> reload_scancode{0};
     std::atomic<bool> reload_requested{false};      // HOT-003, drained by TakeInputReloadRequested
-    bool window_focused{true};
+    std::atomic<bool> window_focused{true};
     /// Window thread, every PollEvents: MOU-003. True iff mouse mode is on, the window has
     /// focus, and neither the menu nor the text dialog is capturing input.
     bool WantsMouseCapture() const;
