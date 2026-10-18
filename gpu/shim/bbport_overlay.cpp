@@ -315,11 +315,12 @@ void Menu() {
     ImGui::EndDisabled(); // upscaler off
 
     ImGui::SeparatorText("Frame generation");
-    static const char* frame_gens[] = {"Off", "FSR 3.1 (any GPU)", "DLSS (NVIDIA RTX 40/50)"};
+    static const char* frame_gens[] = {"Off", "FSR 3.1 (any GPU)", "DLSS (NVIDIA RTX 40/50)", "AMD ML-FG 4.0.1 (RX 9000, 2x SDR, experimental)"};
     const int frame_gen = s.frame_gen;
     if (ImGui::BeginCombo("Frame generation", frame_gens[frame_gen])) {
         for (int i = 0; i < BbSettings::FrameGenCount; ++i) {
-            const bool supported = i != BbSettings::FrameGenDlss || s.dlssg_max_multiplier > 1;
+            const bool supported = (i != BbSettings::FrameGenDlss || s.dlssg_max_multiplier > 1) &&
+                (i != BbSettings::FrameGenFsr401 || s.fg401_supported);
             ImGui::BeginDisabled(!supported);
             if (ImGui::Selectable(frame_gens[i], i == frame_gen)) {
                 Store(s.frame_gen, i, true);

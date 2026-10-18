@@ -18,7 +18,7 @@ inline bool IsFsr4(int upscaler) {
 enum Preset : int { NativeAA = 0, Quality, Balanced, Performance, UltraPerformance, PresetCount };
 enum DebugView : int { DebugNone = 0, DebugReactive = 1, DebugMotion = 2, DebugViewCount };
 /// Frame generation (vk_frame_generation.h): frames generated between two of the game's.
-enum FrameGen : int { FrameGenOff = 0, FrameGenFsr3 = 1, FrameGenDlss = 2, FrameGenCount };
+enum FrameGen : int { FrameGenOff = 0, FrameGenFsr3 = 1, FrameGenDlss = 2, FrameGenFsr401 = 3, FrameGenCount };
 
 /// Game effects switched by the community patches at start (patches.py EFFECTS): ini key,
 /// menu label, default (the game's own behaviour).
@@ -103,6 +103,7 @@ struct Values {
     /// At most the frames the display shows between two of the game's (an uncapped game then
     /// gets fewer generated frames); off: the multiplier as chosen.
     std::atomic<bool> frame_gen_fit_display{false};
+    std::atomic<bool> fg401_supported{false};
     std::atomic<int> dlssg_max_multiplier{1};
     std::atomic<const char*> frame_gen_problem{nullptr};
     /// Generated frames per game frame the display has room for now (0: paused), and its

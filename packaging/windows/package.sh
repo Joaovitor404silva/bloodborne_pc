@@ -14,7 +14,7 @@ elif [[ $# != 0 ]]; then
     echo 'Usage: bash packaging/windows/package.sh [--zip-only]' >&2
     exit 1
 fi
-[[ -f out/bb-probe.exe && -f out/bb-gpu-capabilities.exe && -f out/bb-play.exe ]] || { echo 'Build first: bash build.sh' >&2; exit 1; }
+[[ -f out/bb-probe.exe && -f out/bb-gpu-capabilities.exe && -f out/bb-fg401-capabilities.exe && -f out/bb-play.exe ]] || { echo 'Build first: bash build.sh' >&2; exit 1; }
 
 # A Windows Python (not MSYS2's) for PyInstaller.
 python=${WINPYTHON:-}
@@ -50,7 +50,7 @@ cp -r out/pyi-dist/Bloodborne/. "$dest/"
 llvm-strip -o "$dest/Play Bloodborne.exe" out/bb-play.exe
 cp launcher/bloodborne.ico launcher/bloodborne.png "$dest/launcher/"
 # The executables without debug information (out/ keeps the symbols for crash reports).
-for exe in bb-probe.exe bb-gpu-capabilities.exe; do
+for exe in bb-probe.exe bb-gpu-capabilities.exe bb-fg401-capabilities.exe; do
     llvm-strip --strip-debug -o "$dest/bin/$exe" "out/$exe"
 done
 # Every DLL the executables load from the CLANG64 tree (SDL3, FFmpeg, Vulkan loader, ...).
@@ -63,6 +63,9 @@ cp -r scripts patches "$dest/"
 # The first build downloads AMD's SDK archive; subsequent builds verify the cached DLL.
 out/pyenv/Scripts/python.exe packaging/windows/fetch_fsr411_dx12.py
 cp out/fsr411-dx12/amd_fidelityfx_upscaler_dx12.dll "$dest/bin/"
+out/pyenv/Scripts/python.exe packaging/windows/fetch_fg401_dx12.py
+cp out/fsr411-dx12/amd_fidelityfx_framegeneration_dx12.dll \
+   out/fsr411-dx12/amd_fidelityfx_loader_dx12.dll out/fsr411-dx12/D3D12Core.dll "$dest/bin/"
 # Legacy CPU (Intel 3rd generation and older): the translation plan scripts/cpu_compat.py applies.
 mkdir -p "$dest/tools" && cp tools/legacy-cpu-plan.json "$dest/tools/"
 cp run.py LICENSE README.md packaging/windows/README-Windows.txt "$dest/"
@@ -85,10 +88,12 @@ cp packaging/windows/licenses/*.txt "$dest/licenses/"
 cp packaging/windows/licenses/AMD-FSR-SDK-*.md "$dest/licenses/"
 # Setup and provider requirements must be available in the downloaded package too.
 mkdir -p "$dest/docs"
-cp docs/FSR411_WINDOWS.md docs/OBJECT_MOTION_CACHE.md "$dest/docs/"
+cp docs/FSR411_WINDOWS.md docs/OBJECT_MOTION_CACHE.md docs/ML_FRAME_GENERATION_WINDOWS.md "$dest/docs/"
 mkdir -p "$dest/docs/benchmarks"
 cp docs/benchmarks/fsr411-vulkan-20261016.json "$dest/docs/benchmarks/"
 cp docs/benchmarks/object-motion-cache-20261016.json docs/benchmarks/fsr-sewer-20261016.json "$dest/docs/benchmarks/"
+cp docs/benchmarks/ml-fg401-20261017.json "$dest/docs/benchmarks/"
+cp docs/benchmarks/ml-fg401-profile.ini "$dest/docs/benchmarks/"
 # Where the online code comes from (shadPS4 0.20, Awaken's port, bbhost's protocol).
 cp gpu/bbnet/SHADNET-PORT.md "$dest/licenses/online-code-NOTICE.md"
 for package in protobuf abseil-cpp openssl miniupnpc zlib; do

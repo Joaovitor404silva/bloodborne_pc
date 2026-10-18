@@ -22,6 +22,8 @@
 #include <cstdio>
 #ifdef _WIN32
 #include "native_fsr411.h"
+#include "native_fg401.h"
+#include "fg401_support.h"
 #endif
 
 namespace Vulkan {
@@ -392,7 +394,9 @@ bool Instance::CreateDevice() {
         (fsr411_backend && std::string_view{fsr411_backend} == "dx12");
     native_fsr411 = GetVendorID() == 0x1002 && native_requested &&
         NativeFsr411::Available() && add_extension("VK_KHR_external_memory_win32");
-    native_fsr411_async = native_fsr411 && add_extension("VK_KHR_external_semaphore_win32");
+    fg401_interop = IsRx9000(GetVendorID(),physical_device.getProperties().deviceName.data()) &&
+        Fg401WindowsSupported() && NativeFg401::Available() && add_extension("VK_KHR_external_memory_win32");
+    native_fsr411_async = (native_fsr411 || fg401_interop) && add_extension("VK_KHR_external_semaphore_win32");
     if (native_fsr411_async) {
         const vk::SemaphoreTypeCreateInfo timeline{.semaphoreType = vk::SemaphoreType::eTimeline};
         const auto support = physical_device.getExternalSemaphoreProperties(
@@ -400,6 +404,7 @@ bool Instance::CreateDevice() {
                 .handleType = vk::ExternalSemaphoreHandleTypeFlagBits::eD3D12Fence});
         native_fsr411_async = bool(support.externalSemaphoreFeatures & vk::ExternalSemaphoreFeatureFlagBits::eImportable);
     }
+    fg401_interop = fg401_interop && native_fsr411_async;
     std::printf("FSR411 GPU fence interop: %s\n", native_fsr411_async ? "available" : "unavailable");
     if (native_fsr411) std::printf("FSR 4.1.1: native Windows DX12 backend available\n");
 #endif
@@ -436,10 +441,13 @@ bool Instance::CreateDevice() {
         return false;
     }
 
-    static constexpr std::array queue_priorities = {1.0f};
+    const bool detached = fg401_interop && family_properties[queue_family_index].queueCount >= 2;
+    fg401_interop = fg401_interop && detached;
+    const u32 queue_count = detached ? 2u : 1u;
+    static constexpr std::array queue_priorities = {1.0f, 1.0f};
     const vk::DeviceQueueCreateInfo queue_info = {
         .queueFamilyIndex = queue_family_index,
-        .queueCount = static_cast<u32>(queue_priorities.size()),
+        .queueCount = queue_count,
         .pQueuePriorities = queue_priorities.data(),
     };
 
@@ -743,7 +751,8 @@ bool Instance::CreateDevice() {
     }
 
     graphics_queue = device->getQueue(queue_family_index, 0);
-    present_queue = device->getQueue(queue_family_index, 0);
+    present_queue = device->getQueue(queue_family_index, detached ? 1 : 0);
+    if (detached) std::printf("ML-FG: Vulkan graphics queue 0, completion/present queue 1, family %u\n", queue_family_index);
 
     if (calibrated_timestamps) {
         const auto [time_domains_result, time_domains] =

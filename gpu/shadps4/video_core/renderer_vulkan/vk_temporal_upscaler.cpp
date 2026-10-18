@@ -1289,6 +1289,7 @@ void TemporalUpscaler::CaptureFrameGen() {
         // its motion as clip-space matrices.
         FrameGenCamera camera{camera_motion.Near(), camera_motion.FarPlane(3000.0f),
                               camera_motion.VerticalFov()};
+        camera.has_world_camera=camera_motion.WorldCamera(camera.view_to_world);
         camera.has_matrices = camera_motion.ClipTransforms(
             camera.view_to_clip, camera.clip_to_prev_clip, camera.prev_clip_to_clip);
         frame_generator->EndCapture(cmdbuf, Active() ? jitter : std::array<float, 2>{},

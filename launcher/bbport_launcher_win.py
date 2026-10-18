@@ -126,6 +126,7 @@ def run_command():
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bbport_lang  # noqa: E402
+import bbport_fg401
 import bbport_trophies as trophies  # noqa: E402
 from bbport_input_config import (KEYBOARD_OUTPUTS, BUTTON_OUTPUTS, STICK_OUTPUTS, OUTPUT_LABELS, keysym_to_name,
                                   button_num_to_name, input_ini_path, load_input_ini, reserved_keys,
@@ -223,6 +224,7 @@ UPSCALERS = [('dlss', ('DLSS (NVIDIA GeForce RTX)',)),
 # Frames generated between two of the game's (vk_frame_generation.cpp).
 FRAME_GENERATION = [('off', ('Off', 'Выключена')),
                     ('fsr3', ('AMD FSR 3.1 Frame Generation (any GPU)', 'AMD FSR 3.1 (любая видеокарта)')),
+                    ('fsr401', ('AMD ML-FG 4.0.1 (RX 9000, 2× SDR, experimental)',)),
                     ('dlss', ('NVIDIA DLSS Frame Generation (GeForce RTX 40/50)',
                               'NVIDIA DLSS (GeForce RTX 40/50)'))]
 FRAME_GEN_MULTIPLIERS = [('2', ('2× (one generated frame)', '2× (один кадр)')),
@@ -483,7 +485,7 @@ def motion_cache_available(graphics):
 
 
 def game_environment(s, graphics=None):
-    env = dict(os.environ)
+    env = {k:v for k,v in os.environ.items() if not k.startswith(('BB_FG_', 'BB_FG401_'))}
     env['BB_FSR411_BACKEND'] = fsr411_backend(s)
     env['BB_FSR411_NATIVE'] = '1' if fsr411_backend(s) == 'dx12' else '0'
     env['BB_GAME_DIR'] = s['game_dir']
@@ -580,6 +582,8 @@ class Launcher:
         # Controls page after a cancelled edit shows what is actually on disk, not a half-edit.
         self.remap_edits = {}
         self.mouse_edited = False  # set by any mouse widget's command/trace; gates the save in collect()
+        self.fg401_support = None
+        self.fg401_refreshers = []
         self.vars = {}
         self.process = self.job = None
         self.hidden = False  # closed while the game runs: it exits with the game
@@ -729,6 +733,40 @@ class Launcher:
         box.bind('<<ComboboxSelected>>', lambda _e: var.set(values[box.current()]))
         var.trace_add('write', show)
         return box
+
+    def fg401_choice(self, parent, width=52):
+        var = self.var('frame_gen', 'ini')
+        box = self.ttk.Combobox(parent, state='readonly', width=width)
+        values = []
+        def refresh(*_args):
+            ready = bool(self.fg401_support and self.fg401_support.get('supported'))
+            options = [(v,t) for v,t in FRAME_GENERATION if v!='fsr401' or ready]
+            values[:] = [v for v,t in options]
+            box.configure(values=[_(*t) for v,t in options])
+            if var.get()=='fsr401' and not ready:
+                if self.fg401_support is None:
+                    box.set(_('ML-FG 4.0.1: checking support…'))
+                    return
+                var.set('fsr3')
+            box.current(values.index(var.get()) if var.get() in values else values.index('off'))
+        box.bind('<<ComboboxSelected>>', lambda _e: var.set(values[box.current()]))
+        var.trace_add('write', refresh)
+        self.fg401_refreshers.append(refresh)
+        refresh()
+        return box
+
+    def refresh_fg401(self):
+        for refresh in self.fg401_refreshers:
+            refresh()
+        if hasattr(self, 'fg401_status'):
+            key = ('ML-FG 4.0.1: checking support…' if self.fg401_support is None else
+                   '' if self.fg401_support.get('supported') else
+                   'ML-FG 4.0.1 requires an RX 9000, Windows 11 and a supported AMD driver/runtime. FSR 3.1 remains available.')
+            self.fg401_status.configure(text=_(key))
+            if key:
+                self.fg401_status.grid()
+            else:
+                self.fg401_status.grid_remove()
 
     def fsr411_choice(self, parent, width=38):
         backend = self.var('fsr411_backend', 'app')
@@ -1064,7 +1102,7 @@ class Launcher:
         self.motion_cache_check(f)
         self.section(f, _('Frame generation', 'Генерация кадров'))
         self.row(f, _('Frame generation', 'Генерация кадров'),
-                 self.choice(f, 'frame_gen', 'ini', FRAME_GENERATION),
+                 self.fg401_choice(f),
                  _('Frames made between two of the game\'s: 60 FPS on screen becomes 120. Needs a display with '
                    'that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra '
                    'frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce '
@@ -1073,6 +1111,9 @@ class Launcher:
                    'частотой (120 Гц и выше при 60 FPS); иначе генерация приостанавливается. Немного добавляет '
                    'задержку ввода. Меню и ролики не генерируются. DLSS нужна GeForce RTX 40 или новее, иначе '
                    'используется FSR 3.1.'))
+        self.fg401_status = self.ttk.Label(f, wraplength=self.px(640), justify='left')
+        self.fg401_status.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        self.refresh_fg401()
         self.row(f, _('Multiplier', 'Множитель'),
                  self.choice(f, 'frame_gen_multiplier', 'ini', FRAME_GEN_MULTIPLIERS),
                  _('FSR 3.1 makes one frame (2×); DLSS on a GeForce RTX 50 up to three (4×).',
@@ -1909,6 +1950,10 @@ class Launcher:
         if not exe.is_file():
             exe = PORT_DIR / 'out' / 'bb-gpu-capabilities.exe'
         env = dict(os.environ)
+        for item in str(self.app.get('extra_env', '')).split():
+            if '=' in item:
+                key, value = item.split('=', 1)
+                env[key] = value
         if not (exe.parent / 'SDL3.dll').is_file():
             clang64 = Path(os.environ.get('MSYS2_ROOT', r'C:\msys64')) / 'clang64' / 'bin'
             env['PATH'] = f'{clang64}{os.pathsep}{env.get("PATH", "")}'
@@ -1925,7 +1970,9 @@ class Launcher:
         except (OSError, subprocess.TimeoutExpired):
             pass
         self.gpu_text = text
+        self.fg401_support = bbport_fg401.query(PORT_DIR, env)
         self.ui_calls.put(self.refresh_status)
+        self.ui_calls.put(self.refresh_fg401)
 
     def refresh_fsr4(self):
         total, missing = len(fsr4_files()), len(fsr4_missing())

@@ -242,7 +242,7 @@ const char* PresetName(int preset) {
 }
 
 const char* FrameGenName(int frame_gen) {
-    static constexpr const char* names[FrameGenCount] = {"off", "fsr3", "dlss"};
+    static constexpr const char* names[FrameGenCount] = {"off", "fsr3", "dlss", "fsr401"};
     return names[std::clamp(frame_gen, 0, FrameGenCount - 1)];
 }
 

@@ -87,6 +87,14 @@ Upscaling
   package, or Graphics -> "Download FSR 4 assets"); GPUs without the required shader features
   fall back to FSR 3.1 by themselves.
 
+Frame generation
+- Graphics -> Frame generation offers AMD ML-FG 4.0.1 on a supported RX 9000,
+  alongside the existing FSR 3.1 and DLSS methods. ML-FG generates one intermediate
+  image per game frame (2x, SDR). The launcher checks the selected GPU, Windows 11,
+  driver/runtime and GPU sharing; an unsupported saved selection falls back to FSR 3.1.
+  With HDR output active, bbport displays rendered game frames and skips FG.
+  Details and measurements: docs\ML_FRAME_GENERATION_WINDOWS.md.
+
 Mods and patches
 - Put each mod in its own folder under mods\ (dvdroot_ps4\..., or chr\, parts\, ... directly);
   enable and order them on "Mods & patches". The game files are never changed. Without Windows

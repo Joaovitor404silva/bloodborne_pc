@@ -1242,4 +1242,6 @@ def table(language):
                              **EXTRA_TRANSLATIONS.get(language, {})}
         _tables[language].update(FSR411_TRANSLATIONS.get(language, {}))
         _tables[language].update(MOTION_CACHE_TRANSLATIONS.get(language, {}))
+    from bbport_fg401 import TRANSLATIONS as FG401_TRANSLATIONS
+    _tables[language].update(FG401_TRANSLATIONS.get(language, {}))
     return _tables[language]

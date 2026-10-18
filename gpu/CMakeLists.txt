@@ -134,6 +134,7 @@ add_host_shader(camera_motion.comp camera_motion_debug_comp DEBUG_OVERLAY=1)
 # Frame generation (vk_frame_generation.cpp): its depth input and the UI over generated frames.
 add_host_shader(frame_gen_inputs.comp frame_gen_inputs_comp)
 add_host_shader(frame_gen_ui.comp frame_gen_ui_comp)
+add_host_shader(frame_gen_fused_ui.comp frame_gen_fused_ui_comp)
 foreach(BPP IN ITEMS 8 16 32 64 96 128)
     add_host_shader(tiling.comp tiling_micro_${BPP}_comp BITS_PER_PIXEL=${BPP} IS_MACRO_TILED=0)
     add_host_shader(tiling.comp tiling_macro_${BPP}_comp BITS_PER_PIXEL=${BPP} IS_MACRO_TILED=1)
@@ -362,3 +363,7 @@ add_executable(fsr4-bench EXCLUDE_FROM_ALL tools/fsr4_bench.cpp
     shadps4/video_core/renderer_vulkan/fsr411/fsr411.cpp)
 target_include_directories(fsr4-bench PRIVATE shadps4/video_core/renderer_vulkan/fsr411)
 target_link_libraries(fsr4-bench PRIVATE ffx-vulkan::fsr4-v07-vulkan ffx-vulkan::fsr4-v07-assets Vulkan::Vulkan)
+
+if (WIN32)
+    include(fg401_dx12/CMakeLists.txt)
+endif()
