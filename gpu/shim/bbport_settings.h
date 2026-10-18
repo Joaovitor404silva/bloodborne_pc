@@ -19,6 +19,7 @@ enum Preset : int { NativeAA = 0, Quality, Balanced, Performance, UltraPerforman
 enum DebugView : int { DebugNone = 0, DebugReactive = 1, DebugMotion = 2, DebugViewCount };
 /// Frame generation (vk_frame_generation.h): frames generated between two of the game's.
 enum FrameGen : int { FrameGenOff = 0, FrameGenFsr3 = 1, FrameGenDlss = 2, FrameGenFsr401 = 3, FrameGenCount };
+enum Fsr411Backend : int { Fsr411Vulkan = 0, Fsr411Dx12 = 1 };
 
 /// Game effects switched by the community patches at start (patches.py EFFECTS): ini key,
 /// menu label, default (the game's own behaviour).
@@ -79,6 +80,9 @@ struct Values {
     std::atomic<bool> jitter{true};
     std::atomic<bool> reactive{false};
     std::atomic<bool> object_motion{true};
+    /// Shared launcher/overlay preferences, applied on the next game start.
+    std::atomic<int> fsr411_backend{Fsr411Vulkan};
+    std::atomic<bool> object_motion_cache{false};
     std::atomic<float> reactive_scale{1.0f};
     std::atomic<float> reactive_threshold{0.2f};
     std::atomic<float> reactive_max{0.9f};
@@ -136,6 +140,8 @@ struct Values {
     int startup_preset = NativeAA;
     int startup_upscaler = UpscalerFsr3;
     bool startup_object_motion = true;
+    int startup_fsr411_backend = Fsr411Vulkan;
+    bool startup_object_motion_cache = false;
     bool startup_effects[EffectCount]{};
     int startup_model_lod = 0;
     int startup_output_res = OutputDefault;
@@ -156,6 +162,8 @@ void ConfigureDlssSupport(bool available, const char* problem);
 bool FixedRenderSession();
 int RenderPreset();
 bool ResolutionNeedsRestart();
+/// Provider/cache choices are saved now, and retain their startup behavior until restart.
+bool FsrSettingsNeedRestart();
 /// Writes the file (menu changes).
 void Save();
 

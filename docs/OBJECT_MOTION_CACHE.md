@@ -11,11 +11,17 @@ is retained while another upscaler or disabled object motion makes it unavailabl
 Both normal PLAY and shortcuts apply the choice at the **next game start**.
 Changing the in-game upscaler retains that process's startup cache mode.
 
+The **Insert / L3+R3** in-game overlay provides the same experimental checkbox.
+It retains its choice while unavailable and marks a changed startup mode for
+**Apply and restart**. The launcher follows saved overlay changes while open.
+
 The option and hint are translated into all 13 launcher languages. The boolean
-`object_motion_cache` lives in the launcher's `settings.json`, alongside its
-other startup preferences. The launcher explicitly sets
-`BB_OBJECT_MOTION_CACHE=0` or `1` after processing inherited/extra variables, so
-the checkbox consistently controls launcher and shortcut starts.
+`object_motion_cache=0|1` lives in `bbport.ini`, shared by the launcher and overlay.
+Existing `settings.json` preferences migrate when that INI key is first absent;
+an explicit INI value takes precedence. The launcher removes the legacy JSON
+keys when saving. `run.py` refreshes the derived `BB_OBJECT_MOTION_CACHE=0|1`
+at each launcher-managed start, including **Apply and restart**. The saved
+preference remains available when another upscaler temporarily disables its use.
 
 ## Implementation and tradeoff
 

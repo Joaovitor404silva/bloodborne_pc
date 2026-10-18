@@ -195,7 +195,7 @@ void Menu() {
     ImGui::Text("%s", FpsText().c_str());
 
     ImGui::SeparatorText("Temporal upscaling");
-    static const char* upscalers[] = {"Off", "FSR 3.1", "FSR 4 (INT8)", "FSR 4.1.1 (INT8)",
+    static const char* upscalers[] = {"Off", "FSR 3.1", "FSR 4 (INT8)", "FSR 4.1.1 (experimental)",
                                      "TAA (native anti-aliasing)", "DLSS (NVIDIA RTX)"};
     static const char* later[] = {"XeSS"};
     int upscaler = s.upscaler;
@@ -223,6 +223,26 @@ void Menu() {
         }
         ImGui::EndCombo();
     }
+#ifdef _WIN32
+    const bool fsr411_selected = s.upscaler == BbSettings::UpscalerFsr411;
+    static const char* fsr411_backends[] = {"Vulkan (fsr4vk)", "AMD DX12"};
+    ImGui::BeginDisabled(!fsr411_selected);
+    int backend = s.fsr411_backend;
+    if (ImGui::BeginCombo("FSR 4.1.1 backend", fsr411_selected ? fsr411_backends[backend] : "-")) {
+        for (int i = 0; i < 2; ++i) {
+            if (ImGui::Selectable(fsr411_backends[i], i == backend)) {
+                Store(s.fsr411_backend, i, true);
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::EndDisabled();
+    Hint("AMD DX12 uses AMD's FSR library through the Windows bridge. Vulkan uses fsr4vk. The method is saved with the launcher settings in bbport.ini and applies after restarting the game.");
+    if (fsr411_selected && s.fsr411_backend != s.startup_fsr411_backend) {
+        ImGui::TextDisabled("Active method: %s; selected method applies after restart",
+                            fsr411_backends[s.startup_fsr411_backend]);
+    }
+#endif
     if (const char* problem = s.dlss_problem.load(); problem && upscaler == BbSettings::UpscalerDlss) {
         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "DLSS: %s", problem);
     }
@@ -235,7 +255,11 @@ void Menu() {
     }
     if (BbSettings::IsFsr4(s.upscaler)) {
         if (s.upscaler == BbSettings::UpscalerFsr411) {
-            Hint("FSR 4.1.1 INT8: AMD 4.1.1 DLL model reproduced in Vulkan. One model covers Native through Performance, with another for Ultra Performance. Assets: tools/fsr4cap/build_assets.sh (requires the DLL and Proton).");
+#ifdef _WIN32
+            Hint("FSR 4.1.1 temporal upscaling uses the method selected above. AMD DX12 is included in the Windows package; Vulkan assets can be downloaded in the launcher. Quality presets and sharpening apply to both methods.");
+#else
+            Hint("FSR 4.1.1 uses the Vulkan model passes. One model covers Native through Performance, with another for Ultra Performance. See tools/fsr4cap/build_assets.sh for asset preparation.");
+#endif
         } else {
             Hint("FSR 4 INT8 uses the v07 model from the AMD FidelityFX SDK. Higher quality than FSR 3.1, with more GPU work. Changing presets rebuilds the model and may pause briefly. Assets: tools/fetch_fsr4_assets.sh.");
         }
@@ -307,6 +331,19 @@ void Menu() {
     ImGui::EndDisabled();
     Checkbox("Object motion vectors", s.object_motion);
     Hint("Accurate vectors for animated objects reduce breakup on clothing and weapons during movement. Static geometry receives no extra pass. Changes require a restart.");
+#ifdef _WIN32
+    const bool cache_available = s.object_motion &&
+        (s.upscaler == BbSettings::UpscalerFsr3 || BbSettings::IsFsr4(s.upscaler));
+    ImGui::BeginDisabled(!cache_available);
+    Checkbox("Motion-vector cache (experimental)", s.object_motion_cache);
+    ImGui::EndDisabled();
+    Hint("Reuses object-motion render targets and may improve FSR performance. Uses extra VRAM and requires object motion vectors. The saved choice applies after restarting the game.");
+    if (cache_available && BbSettings::FsrSettingsNeedRestart()) {
+        const bool active = s.startup_object_motion_cache && s.startup_object_motion &&
+            (s.startup_upscaler == BbSettings::UpscalerFsr3 || BbSettings::IsFsr4(s.startup_upscaler));
+        ImGui::TextDisabled("Startup cache mode: %s; changes apply after restart", active ? "On" : "Off");
+    }
+#endif
     bool show_motion = s.debug_view == BbSettings::DebugMotion;
     if (ImGui::Checkbox("Show motion vectors (debug)", &show_motion)) {
         s.debug_view = show_motion ? BbSettings::DebugMotion : BbSettings::DebugNone;
@@ -430,7 +467,7 @@ void Menu() {
     Hint("Effects are applied through game patches at startup (patches/Bloodborne.xml). Motion blur and dynamic shadows can increase GPU load.");
     Hint("Free camera: hold Cross and press L3 (keyboard: Space + Z). Debug menu: left touchpad / Tab. Requires DbgFont14h.ccm and DbgFont14h.tpf in dvdroot_ps4/font from the debug-font mod. Right touchpad: Backspace.");
 
-    bool restart = s.object_motion != s.startup_object_motion ||
+    bool restart = BbSettings::FsrSettingsNeedRestart() || s.object_motion != s.startup_object_motion ||
                    s.model_lod != s.startup_model_lod || s.fov != s.startup_fov ||
                    s.live_resolution != s.startup_live_resolution ||
                    BbSettings::ResolutionNeedsRestart();

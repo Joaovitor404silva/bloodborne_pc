@@ -14,19 +14,19 @@ import bbport_lang_fsr411 as translations
 class BackendSettingsTest(unittest.TestCase):
     def test_existing_profile_retains_vulkan(self):
         settings = dict(launcher.APP_DEFAULTS)
-        settings.pop('fsr411_backend')
+        self.assertEqual(launcher.INI_DEFAULTS['fsr411_backend'], 'vk')
         with patch.dict('os.environ', {}, clear=True):
-            env = launcher.game_environment(settings)
+            env = launcher.game_environment(settings, launcher.INI_DEFAULTS)
         self.assertEqual((env['BB_FSR411_BACKEND'], env['BB_FSR411_NATIVE']), ('vk', '0'))
 
     def test_selection_overrides_inherited_backend_without_changing_other_settings(self):
         for selected, native in (('vk', '0'), ('dx12', '1')):
-            settings = {**launcher.APP_DEFAULTS, 'fsr411_backend': selected,
+            settings = {**launcher.APP_DEFAULTS,
                         'fps_mode': '90', 'frame_cap': '90', 'present_mode': 'Mailbox',
                         'fullscreen': True, 'user_dir': 'copied-saves'}
             original = copy.deepcopy(settings)
             with patch.dict('os.environ', {'BB_FSR411_BACKEND': 'wrong', 'BB_FSR411_NATIVE': 'wrong'}, clear=True):
-                env = launcher.game_environment(settings)
+                env = launcher.game_environment(settings, {**launcher.INI_DEFAULTS, 'fsr411_backend': selected})
             self.assertEqual((env['BB_FSR411_BACKEND'], env['BB_FSR411_NATIVE']), (selected, native))
             self.assertEqual((env['BB_FPS'], env['BB_FPS_LIMIT'], env['BB_PRESENT_MODE']), ('90', '90', 'Mailbox'))
             self.assertEqual(env['BB_USER_DIR'], 'copied-saves')
