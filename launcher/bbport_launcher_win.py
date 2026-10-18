@@ -195,17 +195,16 @@ TWEAKS = [
     ('quit_to_desktop', ('Quit to Desktop in the title menu and in the System menu',
                          'Пункт «Выйти на рабочий стол» в главном меню и в меню «Система»'), True),
 ]
-INI_FLAGS = {'sharpen', 'object_motion', 'show_fps', 'mute_unfocused', 'frame_gen_fit_display',
+INI_FLAGS = {'sharpen', 'object_motion', 'object_motion_cache', 'show_fps', 'mute_unfocused', 'frame_gen_fit_display',
              *(k for k, _t, _o in EFFECTS + EXTRAS + CHEATS + TWEAKS)}
 INI_DEFAULTS = {'upscaler': 'fsr4', 'preset': '1', 'sharpen': '1', 'sharpness': '0.50',
                 'object_motion': '1', 'show_fps': '1', 'output_res': '1920x1080', 'model_lod': '0',
+                'fsr411_backend': 'vk', 'object_motion_cache': '0',
                 'live_resolution': 'auto', 'hud_position': '100', 'fov': '43', 'mute_unfocused': '0',
                 'button_prompts': 'auto',
                 'frame_gen': 'off', 'frame_gen_multiplier': '2', 'frame_gen_fit_display': '0',
                 **{key: '1' if on else '0' for key, _t, on in EFFECTS + EXTRAS + CHEATS + TWEAKS}}
 APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'), 'user_dir': '', 'dlc_dir': '',
-                'fsr411_backend': 'vk',
-                'object_motion_cache': False,
                 'mods_dir': '', 'mods_enabled': True, 'patches_dir': '', 'language': '1',
                 'voice_language': 'auto',
                 'player_name': '', 'fullscreen': False, 'hdr': False, 'present_mode': 'Mailbox',
@@ -235,6 +234,7 @@ FRAME_GEN_MULTIPLIERS = [('2', ('2× (one generated frame)', '2× (один ка
 PRESETS = [('0', ('Native AA (×1.0)',)), ('1', ('Quality (×1.5)',)), ('2', ('Balanced (×1.7)',)),
            ('3', ('Performance (×2)',)), ('4', ('Ultra Performance (×3)',))]
 FSR411_BACKENDS = [('vk', ('Vulkan (fsr4vk)',)), ('dx12', ('AMD DX12',))]
+SHARED_GRAPHICS_KEYS = ('fsr411_backend', 'object_motion_cache')
 
 
 def fsr411_backend(settings):
@@ -328,7 +328,7 @@ def ini_path():
     return Path(os.environ.get('BB_CONFIG', DATA_DIR / 'bbport.ini'))
 
 
-def load_ini():
+def load_ini(legacy_settings=None):
     values, lines = dict(INI_DEFAULTS), []
     try:
         lines = ini_path().read_text(encoding='utf-8').splitlines()
@@ -338,6 +338,21 @@ def load_ini():
         if '=' in line and not line.lstrip().startswith('#'):
             key, value = line.split('=', 1)
             values[key.strip()] = value.strip()
+    # Move existing launcher preferences once. Explicit INI values always win,
+    # including vk/0; a later overlay edit must never be replaced by the old JSON.
+    present = {line.split('=', 1)[0].strip() for line in lines
+               if '=' in line and not line.lstrip().startswith('#')}
+    migrated = {}
+    for key in SHARED_GRAPHICS_KEYS:
+        if key not in present and legacy_settings is not None and key in legacy_settings:
+            old = legacy_settings[key]
+            migrated[key] = fsr411_backend(legacy_settings) if key == 'fsr411_backend' else \
+                '1' if old is True or old == '1' else '0'
+    if migrated:
+        save_ini(migrated, lines)
+        return load_ini()
+    values['fsr411_backend'] = fsr411_backend(values)
+    values['object_motion_cache'] = '1' if values.get('object_motion_cache') == '1' else '0'
     return values, lines
 
 
@@ -502,8 +517,7 @@ def motion_cache_available(graphics):
 
 def game_environment(s, graphics=None):
     env = dict(os.environ)
-    env['BB_FSR411_BACKEND'] = fsr411_backend(s)
-    env['BB_FSR411_NATIVE'] = '1' if fsr411_backend(s) == 'dx12' else '0'
+    graphics = graphics if graphics is not None else load_ini(s)[0]
     env['BB_GAME_DIR'] = s['game_dir']
     if s['user_dir']:
         env['BB_USER_DIR'] = s['user_dir']
@@ -536,9 +550,13 @@ def game_environment(s, graphics=None):
         if '=' in item:
             key, value = item.split('=', 1)
             env[key] = value
-    # The saved checkbox is authoritative for both PLAY and shortcut launches.
-    cache = s.get('object_motion_cache', False) and motion_cache_available(
-        graphics if graphics is not None else load_ini()[0])
+    # run.py refreshes these derived values from the shared file on every start,
+    # including an in-game restart. The saved preference remains independent of
+    # whether the current upscaler/object-motion selection can use the cache.
+    env['BB_SHARED_GRAPHICS_CONFIG'] = '1'
+    env['BB_FSR411_BACKEND'] = fsr411_backend(graphics)
+    env['BB_FSR411_NATIVE'] = '1' if fsr411_backend(graphics) == 'dx12' else '0'
+    cache = graphics.get('object_motion_cache', '0') == '1' and motion_cache_available(graphics)
     env['BB_OBJECT_MOTION_CACHE'] = '1' if cache else '0'
     if s.get('online'):
         server = str(s['online_server']).strip() or APP_DEFAULTS['online_server']
@@ -590,7 +608,7 @@ class Launcher:
         self.tk, self.ttk, self.filedialog, self.messagebox = tk, ttk, filedialog, messagebox
         self.root = root
         self.app = {**APP_DEFAULTS, **load_json(CONFIG_FILE, {})}
-        self.ini, self.ini_lines = load_ini()
+        self.ini, self.ini_lines = load_ini(self.app)
         self.remap_ini_path = input_ini_path(ini_path())
         self.remap_bindings, self.remap_lines, self.remap_toggle_key, self.remap_reload_key, \
             self.mouse_settings = load_input_ini(self.remap_ini_path)
@@ -755,7 +773,7 @@ class Launcher:
         return box
 
     def fsr411_choice(self, parent, width=38):
-        backend = self.var('fsr411_backend', 'app')
+        backend = self.var('fsr411_backend', 'ini')
         upscaler = self.var('upscaler', 'ini')
         values = [value for value, _text in FSR411_BACKENDS]
         box = self.ttk.Combobox(parent, values=[_(*text) for _value, text in FSR411_BACKENDS],
@@ -789,7 +807,7 @@ class Launcher:
         upscaler = self.var('upscaler', 'ini')
         object_motion = self.var('object_motion', 'ini')
         button = self.ttk.Checkbutton(parent, text=_('Motion-vector cache (experimental)'),
-                                     variable=self.var('object_motion_cache', 'app'))
+                                     variable=self.var('object_motion_cache', 'ini'))
         row = self.next_row(parent)
         button.grid(row=row, column=0, columnspan=2, sticky='w', pady=(8, 0))
         self.ttk.Label(parent, text=_(
@@ -2034,7 +2052,7 @@ class Launcher:
                 _('• FSR 4 assets missing (Graphics); FSR 3.1 is used meanwhile',
                   '• Нет ассетов FSR 4 («Графика»); пока используется FSR 3.1'))
         if self.var('upscaler', 'ini').get() == 'fsr411':
-            available = (native_fsr411_present() if self.var('fsr411_backend', 'app').get() == 'dx12'
+            available = (native_fsr411_present() if self.var('fsr411_backend', 'ini').get() == 'dx12'
                          else getattr(self, 'fsr411_verified', False))
             fsr4 = (_('✓ FSR 4.1.1 files installed', '✓ Файлы FSR 4.1.1 установлены')
                     if available else
@@ -2060,7 +2078,7 @@ class Launcher:
             fps = ('30 FPS',)
         upscaler = dict(UPSCALERS).get(self.var('upscaler', 'ini').get(), ('?',))[0].split(' (')[0]
         if self.var('upscaler', 'ini').get() == 'fsr411':
-            upscaler += ' · ' + ('DX12' if self.var('fsr411_backend', 'app').get() == 'dx12' else 'fsr4vk')
+            upscaler += ' · ' + ('DX12' if self.var('fsr411_backend', 'ini').get() == 'dx12' else 'fsr4vk')
         output = self.var('output_res', 'ini').get().replace('x', ' × ')
         online = _('Online') if self.var('online', 'app').get() else _('Offline')
         if self.var('online', 'app').get() and self.var('online_pool', 'app').get() == 'huntersdream':
@@ -2225,8 +2243,22 @@ class Launcher:
             self.mod_order[index], self.mod_order[other] = self.mod_order[other], self.mod_order[index]
             self.refresh_lists()
 
+    def sync_shared_graphics(self):
+        """Merge overlay edits while preserving an explicit, unsaved launcher edit."""
+        disk, lines = load_ini()
+        for key in SHARED_GRAPHICS_KEYS:
+            var = self.vars.get(key)
+            value = var.get() if var is not None else self.ini[key]
+            shown = ('1' if value else '0') if key in INI_FLAGS and var is not None else str(value)
+            if shown == self.ini[key]:
+                self.ini[key] = disk[key]
+                if var is not None:
+                    var.set(disk[key] == '1' if key in INI_FLAGS else disk[key])
+        self.ini_lines = lines
+
     def collect(self):
         """Writes settings.json, bbport.ini, mods.json and patches.json."""
+        self.sync_shared_graphics()
         for key, var in self.vars.items():
             try:
                 value = var.get()
@@ -2237,6 +2269,8 @@ class Launcher:
                     f'{float(value):.2f}' if key == 'sharpness' else str(value)
             else:
                 self.app[key] = value
+        for key in SHARED_GRAPHICS_KEYS:
+            self.app.pop(key, None)
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         CONFIG_FILE.write_text(json.dumps(self.app, indent=2, ensure_ascii=False), encoding='utf-8')
         save_ini({key: self.ini[key] for key in INI_DEFAULTS}, self.ini_lines)
@@ -2350,6 +2384,16 @@ class Launcher:
         self.output.put((process.wait(),))
 
     def drain_output(self):
+        if self.process:
+            try:
+                stamp = ini_path().stat().st_mtime_ns
+                # Wait for a stable write before merging an overlay save into the UI.
+                if stamp == getattr(self, '_shared_ini_seen', None) and stamp != getattr(self, '_shared_ini_synced', None):
+                    self.sync_shared_graphics()
+                    self._shared_ini_synced = stamp
+                self._shared_ini_seen = stamp
+            except OSError:
+                pass
         while not self.ui_calls.empty():
             self.ui_calls.get_nowait()()
         try:
@@ -2358,6 +2402,7 @@ class Launcher:
                 if isinstance(item, tuple):
                     self.append(_('\n— the game exited (code {}) —\n', '\n— игра завершилась (код {}) —\n').format(item[0]))
                     self.process = None
+                    self.sync_shared_graphics()
                     self.refresh_fsr411()
                     if self.job:
                         self.job.close()

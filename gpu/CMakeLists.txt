@@ -366,6 +366,21 @@ add_executable(upscaler-support-test EXCLUDE_FROM_ALL ../tests/test_upscaler_sup
 target_include_directories(upscaler-support-test PRIVATE shim)
 target_compile_options(upscaler-support-test PRIVATE -UNDEBUG)
 
+add_executable(shared-graphics-test EXCLUDE_FROM_ALL ../tests/test_shared_graphics.cpp
+    shim/bbport_settings.cpp)
+target_include_directories(shared-graphics-test PRIVATE shim)
+target_compile_options(shared-graphics-test PRIVATE -UNDEBUG)
+
+if (WIN32)
+    add_executable(shared-graphics-overlay-test EXCLUDE_FROM_ALL ../tests/test_shared_graphics_overlay.cpp)
+    target_include_directories(shared-graphics-overlay-test PRIVATE .. ../src shim shadps4
+        third_party/gcn/include third_party/imgui third_party/imgui/backends)
+    target_compile_definitions(shared-graphics-overlay-test PRIVATE IMGUI_IMPL_VULKAN_NO_PROTOTYPES
+        BB_FONT_PATH="${CMAKE_CURRENT_SOURCE_DIR}/third_party/fonts/DejaVuSans.ttf")
+    target_compile_options(shared-graphics-overlay-test PRIVATE -UNDEBUG)
+    target_link_libraries(shared-graphics-overlay-test PRIVATE bbgpu atrac9 onecore bcrypt ws2_32 -pthread)
+endif()
+
 add_executable(fsr4-bench EXCLUDE_FROM_ALL tools/fsr4_bench.cpp
     shadps4/video_core/renderer_vulkan/fsr411/fsr411.cpp)
 target_include_directories(fsr4-bench PRIVATE shadps4/video_core/renderer_vulkan/fsr411)

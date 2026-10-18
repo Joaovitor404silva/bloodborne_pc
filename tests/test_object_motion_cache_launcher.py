@@ -15,7 +15,7 @@ import bbport_lang_motion_cache as translations
 class CacheEnvironmentTest(unittest.TestCase):
     def test_existing_profile_defaults_to_original_path(self):
         settings = dict(launcher.APP_DEFAULTS)
-        self.assertIs(settings.pop('object_motion_cache'), False)
+        self.assertEqual(launcher.INI_DEFAULTS['object_motion_cache'], '0')
         with patch.dict('os.environ', {'BB_OBJECT_MOTION_CACHE': '1'}, clear=True):
             env = launcher.game_environment(settings, launcher.INI_DEFAULTS)
         self.assertEqual(env['BB_OBJECT_MOTION_CACHE'], '0')
@@ -23,25 +23,27 @@ class CacheEnvironmentTest(unittest.TestCase):
     def test_checkbox_controls_each_fsr_mode_and_overrides_extra_variables(self):
         for upscaler in ('fsr3', 'fsr4', 'fsr411'):
             for enabled in (False, True):
-                settings = {**launcher.APP_DEFAULTS, 'object_motion_cache': enabled,
+                settings = {**launcher.APP_DEFAULTS,
                             'extra_env': f'BB_OBJECT_MOTION_CACHE={int(not enabled)}',
-                            'fsr411_backend': 'dx12', 'frame_cap': '90'}
+                            'frame_cap': '90'}
                 original = copy.deepcopy(settings)
                 with patch.dict('os.environ', {}, clear=True):
-                    env = launcher.game_environment(settings, {'upscaler': upscaler, 'object_motion': '1'})
+                    env = launcher.game_environment(settings, {'upscaler': upscaler, 'object_motion': '1',
+                        'object_motion_cache': str(int(enabled)), 'fsr411_backend': 'dx12'})
                 self.assertEqual(env['BB_OBJECT_MOTION_CACHE'], str(int(enabled)))
                 self.assertEqual(env['BB_FSR411_BACKEND'], 'dx12')
                 self.assertEqual(env['BB_FPS_LIMIT'], '90')
                 self.assertEqual(settings, original)
 
     def test_other_upscalers_and_disabled_motion_use_original_path(self):
-        settings = {**launcher.APP_DEFAULTS, 'object_motion_cache': True}
+        settings = dict(launcher.APP_DEFAULTS)
         for upscaler in ('dlss', 'taa', 'off', 'fsr3', 'fsr4', 'fsr411'):
             for motion in ('0', '1'):
-                env = launcher.game_environment(settings, {'upscaler': upscaler, 'object_motion': motion})
+                graphics = {'upscaler': upscaler, 'object_motion': motion, 'object_motion_cache': '1'}
+                env = launcher.game_environment(settings, graphics)
                 expected = upscaler in ('fsr3', 'fsr4', 'fsr411') and motion == '1'
                 self.assertEqual(env['BB_OBJECT_MOTION_CACHE'], str(int(expected)))
-        self.assertIs(settings['object_motion_cache'], True)
+                self.assertEqual(graphics['object_motion_cache'], '1')
 
     def test_shortcut_reads_current_ini_and_preserves_saved_choice(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -86,7 +88,7 @@ class CacheWidgetTest(unittest.TestCase):
         self.button = self.ui.motion_cache_check(self.frame)
 
     def test_widget_default_and_availability_retain_choice(self):
-        selected = self.ui.var('object_motion_cache', 'app')
+        selected = self.ui.var('object_motion_cache', 'ini')
         self.assertFalse(selected.get())
         self.button.invoke()
         self.assertTrue(selected.get())
@@ -108,17 +110,19 @@ class CacheWidgetTest(unittest.TestCase):
             folder = Path(temporary)
             profile = folder / 'settings.json'
             self.ui.app['user_dir'] = 'existing-save-folder'
-            self.ui.app['fsr411_backend'] = 'dx12'
+            self.ui.var('fsr411_backend', 'ini').set('dx12')
             with patch.object(launcher, 'CONFIG_DIR', folder), \
                     patch.object(launcher, 'CONFIG_FILE', profile), \
                     patch.dict('os.environ', {'BB_CONFIG': str(folder / 'bbport.ini')}):
                 for selected in (True, False):
                     self.ui.vars['object_motion_cache'].set(selected)
                     self.ui.collect()
-                    saved = {**launcher.APP_DEFAULTS, **launcher.load_json(profile, {})}
-                    self.assertIs(saved['object_motion_cache'], selected)
+                    saved = launcher.load_json(profile, {})
+                    self.assertNotIn('object_motion_cache', saved)
+                    self.assertNotIn('fsr411_backend', saved)
                     self.assertEqual(saved['user_dir'], 'existing-save-folder')
-                    self.assertEqual(saved['fsr411_backend'], 'dx12')
+                    self.assertEqual(launcher.load_ini()[0]['object_motion_cache'], str(int(selected)))
+                    self.assertEqual(launcher.load_ini()[0]['fsr411_backend'], 'dx12')
                     self.assertEqual(launcher.load_ini()[0]['object_motion'], '1')
 
     def test_translated_widgets_and_trace_cleanup(self):

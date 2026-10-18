@@ -5,6 +5,15 @@ Select **FSR 4.1.1 (experimental)** in **Upscaler**, then choose the method in
 normal **PLAY** button. `Play Bloodborne.exe` uses the same saved selection.
 A method change takes effect on the next game start.
 
+The **Insert / L3+R3** in-game overlay also provides **FSR 4.1.1 backend**.
+Its pending selection is saved immediately when the menu closes, and the
+existing **Apply and restart** action applies it. The running provider remains
+active until that restart. The launcher and overlay share
+`fsr411_backend=vk|dx12` in `bbport.ini`; older launcher-profile values migrate
+when the INI key is absent. An explicit INI value takes precedence over that
+legacy profile. Both the Graphics page and Play quick settings follow the
+shared selection, including changes saved by the overlay while the launcher is open.
+
 | Method | Provider | Installation |
 |---|---|---|
 | AMD DX12 | AMD's original FSR 4.1.1 runtime through a Vulkan/DX12 shared-texture bridge (buffer fallback) | Included in the Windows package |
