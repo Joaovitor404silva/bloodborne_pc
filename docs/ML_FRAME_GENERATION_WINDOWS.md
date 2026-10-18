@@ -86,7 +86,12 @@ reduced that GPU step from **0.1660 to 0.1052 ms**; game FPS were **74.44 / 74.8
 separate sessions and retain their own reference values. The branch uses the
 overlap and combined copy/HUD path. [Measurement data](benchmarks/ml-fg401-20261017.json).
 
-The public branch builds on the Windows 1.9.1 integration from #76. Build,
+The public branch builds on the Windows 1.9.1 integration from #76, synchronized
+through upstream [`b3fc78b`](https://github.com/Supermedo/bloodborne_pc/commit/b3fc78bff0997f75f73e14a5fffeb1141f0cea70).
+The merge retains upstream's controller and keyboard/mouse improvements, low-VRAM
+handling, GPU fault reporting and the frame-generation fix for a single long hitch.
+Both rendering and FG presentation submissions use upstream's fault reporting;
+the ML method retains its separate completion queue. Build,
 GPU-output and package checks cover this source; the historical gameplay figures
 above retain their Windows 1.9 attribution.
 
