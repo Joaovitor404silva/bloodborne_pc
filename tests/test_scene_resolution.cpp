@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Exercises the production target/resolve path on Vulkan (Lavapipe works, no game/window).
 #include <cmath>
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include "common/slot_vector.h"
@@ -10,6 +11,9 @@
 #include "video_core/renderer_vulkan/vk_scene_resolution.h"
 #include "video_core/texture_cache/blit_helper.h"
 #include <vk_mem_alloc.h>
+
+// Renderer dependencies include the overlay; this test never restarts a guest.
+extern "C" void runtime_restart() { std::abort(); }
 
 // Vulkan-Hpp's dispatcher layout depends on NDEBUG. Include the renderer with
 // the library's build flags, then enable assertions for the test body only.

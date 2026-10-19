@@ -329,7 +329,15 @@ add_executable(ui-composition-test EXCLUDE_FROM_ALL ../tests/test_ui_composition
 target_compile_options(ui-composition-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
 target_include_directories(ui-composition-test PRIVATE ..)
 
-add_executable(scene-resolution-test EXCLUDE_FROM_ALL ../tests/test_scene_resolution.cpp ../tests/test_gpu_runtime_stubs.cpp)
+if (WIN32)
+    add_executable(scene-resolution-test EXCLUDE_FROM_ALL ../tests/test_scene_resolution.cpp
+        ${BB_RUNTIME} ../src/compat_win.c)
+    target_include_directories(scene-resolution-test PRIVATE .. ../src)
+    target_link_libraries(scene-resolution-test PRIVATE atrac9 onecore bcrypt ws2_32 -pthread)
+else()
+    add_executable(scene-resolution-test EXCLUDE_FROM_ALL ../tests/test_scene_resolution.cpp
+        ../tests/test_gpu_runtime_stubs.cpp)
+endif()
 target_include_directories(scene-resolution-test PRIVATE shim shadps4 third_party/gcn/include)
 # The test's Vulkan-Hpp inline methods have a different set of platform extensions
 # from vk_platform.cpp. Keep them local and use an explicit dispatcher in the test.
@@ -373,7 +381,8 @@ target_include_directories(shared-graphics-test PRIVATE shim)
 target_compile_options(shared-graphics-test PRIVATE -UNDEBUG)
 
 if (WIN32)
-    add_executable(shared-graphics-overlay-test EXCLUDE_FROM_ALL ../tests/test_shared_graphics_overlay.cpp)
+    add_executable(shared-graphics-overlay-test EXCLUDE_FROM_ALL ../tests/test_shared_graphics_overlay.cpp
+        ${BB_RUNTIME} ../src/compat_win.c)
     target_include_directories(shared-graphics-overlay-test PRIVATE .. ../src shim shadps4
         third_party/gcn/include third_party/imgui third_party/imgui/backends)
     target_compile_definitions(shared-graphics-overlay-test PRIVATE IMGUI_IMPL_VULKAN_NO_PROTOTYPES
