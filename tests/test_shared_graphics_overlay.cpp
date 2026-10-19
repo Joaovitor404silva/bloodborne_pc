@@ -8,12 +8,14 @@
 #include <fstream>
 #include <string>
 #include "imgui_internal.h"
+#define runtime_restart overlay_test_restart
 #include "../gpu/shim/bbport_overlay.cpp"
+#undef runtime_restart
 #include <windows.h>
 
 static int restarts = 0;
-extern "C" void runtime_restart() { ++restarts; }
-extern "C" { std::uint64_t runtime_disabled_optimizations = 0; }
+// Keep the restart observable while linking the renderer's actual runtime dependencies.
+extern "C" void overlay_test_restart() { ++restarts; }
 
 static std::string Frame(ImGuiID activate = 0, ImGuiWindow* target = nullptr) {
     ImGui::GetIO().DeltaTime = 1.0f / 60;
