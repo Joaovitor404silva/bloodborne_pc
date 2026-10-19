@@ -30,28 +30,17 @@ Both methods use the normal Windows launcher.
 The pre-existing **FSR 4 assets** controls and `fsr4_shaders/` are for the older
 FSR 4 v07 path, independent of these two providers.
 
-## Windows 1.9.1 integration
+## Windows 1.9.2 integration
 
-The PR incorporates the current Windows 1.9.1 branch through
-[`b3fc78b`](https://github.com/Supermedo/bloodborne_pc/commit/b3fc78bff0997f75f73e14a5fffeb1141f0cea70),
-including the Windows 1.9 shadPS4 0.20.1 GPU layer and frame-generation controls.
-The 1.9.1 hotfix restores the earlier index-buffer binding and texture placement,
-and reserves VRAM for game-memory backing to address distorted polygons and
-performance drops after area loads. The FSR providers and optional motion-vector
-cache retain their existing behavior and defaults. The scheduler
-uses upstream's semaphore-sized wait-stage array together with the external DX12
-completion wait. Graphics retains both the experimental motion-vector cache
-checkbox and the upstream frame-generation section. Cache defaults and saved
-provider selections remain the same.
+The PR incorporates the Windows 1.9.2 branch through
+[`de2e38a`](https://github.com/Supermedo/bloodborne_pc/commit/de2e38af055f09f819946951075c6bb119e62ae6).
+The selectable providers, shared overlay settings and optional motion-vector
+cache retain their behavior and defaults. The original Vulkan FSR 3.1 frame-
+generation path includes upstream's per-frame bridge-allocation retirement fix.
+Build and package checks cover both providers and the original frame-generation
+method; shader caches rebuild for upstream's updated shader format.
 
-The 18 October synchronization also retains upstream's keyboard/mouse
-combinations, controller button prompts and gesture fixes, field-of-view and
-background-audio settings, low-VRAM texture handling, external FPS-patch
-precedence, CPU compatibility fixes and GPU fault reporting. The
-Vulkan feature query includes both the fsr4vk descriptor features and upstream
-device-fault support. Controller sampling follows upstream's input code.
-
-The performance tables below record the earlier 1.8.2 integrations. The 1.9.1
+The performance tables below record the earlier 1.8.2 integrations. The 1.9.2
 integration receives separate build, provider-output and extracted-package
 checks. The published
 [test.3](https://github.com/rattensuppe/bloodborne_pc/releases/tag/v1.8.2-fsr411-test.3)
