@@ -13,7 +13,9 @@
 #include <vk_mem_alloc.h>
 
 // Renderer dependencies include the overlay; this test never restarts a guest.
+#ifdef _WIN32
 extern "C" void runtime_restart() { std::abort(); }
+#endif
 
 // Vulkan-Hpp's dispatcher layout depends on NDEBUG. Include the renderer with
 // the library's build flags, then enable assertions for the test body only.
