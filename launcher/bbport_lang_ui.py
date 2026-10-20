@@ -142,6 +142,7 @@ UI = {'de': {
     # ---- Help ----
     'Set everything up again, step by step.': 'Alles noch einmal Schritt für Schritt einrichten.',
     'Only with your own copy of the game': 'Nur mit deiner eigenen Kopie des Spiels',
+    "Windows' title bar instead of the launcher's own": 'Windows-Titelleiste statt der eigenen des Launchers',
     'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from '
     'the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing '
     'them breaks rule 2 of the community Discord and can get you banned.':

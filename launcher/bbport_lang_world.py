@@ -897,6 +897,8 @@ WORLD = {
             'У Windows слишком мало памяти для запуска',
         'Windows shows this for programs it does not know yet.':
             'Windows показывает это для программ, которые ещё не знает.',
+        "Windows' title bar instead of the launcher's own":
+            'Заголовок окна Windows вместо собственного заголовка лаунчера',
         "With The Hunter's Dream, together with bbhost players. It needs a free sign-in with Discord, once.":
             "Через The Hunter's Dream, вместе с игроками bbhost. Нужен однократный бесплатный вход через Discord.",
         'With your own settings. A crash, a freeze or memory that keeps growing ends up in the report with the log lines around it.':
@@ -2222,6 +2224,8 @@ WORLD = {
             'ذاكرة Windows غير كافية لبدء اللعبة',
         'Windows shows this for programs it does not know yet.':
             'يعرض Windows هذا للبرامج التي لا يعرفها بعد.',
+        "Windows' title bar instead of the launcher's own":
+            'شريط عنوان Windows بدلًا من شريط المشغّل',
         "With The Hunter's Dream, together with bbhost players. It needs a free sign-in with Discord, once.":
             "مع The Hunter's Dream، جنبًا إلى جنب مع لاعبي bbhost. يتطلب تسجيل دخول مجانيًا باستخدام Discord، مرة واحدة.",
         'With your own settings. A crash, a freeze or memory that keeps growing ends up in the report with the log lines around it.':
@@ -3555,6 +3559,8 @@ WORLD = {
             'Windows tiene muy poca memoria para el inicio',
         'Windows shows this for programs it does not know yet.':
             'Windows muestra esto con los programas que aún no conoce.',
+        "Windows' title bar instead of the launcher's own":
+            'Barra de título de Windows en lugar de la del lanzador',
         "With The Hunter's Dream, together with bbhost players. It needs a free sign-in with Discord, once.":
             "Con The Hunter's Dream, junto a jugadores de bbhost. Hay que iniciar sesión gratis con Discord una vez.",
         'With your own settings. A crash, a freeze or memory that keeps growing ends up in the report with the log lines around it.':
@@ -4882,6 +4888,8 @@ WORLD = {
             'O Windows tem pouca memória para iniciar o jogo',
         'Windows shows this for programs it does not know yet.':
             'O Windows mostra isso para programas que ainda não conhece.',
+        "Windows' title bar instead of the launcher's own":
+            'Barra de título do Windows em vez da do launcher',
         "With The Hunter's Dream, together with bbhost players. It needs a free sign-in with Discord, once.":
             "Com o The Hunter's Dream, junto com jogadores do bbhost. Precisa de um login gratuito com o Discord, uma vez só.",
         'With your own settings. A crash, a freeze or memory that keeps growing ends up in the report with the log lines around it.':
@@ -6215,6 +6223,8 @@ WORLD = {
             'Windows a trop peu de mémoire pour le lancement',
         'Windows shows this for programs it does not know yet.':
             'Windows affiche ce message pour les programmes qu’il ne connaît pas encore.',
+        "Windows' title bar instead of the launcher's own":
+            'Barre de titre de Windows au lieu de celle du lanceur',
         "With The Hunter's Dream, together with bbhost players. It needs a free sign-in with Discord, once.":
             "Avec The Hunter's Dream, aux côtés des joueurs bbhost. Nécessite une connexion gratuite avec Discord, une seule fois.",
         'With your own settings. A crash, a freeze or memory that keeps growing ends up in the report with the log lines around it.':
@@ -7548,6 +7558,8 @@ WORLD = {
             'Windows ha troppa poca memoria per l’avvio',
         'Windows shows this for programs it does not know yet.':
             'Windows mostra questo messaggio per i programmi che non conosce ancora.',
+        "Windows' title bar instead of the launcher's own":
+            'Barra del titolo di Windows invece di quella del launcher',
         "With The Hunter's Dream, together with bbhost players. It needs a free sign-in with Discord, once.":
             "Con The Hunter's Dream, insieme ai giocatori di bbhost. Richiede un accesso gratuito con Discord, una sola volta.",
         'With your own settings. A crash, a freeze or memory that keeps growing ends up in the report with the log lines around it.':
@@ -8881,6 +8893,8 @@ WORLD = {
             'Windows ma za mało pamięci na start',
         'Windows shows this for programs it does not know yet.':
             'Windows pokazuje to przy programach, których jeszcze nie zna.',
+        "Windows' title bar instead of the launcher's own":
+            'Pasek tytułu Windows zamiast własnego paska launchera',
         "With The Hunter's Dream, together with bbhost players. It needs a free sign-in with Discord, once.":
             "Przez The Hunter's Dream, razem z graczami bbhost. Wymaga jednorazowego, darmowego logowania przez Discord.",
         'With your own settings. A crash, a freeze or memory that keeps growing ends up in the report with the log lines around it.':
@@ -10214,6 +10228,8 @@ WORLD = {
             'Windows’ta başlangıç için yeterli bellek yok',
         'Windows shows this for programs it does not know yet.':
             'Windows bunu henüz tanımadığı programlar için gösterir.',
+        "Windows' title bar instead of the launcher's own":
+            'Başlatıcının kendi başlık çubuğu yerine Windows başlık çubuğu',
         "With The Hunter's Dream, together with bbhost players. It needs a free sign-in with Discord, once.":
             "The Hunter's Dream ile, bbhost oyuncularıyla birlikte. Bir kez ücretsiz olarak Discord ile oturum açmanız gerekir.",
         'With your own settings. A crash, a freeze or memory that keeps growing ends up in the report with the log lines around it.':
@@ -11547,6 +11563,8 @@ WORLD = {
             'Windows 可用内存不足，无法启动',
         'Windows shows this for programs it does not know yet.':
             'Windows 会对它尚不认识的程序显示此提示。',
+        "Windows' title bar instead of the launcher's own":
+            '使用 Windows 标题栏，而非启动器自带的标题栏',
         "With The Hunter's Dream, together with bbhost players. It needs a free sign-in with Discord, once.":
             "通过 The Hunter's Dream，与 bbhost 玩家一起。只需使用 Discord 免费登录一次。",
         'With your own settings. A crash, a freeze or memory that keeps growing ends up in the report with the log lines around it.':
@@ -12880,6 +12898,8 @@ WORLD = {
             '起動に必要なメモリが Windows に不足している',
         'Windows shows this for programs it does not know yet.':
             'Windows は、まだ認識していないプログラムに対してこの表示を出します。',
+        "Windows' title bar instead of the launcher's own":
+            'ランチャー独自のタイトルバーの代わりに Windows のタイトルバーを使う',
         "With The Hunter's Dream, together with bbhost players. It needs a free sign-in with Discord, once.":
             "The Hunter's Dream で、bbhost のプレイヤーと一緒に遊べます。Discord での無料サインインが一度だけ必要です。",
         'With your own settings. A crash, a freeze or memory that keeps growing ends up in the report with the log lines around it.':
@@ -14213,6 +14233,8 @@ WORLD = {
             '시작에 필요한 Windows 메모리 부족',
         'Windows shows this for programs it does not know yet.':
             'Windows는 아직 모르는 프로그램에 대해 이 메시지를 표시합니다.',
+        "Windows' title bar instead of the launcher's own":
+            '런처 자체 제목 표시줄 대신 Windows 제목 표시줄 사용',
         "With The Hunter's Dream, together with bbhost players. It needs a free sign-in with Discord, once.":
             "The Hunter's Dream에서 bbhost 플레이어와 함께. 한 번만 Discord로 무료 로그인하면 됩니다.",
         'With your own settings. A crash, a freeze or memory that keeps growing ends up in the report with the log lines around it.':

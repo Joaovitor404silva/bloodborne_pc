@@ -24,6 +24,39 @@ class WindowTests(unittest.TestCase):
         self.assertIn('self.appearance_check(f)', game)
         self.assertNotIn('game', L.EXPERT_PAGES)
 
+    def test_the_launchers_title_bar_by_default(self):
+        self.assertIs(L.APP_DEFAULTS['windows_title_bar'], False)
+        self.assertIn("'windows_title_bar', 'app'", SOURCE)  # the way back, in Advanced
+
+    def test_where_windows_finds_the_caption(self):
+        import bbport_frame
+
+        class User32:
+            zoomed = False
+
+            def ClientToScreen(self, _hwnd, point):
+                point._obj.x, point._obj.y = 100, 50  # the client area's top left on the screen
+
+            def GetClientRect(self, _hwnd, rect):
+                rect._obj.right, rect._obj.bottom = 1200, 800
+
+            def IsZoomed(self, _hwnd):
+                return self.zoomed
+        frame = bbport_frame.Frame(1, [])
+        frame.user32 = User32()
+        frame.bar, frame.buttons, frame.edge, frame.corner = 32, 138, 5, 10
+
+        def hit(x, y):
+            return frame.hit(((y & 0xFFFF) << 16) | (x & 0xFFFF))
+        self.assertEqual(hit(100 + 600, 50 + 16), bbport_frame.HTCAPTION)
+        self.assertEqual(hit(100 + 1200 - 20, 50 + 16), bbport_frame.HTCLIENT)  # the window's buttons
+        self.assertEqual(hit(100 + 600, 50 + 2), bbport_frame.HTTOP)
+        self.assertEqual(hit(100 + 3, 50 + 2), bbport_frame.HTTOPLEFT)
+        self.assertEqual(hit(100 + 1197, 50 + 2), bbport_frame.HTTOPRIGHT)
+        self.assertEqual(hit(100 + 600, 50 + 40), bbport_frame.HTCLIENT)  # below the bar: the page
+        frame.user32.zoomed = True
+        self.assertEqual(hit(100 + 600, 50 + 2), bbport_frame.HTCAPTION)  # maximized: no edge to resize
+
     def test_side_bar_switch_matches_the_side_bar(self):
         start = SOURCE.index('self.mode_switch = ttk.Checkbutton(')
         statement = SOURCE[start:SOURCE.index('self.mode_switch.pack', start)]

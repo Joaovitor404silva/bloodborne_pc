@@ -136,6 +136,7 @@ import bbport_lang_help  # noqa: E402,F401 (the Help page's and the game tests' 
 import bbport_lang_ui  # noqa: E402,F401 (the regrouped pages, the side bar, the guide)
 import bbport_lang_world  # noqa: E402,F401 (the new texts in the other eleven languages)
 import bbport_hardware as hardware  # noqa: E402
+import bbport_frame  # noqa: E402
 import bbport_help  # noqa: E402
 import bbport_search  # noqa: E402
 import bbport_setup  # noqa: E402
@@ -252,6 +253,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 # A hint of what lies behind the window (window_chrome); off by default, easiest to read.
                 # A new key: the first test build saved 'translucent' on for everyone.
                 'translucent_window': False,
+                'windows_title_bar': False,  # Windows' caption instead of the launcher's own (bbport_frame)
                 'seen_version': '',  # the version whose news the Play page has shown
                 # Game tests (System & performance): the kind, the scenario, its options.
                 'test_mode': 'performance', 'test_scenario': 'hunters-view', 'test_compare': 'preset',
@@ -829,6 +831,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     # ---- layout ------------------------------------------------------------------------------
     def build(self):
         tk, ttk, px = self.tk, self.ttk, self.px
+        self.custom_frame = None  # bbport_frame.Frame once installed (window_chrome), False if it failed
+        self.titlebar = None if self.app.get('windows_title_bar') else self.build_titlebar()
         side = tk.Frame(self.root, bg=BG, width=px(248))
         side.pack(side='left', fill='y')
         side.pack_propagate(False)
@@ -978,6 +982,58 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             c.coords(items['label'], px(44), mid)
             self.nav_paint(name)
 
+    TITLE_ICONS = {'minimize': '\ue921', 'maximize': '\ue922', 'restore': '\ue923', 'close': '\ue8bb'}
+
+    def build_titlebar(self):
+        """The launcher's own title bar: a drag area in the side bar's colour and the window's three
+        buttons. Windows' caption goes once the window exists (window_chrome, bbport_frame)."""
+        tk, px = self.tk, self.px
+        bar = tk.Frame(self.root, bg=BG, height=px(32))
+        bar.pack(side='top', fill='x')
+        bar.pack_propagate(False)
+        self.title_buttons = {}
+        for name, command, hover in (('close', self.close, theme.BLOOD),
+                                     ('maximize', self.toggle_maximized, theme.SURFACE),
+                                     ('minimize', self.root.iconify, theme.SURFACE)):
+            cell = tk.Frame(bar, bg=BG, width=px(46), height=px(32))
+            cell.pack(side='right')
+            cell.pack_propagate(False)
+            glyph = tk.Label(cell, text=self.TITLE_ICONS[name], bg=BG, fg=theme.TEXT_SOFT, font=(theme.ICONS, 9))
+            glyph.pack(fill='both', expand=True)
+
+            def paint(on, cell=cell, glyph=glyph, hover=hover, name=name):
+                cell.configure(bg=hover if on else BG)
+                glyph.configure(bg=hover if on else BG,
+                                fg=theme.TEXT_STRONG if on and name == 'close' else theme.TEXT if on else theme.TEXT_SOFT)
+            for widget in (cell, glyph):
+                widget.bind('<Enter>', lambda _e, paint=paint: paint(True))
+                widget.bind('<Leave>', lambda _e, paint=paint: paint(False))
+                widget.bind('<ButtonRelease-1>', lambda e, command=command, widget=widget, cell=cell, glyph=glyph:
+                            command() if widget.winfo_containing(e.x_root, e.y_root) in (cell, glyph) else None)
+            self.title_buttons[name] = glyph
+        self.root.bind('<Configure>', lambda _e: self.title_state(), add='+')
+        return bar
+
+    def toggle_maximized(self):
+        self.root.state('normal' if self.root.state() == 'zoomed' else 'zoomed')
+
+    def title_state(self):
+        """The maximize button's glyph follows the window's state; Windows learns where the bar is."""
+        if not getattr(self, 'title_buttons', None):
+            return
+        zoomed = self.root.state() == 'zoomed'
+        glyph = self.TITLE_ICONS['restore' if zoomed else 'maximize']
+        if self.title_buttons['maximize'].cget('text') != glyph:
+            self.title_buttons['maximize'].configure(text=glyph)
+        if self.custom_frame:  # where Windows finds the caption and the buttons (physical pixels)
+            self.custom_frame.bar = self.titlebar.winfo_height()
+            self.custom_frame.buttons = sum(cell.master.winfo_width() for cell in self.title_buttons.values())
+            self.custom_frame.edge, self.custom_frame.corner = self.px(5), self.px(10)
+
+    def titlebar_height(self):
+        """The height the launcher's title bar takes at the top (0 with Windows' caption)."""
+        return self.titlebar.winfo_reqheight() if self.titlebar and self.custom_frame is not False else 0
+
     def window_chrome(self):
         """The title bar in the launcher's colours: dark, and on Windows 11 acrylic (a hint of
         what lies behind it); the whole window very slightly translucent when chosen (Game & language,
@@ -993,6 +1049,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             if attribute(20, 1):  # DWMWA_USE_IMMERSIVE_DARK_MODE; 19 before Windows 10 20H1
                 attribute(19, 1)
             attribute(38, 3 if translucent else 2)  # DWMWA_SYSTEMBACKDROP_TYPE: acrylic or mica (Windows 11)
+            attribute(34, 0x00141210)  # DWMWA_BORDER_COLOR (Windows 11): the side bar's dark, not the accent
+            if self.titlebar is not None and getattr(self, 'custom_frame', None) is None:
+                frame = bbport_frame.Frame(hwnd, [self.root.winfo_id(), self.titlebar.winfo_id()])
+                self.custom_frame = frame if frame.install() else False
+                if not self.custom_frame:
+                    self.titlebar.pack_forget()
+                    guide = getattr(self, 'guide', None)
+                    if guide is not None and not getattr(guide, 'closed', True):
+                        guide.frame.place_configure(y=0, height=0)  # the guide over the whole window again
+                self.title_state()
             ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x1 | 0x2 | 0x4 | 0x20)  # redraw the frame
         except (AttributeError, OSError, ValueError, self.tk.TclError):
             pass
@@ -2166,6 +2232,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         ttk.Label(holder, text=f'v{VERSION}', style='Muted.TLabel').pack(side='left', padx=10)
         self.section(f, _('Appearance'))
         self.appearance_check(f)
+        self.check(f, 'windows_title_bar', 'app', _("Windows' title bar instead of the launcher's own"),
+                   _('Applies when the launcher opens again.', 'Применится при следующем открытии лаунчера.'))
+        self.var('windows_title_bar', 'app').trace_add('write', lambda *_a: self.app.__setitem__(
+            'windows_title_bar', self.var('windows_title_bar', 'app').get()))
         self.section(f, _('Performance', 'Производительность'))
         self.row(f, _('Two-stage GPU pipeline', 'Двухстадийный конвейер GPU'), self.choice(f, 'draw_pipe', 'app', DRAW_PIPE),
                  _('20–30% faster; switch it off if the game is unstable.', 'Быстрее на 20–30%; при нестабильности выключите.'))

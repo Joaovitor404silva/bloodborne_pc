@@ -1515,7 +1515,8 @@ class SetupGuide:
         style.configure('Big.Bar.TButton', background=theme.DEEP, padding=(px(18), px(9)), font=(theme.BODY_MEDIUM, 10))
 
         self.frame = tk.Frame(app.root, bg=theme.BG)
-        self.frame.place(x=0, y=0, relwidth=1, relheight=1)
+        top = app.titlebar_height() if hasattr(app, 'titlebar_height') else 0  # below the launcher's title bar
+        self.frame.place(x=0, y=top, relwidth=1, relheight=1, height=-top)
         self.frame.lift()
         rail = tk.Frame(self.frame, bg=theme.DEEP, width=px(292))
         rail.pack(side='left', fill='y')
