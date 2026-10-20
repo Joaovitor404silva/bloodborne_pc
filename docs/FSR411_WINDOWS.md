@@ -328,6 +328,54 @@ original numeric IDs.
 Final production-wrapper correctness and package checks are listed below;
 the eight-phase game benchmark applies to the experimental test build above.
 
+## Direct-input host sharpening (20 October 2026)
+
+The Windows AMD DX12 and fsr4vk methods share the same host RCAS. For scaled
+SDR composition, RCAS now reads the returned RGBA16F image directly and writes
+a separate RGBA16F result. This removes the FP16-to-RGBA32F input blit while
+retaining the shader arithmetic, strength, FP16 output rounding and final HUD
+composition. The renderer records the output image's existing FP16 format
+explicitly so both providers can use this path.
+
+This selects the Windows FSR 4.1.1 providers with sharpening enabled and a
+positive strength. The cache checkbox remains independent. At 1440p/4K the
+scaled SDR path uses direct input; native-size 1080p composition, HDR and the
+other upscalers retain their existing sharpening paths. The new 4K scratch
+image contains 63.28125 MiB of pixel data instead of the old input copy's
+126.5625 MiB; process VRAM also includes other images and retained allocations.
+
+RX 9070 / i7-11700B, driver 26.9.2 LLPC, Windows 1.9.2, fixed **Warehouse above
+the sewers near Eileen** camera. **4K/Quality SDR**, sharpening **0.50**, object
+motion/cache and SSR on, LOD -2, game AA/chromatic aberration off, uncapped
+Immediate presentation; cheats/mods off. Within each provider's process:
+original/direct/direct/original, twice per variant, **10 s warmup + 25 s capture**.
+The loaded view matrix and projection matched throughout all captures.
+
+| FSR 4.1.1 method, FG off | Previous sharpening | Direct input | Change |
+|---|---:|---:|---:|
+| AMD DX12 | 91.30 Game-FPS | 94.65 Game-FPS | +3.67% |
+| Vulkan (fsr4vk) | 76.39 Game-FPS | 78.80 Game-FPS | +3.15% |
+
+The provider rows are separate A/B sessions; both retain their own reference.
+[Phase data and full settings](benchmarks/fsr411-sharpen-warehouse-20261020.json).
+The original 60-case GPU comparison produced bit-identical FP16 results; the
+portable `fsr411-sharpen-test` extends it to 90 cases including 1080p and 1440p.
+It compares the actual old blit/shader sequence against direct input, including
+edge sizes, five strengths, finite SDR/large-value patterns, alpha and unchanged
+input pixels. Build and run without game files:
+
+```sh
+ninja -C out/gpu fsr411-sharpen-test
+out/gpu/fsr411-sharpen-test.exe
+```
+
+Live checks with both providers covered 1080p/1440p/4K output and 4K
+Quality/Performance round trips, with native FPS output and captured images.
+These are upscaler size changes within a 4K fullscreen SDR swapchain.
+The #94 build additionally passed the same transitions with ML-FG and brief
+movement/HUD gameplay checks. Frame-generation results are documented with
+that PR's ML-FG implementation.
+
 ## Validation and reproduction
 
 - Clean 1.8.2 shared-texture/direct-output integration: 16 complete output and
