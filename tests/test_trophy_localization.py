@@ -66,14 +66,26 @@ class TrophyLocalizationTests(unittest.TestCase):
             with self.subTest(trophy=_id):
                 translated_name = launcher._(name)
                 translated_description = launcher._(description)
-                self.assertNotEqual(translated_name, name)
+                # The PSN platinum trophy intentionally retains "Bloodborne".
+                self.assertIn(name, launcher.bbport_lang.table('zh'))
                 self.assertNotEqual(translated_description, description)
                 self.assertIn(translated_name, text)
                 self.assertIn(translated_description, text)
-        for expected in ('血源诅咒', '老猎人', '已解锁 1 / 40 个奖杯', '全部   40',
+        for expected in ('Bloodborne', '老猎人', '已解锁 1 / 40 个奖杯', '全部   40',
                          '已解锁   1', '未解锁   39', '未解锁', '铜奖杯', '白金奖杯'):
             self.assertIn(expected, text)
         self.assertIn(time.strftime('%Y年%m月%d日', time.localtime(0)), text)
+
+    def test_psn_wording_keeps_names_punctuation_and_line_breaks(self):
+        self.assertEqual(launcher._('Bloodborne'), 'Bloodborne')
+        self.assertEqual(launcher._('Yharnam Sunrise'), '亚南日出')
+        self.assertEqual(launcher._('Honoring Wishes'), '履行愿望')
+        self.assertEqual(launcher._('Yharnam, Pthumerian Queen'), '亚南，修梅里安女王')
+        self.assertEqual(launcher._('Lady Maria of the Astral Clocktower'), '精神钟塔的玛利亚修女')
+        self.assertEqual(launcher._('All trophies acquired. Hats off!'), '已获得所有战利品。脱帽!')
+        self.assertEqual(
+            launcher._("Captivated by the moon presence, you pledge to watch over the hunter's dream."),
+            '因月亮的出现而被迷惑，\n你发誓要照看好猎人之梦。')
 
     def test_notification_and_unknown_trophy_fallback(self):
         self.app.toasts = [14]
