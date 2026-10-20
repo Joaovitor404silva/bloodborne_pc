@@ -142,30 +142,20 @@ struct Fg401Native::Impl {
                                f.output.height,
                                uint32_t(NativeFormat(f.color.format)),
                                uint32_t(NativeFormat(f.depth.format)),
-                               f.hdr,
                                {}};
         next.async_compute = overlap;
         // Color, motion and the result cross the API boundary as shared textures.
         // Depth keeps the buffer route to support the game's depth/stencil format.
         next.shared_texture_mask = (1u << 0) | (1u << 2) | (1u << 3);
-        // Nonlinear mode consumes the original encoded texels. A hardware sRGB SRV
-        // would decode them before FSR applies its selected input color transform.
-        if (!f.hdr && next.color_format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
-            next.color_format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        if (!f.hdr && next.color_format == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB)
-            next.color_format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        // The presenter's frames are always FrameGenerator::ColorFormat (RGBA8 UNORM, SDR).
         if (native && next.render_width == config.render_width &&
             next.render_height == config.render_height &&
             next.output_width == config.output_width &&
             next.output_height == config.output_height &&
-            next.color_format == config.color_format && next.depth_format == config.depth_format &&
-            next.hdr == config.hdr)
+            next.color_format == config.color_format && next.depth_format == config.depth_format)
             return;
-        const std::array texture_formats{
-            next.color_format == DXGI_FORMAT_R8G8B8A8_UNORM   ? vk::Format::eR8G8B8A8Unorm
-            : next.color_format == DXGI_FORMAT_B8G8R8A8_UNORM ? vk::Format::eB8G8R8A8Unorm
-                                                              : f.color.format,
-            vk::Format::eR32Sfloat, vk::Format::eR16G16Sfloat, vk::Format::eR8G8B8A8Unorm};
+        const std::array texture_formats{f.color.format, vk::Format::eR32Sfloat,
+                                         vk::Format::eR16G16Sfloat, vk::Format::eR8G8B8A8Unorm};
         const auto texture_usage = [](unsigned i) {
             return vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst |
                    (i == 3 ? vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled
@@ -243,28 +233,8 @@ struct Fg401Native::Impl {
             const auto handle = native->SharedTextureHandle(i);
             if (!handle)
                 continue;
+            // CanImportTexture accepted this format and usage; otherwise there is no handle.
             const auto usage = texture_usage(i);
-            const VkPhysicalDeviceExternalImageFormatInfo external_info{
-                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO, nullptr,
-                VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT};
-            VkPhysicalDeviceImageFormatInfo2 format_info{
-                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2};
-            format_info.pNext = &external_info;
-            format_info.format = VkFormat(texture_formats[i]);
-            format_info.type = VK_IMAGE_TYPE_2D;
-            format_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-            format_info.usage = VkImageUsageFlags(usage);
-            VkExternalImageFormatProperties support{
-                VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES};
-            VkImageFormatProperties2 properties{VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2};
-            properties.pNext = &support;
-            CheckNative(
-                vk::Result(VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceImageFormatProperties2(
-                    instance.GetPhysicalDevice(), &format_info, &properties)),
-                "Query shared image format");
-            if (!(support.externalMemoryProperties.externalMemoryFeatures &
-                  VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT))
-                throw std::runtime_error("Shared image format is not importable");
             const vk::ExternalMemoryImageCreateInfo external{
                 .handleTypes = vk::ExternalMemoryHandleTypeFlagBits::eD3D12Resource};
             const auto created_image = device.createImage(
@@ -320,20 +290,18 @@ struct Fg401Native::Impl {
         std::puts(textures[3] ? "AMD FG native: shared color/motion textures, direct shared "
                                 "output, buffer for depth"
                               : "AMD FG native: shared-buffer compatibility path");
-        if (instance.IsFsr411AsyncSupported()) {
-            const vk::SemaphoreTypeCreateInfo timeline{.semaphoreType =
-                                                           vk::SemaphoreType::eTimeline};
-            for (auto [target, handle] : {std::pair{&input_ready, native->InputFenceHandle()},
-                                          std::pair{&output_ready, native->OutputFenceHandle()}}) {
-                const auto result = device.createSemaphore({.pNext = &timeline});
-                CheckNative(result.result, "Create shared timeline semaphore");
-                *target = result.value;
-                CheckNative(device.importSemaphoreWin32HandleKHR(
-                                {.semaphore = *target,
-                                 .handleType = vk::ExternalSemaphoreHandleTypeFlagBits::eD3D12Fence,
-                                 .handle = handle}),
-                            "Import D3D12 timeline fence");
-            }
+        // Fence interop is checked at the top of Ensure().
+        const vk::SemaphoreTypeCreateInfo timeline{.semaphoreType = vk::SemaphoreType::eTimeline};
+        for (auto [target, handle] : {std::pair{&input_ready, native->InputFenceHandle()},
+                                      std::pair{&output_ready, native->OutputFenceHandle()}}) {
+            const auto result = device.createSemaphore({.pNext = &timeline});
+            CheckNative(result.result, "Create shared timeline semaphore");
+            *target = result.value;
+            CheckNative(device.importSemaphoreWin32HandleKHR(
+                            {.semaphore = *target,
+                             .handleType = vk::ExternalSemaphoreHandleTypeFlagBits::eD3D12Fence,
+                             .handle = handle}),
+                        "Import D3D12 timeline fence");
         }
         std::printf("AMD FG native: shared GPU buffer %.1f MiB, no Linux assets required\n",
                     native->SharedSize() / 1048576.0);
@@ -434,8 +402,8 @@ struct Fg401Native::Impl {
     }
 
     NativeFg401Frame FrameMetadata(const Fsr4Upscaler::Frame &f) {
-        NativeFg401Frame frame{f.jitter[0],    f.jitter[1], f.frame_ms, f.near_plane, f.far_plane,
-                               f.vertical_fov, f.sharpness, f.sharpen,  f.reset};
+        NativeFg401Frame frame{f.jitter[0],  f.jitter[1],    f.frame_ms, f.near_plane,
+                               f.far_plane, f.vertical_fov, f.reset};
         std::copy(std::begin(camera.position), std::end(camera.position), frame.position);
         std::copy(std::begin(camera.up), std::end(camera.up), frame.up);
         std::copy(std::begin(camera.right), std::end(camera.right), frame.right);

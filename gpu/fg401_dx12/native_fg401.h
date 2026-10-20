@@ -8,7 +8,6 @@
 struct NativeFg401Config {
     uint32_t render_width, render_height, output_width, output_height;
     uint32_t color_format, depth_format; // DXGI_FORMAT
-    bool hdr;
     uint8_t adapter_luid[8];
     uint32_t shared_texture_mask{};
     bool async_compute{};
@@ -18,8 +17,8 @@ struct NativeFg401Plane {
     uint32_t width, height, row_pitch, bytes_per_pixel;
 };
 struct NativeFg401Frame {
-    float jitter_x, jitter_y, frame_ms, near_plane, far_plane, vertical_fov, sharpness;
-    bool sharpen, reset;
+    float jitter_x, jitter_y, frame_ms, near_plane, far_plane, vertical_fov;
+    bool reset;
     float position[3]{};
     float up[3]{0, 1, 0}, right[3]{1, 0, 0}, forward[3]{0, 0, 1};
 };

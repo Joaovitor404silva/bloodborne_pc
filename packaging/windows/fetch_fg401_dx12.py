@@ -23,12 +23,9 @@ def verified(target):
 def prepare(target):
     if verified(target):
         return
-    # Share the verified SDK archive with the FSR 4.1.1 packaging step.
-    sdk.prepare(target)
-    archive = target/sdk.ARCHIVE_NAME
-    if not sdk.verified(archive, sdk.ARCHIVE_SIZE, sdk.ARCHIVE_SHA256):
-        raise ValueError('AMD SDK archive does not match the pinned release')
-    with zipfile.ZipFile(archive) as package:
+    # Share the verified SDK archive with the FSR 4.1.1 packaging step; fetched again
+    # when only its upscaler DLL is cached.
+    with zipfile.ZipFile(sdk.fetch_archive(target)) as package:
         for name, (size, digest) in FILES.items():
             member = MEMBER+name
             if package.getinfo(member).file_size != size:

@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 """Capability query and translations for the optional AMD ML-FG method."""
 import json
-import os
 import subprocess
 from pathlib import Path
 
 def query(port, env=None):
+    # bin/ (packaged), else out/ (built with build.sh).
+    exe=Path(port)/'bin/bb-fg401-capabilities.exe'
+    if not exe.is_file():
+        exe=Path(port)/'out/bb-fg401-capabilities.exe'
     try:
-        result=subprocess.run([str(Path(port)/'bin/bb-fg401-capabilities.exe')],
+        result=subprocess.run([str(exe)],
             cwd=port,env=env,capture_output=True,text=True,timeout=15,
             creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         data=json.loads(result.stdout)

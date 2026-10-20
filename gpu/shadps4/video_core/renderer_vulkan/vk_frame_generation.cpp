@@ -104,14 +104,19 @@ FrameGenerator::FrameGenerator(const Instance& instance_, Scheduler& scheduler_)
     : instance{instance_}, scheduler{scheduler_} {
     auto& settings = BbSettings::Get();
 #ifdef _WIN32
-    const auto ids = instance.GetPhysicalDevice().getProperties2<vk::PhysicalDeviceProperties2,vk::PhysicalDeviceIDProperties>();
-    const auto& id=ids.get<vk::PhysicalDeviceIDProperties>();
-    const auto support=instance.IsFg401InteropSupported() && id.deviceLUIDValid
-        ? ProbeFg401(id.deviceLUID.data()) : Fg401Support{false,"interop"};
-    settings.fg401_supported=support.supported;
-    std::printf("ML-FG 4.0.1 support: %s (%s)\n",support.supported?"available":"unavailable",support.reason.c_str());
-    if(settings.frame_gen==BbSettings::FrameGenFsr401 && !support.supported)
-        Fail(BbSettings::FrameGenFsr401,"ML-FG 4.0.1 is unavailable on the selected GPU/driver");
+    const auto ids = instance.GetPhysicalDevice()
+                         .getProperties2<vk::PhysicalDeviceProperties2,
+                                         vk::PhysicalDeviceIDProperties>();
+    const auto& id = ids.get<vk::PhysicalDeviceIDProperties>();
+    const auto support = instance.IsFg401InteropSupported() && id.deviceLUIDValid
+                             ? ProbeFg401(id.deviceLUID.data())
+                             : Fg401Support{false, "interop"};
+    settings.fg401_supported = support.supported;
+    std::printf("ML-FG 4.0.1 support: %s (%s)\n", support.supported ? "available" : "unavailable",
+                support.reason.c_str());
+    if (settings.frame_gen == BbSettings::FrameGenFsr401 && !support.supported) {
+        Fail(BbSettings::FrameGenFsr401, "ML-FG 4.0.1 is unavailable on the selected GPU/driver");
+    }
 #endif
     const int dlss_max = DlssMaxCount();
     settings.dlssg_max_multiplier = dlss_max + 1;
@@ -133,14 +138,18 @@ FrameGenerator::FrameGenerator(const Instance& instance_, Scheduler& scheduler_)
     if (settings.frame_gen != BbSettings::FrameGenOff) {
         const int max = settings.frame_gen == BbSettings::FrameGenDlss ? dlss_max + 1 : 2;
         std::printf("Frame generation: %s, %dx\n",
-                    settings.frame_gen == BbSettings::FrameGenDlss ? "DLSS" : settings.frame_gen == BbSettings::FrameGenFsr401 ? "AMD ML-FG 4.0.1" : "FSR 3.1",
+                    settings.frame_gen == BbSettings::FrameGenDlss      ? "DLSS"
+                    : settings.frame_gen == BbSettings::FrameGenFsr401 ? "AMD ML-FG 4.0.1"
+                                                                        : "FSR 3.1",
                     std::min(settings.frame_gen_multiplier.load(), max));
     }
 }
 
 FrameGenerator::~FrameGenerator() {
 #ifdef _WIN32
-    if (fg401_completion_scheduler) fg401_completion_scheduler->Finish();
+    if (fg401_completion_scheduler) {
+        fg401_completion_scheduler->Finish();
+    }
     fsr401_overlap.reset();
     fg401_fused_ui.reset();
     fg401_completion_scheduler.reset();
@@ -178,7 +187,9 @@ void FrameGenerator::Skip() {
 
 void FrameGenerator::DrainOverlap() {
 #ifdef _WIN32
-    if (fg401_completion_scheduler) fg401_completion_scheduler->Finish();
+    if (fg401_completion_scheduler) {
+        fg401_completion_scheduler->Finish();
+    }
 #endif
 }
 
@@ -191,7 +202,9 @@ void FrameGenerator::Release() {
     scheduler.WaitSubmitted();
     DestroyFsr3();
 #ifdef _WIN32
-    if (fg401_completion_scheduler) fg401_completion_scheduler->Finish();
+    if (fg401_completion_scheduler) {
+        fg401_completion_scheduler->Finish();
+    }
     fsr401_overlap.reset();
     fg401_fused_ui.reset();
     fg401_completion_scheduler.reset();
@@ -373,9 +386,10 @@ void FrameGenerator::EndCapture(vk::CommandBuffer cmdbuf, std::array<float, 2> j
         capture_camera = camera;
     }
     capture_camera.has_matrices = motion_valid && camera.has_matrices;
-    const auto capture_now=std::chrono::steady_clock::now();
-    const float dt=std::chrono::duration<float,std::milli>(capture_now-last_capture).count();
-    last_capture=capture_now;capture_frame_ms=dt>0 && dt<200?dt:16.6f;
+    const auto capture_now = std::chrono::steady_clock::now();
+    const float dt = std::chrono::duration<float, std::milli>(capture_now - last_capture).count();
+    last_capture = capture_now;
+    capture_frame_ms = dt > 0 && dt < 200 ? dt : 16.6f;
 }
 
 void FrameGenerator::CaptureHudless(vk::CommandBuffer cmdbuf, vk::Image source, vk::Format format,
@@ -518,15 +532,18 @@ u32 FrameGenerator::Generate(vk::CommandBuffer& cmdbuf, vk::Image color, vk::Ima
     if (!(frame_ms > 0.0f && frame_ms < 200.0f)) {
         frame_ms = 16.6f;
     }
-    if(captured && BbSettings::Get().frame_gen==BbSettings::FrameGenFsr401) frame_ms=capture_frame_ms;
+    if (captured && BbSettings::Get().frame_gen == BbSettings::FrameGenFsr401) {
+        frame_ms = capture_frame_ms;
+    }
     // Views the FSR 3.1 context took for frames the GPU has finished.
     while (fsr3 && !fsr3_pending.empty() && scheduler.IsFree(fsr3_pending.front().tick)) {
         ffxVkFsr3_3_1_6FrameGenerationContextRetireFrame(fsr3, fsr3_pending.front().frame_id);
         fsr3_pending.pop_front();
     }
     const auto& settings = BbSettings::Get();
-    if(settings.frame_gen==BbSettings::FrameGenFsr401 && !settings.fg401_supported)
-        Fail(BbSettings::FrameGenFsr401,"ML-FG 4.0.1 is unavailable on the selected GPU/driver");
+    if (settings.frame_gen == BbSettings::FrameGenFsr401 && !settings.fg401_supported) {
+        Fail(BbSettings::FrameGenFsr401, "ML-FG 4.0.1 is unavailable on the selected GPU/driver");
+    }
     const int provider = settings.frame_gen;
     const bool had_capture = captured;
     captured = false;
@@ -591,9 +608,9 @@ u32 FrameGenerator::Generate(vk::CommandBuffer& cmdbuf, vk::Image color, vk::Ima
     u32 generated = 0;
 #ifdef _WIN32
     if (OverlapWanted()) {
-        generated = GenerateFsr401Overlap(cmdbuf, with_hudless ? hudless : color,
-            color_view, with_hudless ? hudless_view : vk::ImageView{}, width, height,
-            outputs[0], frame_ms);
+        generated = GenerateFsr401Overlap(cmdbuf, with_hudless ? hudless : color, color_view,
+                                          with_hudless ? hudless_view : vk::ImageView{}, width,
+                                          height, outputs[0], frame_ms);
     } else
 #endif
     if (provider == BbSettings::FrameGenDlss) {
@@ -645,7 +662,8 @@ void FrameGenerator::DestroyFsr3() {
 
 bool FrameGenerator::OverlapWanted() {
 #ifdef _WIN32
-    return BbSettings::Get().frame_gen==BbSettings::FrameGenFsr401 && BbSettings::Get().fg401_supported;
+    const auto& settings = BbSettings::Get();
+    return settings.frame_gen == BbSettings::FrameGenFsr401 && settings.fg401_supported;
 #else
     return false;
 #endif
@@ -653,77 +671,100 @@ bool FrameGenerator::OverlapWanted() {
 
 #ifdef _WIN32
 u32 FrameGenerator::GenerateFsr401Overlap(vk::CommandBuffer& draw_command, vk::Image source,
-    vk::ImageView color_view, vk::ImageView hudless_view, u32 width, u32 height,
-    const Output& output, float frame_ms) {
-    if (!capture_camera.has_world_camera) return 0;
+                                          vk::ImageView color_view, vk::ImageView hudless_view,
+                                          u32 width, u32 height, const Output& output,
+                                          float frame_ms) {
+    if (!capture_camera.has_world_camera) {
+        return 0;
+    }
     if (!fg401_completion_scheduler) {
         if (instance.GetPresentQueue() == instance.GetGraphicsQueue()) {
-            Fail(BbSettings::FrameGenFsr401,"ML-FG requires a separate completion queue");
+            Fail(BbSettings::FrameGenFsr401, "ML-FG requires a separate completion queue");
             return 0;
         }
-        fg401_completion_scheduler = std::make_unique<Scheduler>(instance,false,instance.GetPresentQueue());
-        fsr401_overlap = std::make_unique<Fg401Native>(instance,scheduler,true);
+        fg401_completion_scheduler =
+            std::make_unique<Scheduler>(instance, false, instance.GetPresentQueue());
+        fsr401_overlap = std::make_unique<Fg401Native>(instance, scheduler, true);
     }
     auto& completion = *fg401_completion_scheduler;
     fsr401_overlap->SetWorldCamera(capture_camera.view_to_world);
     Fsr4Upscaler::Frame f{};
-    f.cmdbuf=draw_command;
-    f.color={source,{},width,height,ColorFormat};
-    f.depth={vk::Image(depth_image),*depth_view,input_width,input_height,vk::Format::eR32Sfloat};
-    f.motion={vk::Image(motion_image),*motion_view,input_width,input_height,vk::Format::eR16G16Sfloat};
-    f.output={output.image,output.view,width,height,ColorFormat};
-    f.render_width=input_width;f.render_height=input_height;f.jitter=capture_jitter;
-    f.frame_ms=frame_ms;f.near_plane=capture_camera.near_plane;f.far_plane=capture_camera.far_plane;
-    f.vertical_fov=capture_camera.vertical_fov;f.reset=reset;f.hdr=false;
-    if (!fsr401_overlap->RecordOverlap(f,completion)) {
-        draw_command=scheduler.CommandBuffer();
-        Fail(BbSettings::FrameGenFsr401,fsr401_overlap->Error().c_str());
+    f.cmdbuf = draw_command;
+    f.color = {source, {}, width, height, ColorFormat};
+    f.depth = {vk::Image(depth_image), *depth_view, input_width, input_height,
+               vk::Format::eR32Sfloat};
+    f.motion = {vk::Image(motion_image), *motion_view, input_width, input_height,
+                vk::Format::eR16G16Sfloat};
+    f.output = {output.image, output.view, width, height, ColorFormat};
+    f.render_width = input_width;
+    f.render_height = input_height;
+    f.jitter = capture_jitter;
+    f.frame_ms = frame_ms;
+    f.near_plane = capture_camera.near_plane;
+    f.far_plane = capture_camera.far_plane;
+    f.vertical_fov = capture_camera.vertical_fov;
+    f.reset = reset;
+    f.hdr = false;
+    if (!fsr401_overlap->RecordOverlap(f, completion)) {
+        draw_command = scheduler.CommandBuffer();
+        Fail(BbSettings::FrameGenFsr401, fsr401_overlap->Error().c_str());
         return 0;
     }
-    draw_command=scheduler.CommandBuffer();
-    const auto command=f.cmdbuf;
-    const bool fused = bool(hudless_view);
-    if (fused) {
-        if (!fg401_fused_ui) fg401_fused_ui=std::make_unique<FusedFgUi>(instance);
-        fg401_fused_ui->Record(command,output.image,output.view,f.output.image,f.output.view,
-                              color_view,hudless_view,width,height);
+    draw_command = scheduler.CommandBuffer();
+    const auto command = f.cmdbuf;
+    if (hudless_view) {
+        if (!fg401_fused_ui) {
+            fg401_fused_ui = std::make_unique<FusedFgUi>(instance);
+        }
+        fg401_fused_ui->Record(command, output.image, output.view, f.output.image, f.output.view,
+                               color_view, hudless_view, width, height);
     } else {
-    {
-        std::array<vk::ImageMemoryBarrier2,2> before{};
-        for(u32 i=0;i<2;++i) before[i]={
-            .srcStageMask=vk::PipelineStageFlagBits2::eAllCommands,
-            .srcAccessMask=vk::AccessFlagBits2::eMemoryRead|vk::AccessFlagBits2::eMemoryWrite,
-            .dstStageMask=vk::PipelineStageFlagBits2::eTransfer,
-            .dstAccessMask=i==0?vk::AccessFlagBits2::eTransferRead:vk::AccessFlagBits2::eTransferWrite,
-            .oldLayout=vk::ImageLayout::eGeneral,.newLayout=vk::ImageLayout::eGeneral,
-            .image=i==0?f.output.image:output.image,
-            .subresourceRange={vk::ImageAspectFlagBits::eColor,0,1,0,1}};
-        command.pipelineBarrier2({.imageMemoryBarrierCount=2,.pImageMemoryBarriers=before.data()});
-        const vk::ImageCopy copy{.srcSubresource={vk::ImageAspectFlagBits::eColor,0,0,1},
-            .dstSubresource={vk::ImageAspectFlagBits::eColor,0,0,1},.extent={width,height,1}};
-        command.copyImage(f.output.image,vk::ImageLayout::eGeneral,output.image,vk::ImageLayout::eGeneral,copy);
-        auto after=before[1];after.srcStageMask=vk::PipelineStageFlagBits2::eTransfer;
-        after.srcAccessMask=vk::AccessFlagBits2::eTransferWrite;
-        after.dstStageMask=vk::PipelineStageFlagBits2::eAllCommands;
-        after.dstAccessMask=vk::AccessFlagBits2::eMemoryRead|vk::AccessFlagBits2::eMemoryWrite;
-        command.pipelineBarrier2({.imageMemoryBarrierCount=1,.pImageMemoryBarriers=&after});
-    }
+        std::array<vk::ImageMemoryBarrier2, 2> before{};
+        for (u32 i = 0; i < 2; ++i) {
+            before[i] = {
+                .srcStageMask = vk::PipelineStageFlagBits2::eAllCommands,
+                .srcAccessMask =
+                    vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite,
+                .dstStageMask = vk::PipelineStageFlagBits2::eTransfer,
+                .dstAccessMask = i == 0 ? vk::AccessFlagBits2::eTransferRead
+                                        : vk::AccessFlagBits2::eTransferWrite,
+                .oldLayout = vk::ImageLayout::eGeneral,
+                .newLayout = vk::ImageLayout::eGeneral,
+                .image = i == 0 ? f.output.image : output.image,
+                .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1},
+            };
+        }
+        command.pipelineBarrier2(
+            {.imageMemoryBarrierCount = 2, .pImageMemoryBarriers = before.data()});
+        const vk::ImageCopy copy{.srcSubresource = {vk::ImageAspectFlagBits::eColor, 0, 0, 1},
+                                 .dstSubresource = {vk::ImageAspectFlagBits::eColor, 0, 0, 1},
+                                 .extent = {width, height, 1}};
+        command.copyImage(f.output.image, vk::ImageLayout::eGeneral, output.image,
+                          vk::ImageLayout::eGeneral, copy);
+        auto after = before[1];
+        after.srcStageMask = vk::PipelineStageFlagBits2::eTransfer;
+        after.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
+        after.dstStageMask = vk::PipelineStageFlagBits2::eAllCommands;
+        after.dstAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
+        command.pipelineBarrier2({.imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &after});
     }
     const vk::ImageMemoryBarrier2 written{
-        .srcStageMask=vk::PipelineStageFlagBits2::eAllCommands,
-        .srcAccessMask=vk::AccessFlagBits2::eMemoryWrite,
-        .dstStageMask=vk::PipelineStageFlagBits2::eAllCommands,
-        .dstAccessMask=vk::AccessFlagBits2::eTransferRead,
-        .oldLayout=vk::ImageLayout::eGeneral,.newLayout=vk::ImageLayout::eGeneral,
-        .image=output.image,.subresourceRange={vk::ImageAspectFlagBits::eColor,0,1,0,1}};
-    command.pipelineBarrier2({.imageMemoryBarrierCount=1,.pImageMemoryBarriers=&written});
-    detached_completion={completion.GetWorkSemaphore()->Handle(),completion.CurrentTick()};
+        .srcStageMask = vk::PipelineStageFlagBits2::eAllCommands,
+        .srcAccessMask = vk::AccessFlagBits2::eMemoryWrite,
+        .dstStageMask = vk::PipelineStageFlagBits2::eAllCommands,
+        .dstAccessMask = vk::AccessFlagBits2::eTransferRead,
+        .oldLayout = vk::ImageLayout::eGeneral,
+        .newLayout = vk::ImageLayout::eGeneral,
+        .image = output.image,
+        .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1},
+    };
+    command.pipelineBarrier2({.imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &written});
+    detached_completion = {completion.GetWorkSemaphore()->Handle(), completion.CurrentTick()};
     fsr401_overlap->FlushOverlap(completion);
     return 1;
 }
 
 #endif
-
 
 u32 FrameGenerator::GenerateFsr3(vk::CommandBuffer cmdbuf, vk::Image color,
                                  vk::ImageUsageFlags color_usage, u32 width, u32 height,
@@ -893,13 +934,15 @@ u32 FrameGenerator::GenerateDlss(vk::CommandBuffer cmdbuf, vk::Image color,
 
 void FrameGenerator::Fail(int provider, const char* reason) {
     auto& settings = BbSettings::Get();
-    std::printf("Frame generation: %s; %s\n", reason,
-                (provider == BbSettings::FrameGenDlss || provider == BbSettings::FrameGenFsr401) ? "using FSR 3.1" : "off");
-    settings.frame_gen_problem = provider==BbSettings::FrameGenFsr401
-        ? "ML-FG 4.0.1 unavailable; using FSR 3.1" : reason;
-    if(provider==BbSettings::FrameGenFsr401) settings.fg401_supported=false;
-    settings.frame_gen =
-        (provider == BbSettings::FrameGenDlss || provider == BbSettings::FrameGenFsr401) ? BbSettings::FrameGenFsr3 : BbSettings::FrameGenOff;
+    const bool to_fsr3 =
+        provider == BbSettings::FrameGenDlss || provider == BbSettings::FrameGenFsr401;
+    std::printf("Frame generation: %s; %s\n", reason, to_fsr3 ? "using FSR 3.1" : "off");
+    settings.frame_gen_problem =
+        provider == BbSettings::FrameGenFsr401 ? "ML-FG 4.0.1 unavailable; using FSR 3.1" : reason;
+    if (provider == BbSettings::FrameGenFsr401) {
+        settings.fg401_supported = false;
+    }
+    settings.frame_gen = to_fsr3 ? BbSettings::FrameGenFsr3 : BbSettings::FrameGenOff;
     reset = true;
 }
 
