@@ -249,7 +249,9 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'ui_mode': '',
                 # The player's goal (Play page): smooth, balanced or quiet (bbport_hardware.GOALS).
                 'goal': 'smooth',
-                'translucent': True,  # a hint of what lies behind the window (window_chrome)
+                # A hint of what lies behind the window (window_chrome); off by default, easiest to read.
+                # A new key: the first test build saved 'translucent' on for everyone.
+                'translucent_window': False,
                 'seen_version': '',  # the version whose news the Play page has shown
                 # Game tests (System & performance): the kind, the scenario, its options.
                 'test_mode': 'performance', 'test_scenario': 'hunters-view', 'test_compare': 'preset',
@@ -879,7 +881,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         site = tk.Label(side, text=COMMUNITY_SITE.split('//')[1].strip('/') + '  \u2197', bg=BG, fg=GOLD,
                         font=(theme.BODY_MEDIUM, 9), cursor='hand2')
         site.pack(side='bottom', anchor='w', padx=px(22), pady=(0, px(16)), before=self.search_box)
-        self.mode_switch = ttk.Checkbutton(side, text=_('Expert view'), variable=expert, command=self.toggle_mode)
+        self.mode_switch = ttk.Checkbutton(side, text=_('Expert view'), variable=expert, command=self.toggle_mode,
+                                           style='Bar.TCheckbutton')  # drawn on the side bar's colour
         self.mode_switch.pack(side='bottom', anchor='w', padx=px(22), pady=(px(4), px(6)), before=self.search_box)
         side.bind('<Configure>', lambda _e: self.root.after_idle(self.fit_nav))
         site.bind('<Button-1>', lambda _e: webbrowser.open(COMMUNITY_SITE))
@@ -977,8 +980,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def window_chrome(self):
         """The title bar in the launcher's colours: dark, and on Windows 11 acrylic (a hint of
-        what lies behind it); the whole window very slightly translucent when chosen (Advanced)."""
-        translucent = bool(self.app.get('translucent', True))
+        what lies behind it); the whole window very slightly translucent when chosen (Game & language,
+        Advanced). Off by default: a dark window lets bright windows behind it show through clearly."""
+        translucent = bool(self.app.get('translucent_window', False))
         try:
             hwnd = int(self.root.wm_frame(), 16)
             dwm = ctypes.windll.dwmapi
@@ -993,9 +997,17 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         except (AttributeError, OSError, ValueError, self.tk.TclError):
             pass
         try:
-            self.root.attributes('-alpha', 0.97 if translucent else 1.0)
+            self.root.attributes('-alpha', 0.985 if translucent else 1.0)
         except self.tk.TclError:
             pass
+
+    def appearance_check(self, parent):
+        """The switch for the see-through window (on two pages, one setting)."""
+        self.check(parent, 'translucent_window', 'app', _('Slightly translucent window'), _('A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.'))
+        if not getattr(self, 'appearance_traced', False):
+            self.appearance_traced = True
+            self.var('translucent_window', 'app').trace_add('write', lambda *_a: (self.app.__setitem__(
+                'translucent_window', self.var('translucent_window', 'app').get()), self.window_chrome()))
 
     def nav_paint(self, name, hover=False):
         """A side bar entry: a card behind the current page, a softer one under the mouse."""
@@ -1358,6 +1370,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                                  restart.pack_forget())
         self.row(f, _('Launcher language', 'Язык лаунчера'), language,
                  _('Applies when the launcher opens again.', 'Применится при следующем открытии лаунчера.'))
+        self.appearance_check(f)
         self.row(f, _('Text language', '\u042f\u0437\u044b\u043a \u0442\u0435\u043a\u0441\u0442\u0430'), self.choice(f, 'language', 'app', LANGUAGES))
         self.row(f, _('Voice language', '\u042f\u0437\u044b\u043a \u043e\u0437\u0432\u0443\u0447\u043a\u0438'), self.choice(f, 'voice_language', 'app', VOICE_LANGUAGES),
                  _('As in the game uses the original voice setting; other choices use available tracks.'))
@@ -2138,10 +2151,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             side='left', padx=(6, 0))
         ttk.Label(holder, text=f'v{VERSION}', style='Muted.TLabel').pack(side='left', padx=10)
         self.section(f, _('Appearance'))
-        self.check(f, 'translucent', 'app', _('Slightly translucent window'),
-                   _('A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.'))
-        self.var('translucent', 'app').trace_add('write', lambda *_a: (self.app.__setitem__(
-            'translucent', self.var('translucent', 'app').get()), self.window_chrome()))
+        self.appearance_check(f)
         self.section(f, _('Performance', 'Производительность'))
         self.row(f, _('Two-stage GPU pipeline', 'Двухстадийный конвейер GPU'), self.choice(f, 'draw_pipe', 'app', DRAW_PIPE),
                  _('20–30% faster; switch it off if the game is unstable.', 'Быстрее на 20–30%; при нестабильности выключите.'))

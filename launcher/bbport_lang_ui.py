@@ -281,9 +281,10 @@ UI = {'de': {
     'Gestures (touchpad)': 'Gesten (Touchpad)', 'Right half of the touchpad (debug menu)': 'Rechte Touchpad-Hälfte (Debug-Menü)',
     # ---- Advanced ----
     'Appearance': 'Aussehen', 'Slightly translucent window': 'Leicht durchsichtiges Fenster',
-    'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
+    'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. '
+    'Off: fully opaque, easiest to read.':
         'Eine Andeutung dessen, was hinter dem Launcher liegt: eine verschwommene Titelleiste (Windows 11) und das '
-        'Fenster zu 97 % deckend.',
+        'Fenster zu 98,5 % deckend. Aus: ganz deckend, am besten lesbar.',
     'Other versions…': 'Andere Versionen…', 'Other versions': 'Andere Versionen',
     'Install another version of the port, newer or older (back to {}). Saves, settings and mods are kept.':
         'Eine andere Version des Ports installieren, neuer oder älter (bis zurück zu {}). Spielstände, Einstellungen und '

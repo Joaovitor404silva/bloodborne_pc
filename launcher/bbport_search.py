@@ -60,7 +60,8 @@ WORDS = {
     'mute_unfocused': 'ton stumm sound mute hintergrund',
     'online': 'online koop coop multiplayer freunde glocke beschworen invasion',
     'mods_enabled': 'mods mod remaster texturen',
-    'translucent': 'transparent durchsichtig glas acrylic',
+    'translucent_window': 'transparent durchsichtig transparenz glas acrylic opacity deckkraft see through '
+                          'unreadable unlesbar',
     'ui_language': 'sprache language launcher',
     'draw_pipe': 'absturz crash instabil pipeline',
     'close_on_play': 'schliessen beenden',

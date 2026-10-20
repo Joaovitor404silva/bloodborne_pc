@@ -63,6 +63,8 @@ WORLD = {
             'Выполняется тест игры. Остановить его и закрыть лаунчер?',
         'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
             'Намёк на то, что скрыто за лаунчером: размытая строка заголовка (Windows 11) и окно с непрозрачностью 97 %.',
+        'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.':
+            'Намёк на то, что скрыто за лаунчером: размытая строка заголовка (Windows 11) и окно с непрозрачностью 98,5 %. Выкл.: окно полностью непрозрачное, читать легче всего.',
         'A key, the mouse or a controller used during the test ends it.':
             'Клавиша, мышь или контроллер во время теста прерывают его.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
@@ -1140,6 +1142,8 @@ WORLD = {
             'يجري اختبار للعبة الآن. هل تريد إيقافه وإغلاق المشغّل؟',
         'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
             'لمحة مما يقع خلف المشغّل: شريط عنوان ضبابي (Windows 11) ونافذة بعتامة 97 %.',
+        'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.':
+            'لمحة مما يقع خلف المشغّل: شريط عنوان ضبابي (Windows 11) ونافذة بعتامة 98.5 %. عند الإيقاف: معتمة تمامًا وأسهل للقراءة.',
         'A key, the mouse or a controller used during the test ends it.':
             'استخدام مفتاح أو الفأرة أو وحدة تحكم أثناء الاختبار يُنهيه.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
@@ -2463,6 +2467,8 @@ WORLD = {
             'Hay una prueba de juego en marcha. ¿Detenerla y cerrar el lanzador?',
         'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
             'Un atisbo de lo que hay detrás del lanzador: una barra de título difuminada (Windows 11) y la ventana al 97 %.',
+        'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.':
+            'Un atisbo de lo que hay detrás del lanzador: una barra de título difuminada (Windows 11) y la ventana al 98,5 %. Desactivado: totalmente opaca, lo más legible.',
         'A key, the mouse or a controller used during the test ends it.':
             'Usar una tecla, el ratón o un mando durante la prueba la termina.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
@@ -3786,6 +3792,8 @@ WORLD = {
             'Há um teste de jogo em andamento. Interromper o teste e fechar o launcher?',
         'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
             'Um vislumbre do que há por trás do launcher: barra de título desfocada (Windows 11) e a janela com 97 % de opacidade.',
+        'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.':
+            'Um vislumbre do que há por trás do launcher: barra de título desfocada (Windows 11) e a janela a 98,5 %. Desligado: totalmente opaca, mais fácil de ler.',
         'A key, the mouse or a controller used during the test ends it.':
             'Usar uma tecla, o mouse ou um controle durante o teste o encerra.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
@@ -5103,6 +5111,8 @@ WORLD = {
             'Un test en jeu est en cours. L’arrêter et fermer le lanceur ?',
         'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
             'Un aperçu de ce qui se trouve derrière le lanceur : une barre de titre floutée (Windows 11) et la fenêtre opaque à 97 %.',
+        'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.':
+            'Un aperçu de ce qui se trouve derrière le lanceur : une barre de titre floutée (Windows 11) et la fenêtre à 98,5 %. Désactivé : entièrement opaque, le plus lisible.',
         'A key, the mouse or a controller used during the test ends it.':
             'Une touche, la souris ou une manette utilisée pendant le test l’arrête.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
@@ -6426,6 +6436,8 @@ WORLD = {
             'È in corso un test di gioco. Interromperlo e chiudere il launcher?',
         'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
             'Un accenno di ciò che c’è dietro il launcher: una barra del titolo sfocata (Windows 11) e la finestra al 97%.',
+        'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.':
+            'Un accenno di ciò che c’è dietro il launcher: una barra del titolo sfocata (Windows 11) e la finestra al 98,5 %. Disattivato: completamente opaca, la più leggibile.',
         'A key, the mouse or a controller used during the test ends it.':
             'Un tasto, il mouse o un controller usato durante il test lo interrompe.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
@@ -7749,6 +7761,8 @@ WORLD = {
             'Trwa test gry. Przerwać go i zamknąć launcher?',
         'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
             'Widać odrobinę tego, co jest za launcherem: rozmyty pasek tytułu (Windows 11) i okno o kryciu 97%.',
+        'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.':
+            'Widać odrobinę tego, co jest za launcherem: rozmyty pasek tytułu (Windows 11) i okno kryjące w 98,5 %. Wył.: całkowicie nieprzezroczyste, najczytelniejsze.',
         'A key, the mouse or a controller used during the test ends it.':
             'Klawisz, mysz lub kontroler użyte w trakcie testu przerywają go.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
@@ -9072,6 +9086,8 @@ WORLD = {
             'Bir oyun testi çalışıyor. Test durdurulup başlatıcı kapatılsın mı?',
         'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
             'Başlatıcının arkasında kalanlardan bir iz: bulanık bir başlık çubuğu (Windows 11) ve %97 opaklıkta pencere.',
+        'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.':
+            'Başlatıcının arkasında kalanlardan bir iz: bulanık bir başlık çubuğu (Windows 11) ve %98,5 opak pencere. Kapalı: tamamen opak, en kolay okunur.',
         'A key, the mouse or a controller used during the test ends it.':
             'Test sırasında bir tuş, fare veya kumanda kullanılırsa test sona erer.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
@@ -10395,6 +10411,8 @@ WORLD = {
             '游戏测试正在运行。要停止测试并关闭启动器吗？',
         'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
             '隐约透出启动器背后的内容：模糊的标题栏（Windows 11），窗口不透明度为 97%。',
+        'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.':
+            '隐约透出启动器背后的内容：模糊的标题栏（Windows 11），窗口不透明度为 98.5%。关闭：完全不透明，最易阅读。',
         'A key, the mouse or a controller used during the test ends it.':
             '测试期间使用按键、鼠标或手柄会使测试结束。',
         'A steady 60 FPS with the best picture your graphics card has room for.':
@@ -11718,6 +11736,8 @@ WORLD = {
             'ゲームテストを実行中です。中止してランチャーを閉じますか？',
         'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
             'ランチャーの背後がうっすら透けて見えます：タイトルバーをぼかし（Windows 11）、ウィンドウを 97 % の不透明度にします。',
+        'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.':
+            'ランチャーの背後がうっすら透けて見えます：タイトルバーをぼかし（Windows 11）、ウィンドウを 98.5 % の不透明度にします。オフ：完全に不透明で、最も読みやすくなります。',
         'A key, the mouse or a controller used during the test ends it.':
             'テスト中にキー、マウス、コントローラーを使うとテストは終了します。',
         'A steady 60 FPS with the best picture your graphics card has room for.':
@@ -13041,6 +13061,8 @@ WORLD = {
             '게임 테스트가 실행 중입니다. 중지하고 런처를 닫을까요?',
         'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.':
             '런처 뒤가 살짝 비쳐 보입니다: 흐린 제목 표시줄 (Windows 11)과 97% 불투명한 창.',
+        'A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 98.5 %. Off: fully opaque, easiest to read.':
+            '런처 뒤가 살짝 비쳐 보입니다: 흐린 제목 표시줄 (Windows 11)과 98.5% 불투명한 창. 끄면: 완전히 불투명해 가장 읽기 쉽습니다.',
         'A key, the mouse or a controller used during the test ends it.':
             '테스트 중 키, 마우스 또는 컨트롤러를 사용하면 테스트가 끝납니다.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
