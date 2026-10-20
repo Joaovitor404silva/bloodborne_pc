@@ -134,7 +134,7 @@ from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SL
                                   button_num_to_name, input_ini_path, load_input_ini, reserved_keys,
                                   save_input_ini, save_mouse_settings, wheel_to_name, MAX_COMBO,
                                   MODIFIER_NAMES, apply_layout, slot_conflicts, binding_parts,
-                                  display_name)  # noqa: E402
+                                  display_name, windows_mouse_poller)  # noqa: E402
 
 LANG = 'en'
 
@@ -1756,6 +1756,13 @@ class Launcher:
         # with them, and releasing one with nothing else pressed binds the modifiers alone.
         modifiers = []
 
+        # Tk does not always turn the wheel click and the side ("macro") buttons into
+        # <ButtonPress> events (it depends on the Tcl/Tk build and the mouse driver), so on
+        # Windows they are also polled straight from the OS while waiting. `done` makes the
+        # first of the two paths to see a press the only one that binds it.
+        poller = None if is_stick else windows_mouse_poller()
+        state = {'done': False, 'poll_job': None}
+
         # Tk on Windows sends Alt, Alt + key and F10 to the menu bar (tk::WinMenuKey, which
         # waits in the system menu's loop), not to <KeyPress>: they are taken over meanwhile.
         menu_keys = {seq: self.root.bind_all(seq) for seq in (
@@ -1763,6 +1770,10 @@ class Launcher:
             '<KeyRelease-Alt_L>', '<KeyRelease-Alt_R>', '<Alt-KeyRelease>', '<KeyRelease-F10>')}
 
         def finish():
+            state['done'] = True
+            if state['poll_job'] is not None:
+                self.root.after_cancel(state['poll_job'])
+                state['poll_job'] = None
             self.root.unbind_all('<KeyPress>')
             self.root.unbind_all('<KeyRelease>')
             for seq, script in menu_keys.items():
@@ -1778,6 +1789,8 @@ class Launcher:
             self.refresh_remap_row(output)
 
         def apply(name):
+            if state['done']:
+                return
             parts = (modifiers + [name])[-MAX_COMBO:] if name not in modifiers else list(modifiers)
             reserved = [p for p in parts if p in reserved_keys(self.remap_toggle_key, self.remap_reload_key)]
             if reserved:
@@ -1830,6 +1843,25 @@ class Launcher:
                 apply(name)
             return 'break'
 
+        def pointer_over_launcher():
+            """The polled buttons are read system-wide: only a press with the pointer over the
+            launcher's own window counts, not a click in another program."""
+            try:
+                x, y = self.root.winfo_pointerxy()
+                return self.root.winfo_containing(x, y) is not None
+            except KeyError:
+                return True  # tkinter cannot name a combobox's popdown, but it is ours
+
+        def poll_mouse():
+            state['poll_job'] = None
+            if state['done']:
+                return
+            name = poller.poll()  # refreshed on every tick, even when the press is ignored
+            if name and pointer_over_launcher():
+                apply(name)
+                return
+            state['poll_job'] = self.root.after(10, poll_mouse)
+
         self.root.bind_all('<KeyPress>', on_key)
         self.root.bind_all('<KeyRelease>', on_key_release)
         for seq in menu_keys:
@@ -1839,6 +1871,8 @@ class Launcher:
             # While waiting, the wheel binds instead of scrolling the page.
             self.root.bind_all('<MouseWheel>', on_wheel)
             self.root.bind_all('<Shift-MouseWheel>', lambda e: on_wheel(e, True))
+            if poller is not None:
+                state['poll_job'] = self.root.after(10, poll_mouse)
 
     def build_advanced(self):
         ttk = self.ttk
