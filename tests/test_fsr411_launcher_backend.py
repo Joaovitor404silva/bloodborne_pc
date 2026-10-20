@@ -12,6 +12,17 @@ import bbport_lang_fsr411 as translations
 
 
 class BackendSettingsTest(unittest.TestCase):
+    def test_dx12_runtime_found_in_package_or_source_build(self):
+        import tempfile
+        dll = 'amd_fidelityfx_upscaler_dx12.dll'
+        with tempfile.TemporaryDirectory() as folder, patch.object(launcher, 'PORT_DIR', Path(folder)):
+            self.assertFalse(launcher.native_fsr411_present())
+            for sub in ('out', 'bin'):
+                (Path(folder) / sub).mkdir()
+                (Path(folder) / sub / dll).write_bytes(b'dll')
+                self.assertTrue(launcher.native_fsr411_present())
+                (Path(folder) / sub / dll).unlink()
+
     def test_existing_profile_retains_vulkan(self):
         settings = dict(launcher.APP_DEFAULTS)
         self.assertEqual(launcher.INI_DEFAULTS['fsr411_backend'], 'vk')
