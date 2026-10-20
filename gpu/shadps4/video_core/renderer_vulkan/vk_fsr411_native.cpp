@@ -185,28 +185,8 @@ struct Fsr411Native::Impl {
             const auto handle = native->SharedTextureHandle(i);
             if (!handle)
                 continue;
+            // CanImportTexture accepted this format and usage; otherwise there is no handle.
             const auto usage = texture_usage(i);
-            const VkPhysicalDeviceExternalImageFormatInfo external_info{
-                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO, nullptr,
-                VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D12_RESOURCE_BIT};
-            VkPhysicalDeviceImageFormatInfo2 format_info{
-                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2};
-            format_info.pNext = &external_info;
-            format_info.format = VkFormat(texture_formats[i]);
-            format_info.type = VK_IMAGE_TYPE_2D;
-            format_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-            format_info.usage = VkImageUsageFlags(usage);
-            VkExternalImageFormatProperties support{
-                VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES};
-            VkImageFormatProperties2 properties{VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2};
-            properties.pNext = &support;
-            CheckNative(
-                vk::Result(VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceImageFormatProperties2(
-                    instance.GetPhysicalDevice(), &format_info, &properties)),
-                "Query shared image format");
-            if (!(support.externalMemoryProperties.externalMemoryFeatures &
-                  VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT))
-                throw std::runtime_error("Shared image format is not importable");
             const vk::ExternalMemoryImageCreateInfo external{
                 .handleTypes = vk::ExternalMemoryHandleTypeFlagBits::eD3D12Resource};
             const auto created_image =

@@ -249,8 +249,9 @@ def fsr411_backend(settings):
 
 
 def native_fsr411_present():
-    dll = PORT_DIR / 'bin' / 'amd_fidelityfx_upscaler_dx12.dll'
-    return dll.is_file() and dll.stat().st_size > 0
+    # Packaged beside bin/bb-probe.exe; a source build copies it to out/ (docs/FSR411_WINDOWS.md).
+    return any(dll.is_file() and dll.stat().st_size > 0
+               for dll in (PORT_DIR / folder / 'amd_fidelityfx_upscaler_dx12.dll' for folder in ('bin', 'out')))
 
 
 OUTPUTS = [('1280x720', ('1280 × 720 (Steam Deck)',)), ('1920x1080', ('1920 × 1080',)),
@@ -2306,8 +2307,10 @@ class Launcher:
             shown = ('1' if value else '0') if key in INI_FLAGS and var is not None else str(value)
             if shown == self.ini[key]:
                 self.ini[key] = disk[key]
-                if var is not None:
-                    var.set(disk[key] == '1' if key in INI_FLAGS else disk[key])
+                new = disk[key] == '1' if key in INI_FLAGS else disk[key]
+                # Only on a change: each set fires the traces, which re-hash the fsr4vk DLL.
+                if var is not None and var.get() != new:
+                    var.set(new)
         self.ini_lines = lines
 
     def collect(self):

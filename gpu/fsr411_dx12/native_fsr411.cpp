@@ -255,15 +255,17 @@ struct NativeFsr411::Impl {
                 Check(device->CreateSharedHandle(textures[i], nullptr, GENERIC_ALL, nullptr,
                                                  &texture_handles[i]),
                       "Share D3D12 texture");
-            size = (size + 511) & ~uint64_t(511);
+            // Shared textures need format metadata, but no range in the copy buffer.
+            const uint64_t offset = Shared(i) ? 0 : (size + 511) & ~uint64_t(511);
             UINT rows{}; UINT64 row_bytes{}, bytes{};
-            device->GetCopyableFootprints(&desc, 0, 1, size, &footprints[i], &rows, &row_bytes, &bytes);
+            device->GetCopyableFootprints(&desc, 0, 1, offset, &footprints[i], &rows, &row_bytes, &bytes);
             const auto& fp = footprints[i];
             planes[i] = {fp.Offset, fp.Footprint.Width, fp.Footprint.Height,
                          fp.Footprint.RowPitch, uint32_t(row_bytes / desc.Width)};
-            size = fp.Offset + uint64_t(fp.Footprint.RowPitch) * rows;
+            if (!Shared(i))
+                size = fp.Offset + uint64_t(fp.Footprint.RowPitch) * rows;
         }
-        size = (size + 65535) & ~uint64_t(65535);
+        size = std::max(uint64_t(65536), (size + 65535) & ~uint64_t(65535));
         shared = Buffer(size, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON, true);
         Check(device->CreateSharedHandle(shared, nullptr, GENERIC_ALL, nullptr, &shared_handle), "Share D3D12 buffer");
         ready = true;

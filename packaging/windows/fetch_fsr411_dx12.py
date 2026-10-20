@@ -39,11 +39,8 @@ def verified(path, size, digest):
         return False
 
 
-def prepare(target):
-    """Cache downloads under out/; reject modified archives and DLLs before installation."""
-    dll = target / DLL_NAME
-    if verified(dll, DLL_SIZE, DLL_SHA256):
-        return dll
+def fetch_archive(target):
+    """The pinned SDK archive in `target`, downloaded and verified unless already cached."""
     target.mkdir(parents=True, exist_ok=True)
     archive = target / ARCHIVE_NAME
     if not verified(archive, ARCHIVE_SIZE, ARCHIVE_SHA256):
@@ -60,8 +57,16 @@ def prepare(target):
         finally:
             if temporary:
                 temporary.unlink(missing_ok=True)
+    return archive
+
+
+def prepare(target):
+    """Cache downloads under out/; reject modified archives and DLLs before installation."""
+    dll = target / DLL_NAME
+    if verified(dll, DLL_SIZE, DLL_SHA256):
+        return dll
     # Read this exact member, never extract arbitrary archive paths.
-    with zipfile.ZipFile(archive) as package:
+    with zipfile.ZipFile(fetch_archive(target)) as package:
         if package.getinfo(DLL_MEMBER).file_size != DLL_SIZE:
             raise ValueError('AMD upscaler DLL size does not match the pinned release')
         data = package.read(DLL_MEMBER)
