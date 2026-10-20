@@ -1241,6 +1241,9 @@ from bbport_fsr411 import TRANSLATIONS as FSR411_SUPPORT_TRANSLATIONS
 EXTRA_TRANSLATIONS = {
     'zh': {
         # Achievements: interface and PSN Chinese trophy wording (see docs/TROPHIES_ZH.md).
+        'Traditional Chinese': '繁體中文',
+        'Simplified Chinese': '简体中文',
+        'Korean': '韩语',
         'Achievements': '成就',
         'Trophies the game unlocks while you play; updated live, kept with your saves.':
             '记录你在狩猎途中获得的奖杯，实时更新，并随存档保存在本地。',

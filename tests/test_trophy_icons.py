@@ -82,6 +82,25 @@ class TrophyIconRenderingTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.root.destroy()
 
+    def test_game_language_menu_preserves_chinese_selection(self):
+        from tkinter import ttk
+        previous = self.launcher.LANG
+        self.addCleanup(setattr, self.launcher, 'LANG', previous)
+        self.launcher.LANG = 'zh'
+        app = object.__new__(self.launcher.Launcher)
+        app.tk, app.ttk = self.tk, ttk
+        app.vars = {}
+        app.app = {'language': '11'}
+        box = app.choice(self.root, 'language', 'app', self.launcher.LANGUAGES)
+        self.assertIn('简体中文', box['values'])
+        self.assertIn('繁體中文', box['values'])
+        self.assertIn('韩语', box['values'])
+        self.assertEqual(app.vars['language'].get(), '11')
+        self.assertEqual(box.get(), '简体中文')
+        app.vars['language'].set('10')
+        self.assertEqual(box.get(), '繁體中文')
+        box.destroy()
+
     def test_artwork_size_dimming_cache_and_game_folder_change(self):
         with tempfile.TemporaryDirectory() as folder:
             stream = BytesIO()

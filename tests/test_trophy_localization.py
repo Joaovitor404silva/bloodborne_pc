@@ -50,6 +50,7 @@ class TrophyLocalizationTests(unittest.TestCase):
         launcher.LANG = 'zh'
         self.app = object.__new__(launcher.Launcher)
         self.app.tk = SimpleNamespace(Frame=Widget, Label=Widget, Canvas=Widget)
+        self.app.ttk = self.app.tk
         self.app.px = lambda value: value
         self.icon_ids = []
         def icon(parent, *args, **kwargs):
@@ -77,8 +78,14 @@ class TrophyLocalizationTests(unittest.TestCase):
                 self.assertNotEqual(translated_description, description)
                 self.assertIn(translated_name, text)
                 self.assertIn(translated_description, text)
-        for expected in ('Bloodborne', '老猎人', '已解锁 1 / 40 个奖杯', '全部   40',
-                         '已解锁   1', '未解锁   39', '未解锁', '铜奖杯', '白金奖杯'):
+        for expected in ('Bloodborne', '老猎人',
+                         launcher._('{} of {} trophies earned').format(1, 40),
+                         f"{launcher._('All')}   40",
+                         f"{launcher._('Earned')}   1",
+                         f"{launcher._('Locked')}   39",
+                         launcher._('Locked'),
+                         launcher._('Bronze'),
+                         launcher._('Platinum')):
             self.assertIn(expected, text)
         self.assertIn(time.strftime('%Y年%m月%d日', time.localtime(0)), text)
 
@@ -97,7 +104,7 @@ class TrophyLocalizationTests(unittest.TestCase):
         self.app.toasts = [14]
         self.app.show_toast()
         self.assertEqual(self.icon_ids[-1], 14)
-        self.assertIn('奖杯已解锁', labels(self.app.content))
+        self.assertIn(launcher._("You've earned a trophy."), labels(self.app.content))
         self.assertIn('加斯科因神父', labels(self.app.content))
         self.app.content = Widget()
         self.app.toasts = [999]
@@ -115,7 +122,7 @@ class TrophyLocalizationTests(unittest.TestCase):
         self.app.tracker.unlocked = {t[0]: 0 for t in launcher.trophies.TROPHIES}
         self.app.trophy_filter = 'locked'
         self.app.render_trophies()
-        self.assertIn('奖杯已全部解锁。向你致敬，善良的猎人。', labels(self.app.trophy_body))
+        self.assertIn(launcher._('Every trophy is earned. Hail, good hunter.'), labels(self.app.trophy_body))
 
     def test_other_languages_keep_the_english_trophy_fallback(self):
         for language in ('en', 'ru', 'fr'):
