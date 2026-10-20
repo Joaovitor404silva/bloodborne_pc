@@ -276,10 +276,16 @@ void Apply() {
                 }
                 return {};
             };
+            // A rebound action on PlayStation: the game's picture of its button when one is in
+            // memory (a menu loads only the buttons its guide shows), else ours.
+            const auto& playstation = pad_icons[BbPromptIcons::PadPlayStation];
             for (int i = 0; i < BbPromptIcons::Count; ++i) {
                 const int from = pad_source[i] < 0 ? i : pad_source[i];
                 if (want != PlayStation && !pad_icons[pad][from].empty()) icons[i] = pad_icons[pad][from];
-                else if (from != i) icons[i] = original_icon(from);
+                else if (from != i) {
+                    icons[i] = original_icon(from);
+                    if (icons[i].empty()) icons[i] = playstation[from];
+                }
             }
             for (int s = 0; s < HudCount; ++s) {
                 const int own = BbPromptIcons::HudIcon[s], from = pad_source[own] < 0 ? own : pad_source[own];
@@ -289,7 +295,11 @@ void Apply() {
                     else if (BbPromptIcons::DrawPad(BbPromptIcons::Icon(from), BbPromptIcons::Pad(pad), pixels))
                         sprites[s] = BbPromptIcons::RenderIconArea(pixels, BbPromptIcons::HudAreas[s]);
                 } else if (from != own) {
-                    sprites[s] = original_sprite(from); // empty when the atlas has no such button
+                    sprites[s] = original_sprite(from); // the atlas has only Circle, Cross and L3
+                    BbPromptIcons::Pixels pixels;
+                    if (sprites[s].empty() &&
+                        BbPromptIcons::DrawPad(BbPromptIcons::Icon(from), BbPromptIcons::PadPlayStation, pixels))
+                        sprites[s] = BbPromptIcons::RenderIconArea(pixels, BbPromptIcons::HudAreas[s]);
                 }
             }
         }
