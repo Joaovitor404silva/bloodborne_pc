@@ -34,7 +34,9 @@ SLOTS = [f'userdata{i:04d}' for i in range(10)]
 PROFILE = 'userdata0010'
 SAVE_FILES = re.compile(r'^(userdata|backup)\d{4}$')
 SKIP = {'dvdroot_ps4', 'sce_module', 'cache', 'shader', 'shader_cache', 'fsr4_shaders', '_internal', 'bin',
-        'mods', 'patches', 'licenses', 'tools', 'scripts', 'out', 'node_modules', '.git', 'windows', 'program files'}
+        'mods', 'patches', 'licenses', 'tools', 'scripts', 'out', 'node_modules', '.git', 'windows', 'program files',
+        # a benchmark's own character (a port build's benchmark/ folder, recorded routes): not a player's save
+        'benchmark', 'recordings'}
 
 
 # ---- where this port wants them --------------------------------------------------------------

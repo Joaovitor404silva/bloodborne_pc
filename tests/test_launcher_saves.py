@@ -68,6 +68,18 @@ class SaveTests(unittest.TestCase):
             found = saves.scan(self.root / 'port', exclude=[mine])
         self.assertEqual(sorted(s.source for s in found), ['bbhost', 'bbport (BB.Other)', 'shadPS4', 'shadPS4'])
 
+    def test_benchmark_characters_are_not_offered(self):
+        """A port build's bundled benchmark character (benchmark/savedata/…) and recorded test routes are
+        not a player's save."""
+        make_save(self.root / 'port' / 'benchmark' / 'savedata' / '1' / 'CUSA00207' / 'SPRJ0005', 'Hunter')
+        make_save(self.root / 'BB.Other' / 'benchmark' / 'savedata' / '1' / 'CUSA00207' / 'SPRJ0005', 'Hunter')
+        make_save(self.root / 'port' / 'launcher_src' / 'recordings' / 'sewers' / 'save' / 'SPRJ0005', 'Hunter')
+        player = make_save(self.root / 'BB.Other' / 'user' / 'savedata' / '1' / 'CUSA00207' / 'SPRJ0005', 'Zed')
+        (self.root / 'BB.Other' / 'run.py').write_text('')
+        with mock.patch.dict(os.environ, {'APPDATA': str(self.root / 'Roaming'), 'LOCALAPPDATA': str(self.root / 'Local')}):
+            found = saves.scan(self.root / 'port')
+        self.assertEqual([s.folder for s in found], [player])
+
     def test_import_backs_up_copies_and_restores(self):
         mine = make_save(saves.target_dir(self.user), 'Old')
         other = saves.SaveSet('bbhost', make_save(self.root / 'data' / 'saves' / 'SPRJ0005', 'New',
