@@ -26,6 +26,7 @@ perf.data
 mods.json
 patches.json
 !launcher/bloodborne.png
+!launcher/assets/*.png
 # IDE/session-local
 .claude/
 .vscode/

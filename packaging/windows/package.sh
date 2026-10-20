@@ -29,7 +29,8 @@ export USERPROFILE=${USERPROFILE:-$(cygpath -w "/c/Users/$(id -un)")}
 if [[ ! -x out/pyenv/Scripts/python.exe ]]; then
     "$python" -m venv out/pyenv
 fi
-out/pyenv/Scripts/python.exe -m pip install -q --disable-pip-version-check pyinstaller
+# Pillow draws the launcher's look (launcher/bbport_theme.py) and scales the cover art.
+out/pyenv/Scripts/python.exe -m pip install -q --disable-pip-version-check pyinstaller pillow
 # The scripts run inside Bloodborne.exe (--script): the standard modules they import come along.
 hidden=()
 for module in argparse base64 bisect collections contextlib hashlib json re shutil struct tempfile \
@@ -39,6 +40,7 @@ done
 out/pyenv/Scripts/python.exe -m PyInstaller --noconfirm --clean --log-level WARN --windowed \
     --name Bloodborne --icon "$(cygpath -w "$PWD/launcher/bloodborne.ico")" --distpath out/pyi-dist \
     --workpath out/pyi-work --specpath out/pyi-work --paths "$(cygpath -w "$PWD/scripts")" "${hidden[@]}" \
+    --add-data "$(cygpath -w "$PWD/launcher/assets");assets" \
     "$(cygpath -w "$PWD/launcher/bbport_launcher_win.py")"
 
 # The package is assembled in a fresh staging folder and zipped from there; dist/bbport-windows
@@ -96,6 +98,8 @@ cp docs/benchmarks/fsr411-sharpen-warehouse-20261020.json "$dest/docs/benchmarks
 cp docs/benchmarks/ml-fg401-20261017.json "$dest/docs/benchmarks/"
 cp docs/benchmarks/mlfg-sharpen-warehouse-20261020.json "$dest/docs/benchmarks/"
 cp docs/benchmarks/ml-fg401-profile.ini "$dest/docs/benchmarks/"
+cp launcher/assets/fonts/Cinzel-OFL.txt "$dest/licenses/Cinzel-OFL.txt"  # the launcher's fonts
+cp launcher/assets/fonts/Inter-LICENSE.txt "$dest/licenses/Inter-OFL.txt"
 # Where the online code comes from (shadPS4 0.20, Awaken's port, bbhost's protocol).
 cp gpu/bbnet/SHADNET-PORT.md "$dest/licenses/online-code-NOTICE.md"
 for package in protobuf abseil-cpp openssl miniupnpc zlib; do
