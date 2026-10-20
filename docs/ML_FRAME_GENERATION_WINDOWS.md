@@ -92,6 +92,26 @@ Build, GPU-output and package checks cover both FG choices, including upstream's
 FSR 3.1 per-frame allocation fix. The ML method retains its separate completion
 queue; the historical gameplay figures above retain their Windows 1.9 attribution.
 
+## Shared sharpening update (20 October 2026)
+
+The FSR 4.1.1 host RCAS improvement from #76 also reduces work ahead of ML-FG.
+At the fixed Warehouse-above-the-sewers camera, **4K/Quality SDR**, sharpness
+**0.50**, DX12 upscaling and the motion-vector cache enabled, game throughput
+improved from **76.28 to 79.02 Game-FPS (+3.59%)**. CPU/GPU: i7-11700B / RX 9070;
+AMD 26.9.2 LLPC. SSR on, LOD -2, game AA/chromatic aberration off, uncapped
+Immediate presentation. Original/direct/direct/original in one process;
+two 10 s warmup / 25 s captures per variant, with the same verified loaded
+camera. The change is in upscaling's shared sharpening; ML-FG uses the existing
+overlap and copy/HUD implementation.
+[Phase data and settings](benchmarks/mlfg-sharpen-warehouse-20261020.json).
+
+Both upscaling providers passed eleven live size/mode states each: 1080p,
+1440p and 4K Quality, plus 4K Performance and return to Quality, with FG off
+and with ML-FG 4.0.1. Each state confirmed the active dimensions, sharpening
+path and generated-frame output. 1440p/4K used direct RCAS; native-size 1080p
+retained the existing LDR path. The swapchain remained 4K fullscreen SDR.
+Brief movement, camera-pan and HUD checks were reported free of visible issues.
+
 ## Maintenance and transfer-buffer sizing
 
 The 20 October 2026 cleanup removes unused ML-FG metadata and repeated import
