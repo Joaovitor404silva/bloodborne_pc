@@ -25,3 +25,15 @@ Launcher-specific controls, help, progress, empty states and notification text
 remain launcher translations; this document does not attribute those strings to
 the PS5 system interface. Selecting Chinese uses launcher language `zh` and does
 not change the game's text-language setting.
+
+## Trophy artwork
+
+The achievement cards and unlock notifications read `TROP000.PNG` through
+`TROP039.PNG` directly from the selected game's `sce_sys/trophy/trophy00.trp`.
+These PNG entries are unencrypted; encrypted metadata is skipped. No extraction,
+keys, downloads or bundled game images are needed. The archive is read only.
+
+The launcher scales the artwork with Pillow and dims locked trophies. Grade
+totals retain their cup symbols. Missing, unsupported or damaged artwork falls
+back to the grade cup, so the page still works without a trophy archive. The
+Windows packaging script installs Pillow for the frozen launcher.

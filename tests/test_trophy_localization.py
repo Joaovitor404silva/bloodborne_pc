@@ -51,7 +51,12 @@ class TrophyLocalizationTests(unittest.TestCase):
         self.app = object.__new__(launcher.Launcher)
         self.app.tk = SimpleNamespace(Frame=Widget, Label=Widget, Canvas=Widget)
         self.app.px = lambda value: value
-        self.app.trophy_icon = lambda parent, *args: Widget(parent)
+        self.icon_ids = []
+        def icon(parent, *args, **kwargs):
+            self.icon_ids.append(kwargs.get('trophy_id'))
+            return Widget(parent)
+        self.app.trophy_icon = icon
+        self.app.var = lambda *args: SimpleNamespace(get=lambda: 'game')
         self.app.trophy_body = Widget()
         self.app.trophy_state = None
         self.app.trophy_filter = 'all'
@@ -62,6 +67,7 @@ class TrophyLocalizationTests(unittest.TestCase):
     def test_all_base_and_dlc_trophies_are_translated_on_the_page(self):
         self.app.render_trophies()
         text = labels(self.app.trophy_body)
+        self.assertEqual([trophy for trophy in self.icon_ids if trophy is not None], list(range(40)))
         for _id, name, description, _grade, _group in launcher.trophies.TROPHIES:
             with self.subTest(trophy=_id):
                 translated_name = launcher._(name)
@@ -90,11 +96,13 @@ class TrophyLocalizationTests(unittest.TestCase):
     def test_notification_and_unknown_trophy_fallback(self):
         self.app.toasts = [14]
         self.app.show_toast()
+        self.assertEqual(self.icon_ids[-1], 14)
         self.assertIn('奖杯已解锁', labels(self.app.content))
         self.assertIn('加斯科因神父', labels(self.app.content))
         self.app.content = Widget()
         self.app.toasts = [999]
         self.app.show_toast()
+        self.assertEqual(self.icon_ids[-1], 999)
         self.assertIn('奖杯 999', labels(self.app.content))
 
     def test_empty_filters_use_chinese_messages(self):
