@@ -1517,6 +1517,7 @@ class Launcher:
                                  'Геймпад продолжает работать одновременно; его строки можно '
                                  'настроить только в input.ini — см. docs/INPUT.md.'))
         self.remap_rows = {}  # output -> ([slot buttons], conflict label)
+        self.remap_clear_marks = {}  # (output, slot) -> the small × that clears that slot
         self.remap_listening = False
         self.mouse_vars = {}  # mouse_settings key -> its widget's variable (apply_layout_preset)
 
@@ -1561,6 +1562,17 @@ class Launcher:
                     btn.grid(row=r, column=slot + 1, sticky='ew', padx=2, pady=2)
                     btn.bind('<Button-3>', lambda _e, o=output, i=slot: self.clear_remap(o, i))
                     buttons.append(btn)
+                    # A small × in the slot's top-right corner clears it, like a right-click.
+                    # refresh_remap_row places it over the slot only while the slot has a binding.
+                    mark = tk.Label(table, text='×', bg=CARD, fg=MUTED, cursor='hand2',
+                                    font=('Segoe UI', 10))
+                    mark.bind('<Button-1>', lambda _e, o=output, i=slot: self.clear_remap(o, i))
+                    mark.bind('<Enter>', lambda _e, m=mark: m.configure(bg=LINE, fg=TEXT))
+                    mark.bind('<Leave>', lambda _e, m=mark: m.configure(bg=CARD, fg=MUTED))
+                    # Keep the × the same colour as the slot under it while the slot is hovered.
+                    btn.bind('<Enter>', lambda _e, m=mark: m.configure(bg=LINE), add='+')
+                    btn.bind('<Leave>', lambda _e, m=mark: m.configure(bg=CARD), add='+')
+                    self.remap_clear_marks[(output, slot)] = mark
                 warn = ttk.Label(table, style='Muted.TLabel')
                 warn.grid(row=r, column=SLOTS + 1, sticky='w', padx=(8, 0))
                 self.remap_rows[output] = (buttons, warn)
@@ -1713,6 +1725,12 @@ class Launcher:
                 key = values[i] if i < len(values) else None
                 text = ' + '.join(display_name(p, russian) for p in binding_parts(key)) if key else '—'
                 btn.configure(text=text + ('  ⚠' if i in marked else ''), style='Slot.TButton')
+                mark = self.remap_clear_marks.get((o, i))
+                if mark is not None:
+                    if key:
+                        mark.place(in_=btn, relx=1.0, x=-self.px(4), y=self.px(2), anchor='ne')
+                    else:
+                        mark.place_forget()
             others = sorted({b for slot in marked.values() for b in slot})
             warn.configure(text='⚠ ' + _('also {}', 'также {}').format(
                 ', '.join(_(*OUTPUT_LABELS[c]) for c in others)) if others else '')
