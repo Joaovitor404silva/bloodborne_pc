@@ -188,6 +188,21 @@ Three DX12 allocator/list slots wait before reusing an occupied slot; resource
 changes and teardown still wait for completion. The synchronous bridge remains
 available only in the headless comparison test as a control.
 
+### DX12 transfer-buffer sizing
+
+Shared textures retain their format/row-pitch metadata while only buffer-copied
+planes reserve space in the shared transfer buffer. The buffer-only fallback
+keeps all four planes; a fully shared layout retains a 64 KiB minimum buffer.
+At 2560x1440 input and 3840x2160 SDR output, the normal shared-texture SR path
+uses **14.0625 MiB instead of 105.5 MiB** for this buffer, saving **91.4375 MiB**.
+These are transfer-buffer allocations, rather than total process VRAM.
+
+The 20 October 2026 checks cover real DX12 allocation sizes, plane dimensions,
+row pitches and fallback layouts, plus paired synthetic GPU output comparisons.
+The RX 9070 Warehouse check loaded the same save without adjusting the camera;
+camera matrices/projection were verified in every 10 s warmup / 25 s measurement
+phase. Two phases per mode found no FPS regression from this allocation change.
+
 ### Object-motion target reuse
 
 Some scenes alternate full- and half-resolution object-motion attachments within

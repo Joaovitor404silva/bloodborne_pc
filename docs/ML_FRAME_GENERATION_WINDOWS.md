@@ -92,6 +92,30 @@ Build, GPU-output and package checks cover both FG choices, including upstream's
 FSR 3.1 per-frame allocation fix. The ML method retains its separate completion
 queue; the historical gameplay figures above retain their Windows 1.9 attribution.
 
+## Maintenance and transfer-buffer sizing
+
+The 20 October 2026 cleanup removes unused ML-FG metadata and repeated import
+queries, preserves the SDR/fence checks and caches launcher translations once
+per language. Runtime/helper discovery also supports source builds. Packaging
+can fetch the verified SDK archive when the upscaler DLL is already cached;
+a regression test covers that case and the cached DLL remains intact.
+
+The shared-texture ML-FG path reserves transfer-buffer space for copied planes
+only. At 2560x1440 input / 3840x2160 SDR output, its buffer falls from
+**91.4375 MiB to 14.0625 MiB**, saving **77.375 MiB**. Together with the SR
+change, this removes **168.8125 MiB** of transfer-buffer allocation. The
+buffer-only compatibility path retains its plane layout.
+
+Real allocation/layout checks and paired GPU image comparisons passed. A
+Warehouse comparison on the RX 9070 used identical loaded saves, verified
+camera matrices/projection and two 10 s warmup / 25 s measurement phases per
+mode. Game FPS were 90.56 / 92.90 with FG off and 76.24 / 77.68 with ML-FG,
+before/after buffer sizing. This is a one-scene validation of the memory change.
+Nine rapid loaded-world FG cycles across the previous PR build, the cleanup
+and buffer-sizing builds passed, as did one early-world sequence each on the
+previous PR build and buffer-sizing build. An earlier one-off AMD driver fault
+on rapid ML-FG teardown remains unreproduced; its cause is unassigned.
+
 ## Building and checking
 
 Use the normal Windows `bash build.sh` and
