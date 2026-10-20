@@ -11,6 +11,7 @@ Every size here is in physical pixels: the code that measures monitors and moves
 per-monitor DPI aware, whatever the rest of the launcher is."""
 import ctypes
 import re
+import struct
 import threading
 import time
 from ctypes import wintypes
@@ -79,6 +80,21 @@ class Monitor:
         return f'Monitor({self.device!r}, {self.rect}, primary={self.primary}, name={self.name!r})'
 
 
+class SourceName(ctypes.Structure):  # DISPLAYCONFIG_SOURCE_DEVICE_NAME
+    _fields_ = [('type', ctypes.c_uint32), ('size', ctypes.c_uint32), ('adapter_low', ctypes.c_uint32),
+                ('adapter_high', ctypes.c_int32), ('id', ctypes.c_uint32), ('gdi', wintypes.WCHAR * 32)]
+
+
+class TargetName(ctypes.Structure):  # DISPLAYCONFIG_TARGET_DEVICE_NAME
+    _fields_ = [('type', ctypes.c_uint32), ('size', ctypes.c_uint32), ('adapter_low', ctypes.c_uint32),
+                ('adapter_high', ctypes.c_int32), ('id', ctypes.c_uint32), ('flags', ctypes.c_uint32),
+                ('technology', ctypes.c_uint32), ('maker', ctypes.c_uint16), ('product', ctypes.c_uint16),
+                ('connector', ctypes.c_uint32), ('name', wintypes.WCHAR * 64), ('path', wintypes.WCHAR * 128)]
+
+
+PATH_INFO = 72  # sizeof(DISPLAYCONFIG_PATH_INFO): source adapter and id at 0 and 8, target's at 20 and 28
+
+
 def monitor_names():
     """{GDI device name: the monitor's own name} from Windows' display configuration, e.g.
     {'\\\\.\\DISPLAY1': 'DELL S2721DGF'}; empty when Windows does not say."""
@@ -89,28 +105,17 @@ def monitor_names():
         QDC_ONLY_ACTIVE_PATHS = 2
         if user32.GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, ctypes.byref(paths), ctypes.byref(modes)):
             return names
-        path_data = (ctypes.c_byte * (72 * paths.value))()  # DISPLAYCONFIG_PATH_INFO
+        path_data = (ctypes.c_byte * (PATH_INFO * paths.value))()
         mode_data = (ctypes.c_byte * (64 * modes.value))()  # DISPLAYCONFIG_MODE_INFO
         if user32.QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS, ctypes.byref(paths), path_data, ctypes.byref(modes),
                                      mode_data, None):
             return names
         raw = bytes(path_data)
-
-        class Source(ctypes.Structure):  # DISPLAYCONFIG_SOURCE_DEVICE_NAME
-            _fields_ = [('type', ctypes.c_uint32), ('size', ctypes.c_uint32), ('adapter_low', ctypes.c_uint32),
-                        ('adapter_high', ctypes.c_int32), ('id', ctypes.c_uint32), ('gdi', wintypes.WCHAR * 32)]
-
-        class Target(ctypes.Structure):  # DISPLAYCONFIG_TARGET_DEVICE_NAME
-            _fields_ = [('type', ctypes.c_uint32), ('size', ctypes.c_uint32), ('adapter_low', ctypes.c_uint32),
-                        ('adapter_high', ctypes.c_int32), ('id', ctypes.c_uint32), ('flags', ctypes.c_uint32),
-                        ('technology', ctypes.c_uint32), ('maker', ctypes.c_uint16), ('product', ctypes.c_uint16),
-                        ('connector', ctypes.c_uint32), ('name', wintypes.WCHAR * 64),
-                        ('path', wintypes.WCHAR * 128)]
-        for i in range(paths.value):
-            at = i * 72
-            field = lambda offset, kind='<I': __import__('struct').unpack_from(kind, raw, at + offset)[0]
-            source = Source(1, ctypes.sizeof(Source), field(0), field(4, '<i'), field(8))
-            target = Target(2, ctypes.sizeof(Target), field(20), field(24, '<i'), field(28))
+        for at in range(0, paths.value * PATH_INFO, PATH_INFO):
+            low, high, source_id = struct.unpack_from('<Iii', raw, at)
+            target_low, target_high, target_id = struct.unpack_from('<Iii', raw, at + 20)
+            source = SourceName(1, ctypes.sizeof(SourceName), low, high, source_id)
+            target = TargetName(2, ctypes.sizeof(TargetName), target_low, target_high, target_id)
             if user32.DisplayConfigGetDeviceInfo(ctypes.byref(source)) or \
                     user32.DisplayConfigGetDeviceInfo(ctypes.byref(target)):
                 continue

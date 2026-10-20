@@ -28,6 +28,8 @@ import struct
 import zipfile
 from pathlib import Path
 
+import bbport_character as character
+
 SAVE_DIR = 'SPRJ0005'
 DEFAULT_TITLE = 'CUSA00207'  # what the Game of the Year Edition (CUSA03173) and the EU base game use
 SLOTS = [f'userdata{i:04d}' for i in range(10)]
@@ -100,6 +102,11 @@ def character_name(slot):
             data = stream.read(0x20000)
     except OSError:
         return ''
+    return name_in(data)
+
+
+def name_in(data):
+    """The character's name in the first bytes of a slot ('' when not found)."""
     match = NAME.search(data.decode('utf-16-le', errors='replace'))
     if not match:
         return ''
@@ -280,29 +287,269 @@ def find_in(root, depth=6):
 
 
 # ---- copying ---------------------------------------------------------------------------------------
-def backup(user_dir, game_dir=''):
+# ---- backups ---------------------------------------------------------------------------------------
+# <saves folder>/save_backups/*.zip, each with the game's files as this port keeps them and
+# bbport-backup.json: why it was made, a name the player gave it, when, and who is in it. The file
+# name says the same ("2026-10-20 15.32 - Before playing - Nick, Maria.zip"), so a backup can be told
+# apart in Explorer too. Backups from before (saves_<date>.zip) have no such file: 'old'.
+BACKUP_DIR = 'save_backups'
+BACKUP_META = 'bbport-backup.json'
+REASONS = {'manual': 'Saved by hand', 'auto': 'Before playing', 'import': 'Before an import',
+           'restore': 'Before a restore', 'file': 'From a file', 'old': 'Earlier backup'}
+WORDS = dict(REASONS)  # the words for file names; the launcher puts its translations here
+AUTO_KEEP = 10  # automatic backups kept; the player's own are never removed by the launcher
+META_FILES = {'param.bin', 'icon0.png'}
+
+
+def backup_dir(user_dir):
+    return Path(user_dir) / BACKUP_DIR
+
+
+def backup_file_name(created, reason, label='', detail='', names=()):
+    """'2026-10-20 15.32 - Before playing - Nick, Maria.zip', safe for Windows, at most 120 characters."""
+    words = label or WORDS.get(reason, REASONS.get(reason, reason))
+    parts = [created.strftime('%Y-%m-%d %H.%M'), words, '' if label else detail, ', '.join(names)]
+    text = ' - '.join(p.strip() for p in parts if p and p.strip())
+    text = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', text).strip(' .')
+    return text[:116].rstrip(' .-') + '.zip'
+
+
+def free_name(folder, name):
+    """`name` in `folder`, with ' (2)', ' (3)' … when it is taken."""
+    candidate, number = Path(folder) / name, 1
+    while candidate.exists():
+        number += 1
+        candidate = Path(folder) / f'{name[:-4]} ({number}).zip'
+    return candidate
+
+
+def write_backup(target, files, meta):
+    """A backup zip: `files` [(member name, path or bytes)] and the meta file, checked after writing."""
+    staging = target.with_name(target.name + '.part')
+    try:
+        with zipfile.ZipFile(staging, 'w', zipfile.ZIP_DEFLATED) as zipped:
+            for member, source in files:
+                if isinstance(source, bytes):
+                    zipped.writestr(member, source)
+                else:
+                    zipped.write(source, member)
+            zipped.writestr(BACKUP_META, json.dumps(meta, ensure_ascii=False, indent=1))
+        with zipfile.ZipFile(staging) as zipped:  # readable before anything relies on it
+            if zipped.testzip() is not None:
+                raise OSError(f'the backup {target} is damaged')
+        os.replace(staging, target)
+    finally:
+        if staging.exists():
+            staging.unlink()
+    return target
+
+
+def backup(user_dir, game_dir='', reason='manual', label='', detail=''):
     """Packs this port's current save (and its metadata) into save_backups/; None without one."""
     current = target_dir(user_dir, game_dir)
     parts = [p for p in (current, current.with_name(SAVE_DIR + '.sce_sys')) if p.is_dir()]
     if not parts or not any(current.glob('userdata*')):
         return None
-    folder = Path(user_dir) / 'save_backups'
+    names = SaveSet('', current).names
+    created = datetime.datetime.now()
+    folder = backup_dir(user_dir)
     folder.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.datetime.now().strftime('saves_%Y-%m-%d_%H%M%S')
-    archive, number = folder / f'{stamp}.zip', 1
-    while archive.exists():  # never over another backup (two in one second: import, then restore)
-        number += 1
-        archive = folder / f'{stamp}_{number}.zip'
     root = Path(user_dir)
-    with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as zipped:
-        for part in parts:
-            for path in sorted(part.rglob('*')):
-                if path.is_file():
-                    zipped.write(path, path.relative_to(root))
-    with zipfile.ZipFile(archive) as zipped:  # readable before anything is replaced
-        if zipped.testzip() is not None:
-            raise OSError(f'the backup {archive} is damaged')
-    return archive
+    files = [(p.relative_to(root).as_posix(), p) for part in parts for p in sorted(part.rglob('*')) if p.is_file()]
+    meta = {'version': 1, 'reason': reason, 'label': label, 'detail': detail,
+            'created': created.isoformat(timespec='seconds'), 'characters': names}
+    return write_backup(free_name(folder, backup_file_name(created, reason, label, detail, names)), files, meta)
+
+
+def archive_files(archive):
+    """{'save': {file name: member}, 'meta': {file name: member}} of a backup zip, whatever folders the
+    files were packed in. Only the game's own files count (userdata/backup, param.bin, icon0.png);
+    raises OSError when it is no complete save or holds two."""
+    found = {'save': {}, 'meta': {}}
+    try:
+        with zipfile.ZipFile(archive) as zipped:
+            for info in zipped.infolist():
+                if info.is_dir():
+                    continue
+                parts = info.filename.replace('\\', '/').split('/')
+                name, parent = parts[-1], (parts[-2] if len(parts) > 1 else '')
+                kind = 'meta' if parent.lower().endswith('sce_sys') else 'save'
+                if (kind == 'save' and not SAVE_FILES.match(name)) or (kind == 'meta' and name not in META_FILES):
+                    continue
+                if name in found[kind]:
+                    raise OSError('the file holds more than one save')
+                found[kind][name] = info.filename
+    except (zipfile.BadZipFile, OSError) as error:
+        raise OSError(str(error) or 'not a zip file') from error
+    names = set(found['save'])
+    if PROFILE not in names or not any(slot in names for slot in SLOTS):
+        raise OSError('no complete save: it needs userdata0010 and at least one character')
+    return found
+
+
+class Backup:
+    """One zip in save_backups: why, when, who; `ok` is False for a file that is no usable backup."""
+
+    def __init__(self, path):
+        self.path = Path(path)
+        try:
+            self.size = self.path.stat().st_size
+            self.modified = stamp = self.path.stat().st_mtime
+        except OSError:
+            self.size = self.modified = stamp = 0
+        meta, names, self.ok = {}, [], True
+        try:
+            files = archive_files(self.path)
+            with zipfile.ZipFile(self.path) as zipped:
+                if BACKUP_META in zipped.namelist():
+                    meta = json.loads(zipped.read(BACKUP_META).decode('utf-8'))
+                if not meta.get('characters'):
+                    for slot in SLOTS:
+                        if slot in files['save']:
+                            with zipped.open(files['save'][slot]) as stream:
+                                data = stream.read(0x20000)
+                            name = name_in(data) if any(data[:4096]) else ''
+                            names += [name] if name else []
+        except (OSError, ValueError, KeyError):
+            self.ok = False
+        self.reason = meta.get('reason') if meta.get('reason') in REASONS else 'old'
+        self.label, self.detail = str(meta.get('label') or ''), str(meta.get('detail') or '')
+        self.names = [str(n) for n in meta.get('characters') or names]
+        self.created = None
+        try:
+            self.created = datetime.datetime.fromisoformat(meta['created'])
+        except (KeyError, TypeError, ValueError):
+            match = re.search(r'(\d{4}-\d{2}-\d{2})_(\d{6})', self.path.name)  # saves_2026-10-20_153200.zip
+            if match:
+                self.created = datetime.datetime.strptime(''.join(match.groups()), '%Y-%m-%d%H%M%S')
+        if self.created is None:
+            self.created = datetime.datetime.fromtimestamp(stamp)
+        self.meta = meta
+
+
+def characters(folder):
+    """{slot: Character} of a save folder's readable characters."""
+    found = {slot: character.read_file(Path(folder) / slot) for slot in SLOTS if used(Path(folder) / slot)}
+    return {slot: info for slot, info in found.items() if info}
+
+
+_IN_BACKUPS = {}  # (path, size, modified) -> {slot: Character}; a backup's file does not change
+
+
+def backup_characters(item):
+    """{slot: Character} of a backup's readable characters (each file read once)."""
+    key = (str(item.path), item.size, item.modified)
+    if key not in _IN_BACKUPS:
+        found = {}
+        try:
+            members = archive_files(item.path)['save']
+            with zipfile.ZipFile(item.path) as zipped:
+                for slot in SLOTS:
+                    if slot in members:
+                        info = character.read(zipped.read(members[slot]))
+                        if info:
+                            found[slot] = info
+        except (OSError, zipfile.BadZipFile, KeyError):
+            pass
+        _IN_BACKUPS[key] = found
+    return _IN_BACKUPS[key]
+
+
+def backups(user_dir):
+    """The backups in save_backups, newest first."""
+    folder = backup_dir(user_dir)
+    found = [Backup(p) for p in folder.glob('*.zip')] if folder.is_dir() else []
+    return sorted(found, key=lambda b: b.created, reverse=True)
+
+
+def rename_backup(path, label):
+    """Gives a backup the player's own name ('' gives back the reason's); returns its new path."""
+    item = Backup(path)
+    if not item.ok:
+        raise OSError('not a usable backup')
+    with zipfile.ZipFile(item.path) as zipped:
+        files = [(i.filename, zipped.read(i.filename)) for i in zipped.infolist()
+                 if not i.is_dir() and i.filename != BACKUP_META]
+    meta = {**item.meta, 'version': 1, 'reason': item.reason, 'detail': item.detail,
+            'created': item.created.isoformat(timespec='seconds'), 'characters': item.names, 'label': label.strip()}
+    name = backup_file_name(item.created, item.reason, meta['label'], item.detail, item.names)
+    target = item.path if name == item.path.name else free_name(item.path.parent, name)
+    write_backup(target, files, meta)
+    if target != item.path:
+        item.path.unlink()
+    return target
+
+
+def latest_change(user_dir, game_dir=''):
+    """When the game last wrote this port's save (0 without one)."""
+    current = target_dir(user_dir, game_dir)
+    try:
+        return max((p.stat().st_mtime for p in current.iterdir() if p.is_file() and SAVE_FILES.match(p.name)),
+                   default=0)
+    except OSError:
+        return 0
+
+
+def auto_backup(user_dir, game_dir='', keep=AUTO_KEEP):
+    """Before a start: a backup when the save changed since the newest backup; the oldest automatic
+    ones beyond `keep` go. Returns the new backup or None."""
+    changed = latest_change(user_dir, game_dir)
+    if not changed:
+        return None
+    existing = backups(user_dir)
+    if existing and existing[0].created.timestamp() >= int(changed):
+        return None  # nothing played since
+    made = backup(user_dir, game_dir, reason='auto')
+    automatic = [b for b in backups(user_dir) if b.reason == 'auto']
+    for old in automatic[keep:]:
+        try:
+            old.path.unlink()
+        except OSError:
+            pass
+    return made
+
+
+def add_backup_file(path, user_dir):
+    """A backup zip from elsewhere (another PC, a friend's) into save_backups, as 'From a file' with
+    its file name; only the game's files are taken. Returns the new path (OSError: not a save)."""
+    files = archive_files(path)
+    title = DEFAULT_TITLE
+    with zipfile.ZipFile(path) as zipped:
+        packed = [(f'savedata/1/{title}/{SAVE_DIR}/{name}', zipped.read(member)) for name, member in
+                  sorted(files['save'].items())]
+        packed += [(f'savedata/1/{title}/{SAVE_DIR}.sce_sys/{name}', zipped.read(member)) for name, member in
+                   sorted(files['meta'].items())]
+    names = []
+    for member, data in packed:
+        if member.rsplit('/', 1)[-1] in SLOTS and any(data[:4096]):
+            name = name_in(data[:0x20000])
+            names += [name] if name else []
+    created = datetime.datetime.now()
+    detail = Path(path).stem[:60]
+    meta = {'version': 1, 'reason': 'file', 'label': '', 'detail': detail,
+            'created': created.isoformat(timespec='seconds'), 'characters': names}
+    folder = backup_dir(user_dir)
+    folder.mkdir(parents=True, exist_ok=True)
+    return write_backup(free_name(folder, backup_file_name(created, 'file', '', detail, names)), packed, meta)
+
+
+def to_recycle_bin(path):
+    """Moves a file to the Recycle Bin (Windows); True when it is gone from its folder."""
+    path = Path(path)
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        class SHFILEOPSTRUCTW(ctypes.Structure):
+            _fields_ = [('hwnd', wintypes.HWND), ('wFunc', wintypes.UINT), ('pFrom', wintypes.LPCWSTR),
+                        ('pTo', wintypes.LPCWSTR), ('fFlags', ctypes.c_ushort), ('fAnyOperationsAborted', wintypes.BOOL),
+                        ('hNameMappings', ctypes.c_void_p), ('lpszProgressTitle', wintypes.LPCWSTR)]
+        # FO_DELETE; FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI
+        operation = SHFILEOPSTRUCTW(None, 3, str(path.resolve()) + '\0', None, 0x40 | 0x10 | 0x4 | 0x400)
+        ctypes.windll.shell32.SHFileOperationW(ctypes.byref(operation))
+    except (AttributeError, OSError):
+        return False
+    return not path.exists()
 
 
 def param_from_sfo(path):
@@ -326,7 +573,7 @@ def import_set(save, user_dir, game_dir=''):
         raise OSError('the save has no userdata0010 (the profile) or no character slot')
     user_dir = Path(user_dir)
     target = target_dir(user_dir, game_dir)
-    archive = backup(user_dir, game_dir)
+    archive = backup(user_dir, game_dir, reason='import', detail=save.source)
     staging = user_dir / 'save_import'  # outside savedata: the game takes every folder there for a save
     shutil.rmtree(staging, ignore_errors=True)
     staging.mkdir(parents=True)
@@ -369,10 +616,94 @@ def import_set(save, user_dir, game_dir=''):
 
 
 def restore(archive, user_dir, game_dir=''):
-    """Puts a backup from save_backups back (the current save is backed up first)."""
-    backup(user_dir, game_dir)
+    """Puts a backup from save_backups back; the current save is backed up first ('Before a
+    restore'), which is returned. Only the game's own files are taken from the zip."""
+    files = archive_files(archive)
+    item = Backup(archive)
+    user_dir = Path(user_dir)
+    before = backup(user_dir, game_dir, reason='restore',
+                    detail=item.label or item.created.strftime('%Y-%m-%d %H.%M'))
     target = target_dir(user_dir, game_dir)
-    for part in (target, target.with_name(SAVE_DIR + '.sce_sys')):
-        shutil.rmtree(part, ignore_errors=True)
+    meta = target.with_name(SAVE_DIR + '.sce_sys')
+    staging = user_dir / 'save_import'  # outside savedata: the game takes every folder there for a save
+    shutil.rmtree(staging, ignore_errors=True)
+    staging.mkdir(parents=True)
+    try:
+        with zipfile.ZipFile(archive) as zipped:
+            for kind in ('save', 'meta'):
+                (staging / kind).mkdir()
+                for name, member in files[kind].items():
+                    data = zipped.read(member)
+                    (staging / kind / name).write_bytes(data)
+                    if (staging / kind / name).stat().st_size != len(data):
+                        raise OSError(f'{name} was not written completely')
+        target.mkdir(parents=True, exist_ok=True)
+        for old in target.iterdir():
+            if old.is_file() and SAVE_FILES.match(old.name):
+                os.chmod(old, 0o666)
+                old.unlink()
+        for copy in (staging / 'save').iterdir():
+            os.replace(copy, target / copy.name)
+        meta.mkdir(exist_ok=True)  # the game's metadata writes fail silently without it
+        for copy in (staging / 'meta').iterdir():
+            os.replace(copy, meta / copy.name)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+    return before
+
+
+# ---- one character back -------------------------------------------------------------------------
+# The profile holds a block of 0x192 bytes per slot from 0x1096, the character's name first: what the
+# Load Game menu shows (level, play time, place, appearance, equipment). One character goes back with
+# its slot file and its block; the other slots and the rest of the profile stay as they are.
+PROFILE_SLOTS, PROFILE_SLOT_SIZE = 0x1096, 0x192
+
+
+def profile_block(profile, slot):
+    """(offset, bytes) of a slot's block in the profile."""
+    start = PROFILE_SLOTS + SLOTS.index(slot) * PROFILE_SLOT_SIZE
+    return start, bytes(profile[start:start + PROFILE_SLOT_SIZE])
+
+
+def block_name(block):
+    return block[:character.NAME_BYTES].decode('utf-16-le', errors='replace').split('\0')[0]
+
+
+def restore_character(archive, slot, user_dir, game_dir=''):
+    """Puts one character back as it is in a backup: its slot file and its block in the profile; the
+    other characters stay. Only for the same character in the same slot, and only when the profile
+    is laid out as expected (OSError otherwise). The current saves are backed up first ('Before a
+    restore'), which is returned."""
+    files = archive_files(archive)
+    if slot not in files['save']:
+        raise OSError(f'the backup has no {slot}')
     with zipfile.ZipFile(archive) as zipped:
-        zipped.extractall(Path(user_dir))
+        old_slot, old_profile = zipped.read(files['save'][slot]), zipped.read(files['save'][PROFILE])
+    user_dir = Path(user_dir)
+    target = target_dir(user_dir, game_dir)
+    profile = bytearray((target / PROFILE).read_bytes())
+    then, now = character.read(old_slot), character.read_file(target / slot)
+    if not then or not now or then.name != now.name:
+        raise OSError('it is not the same character in this slot')
+    start, block = profile_block(old_profile, slot)
+    current = block_name(profile_block(profile, slot)[1])
+    if len(profile) != len(old_profile) or block_name(block) != then.name or current != now.name:
+        raise OSError('the profile is not laid out as expected')
+    item = Backup(archive)
+    before = backup(user_dir, game_dir, reason='restore',
+                    detail=item.label or item.created.strftime('%Y-%m-%d %H.%M'))
+    profile[start:start + PROFILE_SLOT_SIZE] = block
+    staging = user_dir / 'save_import'  # outside savedata: the game takes every folder there for a save
+    shutil.rmtree(staging, ignore_errors=True)
+    staging.mkdir(parents=True)
+    try:
+        for name, data in ((slot, old_slot), (PROFILE, bytes(profile))):
+            (staging / name).write_bytes(data)
+            if (staging / name).stat().st_size != len(data):
+                raise OSError(f'{name} was not written completely')
+        for name in (slot, PROFILE):
+            os.chmod(target / name, 0o666)
+            os.replace(staging / name, target / name)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+    return before

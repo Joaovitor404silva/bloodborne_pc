@@ -43,6 +43,12 @@ ICON = {'play': '', 'graphics': '', 'display': '', 'game': '', 'chea
 SS = 4  # supersampling of the drawn images
 
 
+def blend(a, b, t):
+    """The colour between two #rrggbb colours, t from 0 (a) to 1 (b): fades and gradual fills."""
+    one, two = (int(a[i:i + 2], 16) for i in (1, 3, 5)), (int(b[i:i + 2], 16) for i in (1, 3, 5))
+    return '#' + ''.join(f'{round(x + (y - x) * t):02x}' for x, y in zip(one, two))
+
+
 def load_fonts(root):
     """Registers the bundled fonts for this process only and picks the families Tk sees."""
     global HEAD, HEAD_BOLD, BODY, BODY_MEDIUM, BODY_SEMI, ICONS

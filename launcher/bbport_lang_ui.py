@@ -134,7 +134,6 @@ UI = {'de': {
     'Precise': 'Genau', 'Debug': 'Debug',
     'Quit to Desktop in the title menu and in the System menu': '„Zum Desktop“ im Titelmenü und im Systemmenü',
     # ---- Cheats: system page ----
-    'System & tests': 'System & Tests',
     'What your PC can do, rated like the hardware check on bbport.de, and game tests that measure it: the best settings '
     'for a goal, settings side by side, stability.':
         'Was dein PC kann, bewertet wie der Hardware-Check auf bbport.de, und Spieltests, die es messen: beste '
@@ -431,6 +430,178 @@ UI = {'de': {
     "The game's text and voices, the launcher's language, how the game starts and sounds.":
         'Texte und Stimmen des Spiels, die Sprache des Launchers, wie das Spiel startet und klingt.',
     'As the game opens it': 'Wie das Spiel es öffnet',
+    'Saved by hand':
+        'Von Hand gesichert',
+    'Before playing':
+        'Vor dem Spielstart',
+    'Before an import':
+        'Vor einem Import',
+    'Before a restore':
+        'Vor dem Zurückholen',
+    'From a file':
+        'Aus einer Datei',
+    'Earlier backup':
+        'Ältere Sicherung',
+    'Your characters':
+        'Deine Charaktere',
+    'From other versions':
+        'Aus anderen Versionen',
+    'No characters yet. The game makes them, or bring yours from another version (below).':
+        'Noch keine Charaktere. Das Spiel legt sie an, oder du holst deine aus einer anderen Version (unten).',
+    'A character without a readable name':
+        'Ein Charakter ohne lesbaren Namen',
+    'Slot {}':
+        'Platz {}',
+    'saved {}':
+        'gespeichert {}',
+    'Back up now':
+        'Jetzt sichern',
+    'Back up automatically before every start':
+        'Vor jedem Spielstart automatisch sichern',
+    'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+        'Nur wenn du seit der letzten Sicherung gespielt hast. Die letzten {} automatischen Sicherungen bleiben, deine eigenen immer.',
+    'No backups yet.':
+        'Noch keine Sicherungen.',
+    'Show fewer':
+        'Weniger zeigen',
+    'Show all ({})':
+        'Alle zeigen ({})',
+    'Add a backup file…':
+        'Sicherungsdatei hinzufügen…',
+    'Restore':
+        'Zurückholen',
+    'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+        'Ein Name für diese Sicherung. Enter übernimmt ihn, Esc lässt alles, wie es war.',
+    'Rename':
+        'Umbenennen',
+    'Copy to…':
+        'Kopieren nach…',
+    'Show in folder':
+        'Im Ordner zeigen',
+    'Delete':
+        'Löschen',
+    'Could not rename the backup: {}':
+        'Die Sicherung ließ sich nicht umbenennen: {}',
+    'Could not back up the saves: {}':
+        'Die Spielstände ließen sich nicht sichern: {}',
+    'There is no save to back up yet.':
+        'Es gibt noch keinen Spielstand zum Sichern.',
+    'Put this backup back?':
+        'Diese Sicherung zurückholen?',
+    'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+        'Deine aktuellen Spielstände ({}) werden vorher gesichert („{}“), es geht also nichts verloren.',
+    'Could not put the backup back: {}':
+        'Die Sicherung ließ sich nicht zurückholen: {}',
+    "Backup put back. Your characters are in the game's Load Game menu.":
+        'Sicherung zurückgeholt. Deine Charaktere findest du im Spiel unter „Spiel laden“.',
+    'Choose a backup (zip)':
+        'Sicherung wählen (Zip)',
+    'This file is no Bloodborne save backup: {}':
+        'Diese Datei ist keine Bloodborne-Spielstandsicherung: {}',
+    'Copy the backup to…':
+        'Sicherung kopieren nach…',
+    'Could not copy the backup: {}':
+        'Die Sicherung ließ sich nicht kopieren: {}',
+    'Delete this backup? It goes to the Recycle Bin.':
+        'Diese Sicherung löschen? Sie kommt in den Papierkorb.',
+    'Could not move the backup to the Recycle Bin.':
+        'Die Sicherung ließ sich nicht in den Papierkorb verschieben.',
+    'The automatic backup of the saves failed: {}':
+        'Die automatische Sicherung der Spielstände ist fehlgeschlagen: {}',
+    'Saves backed up: {}':
+        'Spielstände gesichert: {}',
+    '{} online':
+        '{} online',
+    "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+        "The Hunter's Dream: gerade {} Jäger online ({} bbhost · {} shadNet)",
+    'A character is gone or the save is broken':
+        'Ein Charakter ist weg oder der Spielstand kaputt',
+    'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+        'Das Menü „Spiel laden“ ist leer, ein Charakter fehlt, oder das Spiel meldet einen beschädigten Spielstand. Vor jedem Start sichert der Launcher deine Spielstände, du kannst also zum vorherigen Stand zurück.',
+    'Close the game.':
+        'Schließe das Spiel.',
+    'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+        'Seite Spielstände, Sicherungen: Hol die neueste Sicherung von vor dem Problem zurück („Vor dem Spielstart“ mit dem Datum deiner letzten guten Sitzung).',
+    'Your current saves are backed up first: trying an older backup loses nothing.':
+        'Deine aktuellen Spielstände werden vorher gesichert: Eine ältere Sicherung auszuprobieren kostet nichts.',
+    'The character came from another version and there is no backup yet: import it again under "From other versions".':
+        'Der Charakter kam aus einer anderen Version und es gibt noch keine Sicherung: Importiere ihn erneut unter „Aus anderen Versionen“.',
+    'The controller does nothing':
+        'Der Controller macht nichts',
+    'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+        'Das Spiel liest Controller genauso wie der Controller-Test auf der Seite Steuerung: Was dort aufleuchtet, kommt im Spiel an.',
+    'Open the controller test and press the buttons.':
+        'Öffne den Controller-Test und drücke die Tasten.',
+    'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+        'Nichts leuchtet auf: Verbinde den Controller neu (am sichersten per Kabel) und schließe Programme, die ihn übernehmen, etwa DS4Windows.',
+    "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+        'Über Steam gestartet: Probiere in den Steam-Eigenschaften des Spiels Steam Input an oder aus.',
+    'Open the backups':
+        'Sicherungen öffnen',
+    'Open the controller test':
+        'Controller-Test öffnen',
+    'Controller test':
+        'Controller-Test',
+    'Press the buttons: what lights up here reaches the game.':
+        'Drück die Tasten: Was hier aufleuchtet, kommt im Spiel an.',
+    'The game is running: the test waits until it is closed.':
+        'Das Spiel läuft: Der Test wartet, bis es geschlossen ist.',
+    "SDL3.dll is missing in the port's bin folder.":
+        'SDL3.dll fehlt im bin-Ordner des Ports.',
+    'The controller test cannot start: {}':
+        'Der Controller-Test kann nicht starten: {}',
+    'No controller found. Connect it by cable or Bluetooth.':
+        'Kein Controller gefunden. Verbinde ihn per Kabel oder Bluetooth.',
+    "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+        "The Hunter's Dream: Koop zusammen mit bbhost-Spielern, nach einer kostenlosen Anmeldung mit Discord. shadNet: ein shadNet-Server deiner Wahl und sein Konto.",
+    'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+        'Stattdessen ein shadNet-Server und alle Optionen: Seite „Online spielen“. Offline braucht nichts: Haken weg.',
+    'Fullscreen, HDR and the taste effects are on Picture & performance.':
+        'Vollbild, HDR und die Geschmackseffekte sind unter Bild & Leistung.',
+    'Your characters, their backups and the trophies. Empty: {}.':
+        'Deine Charaktere, ihre Sicherungen und die Trophäen. Leer: {}.',
+    'Cache folder':
+        'Cache-Ordner',
+    'Choose the cache folder':
+        'Cache-Ordner wählen',
+    'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+        'Shader, Protokolle und temporäre Dateien dieses PCs. Leer: im Spielstandordner, oder auf diesem PC, wenn der Spielstandordner in einem Cloud-Ordner liegt (OneDrive, Dropbox, Google Drive), damit jeder PC seine eigenen Shader behält.',
+    'Caches now: {}':
+        'Caches jetzt: {}',
+    'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+        'Dein Spielstandordner liegt in einem Cloud-Ordner: Die Spielstände wandern mit, die Shader bleiben auf diesem PC. Spiel immer nur auf einem PC und lass die Synchronisierung fertig werden, bevor du auf einem anderen startest; stell den Ordner in OneDrive auf „Immer auf diesem Gerät beibehalten“.',
+    'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+        'Zieh einen Mod an seinem Griff, um die Reihenfolge zu ändern. Weiter unten lädt später und gewinnt bei Konflikten.',
+    'Weapons':
+        'Waffen',
+    'Bosses':
+        'Bosse',
+    'Deaths':
+        'Tode',
+    'None beaten yet':
+        'Noch keiner besiegt',
+    'Earlier states in your backups ({})':
+        'Frühere Stände in deinen Sicherungen ({})',
+    'Hide the earlier states':
+        'Frühere Stände ausblenden',
+    'same as now':
+        'wie jetzt',
+    'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+        'Im Spiel lädt „{}“ den zuletzt gespielten Charakter; „{}“ im Titelbildschirm zeigt alle.',
+    'Its level, weapons and bosses cannot be read from this save.':
+        'Stufe, Waffen und Bosse lassen sich aus diesem Spielstand nicht lesen.',
+    'Every character in this backup goes back to this state.':
+        'Alle Charaktere in dieser Sicherung gehen auf diesen Stand zurück.',
+    'Put {} back to this state?':
+        '{} auf diesen Stand zurückholen?',
+    'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+        'Nur dieser Charakter ändert sich, deine anderen Charaktere bleiben, wie sie sind. Sein jetziger Stand wird vorher gesichert („{}“), es geht also nichts verloren.',
+    'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+        'Dieser Charakter lässt sich nicht einzeln zurückholen ({}). Hol stattdessen unter Sicherungen die ganze Sicherung zurück.',
+    '{} is back at this state.':
+        '{} ist wieder auf diesem Stand.',
+    'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+        'Nur ein Charakter betroffen: unter „Deine Charaktere“ seine früheren Stände öffnen und nur ihn zurückholen.',
 }}
 
 for _language, _texts in UI.items():

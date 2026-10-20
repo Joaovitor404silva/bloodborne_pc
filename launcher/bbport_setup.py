@@ -17,6 +17,7 @@ import webbrowser
 from PIL import ImageTk
 
 import bbport_benchmark as bench
+import bbport_character as character
 import bbport_display as display
 import bbport_hardware as hardware
 import bbport_saves as saves
@@ -831,9 +832,10 @@ class SetupMixin:
         text = _('1 character') if count == 1 else _('{} characters').format(count)
         return f'{text}: {names}' if names else text
 
-    def saves_card(self, parent, limit=None, title=None, hide_empty=False):
+    def saves_card(self, parent, limit=None, title=None, hide_empty=False, manager=False):
         """The saves found from other versions, each with Import; Search again, Choose a folder.
-        With hide_empty the card stays hidden until something is found."""
+        With hide_empty the card stays hidden until something is found; with manager (the Saves
+        page) without this port's own line and the Backups button (the cards above have them)."""
         tk, ttk, px = self.tk, self.ttk, self.px
         card = ttk.Frame(parent, style='Card.TFrame', padding=(px(22), px(16)))
         body = tk.Frame(card, bg=theme.CARD)
@@ -850,18 +852,20 @@ class SetupMixin:
                     anchor='w', pady=(0, px(6)))
             here = self.save_target()
             mine = saves.SaveSet('', here) if saves.is_save_folder(here) else None
-            self.state_line(body, 'ok' if mine and mine.slots else 'info',
-                            _('This port: {}, last played {}').format(self.describe_save(mine), mine.when())
-                            if mine else _('This port has no saves yet.'), theme.CARD, wrap=640).pack(fill='x')
+            if not manager:
+                self.state_line(body, 'ok' if mine and mine.slots else 'info',
+                                _('This port: {}, last played {}').format(self.describe_save(mine), mine.when())
+                                if mine else _('This port has no saves yet.'), theme.CARD, wrap=640).pack(fill='x')
             sets = state['sets']
+            top = 0 if manager else px(10)
             if sets is None:
                 tk.Label(body, text=_('Searching this PC for saves of shadPS4, Awaken\'s port and bbhost…'),
-                         bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9)).pack(anchor='w', pady=(px(10), 0))
+                         bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9)).pack(anchor='w', pady=(top, 0))
             elif not sets:
                 tk.Label(body, text=_('No saves from shadPS4, Awaken\'s port or bbhost found on this PC. If yours '
                                       'are somewhere else (a backup, a PS4 export), choose their folder.'),
                          bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
-                         wraplength=px(640)).pack(anchor='w', pady=(px(10), 0))
+                         wraplength=px(640)).pack(anchor='w', pady=(top, 0))
             for save in (sets or [])[:limit or None]:
                 tk.Frame(body, bg=theme.BORDER, height=1).pack(fill='x', pady=(px(10), px(8)))
                 line = tk.Frame(body, bg=theme.CARD)
@@ -883,7 +887,7 @@ class SetupMixin:
             ttk.Button(buttons, text=_('Choose a folder…'), style='Card.TButton', command=choose).pack(
                 side='left', padx=(px(6), 0))
             backups = self.save_user_dir() / 'save_backups'
-            if backups.is_dir():
+            if backups.is_dir() and not manager:
                 ttk.Button(buttons, text=_('Backups'), style='Card.TButton',
                            command=lambda: self.open_path(backups)).pack(side='left', padx=(px(6), 0))
 
@@ -963,7 +967,392 @@ class SetupMixin:
         self.messagebox.showinfo('Bloodborne', done)
         self.save_found = None
         self.refresh_status()
+        self.refresh_saves()
         refresh()
+
+    # ---- the save manager (Saves page) -----------------------------------------------------------
+    def game_running(self):
+        """The game runs (from here, a shortcut or Steam): it writes its saves while it runs."""
+        return bool(self.process) or bool(bench.game_pids())
+
+    def refresh_saves(self, only_if_changed=False):
+        """The characters and the backups drawn anew (on a page change only when the files changed)."""
+        made_from = (str(self.save_target()), L.folder_entries(self.save_target()),
+                     L.folder_entries(saves.backup_dir(self.save_user_dir())), self.var('game_dir', 'app').get(),
+                     self.var('language', 'app').get())
+        if only_if_changed and made_from == getattr(self, 'saves_made_from', None):
+            return
+        self.saves_made_from = made_from
+        for view in ('characters_view', 'backups_view'):
+            card = getattr(self, view, None)
+            if card is not None and card.winfo_exists():
+                card.redraw()
+
+    def characters_card(self, parent):
+        """This port's characters: what each is now (level, attributes, weapons, the bosses it beat)
+        and, folded beneath it, what it was in each backup."""
+        tk, ttk, px = self.tk, self.ttk, self.px
+        card = ttk.Frame(parent, style='Card.TFrame', padding=(px(22), px(16)))
+        body = tk.Frame(card, bg=theme.CARD)
+        body.pack(fill='both', expand=True)
+        opened = {}  # slot: 'some' or 'all' of its earlier states shown
+
+        def draw():
+            if not body.winfo_exists():
+                return
+            for child in body.winfo_children():
+                child.destroy()
+            here = self.save_target()
+            mine = saves.SaveSet('', here) if saves.is_save_folder(here) else None
+            if not mine or not mine.slots:
+                self.state_line(body, 'info', _('No characters yet. The game makes them, or bring yours from another '
+                                                'version (below).'), theme.CARD, wrap=640).pack(fill='x')
+            else:
+                words = character.names(self.var('game_dir', 'app').get(), self.var('language', 'app').get())
+                items = [b for b in saves.backups(self.save_user_dir()) if b.ok]
+                for index, slot in enumerate(mine.slots):
+                    if index:
+                        tk.Frame(body, bg=theme.BORDER, height=1).pack(fill='x', pady=px(16))
+                    self.character_view(body, here / slot, words, items, opened, draw)
+                hint = _('In the game, {} loads the character you played last; {} on the title screen lists all '
+                         'of them.').format(words.word(character.CONTINUE_TEXT), words.word(character.LOAD_GAME_TEXT))
+                tk.Label(body, text=hint, bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
+                         wraplength=px(640)).pack(anchor='w', pady=(px(18), 0))
+            buttons = tk.Frame(body, bg=theme.CARD)
+            buttons.pack(anchor='w', pady=(px(14), 0))
+            if mine and mine.slots:
+                ttk.Button(buttons, text=_('Back up now'), style='Card.Accent.TButton', command=self.backup_now).pack(
+                    side='left', padx=(0, px(6)))
+            ttk.Button(buttons, text=_('Open the folder'), style='Card.TButton',
+                       command=lambda: self.open_path(here if here.is_dir() else self.save_user_dir())).pack(side='left')
+        draw()
+        card.redraw = draw
+        return card
+
+    STATES_SHOWN = 3
+
+    def character_view(self, body, path, words, items, opened, redraw):
+        """One character: name, level, play time, when it was saved; its attributes; its weapons, the
+        bosses it beat, its echoes, insight and deaths; then its states in the backups."""
+        import datetime
+        tk, px = self.tk, self.px
+        info = character.read_file(path)
+        name = info.name if info else saves.character_name(path)
+        head = tk.Frame(body, bg=theme.CARD)
+        head.pack(fill='x')
+        tk.Label(head, text=name or _('A character without a readable name'), bg=theme.CARD,
+                 fg=theme.TEXT_STRONG if name else theme.MUTED, font=(theme.BODY_SEMI, 13)).pack(side='left')
+        if info:
+            tk.Label(head, text=f'{words.word(character.LEVEL_TEXT)} {info.level}', bg=theme.CARD, fg=theme.GOLD_LIGHT,
+                     font=(theme.BODY_SEMI, 13)).pack(side='right')
+        try:
+            when = datetime.datetime.fromtimestamp(path.stat().st_mtime).strftime('%d.%m.%Y %H:%M')
+        except OSError:
+            when = '?'
+        facts = [_('Slot {}').format(int(path.name[-4:]) + 1), _('saved {}').format(when)]
+        if info:
+            hours, minutes = info.played // 3600, info.played % 3600 // 60
+            facts.insert(1, f'{words.word(character.PLAY_TIME_TEXT)} {hours}:{minutes:02d}')
+        tk.Label(body, text='  ·  '.join(facts), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9)).pack(anchor='w')
+        if not info:
+            tk.Label(body, text=_('Its level, weapons and bosses cannot be read from this save.'), bg=theme.CARD,
+                     fg=theme.MUTED, font=(theme.BODY, 9)).pack(anchor='w', pady=(px(6), 0))
+            return
+        tiles = tk.Frame(body, bg=theme.CARD)
+        tiles.pack(fill='x', pady=(px(12), 0))
+        for column, (key, value) in enumerate(info.attributes.items()):
+            tiles.columnconfigure(column, weight=1, uniform='attributes')
+            tile = tk.Frame(tiles, bg=theme.SURFACE, padx=px(10), pady=px(6))
+            tile.grid(row=0, column=column, sticky='we', padx=(px(6) if column else 0, 0))
+            tk.Label(tile, text=words.attribute(key), bg=theme.SURFACE, fg=theme.MUTED, font=(theme.BODY, 8)).pack(
+                anchor='w')
+            tk.Label(tile, text=value, bg=theme.SURFACE, fg=theme.TEXT_STRONG, font=(theme.BODY_SEMI, 13)).pack(
+                anchor='w')
+        rows = tk.Frame(body, bg=theme.CARD)
+        rows.pack(fill='x', pady=(px(10), 0))
+        self.character_facts(rows, info, words, theme.CARD, 10)
+        more = [f'{words.word(character.ECHOES_TEXT)} {info.echoes}',
+                f'{words.word(character.INSIGHT_TEXT)} {info.insight}', _('Deaths') + f' {info.deaths}']
+        if info.journey:
+            more.append(f'NG+{info.journey}')
+        tk.Label(body, text='  ·  '.join(more), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9)).pack(
+            anchor='w', pady=(px(4), 0))
+        self.earlier_states(body, path.name, info, words, items, opened, redraw)
+
+    def character_facts(self, rows, info, words, bg, size):
+        """Its weapons and the bosses it beat, as two labelled rows."""
+        tk, px = self.tk, self.px
+        weapons = [w for w in map(words.weapon, info.weapons) if w]
+        bosses = [b for b in map(words.boss, info.bosses) if b]
+        lines = ((_('Weapons'), '  ·  '.join(weapons) or '–'),
+                 (_('Bosses') + f' {len(info.bosses)}/{len(character.BOSSES)}',
+                  '  ·  '.join(bosses) or _('None beaten yet')))
+        rows.columnconfigure(0, minsize=px(92))
+        for row, (label, value) in enumerate(lines):
+            tk.Label(rows, text=label, bg=bg, fg=theme.MUTED, font=(theme.BODY, 9)).grid(
+                row=row, column=0, sticky='nw', padx=(0, px(14)), pady=px(1))
+            tk.Label(rows, text=value, bg=bg, fg=theme.TEXT, font=(theme.BODY, size), justify='left',
+                     wraplength=px(560)).grid(row=row, column=1, sticky='w', pady=px(1))
+
+    def earlier_states(self, body, slot, now, words, items, opened, redraw):
+        """The character as it was in each backup, newest first; what differs from now stands out."""
+        tk, px = self.tk, self.px
+        states = [(item, then) for item in items
+                  for then in [saves.backup_characters(item).get(slot)] if then and then.name == now.name]
+        if not states:
+            return
+        shown = opened.get(slot)
+        toggle = tk.Label(body, text=(_('Hide the earlier states') if shown else
+                                      _('Earlier states in your backups ({})').format(len(states))) + '  ›',
+                          bg=theme.CARD, fg=theme.GOLD_LIGHT, font=(theme.BODY_MEDIUM, 9), cursor='hand2')
+        toggle.pack(anchor='w', pady=(px(12), 0))
+        toggle.bind('<Button-1>', lambda _e: (opened.update({slot: None if shown else 'some'}), redraw()))
+        if not shown:
+            return
+        bg = theme.SURFACE
+        well = tk.Frame(body, bg=bg, padx=px(16), pady=px(10))
+        well.pack(fill='x', pady=(px(8), 0))
+        for index, (item, then) in enumerate(states if shown == 'all' else states[:self.STATES_SHOWN]):
+            if index:
+                tk.Frame(well, bg=theme.BORDER, height=1).pack(fill='x', pady=(px(10), 0))
+            line = tk.Frame(well, bg=bg)
+            line.pack(fill='x', pady=(px(8) if index else 0, 0))
+            restore = tk.Label(line, text=_('Restore'), bg=bg, fg=theme.MUTED, font=(theme.BODY_MEDIUM, 9),
+                               cursor='hand2')
+            restore.pack(side='right')
+            restore.bind('<Button-1>', lambda _e, i=item, t=then: self.restore_character(i, slot, t, words))
+            restore.bind('<Enter>', lambda _e, w=restore: w.configure(fg=theme.TEXT))
+            restore.bind('<Leave>', lambda _e, w=restore: w.configure(fg=theme.MUTED))
+            tk.Label(line, text=item.created.strftime('%d.%m.%Y %H:%M') + '  ·  ' + self.backup_title(item), bg=bg,
+                     fg=theme.GOLD_LIGHT, font=(theme.BODY_SEMI, 9)).pack(side='left')
+            if then.summary() == now.summary():
+                tk.Label(line, text=_('same as now'), bg=bg, fg=theme.MUTED, font=(theme.BODY, 9)).pack(
+                    side='left', padx=(px(10), 0))
+            values = tk.Frame(well, bg=bg)
+            values.pack(anchor='w', pady=(px(4), 0))
+            pieces = [(words.word(character.LEVEL_TEXT), then.level, now.level)] + [
+                (words.attribute(key), value, now.attributes[key]) for key, value in then.attributes.items()]
+            for number, (word, value, current) in enumerate(pieces):
+                changed = value != current
+                tk.Label(values, text=f'{word} {value}', bg=bg, fg=theme.TEXT_STRONG if changed else theme.MUTED,
+                         font=(theme.BODY_SEMI if changed else theme.BODY, 9)).pack(
+                    side='left', padx=(px(12) if number else 0, 0))
+            rows = tk.Frame(well, bg=bg)
+            rows.pack(fill='x', pady=(px(2), 0))
+            self.character_facts(rows, then, words, bg, 9)
+        if len(states) > self.STATES_SHOWN:
+            more = tk.Label(well, text=(_('Show fewer') if shown == 'all' else _('Show all ({})').format(len(states)))
+                            + '  ›', bg=bg, fg=theme.GOLD_LIGHT, font=(theme.BODY_MEDIUM, 9), cursor='hand2')
+            more.pack(anchor='w', pady=(px(10), 0))
+            more.bind('<Button-1>', lambda _e: (opened.update({slot: 'some' if shown == 'all' else 'all'}), redraw()))
+
+    BACKUPS_SHOWN = 6
+
+    def backup_title(self, item):
+        """What a backup is: the player's name for it, else why it was made (and from what)."""
+        if item.label:
+            return item.label
+        words = _(saves.REASONS[item.reason])
+        return f'{words}: {item.detail}' if item.detail else words
+
+    def backups_card(self, parent):
+        """The backups, newest first: what each is, when, who is in it; Restore, Rename, Copy to,
+        Show in folder, Delete. Back up now, Add a backup file, the automatic backup switch."""
+        tk, ttk, px = self.tk, self.ttk, self.px
+        card = ttk.Frame(parent, style='Card.TFrame', padding=(px(22), px(16)))
+        body = tk.Frame(card, bg=theme.CARD)
+        body.pack(fill='both', expand=True)
+        self.backups_state = state = {'all': False, 'rename': None}
+
+        def draw():
+            if not body.winfo_exists():
+                return
+            for child in body.winfo_children():
+                child.destroy()
+            ttk.Checkbutton(body, text=_('Back up automatically before every start'),
+                            variable=self.var('auto_backup', 'app'), style='Card.TCheckbutton').pack(anchor='w')
+            tk.Label(body, text=_('Only when you played since the last backup. The last {} automatic backups are '
+                                  'kept; the ones you make yourself always.').format(saves.AUTO_KEEP),
+                     bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
+                     wraplength=px(640)).pack(anchor='w', padx=(px(26), 0))
+            items = [b for b in saves.backups(self.save_user_dir()) if b.ok]
+            if not items:
+                tk.Label(body, text=_('No backups yet.'), bg=theme.CARD, fg=theme.MUTED,
+                         font=(theme.BODY, 10)).pack(anchor='w', pady=(px(12), 0))
+            for item in items if state['all'] else items[:self.BACKUPS_SHOWN]:
+                self.backup_row(body, item, state, draw)
+            if len(items) > self.BACKUPS_SHOWN:
+                more = tk.Label(body, text=(_('Show fewer') if state['all'] else
+                                            _('Show all ({})').format(len(items))) + '  ›',
+                                bg=theme.CARD, fg=theme.GOLD_LIGHT, font=(theme.BODY_MEDIUM, 9), cursor='hand2')
+                more.pack(anchor='w', pady=(px(10), 0))
+                more.bind('<Button-1>', lambda _e: (state.update(all=not state['all']), draw()))
+            buttons = tk.Frame(body, bg=theme.CARD)
+            buttons.pack(anchor='w', pady=(px(14), 0))
+            ttk.Button(buttons, text=_('Back up now'), style='Card.TButton', command=self.backup_now).pack(side='left')
+            ttk.Button(buttons, text=_('Add a backup file…'), style='Card.TButton', command=self.add_backup_file).pack(
+                side='left', padx=(px(6), 0))
+            ttk.Button(buttons, text=_('Open the folder'), style='Card.TButton',
+                       command=lambda: self.open_path(saves.backup_dir(self.save_user_dir()))
+                       if saves.backup_dir(self.save_user_dir()).is_dir() else None).pack(side='left', padx=(px(6), 0))
+        draw()
+        card.redraw = draw
+        return card
+
+    def backup_row(self, body, item, state, redraw):
+        tk, ttk, px = self.tk, self.ttk, self.px
+        tk.Frame(body, bg=theme.BORDER, height=1).pack(fill='x', pady=(px(12), px(8)))
+        line = tk.Frame(body, bg=theme.CARD)
+        line.pack(fill='x')
+        ttk.Button(line, text=_('Restore'), style='Card.TButton',
+                   command=lambda: self.restore_backup(item)).pack(side='right', anchor='n')
+        words = tk.Frame(line, bg=theme.CARD)
+        words.pack(side='left', fill='x', expand=True)
+        if state['rename'] == item.path:
+            text = self.tk.StringVar(value=item.label or self.backup_title(item))
+            entry = ttk.Entry(words, textvariable=text, width=44)
+            entry.pack(anchor='w')
+
+            def done(save=True):
+                if state['rename'] != item.path:
+                    return
+                state['rename'] = None
+                name = text.get().strip()
+                if save and name != (item.label or self.backup_title(item)):
+                    try:
+                        saves.rename_backup(item.path, name)
+                    except OSError as error:
+                        self.messagebox.showerror('Bloodborne', _('Could not rename the backup: {}').format(error))
+                self.root.after_idle(redraw)
+            entry.bind('<Return>', lambda _e: done())
+            entry.bind('<Escape>', lambda _e: done(False))
+            entry.bind('<FocusOut>', lambda _e: done())
+            entry.focus_set()
+            entry.select_range(0, 'end')
+            tk.Label(words, text=_('A name for this backup. Enter keeps it, Esc leaves it as it was.'), bg=theme.CARD,
+                     fg=theme.MUTED, font=(theme.BODY, 8)).pack(anchor='w', pady=(px(2), 0))
+        else:
+            tk.Label(words, text=self.backup_title(item), bg=theme.CARD, fg=theme.GOLD_LIGHT,
+                     font=(theme.BODY_SEMI, 10), anchor='w', justify='left', wraplength=px(520)).pack(anchor='w')
+        size = item.size / 1024
+        size = f'{size / 1024:.1f} MB' if size >= 1024 else f'{max(1, round(size))} KB'
+        level = character.names(self.var('game_dir', 'app').get(), self.var('language', 'app').get()).word(
+            character.LEVEL_TEXT)
+        found = saves.backup_characters(item).values()
+        who = ', '.join(f'{c.name} ({level} {c.level})' for c in found) if found else ', '.join(item.names)
+        tk.Label(words, text='  ·  '.join([item.created.strftime('%d.%m.%Y %H:%M'), who or _('no characters'), size]),
+                 bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 9), anchor='w', justify='left',
+                 wraplength=px(520)).pack(anchor='w', pady=(px(1), 0))
+        links = tk.Frame(words, bg=theme.CARD)
+        links.pack(anchor='w', pady=(px(3), 0))
+        for title, command in ((_('Rename'), lambda: (state.update(rename=item.path), redraw())),
+                               (_('Copy to…'), lambda: self.copy_backup(item)),
+                               (_('Show in folder'), lambda: self.show_backup(item)),
+                               (_('Delete'), lambda: self.delete_backup(item))):
+            link = tk.Label(links, text=title, bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), cursor='hand2')
+            link.pack(side='left', padx=(0, px(14)))
+            link.bind('<Button-1>', lambda _e, c=command: c())
+            link.bind('<Enter>', lambda _e, w=link: w.configure(fg=theme.TEXT))
+            link.bind('<Leave>', lambda _e, w=link: w.configure(fg=theme.MUTED))
+
+    def backup_now(self):
+        if self.game_running():
+            self.messagebox.showinfo('Bloodborne', _('Close the game first; it writes its saves while it runs.'))
+            return
+        try:
+            made = saves.backup(self.save_user_dir(), self.var('game_dir', 'app').get(), reason='manual')
+        except OSError as error:
+            self.messagebox.showerror('Bloodborne', _('Could not back up the saves: {}').format(error))
+            return
+        if not made:
+            self.messagebox.showinfo('Bloodborne', _('There is no save to back up yet.'))
+            return
+        if getattr(self, 'backups_state', None) is not None:
+            self.backups_state['rename'] = made  # name it right away (or keep the name it has)
+        self.refresh_saves()
+
+    def restore_backup(self, item):
+        if self.game_running():
+            self.messagebox.showinfo('Bloodborne', _('Close the game first; it writes its saves while it runs.'))
+            return
+        here = self.save_target()
+        mine = saves.SaveSet('', here) if saves.is_save_folder(here) else None
+        question = _('Put this backup back?') + '\n\n' + self.backup_title(item) + '\n' + '  ·  '.join(
+            [item.created.strftime('%d.%m.%Y %H:%M'), ', '.join(item.names) or _('no characters')])
+        if len(item.names) > 1:
+            question += '\n\n' + _('Every character in this backup goes back to this state.')
+        if mine:
+            question += '\n\n' + _('Your current saves ({}) are backed up first ("{}"), so nothing is lost.').format(
+                self.describe_save(mine), _(saves.REASONS['restore']))
+        if not self.messagebox.askyesno('Bloodborne', question):
+            return
+        try:
+            saves.restore(item.path, self.save_user_dir(), self.var('game_dir', 'app').get())
+        except OSError as error:
+            self.messagebox.showerror('Bloodborne', _('Could not put the backup back: {}').format(error))
+            return
+        self.messagebox.showinfo('Bloodborne', _('Backup put back. Your characters are in the game\'s Load Game menu.'))
+        self.refresh_status()
+        self.refresh_saves()
+
+    def restore_character(self, item, slot, then, words):
+        """One character back to its state in a backup; the other characters stay."""
+        if self.game_running():
+            self.messagebox.showinfo('Bloodborne', _('Close the game first; it writes its saves while it runs.'))
+            return
+        question = '\n'.join([
+            _('Put {} back to this state?').format(then.name), '',
+            item.created.strftime('%d.%m.%Y %H:%M') + '  ·  ' + self.backup_title(item),
+            f'{words.word(character.LEVEL_TEXT)} {then.level}  ·  ' + _('Bosses') + f' {len(then.bosses)}/'
+            f'{len(character.BOSSES)}', '',
+            _('Only this character changes; your other characters stay as they are. Its current state is backed '
+              'up first ("{}"), so nothing is lost.').format(_(saves.REASONS['restore']))])
+        if not self.messagebox.askyesno('Bloodborne', question):
+            return
+        try:
+            saves.restore_character(item.path, slot, self.save_user_dir(), self.var('game_dir', 'app').get())
+        except OSError as error:
+            self.messagebox.showerror('Bloodborne', _('This character cannot be put back on its own ({}). Restore the '
+                                                      'whole backup under Backups instead.').format(error))
+            return
+        self.messagebox.showinfo('Bloodborne', _('{} is back at this state.').format(then.name))
+        self.refresh_status()
+        self.refresh_saves()
+
+    def add_backup_file(self):
+        chosen = self.filedialog.askopenfilename(title=_('Choose a backup (zip)'), initialdir=str(Path.home()),
+                                                 filetypes=[(_('Backups'), '*.zip')])
+        if not chosen:
+            return
+        try:
+            saves.add_backup_file(chosen, self.save_user_dir())
+        except OSError as error:
+            self.messagebox.showerror('Bloodborne', _('This file is no Bloodborne save backup: {}').format(error))
+            return
+        self.refresh_saves()
+
+    def copy_backup(self, item):
+        target = self.filedialog.asksaveasfilename(title=_('Copy the backup to…'), initialfile=item.path.name,
+                                                   defaultextension='.zip', filetypes=[(_('Backups'), '*.zip')])
+        if not target:
+            return
+        import shutil
+        try:
+            shutil.copy2(item.path, target)
+        except OSError as error:
+            self.messagebox.showerror('Bloodborne', _('Could not copy the backup: {}').format(error))
+
+    def show_backup(self, item):
+        import subprocess
+        subprocess.Popen(['explorer', '/select,', str(item.path)])
+
+    def delete_backup(self, item):
+        if not self.messagebox.askyesno('Bloodborne', _('Delete this backup? It goes to the Recycle Bin.') + '\n\n' +
+                                        self.backup_title(item) + '  ·  ' + item.created.strftime('%d.%m.%Y %H:%M')):
+            return
+        if not saves.to_recycle_bin(item.path):
+            self.messagebox.showerror('Bloodborne', _('Could not move the backup to the Recycle Bin.'))
+        self.refresh_saves()
 
     # ---- small pieces ----------------------------------------------------------------------------
     def meter(self, parent, level, bg, width=150, height=10):
@@ -1096,7 +1485,7 @@ class SetupMixin:
             grid = tk.Frame(body, bg=bg)
             grid.pack(fill='x')
             grid.columnconfigure(1, weight=1)
-            for row, (state, part, text) in enumerate(r.checks):
+            for state, part, text in r.checks:
                 order = ('gpu', 'cpu', 'ram').index(part)
                 tk.Label(grid, text=PART_ICONS[part], bg=bg, fg=theme.MUTED, font=(theme.ICONS, 14)).grid(
                     row=order, column=0, sticky='n', padx=(0, px(14)), pady=(px(6), 0))
@@ -1150,6 +1539,7 @@ class SetupMixin:
         tk.Label(goal_row, text=_('Your goal'), bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 10)).pack(
             side='left', padx=(0, px(14)))
         self.goal_switch(goal_row).pack(side='left')
+        self.index_entry(goal_row, _('Your goal'), '', 'goal')
         note = tk.Label(body, text='', bg=theme.CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9), anchor='w',
                         justify='left', wraplength=px(700))
         note.pack(anchor='w', pady=(px(6), 0))
@@ -1192,6 +1582,9 @@ class SetupMixin:
                 self.profile_view.grid()
                 self.profile_view.redraw(force=True)
                 details.configure(text=_('Hide the settings'))
+        self.index_entry(self.profile_view, _('Adjust them automatically when the hardware changes'),
+                         _('Show the settings one by one'), 'auto_graphics',
+                         reveal=lambda: None if self.profile_view.winfo_manager() else toggle_details())
         details.configure(command=toggle_details)
 
         def draw():
@@ -1244,9 +1637,6 @@ class SetupMixin:
         flags = {key: title for key, title, _on in L.EFFECTS}
         for key in L.TASTE_EFFECTS:
             self.check(f, key, 'ini', _(*flags[key]))
-        self.row(f, _('Field of view', 'Поле зрения'), self.choice(f, 'fov', 'ini', L.fov_options(self.ini.get('fov'))),
-                 _('Vertical, in degrees. Every camera of the game is widened by the same amount.',
-                   'По вертикали, в градусах. Все камеры игры расширяются одинаково.'))
         self.check(f, 'show_fps', 'ini', _('Show the FPS counter', 'Показывать FPS'))
         self.link_row(f, _('Every graphics setting one by one:'), 'graphics')
 
@@ -1285,16 +1675,47 @@ class SetupMixin:
             webbrowser.open(report.as_uri())
 
     def build_saves(self):
+        px = self.px
         f = self.scrolled_page('saves', _('Saves'),
                                _('Your characters: bring them from another version, back them up, put a backup back.'))
+        self.section(f, _('Your characters'), top=4)
+        self.characters_view = self.characters_card(f)
+        self.characters_view.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(4), 0))
+        self.index_entry(self.characters_view, _('Your characters'), _('Saves'), 'characters')
+        self.section(f, _('Backups'))
+        self.backups_view = self.backups_card(f)
+        self.backups_view.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(4), 0))
+        # the card is drawn anew on every change: the search points at the card
+        self.index_entry(self.backups_view, _('Back up automatically before every start'), _('Backups'), 'auto_backup')
+        self.index_entry(self.backups_view, _('Back up now'), _('Backups'), 'button:backup')
+        self.section(f, _('From other versions'))
         self.note(f, _('Characters from shadPS4, Awaken\'s port, bbhost or a PS4 export: found on this PC and copied '
-                       'into this port\'s saves folder. Your current saves are backed up first.'), top=6)
-        self.saves_card(f).grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(self.px(8), 0))
+                       'into this port\'s saves folder. Your current saves are backed up first.'), top=0)
+        self.saves_card(f, manager=True).grid(row=self.next_row(f), column=0, columnspan=2, sticky='we',
+                                              pady=(px(8), 0))
         self.section(f, _('Saves folder'))
         self.folder(f, 'user_dir', _('Saves folder', 'Папка сохранений'),
                     _('Choose the saves folder', 'Выберите папку сохранений'),
-                    _('Empty: {} (shader caches are kept there too).',
-                      'Пусто: {} (там же кэш шейдеров).').format(L.DATA_DIR / 'user'), on_change=self.refresh_status)
+                    _('Your characters, their backups and the trophies. Empty: {}.').format(L.DATA_DIR / 'user'),
+                    on_change=self.refresh_status)
+        self.folder(f, 'cache_dir', _('Cache folder'), _('Choose the cache folder'),
+                    _('Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when '
+                      'the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its '
+                      'own shaders.'))
+        where = self.tk.Label(f, text='', bg=L.PANEL, fg=theme.MUTED, font=(theme.BODY, 9), justify='left', anchor='w')
+        where.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 2))
+
+        def show_where(*_a):
+            settings = {key: self.var(key, 'app').get() for key in ('user_dir', 'cache_dir')}
+            text = _('Caches now: {}').format(L.cache_folder(settings))
+            if L.synced_folder(L.saves_folder(settings)):
+                text += '\n' + _('Your saves folder is in a cloud folder: the saves go with you, the shaders stay on '
+                                  'this PC. Play on one PC at a time and let it finish syncing before you start on '
+                                  'another one; in OneDrive, set the folder to "Always keep on this device".')
+            where.configure(text=text, wraplength=self.px(560))
+        for key in ('user_dir', 'cache_dir'):
+            self.var(key, 'app').trace_add('write', lambda *_a: self.root.after_idle(show_where))
+        show_where()
 
     # ---- the System page --------------------------------------------------------------------------
     def build_system(self):
@@ -1302,7 +1723,9 @@ class SetupMixin:
         f = self.scrolled_page('system', _('System & tests'),
                                _('What your PC can do, rated like the hardware check on bbport.de, and game tests that '
                                  'measure it: the best settings for a goal, settings side by side, stability.'))
-        self.rating_card(f).grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(10), 0))
+        rating = self.rating_card(f)
+        rating.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(10), 0))
+        self.index_entry(rating, _('Wrong graphics card?'), _('Detected automatically'), 'gpu_override')
         notes = tk.Frame(f, bg=L.PANEL)
         notes.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(10), 0))
 
@@ -1974,7 +2397,7 @@ class SetupGuide:
                 return
             state = 'bad' if r.tier == 0 else 'warn' if r.tier == 1 else 'ok'
             app.state_line(pc, state, f'{r.tier_label}: {r.summary}', theme.CARD, wrap=640).pack(fill='x', pady=px(2))
-            for part_state, part, text in r.checks:
+            for part_state, _part, text in r.checks:
                 if part_state != 'ok':
                     app.state_line(pc, part_state, text, theme.CARD, wrap=640).pack(fill='x', pady=px(2))
             if r.tier == 0:
@@ -2143,8 +2566,8 @@ class SetupGuide:
             button = ttk.Button(row, text=_('Sign in with Discord'), style='Card.Accent.TButton', command=sign_in)
             button.pack(side='left')
             show()
-        tk.Label(online, text=_('Other servers (shadNet, SuperMedo) and every option: the Online play page. Offline '
-                                'needs nothing: untick it.'), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9),
+        tk.Label(online, text=_('A shadNet server instead, and every option: the Online play page. Offline needs '
+                                'nothing: untick it.'), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9),
                  justify='left', wraplength=px(660)).pack(anchor='w', pady=(px(10), 0))
 
     # -- V: ready --
@@ -2207,7 +2630,7 @@ class SetupGuide:
             app.state_line(tips, 'info', text, theme.BG, wrap=720).pack(fill='x', pady=px(3))
 
     def res_card(self, parent, res, output, recommended):
-        tk, px, r = self.tk, self.px, self.app.rating
+        tk, px = self.tk, self.px
         w, h = px(232), px(196)
         c = tk.Canvas(parent, width=w, height=h, bg=theme.BG, highlightthickness=0, bd=0, cursor='hand2')
         c.res, c.output, c.recommended, c.hover = res, output, recommended, False
@@ -2228,7 +2651,7 @@ class SetupGuide:
             line = theme.BLOOD_LIGHT if on else theme.BORDER_HOVER if c.hover else theme.BORDER
             c.delete('all')
             fill = theme.CARD if on else theme.SURFACE
-            c.bg = cache(('res-card', w, h, line, on), lambda line=line, fill=fill: theme.rounded(
+            c.bg = cache(('res-card', w, h, line, on), lambda w=w, h=h, line=line, fill=fill, on=on: theme.rounded(
                 (w, h), px(14), fill, line, (2 if on else 1) * self.app.dpi), theme.BG)
             c.create_image(0, 0, image=c.bg, anchor='nw')
             level = r.levels[res]
@@ -2238,8 +2661,9 @@ class SetupGuide:
             seg_w, seg_h, gap = (w - px(40) - 4 * px(4)) / 5, px(8), px(4)
             for i in range(5):
                 color = level_color(level) if i < level else theme.BORDER
-                image = cache(('seg', round(seg_w), seg_h, color, fill), lambda color=color: theme.rounded(
-                    (round(seg_w), seg_h), seg_h / 2, color), fill)
+                size = (round(seg_w), seg_h)
+                image = cache(('seg', *size, color, fill),
+                              lambda size=size, color=color: theme.rounded(size, size[1] / 2, color), fill)
                 c.create_image(px(20) + round(i * (seg_w + gap)), px(88), image=image, anchor='nw')
             c.create_text(px(20), px(120), text=_(hardware.LEVELS[level]), anchor='w', fill=level_color(level),
                           font=(theme.BODY_SEMI, 13))
@@ -2249,7 +2673,7 @@ class SetupGuide:
                 text = _('RECOMMENDED')
                 from tkinter import font as tkfont
                 tw = tkfont.Font(root=self.app.root, font=(theme.HEAD, 8)).measure(text) + px(18)
-                chip = cache(('chip', tw, px(22), theme.GOLD, fill), lambda: theme.rounded(
+                chip = cache(('chip', tw, px(22), theme.GOLD, fill), lambda tw=tw: theme.rounded(
                     (tw, px(22)), px(11), (8, 9, 10, 255), theme.GOLD, self.app.dpi), fill)
                 c.create_image(px(20), h - px(26), image=chip, anchor='w')
                 c.create_text(px(29), h - px(26), text=text, anchor='w', fill=theme.GOLD_LIGHT, font=(theme.HEAD, 8))

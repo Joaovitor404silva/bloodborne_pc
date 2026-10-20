@@ -138,6 +138,8 @@ import bbport_lang_world  # noqa: E402,F401 (the new texts in the other eleven l
 import bbport_hardware as hardware  # noqa: E402
 import bbport_frame  # noqa: E402
 import bbport_display as display  # noqa: E402
+import bbport_saves as saves  # noqa: E402
+import bbport_pad  # noqa: E402
 import bbport_help  # noqa: E402
 import bbport_search  # noqa: E402
 import bbport_setup  # noqa: E402
@@ -229,7 +231,8 @@ INI_DEFAULTS = {'upscaler': 'fsr4', 'preset': '1', 'sharpen': '1', 'sharpness': 
                 'button_prompts': 'auto',
                 'frame_gen': 'off', 'frame_gen_multiplier': '2', 'frame_gen_fit_display': '0',
                 **{key: '1' if on else '0' for key, _t, on in EFFECTS + EXTRAS + CHEATS + TWEAKS}}
-APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'), 'user_dir': '', 'dlc_dir': '',
+APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'), 'user_dir': '', 'cache_dir': '',
+                'dlc_dir': '',
                 'mods_dir': '', 'mods_enabled': True, 'patches_dir': '', 'language': '1',
                 'voice_language': 'auto',
                 'player_name': '', 'fullscreen': False, 'hdr': False, 'present_mode': 'Mailbox',
@@ -238,8 +241,8 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'vk_validation': False, 'extra_env': '', 'close_on_play': False,
                 'check_updates': True, 'online': False, 'online_server': 'srv.shadps4.net:31313',
                 'online_webapi': '', 'online_npid': '', 'online_password': '', 'online_upnp': True,
-                'online_community': COMMUNITY_SERVER, 'online_pool': 'shadnet', 'bridge_live_map': False,
-                'supermedo_user': '', 'supermedo_password': '', 'thd_online_id': '', 'thd_token': '',
+                'online_community': COMMUNITY_SERVER, 'online_pool': 'huntersdream', 'bridge_live_map': False,
+                'thd_online_id': '', 'thd_token': '',
                 # The setup guide ran (or the launcher was set up before it existed); a graphics card
                 # chosen by hand when the detected one is not in the hardware check's list.
                 'setup_done': False, 'gpu_override': '',
@@ -261,6 +264,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 # window ('output', 'last' or 'custom'), the player's own size and the last one it had.
                 'game_monitor': '', 'window_size': 'output', 'window_custom': '1600x900', 'window_last': '',
                 'output_display': False,  # output resolution: the game monitor's own, set at every start
+                'auto_backup': True,  # the saves backed up before every start (bbport_saves.auto_backup)
                 'seen_version': '',  # the version whose news the Play page has shown
                 # Game tests (System & performance): the kind, the scenario, its options.
                 'test_mode': 'performance', 'test_scenario': 'hunters-view', 'test_compare': 'preset',
@@ -288,15 +292,8 @@ OUTPUTS = [('1280x720', ('1280 × 720 (Steam Deck)',)), ('1920x1080', ('1920 × 
            ('2560x1080', ('2560 × 1080 (21:9)',)), ('3440x1440', ('3440 × 1440 (21:9)',)),
            ('3840x1600', ('3840 × 1600 (21:9)',)), ('5120x2160', ('5120 × 2160 (21:9)',)),
            ('3840x1080', ('3840 × 1080 (32:9)',)), ('5120x1440', ('5120 × 1440 (32:9)',))]
-# Vertical field of view in degrees (scripts/fov.py; the game's camera has 43).
-FOVS = [('43', ('Game (43°)', 'Как в игре (43°)')), *((str(d), (f'{d}°',)) for d in (50, 55, 60, 65, 70, 75, 80, 90))]
-
-
-def fov_options(current):
-    """FOVS, with a value set in the game's menu (any degree from 30 to 90) kept as a choice."""
-    if current in (v for v, _t in FOVS) or not str(current).isdigit() or not 30 <= int(current) <= 90:
-        return FOVS
-    return sorted([*FOVS, (current, (f'{current}°',))], key=lambda o: int(o[0]))
+# No field of view here: bbport.ini fov (scripts/fov.py) scales the camera table LockCamParam, but
+# measured in the game 90 degrees gives about 48 (2026-10-20). Back once it works.
 # The game's button icons (gpu/shim/bbport_prompts.cpp): with the device in use, or always one kind.
 PROMPT_MODES = [('auto', ('Follow the device in use', 'По используемому устройству')),
                 ('playstation', ('PlayStation', 'PlayStation')),
@@ -578,10 +575,6 @@ def thd_sign_in(game_server, on_code):
         elif status == 'expired':
             break
     raise ValueError('the code expired; try again')
-# The SuperMedo Server co-op pool: a public shadNet server. Accounts are made at
-# SUPERMEDO_SIGNUP. The launcher shows the pool's name, not its address.
-SUPERMEDO_SERVER = 'www.supermedo.com:31313'
-SUPERMEDO_SIGNUP = 'https://www.supermedo.com'
 
 
 def server_check_hunters_dream():
@@ -600,11 +593,67 @@ def server_check_hunters_dream():
     return '\n'.join(lines)
 
 
+HUNTERS_ONLINE_EVERY = 600  # seconds between two looks at the count: the answer is about 140 KB
+
+
+def hunters_online():
+    """(players online, bbhost, shadNet) on The Hunter's Dream, from the public statistics its own
+    start page shows (thehuntersdream.com/api/stats, active_sessions); None when it does not answer."""
+    request = urllib.request.Request(COMMUNITY_SERVER + '/api/stats', headers={'User-Agent': f'bbport-launcher/{VERSION}'})
+    try:
+        with urllib.request.urlopen(request, timeout=8) as response:
+            sessions = json.load(response).get('active_sessions') or {}
+        if not sessions.get('server_online'):
+            return None
+        clients = sessions.get('by_client') or {}
+        return int(sessions.get('count') or 0), int(clients.get('bbhost') or 0), int(clients.get('shadps4') or 0)
+    except (OSError, ValueError, TypeError, AttributeError):
+        return None
+
+
+def moved(order, source, to):
+    """`order` with the item at `source` dropped before the item now at `to` (len: at the end)."""
+    order = list(order)
+    if to not in (source, source + 1):
+        order.insert(to - 1 if to > source else to, order.pop(source))
+    return order
+
+
+# Folders a sync client (OneDrive, Dropbox, Google Drive, iCloud, Nextcloud) keeps in step with the cloud.
+SYNCED_NAMES = ('onedrive', 'dropbox', 'google drive', 'googledrive', 'icloud drive', 'iclouddrive', 'nextcloud')
+
+
+def synced_folder(path):
+    """Whether a folder lies in a cloud sync folder (by OneDrive's own variables, or by its name)."""
+    text = str(path).lower().replace('\\', '/').rstrip('/') + '/'
+    roots = [os.environ.get(name, '') for name in ('OneDrive', 'OneDriveConsumer', 'OneDriveCommercial')]
+    if any(root and text.startswith(root.lower().replace('\\', '/').rstrip('/') + '/') for root in roots):
+        return True
+    # the folder itself or a variant of it: 'OneDrive - Firma', 'Dropbox (Personal)'; not 'OneDriveBackup'
+    return any(re.search(rf'/{re.escape(name)}(?=[/ (-])', text) for name in SYNCED_NAMES)
+
+
+def saves_folder(s):
+    return Path(s.get('user_dir') or DATA_DIR / 'user')
+
+
+def cache_folder(s):
+    """Where the shader and pipeline caches, the logs and the temporary files go: the cache folder the
+    player chose, else the saves folder; a saves folder in a cloud folder keeps them on this PC
+    (every PC builds the shaders for its own graphics card, and they are big)."""
+    if s.get('cache_dir'):
+        return Path(s['cache_dir'])
+    saves = saves_folder(s)
+    return DATA_DIR / 'user' if synced_folder(saves) else saves
+
+
 def game_environment(s):
     env = dict(os.environ)
     env['BB_GAME_DIR'] = s['game_dir']
     if s['user_dir']:
         env['BB_USER_DIR'] = s['user_dir']
+    if cache_folder(s) != saves_folder(s):  # else run.py puts them beside the saves, as before
+        env['BB_GPU_USER_DIR'] = str(cache_folder(s))
     if s['dlc_dir']:
         env['BB_DLC_DIR'] = s['dlc_dir']
     env['BB_MODS_DIR'] = s['mods_dir'] or str(DATA_DIR / 'mods')
@@ -643,13 +692,7 @@ def game_environment(s):
         env['BB_SHADNET_PASSWORD'] = str(s['online_password'])
         env['BB_UPNP'] = '1' if s['online_upnp'] else '0'
         env['BB_COMMUNITY_SERVER'] = community_address(s['online_community'])
-        if s.get('online_pool') == 'supermedo':
-            env['BB_SHADNET_SERVER'] = SUPERMEDO_SERVER
-            env['BB_SHADNET_WEBAPI'] = webapi_address(SUPERMEDO_SERVER)
-            env['BB_POOL_NAME'] = 'SuperMedo Server'
-            env['BB_SHADNET_NPID'] = str(s.get('supermedo_user', '')).strip()
-            env['BB_SHADNET_PASSWORD'] = str(s.get('supermedo_password', ''))
-        if s.get('online_pool') == 'huntersdream' and HUNTERS_DREAM_POOL:
+        if s.get('online_pool') != 'shadnet' and HUNTERS_DREAM_POOL:  # also a pool the launcher no longer has
             # The engine's Hunter's Dream backend with the Discord-linked account (run.py sets
             # the game server and the backend's addresses).
             env['BB_NET_BACKEND'] = 'thd'
@@ -691,12 +734,16 @@ NAV_EXPERT = [('graphics', ('All graphics',)), ('game', ('Game files',)), ('chea
 EXPERT_PAGES = {name for name, _t in NAV_EXPERT} | {'log'}
 
 
-class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.SearchMixin):
+class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.SearchMixin, bbport_pad.PadMixin):
     def __init__(self, root, tk, ttk, filedialog, messagebox):
         self.tk, self.ttk, self.filedialog, self.messagebox = tk, ttk, filedialog, messagebox
         self.root = root
         saved = load_json(CONFIG_FILE, {})
         self.app = {**APP_DEFAULTS, **saved}
+        if self.app.get('online_pool') not in ('huntersdream', 'shadnet'):  # SuperMedo Server left the launcher
+            self.app['online_pool'] = 'huntersdream'
+        for key in ('supermedo_user', 'supermedo_password'):  # its account, the password in plain text
+            self.app.pop(key, None)
         if self.app.get('ui_mode') not in ('simple', 'expert'):
             # Set up with an earlier launcher: every page as before (expert). New: the simple view.
             self.app['ui_mode'] = 'expert' if saved.get('setup_done') or saved.get('game_dir') else 'simple'
@@ -740,6 +787,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         root.protocol('WM_DELETE_WINDOW', self.close)
         root.after(100, self.drain_output)
         root.after(300, self.poll_trophies)
+        self.hunters, self.hunters_when, self.hunters_asking = None, 0, False
+        root.after(3000, self.poll_hunters)
         threading.Thread(target=self.detect_gpu, daemon=True).start()
         if self.app.get('check_updates', True) and not COOP_TEST:
             threading.Thread(target=self.check_update, daemon=True).start()
@@ -902,7 +951,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def next_row(self, parent):
         return parent.grid_size()[1]
 
-    def row(self, parent, title, widget, hint=None):
+    def row(self, parent, title, widget, hint=None, key=None):
         ttk = self.ttk
         r = self.next_row(parent)
         label = ttk.Label(parent, text=title)
@@ -911,7 +960,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if hint:
             ttk.Label(parent, text=hint, style='Muted.TLabel', wraplength=self.px(560), justify='left').grid(
                 row=r + 1, column=1, sticky='w', pady=(2, 2))
-        self.index_entry(widget, title, hint, getattr(widget, 'setting_key', None), mark=label)
+        self.index_entry(widget, title, hint, key or self.setting_key_of(widget), mark=label)
         return widget
 
     def check(self, parent, key, store, title, hint=None):
@@ -969,10 +1018,17 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 c.create_text(self.px(33), self.px(72), text=subtitle, anchor='nw', fill=theme.TEXT_SOFT,
                               font=(theme.BODY, 9), width=w - self.px(66))
 
-        def schedule(_event=None):
+        def schedule(event):
             if getattr(c, 'pending', None):
                 c.after_cancel(c.pending)
-            c.pending = c.after(30, draw)
+                c.pending = None
+            if (event.width, event.height) == getattr(c, 'drawn', None):
+                return  # shown again at the same size (a page change, back from the task bar)
+            c.drawn = (event.width, event.height)
+            if ('header', max(event.width, 200), int(c['height'])) in self.theme.cache:
+                draw()  # a size every page has: at once, so the page never shows without it
+            else:
+                c.pending = c.after(30, draw)  # while the window is being resized: once it rests
         c.bind('<Configure>', schedule)
         return c
 
@@ -992,6 +1048,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         bar.pack(side='right', fill='y', padx=(0, self.px(4)), pady=(0, self.px(8)))
         canvas.pack(side='left', fill='both', expand=True)
         outer.scroll = lambda pixels: canvas.yview_scroll(pixels, 'units') if inner.winfo_height() > canvas.winfo_height() else None
+        # A canvas maps the page in it only when it draws, and it draws when it is seen: asked to now,
+        # the page is built under the cover (Launcher.cover), not after it goes.
+        outer.redisplay = lambda: canvas.itemconfigure(window, state='normal')
         self.pages[name] = outer
         return inner
 
@@ -1000,6 +1059,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         tk, ttk, px = self.tk, self.ttk, self.px
         self.custom_frame = None  # bbport_frame.Frame once installed (window_chrome), False if it failed
         self.titlebar = None if self.app.get('windows_title_bar') else self.build_titlebar()
+        self.root.bind('<Map>', self.restored, add='+')
         side = tk.Frame(self.root, bg=BG, width=px(248))
         side.pack(side='left', fill='y')
         side.pack_propagate(False)
@@ -1162,7 +1222,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.title_buttons = {}
         for name, command, hover in (('close', self.close, theme.BLOOD),
                                      ('maximize', self.toggle_maximized, theme.SURFACE),
-                                     ('minimize', self.root.iconify, theme.SURFACE)):
+                                     ('minimize', self.minimize, theme.SURFACE)):
             cell = tk.Frame(bar, bg=BG, width=px(46), height=px(32))
             cell.pack(side='right')
             cell.pack_propagate(False)
@@ -1221,6 +1281,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             if self.titlebar is not None and getattr(self, 'custom_frame', None) is None:
                 frame = bbport_frame.Frame(hwnd, [self.root.winfo_id(), self.titlebar.winfo_id()])
                 self.custom_frame = frame if frame.install() else False
+                if self.custom_frame:
+                    frame.cover_on_minimize = True
                 if not self.custom_frame:
                     self.titlebar.pack_forget()
                     guide = getattr(self, 'guide', None)
@@ -1279,7 +1341,83 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         (self.guide.wheel if getattr(self, 'guide', None) else self.wheel)(event)
         return 'break'
 
+    def cover(self, widget):
+        """A still picture of what `widget` shows now, laid over it (None when there is none to take).
+        Tk on Windows maps every element of a page on its own, about 1 ms each: built under the
+        picture, a page appears at once when the picture goes (uncover) instead of piece by piece."""
+        if not widget.winfo_viewable() or widget.winfo_width() < 2:
+            return None
+        image = picture_of(widget)
+        if image is None:
+            return None
+        from PIL import ImageTk
+        label = self.tk.Label(self.root, bd=0, highlightthickness=0, background=PANEL)
+        label.photo = ImageTk.PhotoImage(image, master=self.root)
+        label.configure(image=label.photo)
+        label.place(in_=widget, x=0, y=0, relwidth=1, relheight=1)
+        label.lift()
+        self.root.update()  # the picture is on the screen before anything changes under it
+        return label
+
+    def uncover(self, label):
+        """The picture goes once what was built under it is laid out and drawn."""
+        if label is not None:
+            self.built_under_cover()
+            label.destroy()
+
+    def built_under_cover(self):
+        """Lays out, maps and draws what changed under a cover, before the cover goes."""
+        self.root.update_idletasks()  # the page is mapped (a canvas that is not ignores the call below)
+        page = self.pages.get(getattr(self, 'current_page', None))
+        if hasattr(page, 'redisplay'):
+            page.redisplay()
+        self.root.update()
+
+    def minimize(self):
+        """To the task bar with a picture of the window over it: back from there, the window shows
+        that at once while Tk maps its elements under it (else it would build up piece by piece).
+        The task bar button and Win+Down lay the picture from the window procedure (bbport_frame)."""
+        if self.custom_frame:
+            self.custom_frame.take_cover()
+        elif getattr(self, 'restore_cover', None) is None:
+            self.restore_cover = self.cover(self.root)
+        self.root.iconify()
+
+    def restored(self, event):
+        """Back from the task bar: the picture goes once the window is built under it."""
+        if event.widget is self.root:
+            self.root.after(1, self.uncover_window)
+
+    def uncover_window(self):
+        label, self.restore_cover = getattr(self, 'restore_cover', None), None
+        frame = self.custom_frame if self.custom_frame and self.custom_frame.cover else None
+        if label is not None or frame is not None:
+            self.built_under_cover()
+            if label is not None:
+                label.destroy()
+            if frame is not None:
+                frame.drop_cover()
+
     def show(self, name):
+        if getattr(self, 'showing', False):
+            self.page_wanted = name  # clicked while the page before is still being built: next
+            return
+        self.showing, self.page_wanted = True, None
+        try:
+            cover = self.cover(self.content) if name != getattr(self, 'current_page', None) else None
+            self.show_page(name)
+            self.uncover(cover)
+        finally:
+            self.showing = False
+        if self.page_wanted and self.page_wanted != name:
+            self.show(self.page_wanted)
+            return
+        if name == 'controls':  # SDL starts after the page is there (it takes a moment)
+            self.root.after(60, lambda: self.pad_start() if self.current_page == 'controls' else None)
+
+    def show_page(self, name):
+        if name != 'controls':
+            self.pad_stop()
         if name in EXPERT_PAGES and name != 'log' and self.app.get('ui_mode') != 'expert' and \
                 getattr(self, 'expert_var', None) is not None:
             self.expert_var.set(True)  # the page and its place in the side bar, not a page out of nowhere
@@ -1293,7 +1431,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         for n in self.nav:
             self.nav_paint(n)
         if name == 'mods':
-            self.refresh_lists()
+            self.refresh_lists(only_if_changed=True)
         elif name == 'graphics':
             self.refresh_fsr4()
         elif name == 'play':
@@ -1305,6 +1443,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.profile_view.redraw()
         elif name == 'trophies':
             self.render_trophies()
+        elif name == 'saves':
+            self.refresh_saves(only_if_changed=True)
         elif name == 'system':
             self.update_rating()
 
@@ -1314,7 +1454,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.pages['play'] = page
         self.banner = tk.Canvas(page, height=px(200 if self.compact else 286), bg=PANEL, highlightthickness=0, bd=0)
         self.banner.pack(fill='x')
-        self.banner.bind('<Configure>', lambda _e: self.schedule_banner())
+        self.banner.bind('<Configure>', lambda e: self.schedule_banner()
+                         if (e.width, e.height) != getattr(self, 'banner_size', None) else None)
         self.banner.bind('<Button-1>', lambda e: self.banner_spot(e) and self.show('game'))
         self.banner.bind('<Motion>', lambda e: self.banner.configure(cursor='hand2' if self.banner_spot(e) else ''))
         body = ttk.Frame(page, padding=(px(28), 0, px(28), px(22)))
@@ -1349,7 +1490,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         quick.columnconfigure(0, weight=1)
         ttk.Label(quick, text=_('Your goal'), style='Card.Section.TLabel').grid(row=0, column=0, sticky='w',
                                                                                pady=(0, px(8)))
-        self.goal_switch(quick).grid(row=1, column=0, sticky='w')
+        goal = self.goal_switch(quick)
+        goal.grid(row=1, column=0, sticky='w')
+        self.index_entry(goal, _('Your goal'), ', '.join(self.goal_name(g) for g in ('smooth', 'balanced', 'quiet')),
+                         'goal')
         self.goal_note = tk.Label(quick, text='', bg=CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9), justify='left',
                                   anchor='w')
         self.goal_note.grid(row=2, column=0, sticky='we', pady=(px(8), 0))
@@ -1370,6 +1514,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.online_note = tk.Label(online, text='', bg=CARD, fg=MUTED, font=(theme.BODY, 9), cursor='hand2')
         self.online_note.pack(side='left', padx=(px(12), 0))
         self.online_note.bind('<Button-1>', lambda _e: self.show('online'))
+        self.hunters_note = tk.Label(online, text='', bg=CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9), cursor='hand2')
+        self.hunters_note.pack(side='right')
+        self.hunters_note.bind('<Button-1>', lambda _e: webbrowser.open(COMMUNITY_SERVER))
         for key in ('fps_mode', 'upscaler', 'output_res'):
             self.var(key, 'app' if key == 'fps_mode' else 'ini').trace_add('write', lambda *_a: self.refresh_status())
         self.vars['output_res'].trace_add('write', lambda *_a: self.show_rating_check())
@@ -1432,6 +1579,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         """The hero: Yharnam at night, the emblem, the title and which dump is selected."""
         self.banner_pending = None
         c, px = self.banner, self.px
+        self.banner_size = (c.winfo_width(), c.winfo_height())
         w, h = max(c.winfo_width(), 400), int(c['height'])
         c.delete('all')
         x, y = px(40), int(h * 0.27)
@@ -1475,14 +1623,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         return any(x0 <= event.x <= x1 and y0 <= event.y <= y1 for x0, y0, x1, y1 in getattr(self, 'banner_spots', []))
 
     def build_graphics(self):
-        """Expert: every graphics setting on one page (the taste effects, fullscreen and the field
-        of view are on Picture & performance)."""
+        """Expert: every graphics setting on one page (fullscreen, HDR and the taste effects are on
+        Picture & performance)."""
         ttk = self.ttk
         f = self.scrolled_page('graphics', _('All graphics'),
                                _('Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu '
                                  '(Insert or L3+R3) changes the same values.'))
         self.version_warning(f)
-        self.link_row(f, _('Fullscreen, HDR, field of view and the taste effects are on Picture & performance.'),
+        self.link_row(f, _('Fullscreen, HDR and the taste effects are on Picture & performance.'),
                       'picture')
         self.section(f, _('Upscaling', 'Апскейлинг'), top=4)
         self.row(f, _('Upscaler', 'Апскейлер'), self.choice(f, 'upscaler', 'ini', UPSCALERS),
@@ -1686,20 +1834,20 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.var('online', 'app').trace_add('write', lambda *_a: self.refresh_status())
         self.section(f, _('Co-op pool'))
         pool = self.var('online_pool', 'app')
-        pool.trace_add('write', lambda *_a: self.refresh_status())
+        pool.trace_add('write', lambda *_a: (self.refresh_status(), self.root.after_idle(self.ask_hunters)))
         pools = ttk.Frame(f)
-        ttk.Radiobutton(pools, text=_('shadNet server'), variable=pool, value='shadnet').pack(side='left')
-        ttk.Radiobutton(pools, text=_('SuperMedo Server'), variable=pool,
-                        value='supermedo').pack(side='left', padx=(16, 0))
         if HUNTERS_DREAM_POOL:
             ttk.Radiobutton(pools, text=_("The Hunter's Dream (with bbhost players)"), variable=pool,
-                            value='huntersdream').pack(side='left', padx=(16, 0))
+                            value='huntersdream').pack(side='left', padx=(0, 16))
         elif pool.get() == 'huntersdream':
             pool.set('shadnet')
+        ttk.Radiobutton(pools, text=_('shadNet server'), variable=pool, value='shadnet').pack(side='left')
         pools.setting_key = 'online_pool'  # the search's words (bbport_search.WORDS)
         self.row(f, _('Play with'), pools,
-                 _("shadNet: a shadNet server and its account. SuperMedo Server uses an account from "
-                   "supermedo.com."))
+                 _("The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. "
+                   'shadNet: a shadNet server of your choice and its account.'))
+        self.hunters_line = ttk.Label(f, text='', style='Muted.TLabel')
+        self.hunters_line.grid(row=self.next_row(f), column=1, sticky='w', pady=(2, 0))
         # Each pool shows only its own settings (show_pool below).
         groups = {}
         before = set(f.grid_slaves())
@@ -1710,18 +1858,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             groups[name] = groups.get(name, []) + list(now - before)
             before = now
 
-        self.section(f, _('SuperMedo Server account'))
-        self.row(f, '', ttk.Button(f, text=_('Sign up for SuperMedo Server'),
-                                   command=lambda: webbrowser.open(SUPERMEDO_SIGNUP)))
-        self.row(f, _('Username'), ttk.Entry(f, textvariable=self.var('supermedo_user', 'app'), width=40),
-                 _('The account you made at supermedo.com.'))
-        self.row(f, _('Password'), ttk.Entry(f, textvariable=self.var('supermedo_password', 'app'), width=40,
-                                             show='•'),
-                 _('Saved on this PC with the other launcher settings.'))
-        group('supermedo')
         self.section(f, _("The Hunter's Dream account"))
         account = ttk.Label(f, text='', justify='left')
-        user_dir = self.var('user_dir', 'app')
 
         thd_id, thd_token = self.var('thd_online_id', 'app'), self.var('thd_token', 'app')
 
@@ -1729,7 +1867,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             name = thd_id.get() if thd_token.get() else ''
             account.configure(text=_('Signed in as {}').format(name) if name else _('Not signed in'))
         show_accounts()
-        self.row(f, _('Account'), account)
+        self.row(f, _('Account'), account, key='thd_online_id')
         signing = ttk.Label(f, text='', style='Muted.TLabel', justify='left', wraplength=self.px(560))
         # The code to type on the website, large, with a button that copies it.
         code_box = ttk.Frame(f)
@@ -1812,7 +1950,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             webapi, game = webapi_setting(values), community_address(values['online_community'])
             online_on = self.var('online', 'app').get()
             pool_name = pool.get()
-            hunters_dream, supermedo = pool_name == 'huntersdream', pool_name == 'supermedo'
+            hunters_dream = pool_name == 'huntersdream'
             signed_in = thd_id.get() if thd_token.get() else ''
             result.configure(text=_('Checking…'))
 
@@ -1821,14 +1959,6 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     text = server_check_hunters_dream()
                     text += '\n' + (_('Signed in as {}').format(signed_in) if signed_in else
                                     _('Not signed in: use "Sign in with Discord" above.'))
-                elif supermedo:
-                    # The pool's name instead of its address.
-                    text = server_check(SUPERMEDO_SERVER, webapi_address(SUPERMEDO_SERVER), game)
-                    text = text.replace('http://' + SUPERMEDO_SERVER.split(':')[0] + ':31315', 'SuperMedo Server')
-                    text = text.replace(SUPERMEDO_SERVER, 'SuperMedo Server')
-                    text = text.replace(SUPERMEDO_SERVER.split(':')[0], 'SuperMedo Server')
-                    if 'SuperMedo Server: not reachable' in text:
-                        text += '\n' + _('SuperMedo Server could not be reached. Check your internet connection and try again.')
                 else:
                     text = server_check(address, webapi, game)
                 if pool_name == 'shadnet' and values['online_webapi'].strip() and values['online_webapi'].strip() != webapi:
@@ -1842,8 +1972,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.note(f, _('Everyone in a session needs the same game version (1.09) and the same server. '
                        'Cheats change the game for the other players too: turn them off when you play together.'))
         show_code()  # hidden until a sign-in shows one; its row stays reserved (rows are counted above)
-        shown = {'shadnet': {'shadnet', 'upnp'}, 'supermedo': {'supermedo', 'upnp'},
-                 'huntersdream': {'huntersdream', 'upnp'}}
+        shown = {'shadnet': {'shadnet', 'upnp'}, 'huntersdream': {'huntersdream', 'upnp'}}
 
         def show_pool(*_args):
             if pool.get() == 'huntersdream' and not HUNTERS_DREAM_POOL:
@@ -2081,9 +2210,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    "the controller's (PlayStation, Xbox or Switch) while you use it.",
                    'Значки кнопок в игре: ваши клавиши и мышь, пока вы играете ими, и кнопки '
                    'геймпада (PlayStation, Xbox или Switch), пока вы используете его.'))
+        self.section(f, _('Controller test'))
+        self.pad_card = self.controller_card(f)
+        self.pad_card.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(self.px(4), self.px(6)))
+        self.index_entry(self.pad_card, _('Controller test'), _('Press the buttons: what lights up here reaches the '
+                                                                  'game.'), 'controller_test')
         preset = ttk.Frame(f)
         ttk.Button(preset, text=_('Use the Dark Souls III layout', 'Раскладка Dark Souls III'),
                    command=self.apply_layout_preset).pack(side='left')
+        preset.setting_key = 'mouse:layout'
         self.row(f, _('Layout', 'Раскладка'), preset,
                  _('WASD, Space to dodge, left click / Shift + left click to attack, right click / '
                    'Shift + right click (or Ctrl) for the off hand, E interact, R item, F vial, Q lock '
@@ -2530,7 +2665,6 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                         if missing and self.var('upscaler', 'ini').get() == 'fsr4' else '', self.download_fsr4)
         online, pool = self.var('online', 'app').get(), self.var('online_pool', 'app').get()
         signed_in = (bool(self.var('thd_token', 'app').get()) if pool == 'huntersdream' else
-                     bool(self.var('supermedo_user', 'app').get()) if pool == 'supermedo' else
                      bool(self.var('online_npid', 'app').get().strip()))
         self.check_line('online', ('⚠ ' + _('Online is on, but you are not signed in yet: sign in now')
                                    if online and not signed_in else ''), lambda: self.show('online'))
@@ -2539,6 +2673,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.online_note.configure(text=(_('signed in as {}').format(name) if online and signed_in and name else
                                              _('not signed in ›') if online and not signed_in else ''),
                                        fg=MUTED if signed_in else theme.AMBER)
+        self.show_hunters()
         cheats = [_(*title) for key, title, _on in CHEATS if self.var(key, 'ini').get()]
         self.check_line('cheats', ('⚠ ' + _('Cheats on: {}').format(', '.join(t.split(' (')[0] for t in cheats))
                                    if cheats else ''), lambda: self.show('cheats'))
@@ -2556,6 +2691,37 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.status.configure(text=self.summary() if info else _('Choose the game folder first.',
                                                                      'Сначала выберите папку игры.'), fg=MUTED)
 
+    def poll_hunters(self):
+        """Every minute: the count of The Hunter's Dream again when it is the chosen pool, the window is
+        shown, no game runs and the last look is HUNTERS_ONLINE_EVERY old (a helper thread asks)."""
+        self.root.after(60_000, self.poll_hunters)
+        self.ask_hunters()
+
+    def ask_hunters(self):
+        if (not HUNTERS_DREAM_POOL or getattr(self, 'hunters_asking', True) or self.process or self.root.state() == 'iconic'
+                or self.var('online_pool', 'app').get() != 'huntersdream'
+                or time.time() - self.hunters_when < HUNTERS_ONLINE_EVERY):
+            return
+        self.hunters_asking = True
+
+        def ask():
+            found = hunters_online()
+
+            def done():
+                self.hunters, self.hunters_when, self.hunters_asking = found, time.time(), False
+                self.show_hunters()
+            self.ui_calls.put(done)
+        threading.Thread(target=ask, daemon=True).start()
+
+    def show_hunters(self):
+        """'● 798 online' beside Play online, and the split on the Online page; nothing when unknown."""
+        known = getattr(self, 'hunters', None) if self.var('online_pool', 'app').get() == 'huntersdream' else None
+        if getattr(self, 'hunters_note', None):
+            self.hunters_note.configure(text='● ' + _('{} online').format(known[0]) if known else '')
+        if getattr(self, 'hunters_line', None):
+            self.hunters_line.configure(text=_("The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)")
+                                        .format(*known) if known else '')
+
     def open_news(self):
         self.app['seen_version'] = VERSION
         webbrowser.open(RELEASES_PAGE)
@@ -2571,8 +2737,6 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         online = _('Online') if self.var('online', 'app').get() else _('Offline')
         if self.var('online', 'app').get() and self.var('online_pool', 'app').get() == 'huntersdream':
             online = _("Online (The Hunter's Dream)")
-        elif self.var('online', 'app').get() and self.var('online_pool', 'app').get() == 'supermedo':
-            online = _('Online (SuperMedo Server)')
         return f'{_(*fps)}   ·   {upscaler}   ·   {output}   ·   {online}'
 
     def detect_gpu(self):
@@ -2641,8 +2805,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.ui_calls.put(done)
         threading.Thread(target=work, daemon=True).start()
 
-    def refresh_lists(self):
+    def refresh_lists(self, only_if_changed=False):
+        """The mods and the patch files drawn anew (on a page change only when something changed)."""
         if not hasattr(self, 'patches_frame'):
+            return
+        if only_if_changed and self.lists_made_from_now() == getattr(self, 'lists_made_from', None):
             return
         tk, ttk = self.tk, self.ttk
         from mods import discover, unrecognized
@@ -2661,20 +2828,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if not available:
             ttk.Label(self.mods_frame, text=_('No mods in {} yet.', 'В {} пока нет модов.').format(root),
                       style='Muted.TLabel').pack(anchor='w')
+        self.mod_rows = []
         for index, name in enumerate(self.mod_order):
-            line = ttk.Frame(self.mods_frame)
-            line.pack(fill='x', pady=1)
             var = tk.BooleanVar(value=old.get(name, name not in profile.get('disabled', [])))
             self.mod_vars[name] = var
-            ttk.Button(line, text='▲', width=3, style='Slot.TButton',
-                       command=lambda i=index: self.move_mod(i, -1)).pack(side='left')
-            ttk.Button(line, text='▼', width=3, style='Slot.TButton',
-                       command=lambda i=index: self.move_mod(i, 1)).pack(side='left', padx=(4, 12))
-            ttk.Checkbutton(line, text=f'{index + 1}.  {name}', variable=var).pack(side='left')
+            self.mod_rows.append(self.mod_row(index, name, var))
         if len(self.mod_order) > 1:
-            ttk.Label(self.mods_frame, text=_('Lower in the list loads later and wins conflicts.',
-                                              'Ниже в списке — загружается позже и перекрывает.'),
-                      style='Muted.TLabel').pack(anchor='w', pady=(4, 0))
+            ttk.Label(self.mods_frame, text=_('Drag a mod by its grip to change the order. Lower in the list loads '
+                                              'later and wins conflicts.'),
+                      style='Muted.TLabel').pack(anchor='w', pady=(6, 0))
         # Folders that are not mods are named, with why, instead of left out silently.
         for name, problem in unrecognized(root):
             ttk.Label(self.mods_frame, text=_('Not loaded: {}: {}', 'Не загружен: {}: {}').format(name, problem),
@@ -2693,12 +2855,71 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.patch_vars[key] = var
             author = meta.get('Author')
             ttk.Checkbutton(self.patches_frame, text=key + (f'  —  {author}' if author else ''), variable=var).pack(anchor='w')
+        self.lists_made_from = self.lists_made_from_now()
 
-    def move_mod(self, index, step):
-        other = index + step
-        if 0 <= other < len(self.mod_order):
-            self.mod_order[index], self.mod_order[other] = self.mod_order[other], self.mod_order[index]
-            self.refresh_lists()
+    def lists_made_from_now(self):
+        """What the mod and patch lists are drawn from: the folders, the saved choices, the order."""
+        mods_dir = Path(self.var('mods_dir', 'app').get() or DATA_DIR / 'mods')
+        patches_dir = Path(self.var('patches_dir', 'app').get() or DATA_DIR / 'patches')
+        return (str(mods_dir), folder_entries(mods_dir), str(patches_dir), folder_entries(patches_dir),
+                tuple(self.mod_order), folder_entries(DATA_DIR, ('mods.json', 'patches.json')))
+
+    def mod_row(self, index, name, var):
+        """One mod: a grip to drag it by, its place, its switch and its name (a click on the name
+        switches it too)."""
+        tk, ttk, px = self.tk, self.ttk, self.px
+        row = tk.Frame(self.mods_frame, bg=CARD, highlightthickness=1, highlightbackground=LINE)
+        row.pack(fill='x', pady=(0, px(4)))
+        grip = tk.Label(row, text='\ue76f', bg=CARD, fg=MUTED, font=(theme.ICONS, 11), cursor='fleur')
+        grip.pack(side='left', padx=(px(10), px(6)), pady=px(8))
+        tk.Label(row, text=f'{index + 1}.', bg=CARD, fg=MUTED, font=(theme.BODY, 10), width=3, anchor='e').pack(
+            side='left')
+        ttk.Checkbutton(row, variable=var, style='Card.TCheckbutton').pack(side='left', padx=(px(6), 0))
+        label = tk.Label(row, text=name, bg=CARD, fg=TEXT, font=(theme.BODY, 10), anchor='w', cursor='hand2')
+        label.pack(side='left', fill='x', expand=True, padx=(px(4), px(10)))
+        for widget in (row, grip, label):
+            widget.bind('<ButtonPress-1>', lambda e, i=index: self.mod_drag_start(e, i))
+            widget.bind('<B1-Motion>', self.mod_drag_move)
+            widget.bind('<ButtonRelease-1>', lambda _e, v=var, w=widget: self.mod_drag_end(v if w is label else None))
+        return row
+
+    def mod_drag_start(self, event, index):
+        self.mod_drag = {'from': index, 'y': event.y_root, 'to': None, 'line': None}
+
+    def mod_drag_move(self, event):
+        drag = getattr(self, 'mod_drag', None)
+        if not drag or (drag['to'] is None and abs(event.y_root - drag['y']) < self.px(5)):
+            return  # a click, not yet a drag
+        rows = self.mod_rows
+        if drag['to'] is None:  # the drag begins: the row lifts
+            self.mod_paint(rows[drag['from']], theme.SURFACE, GOLD)
+            drag['line'] = self.tk.Frame(self.mods_frame, bg=GOLD, height=self.px(2))
+        # where it would land: before the first row whose middle is below the pointer
+        to = sum(1 for row in rows if row.winfo_rooty() + row.winfo_height() / 2 < event.y_root)
+        drag['to'] = to
+        last = rows[-1]
+        top = rows[to].winfo_y() - self.px(3) if to < len(rows) else last.winfo_y() + last.winfo_height() + self.px(1)
+        drag['line'].place(x=0, y=max(0, top), relwidth=1, height=self.px(2))
+        drag['line'].lift()
+
+    def mod_drag_end(self, switch=None):
+        """The drop: the mod moves to where the line is. Without a drag a click on the name switches
+        the mod (`switch` is its variable then)."""
+        drag, self.mod_drag = getattr(self, 'mod_drag', None), None
+        if not drag:
+            return
+        if drag['to'] is None:
+            if switch is not None:
+                switch.set(not switch.get())
+            return
+        self.mod_order = moved(self.mod_order, drag['from'], drag['to'])
+        self.refresh_lists()
+
+    def mod_paint(self, row, bg, edge):
+        row.configure(bg=bg, highlightbackground=edge)
+        for child in row.winfo_children():
+            if child.winfo_class() == 'Label':
+                child.configure(bg=bg)
 
     def collect(self):
         """Writes settings.json, bbport.ini, mods.json and patches.json."""
@@ -2762,13 +2983,6 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.show('online')
                 return
             online.set(False)
-        if online.get() and pool_name == 'supermedo' and not (
-                self.var('supermedo_user', 'app').get().strip() and self.var('supermedo_password', 'app').get()):
-            self.messagebox.showwarning(
-                'Bloodborne', _('To play on SuperMedo Server, enter your supermedo.com username and password '
-                                'on the Online co-op page (Sign up there if you have no account).'))
-            self.show('online')
-            return
         if online.get() and pool_name == 'shadnet' and '@' in npid.get():
             self.messagebox.showwarning(
                 'Bloodborne', _('The Online ID is the account name (NPID) you registered on the server, '
@@ -2786,6 +3000,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if not self.preflight():  # bbport_help: a start that would fail for a reason the player can fix
             return
         self.set_log('')
+        self.pad_stop()  # the game reads the controller now
+        self.auto_backup()
         try:
             self.process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(self.app),
                                             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -2803,6 +3019,19 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                      'Подготовка игры; она откроется в своём окне…'), fg=GOLD)
         if self.app.get('close_on_play'):
             self.root.after(5000, lambda: self.process and self.close())
+
+    def auto_backup(self):
+        """Before a start: the saves backed up when they changed since the last backup (never in the way)."""
+        if not self.app.get('auto_backup', True):
+            return
+        try:
+            made = saves.auto_backup(self.save_user_dir(), self.app['game_dir'])
+        except OSError as error:
+            self.append(_('The automatic backup of the saves failed: {}').format(error) + '\n')
+            return
+        if made:
+            self.append(_('Saves backed up: {}').format(made.name) + '\n')
+            self.refresh_saves()
 
     def window_left(self, size):
         """The game's last size in a window, for 'As I left it' next time."""
@@ -2839,6 +3068,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def drain_output(self):
         while not self.ui_calls.empty():
             self.ui_calls.get_nowait()()
+        frame = self.custom_frame
+        if frame and frame.cover and time.monotonic() - frame.cover_time > 1.5 and self.root.state() != 'iconic':
+            self.uncover_window()  # a minimize that did not happen: the picture never stays over the window
         try:
             for _i in range(500):
                 item = self.output.get_nowait()
@@ -2847,6 +3079,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     self.process = None
                     if self.job:
                         self.job.close()
+                    self.refresh_saves()  # the characters' times
                     if self.placer:
                         self.placer.stop()
                         self.window_left(self.placer.last)
@@ -3124,7 +3357,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if self.process:
             return
         import shutil
-        cache = Path(self.app['user_dir'] or DATA_DIR / 'user') / 'cache'
+        cache = cache_folder(self.app) / 'cache'
         shutil.rmtree(cache, ignore_errors=True)
         self.messagebox.showinfo('Bloodborne', _('Shader cache cleared. The next start stutters for a few minutes while '
                                                  'it is rebuilt.', 'Кэш шейдеров очищен. Следующий запуск несколько '
@@ -3232,6 +3465,26 @@ class GameJob:
             self.handle = None
 
 
+def folder_entries(folder, names=None):
+    """(name, modified) of a folder's entries (only `names`, when given): what a list drawn from it
+    depends on; () without the folder."""
+    try:
+        return tuple(sorted((e.name, e.stat().st_mtime_ns) for e in os.scandir(folder)
+                            if names is None or e.name in names))
+    except OSError:
+        return ()
+
+
+def picture_of(widget):
+    """What a widget's window shows on the screen now, as a PIL image (None where it cannot be had)."""
+    if os.name != 'nt':
+        return None
+    try:
+        return bbport_frame.picture(widget.winfo_id(), widget.winfo_width(), widget.winfo_height())
+    except (AttributeError, OSError, ValueError, ImportError, ctypes.ArgumentError):
+        return None
+
+
 def remember_window(size):
     """Writes the game window's last size into settings.json (and nothing else)."""
     settings = load_json(CONFIG_FILE, {})
@@ -3252,6 +3505,11 @@ def play_without_window(settings):
         if m and values.get('output_res') != display.size_text(m.size):
             values['output_res'] = display.size_text(m.size)
             save_ini({key: values[key] for key in INI_DEFAULTS}, lines)
+    if settings.get('auto_backup', True):
+        try:
+            saves.auto_backup(Path(settings.get('user_dir') or DATA_DIR / 'user'), settings['game_dir'])
+        except OSError:
+            pass  # never in the way of a start
     placer = display.Placer(settings, display.parse_size(values.get('output_res')) or (1920, 1080)).start()
     log_dir = Path(settings.get('user_dir') or DATA_DIR / 'user')
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -3325,7 +3583,7 @@ def install_update(target, wait_pid):
         kernel.WaitForSingleObject(handle, 60000)
         kernel.CloseHandle(handle)
     ignore = shutil.ignore_patterns(*USER_FILES)
-    for attempt in range(30):
+    for _attempt in range(30):
         try:
             shutil.copytree(PORT_DIR, target, dirs_exist_ok=True, ignore=ignore)
             break
@@ -3355,6 +3613,7 @@ class _ThisModule:
 bbport_setup.bind(_ThisModule())
 bbport_help.bind(_ThisModule())
 bbport_search.bind(_ThisModule())
+bbport_pad.bind(_ThisModule())
 
 
 def main():
@@ -3364,6 +3623,7 @@ def main():
         sys.exit(run_role(args))
     settings = {**APP_DEFAULTS, **load_json(CONFIG_FILE, {})}
     LANG = settings.get('ui_language') or windows_language()
+    saves.WORDS.update({key: _(text) for key, text in saves.REASONS.items()})  # backup file names
     if args[:1] == ['--install-update'] and len(args) == 3:
         sys.exit(install_update(args[1], args[2]))
     if FROZEN and UPDATE_DIR not in PORT_DIR.parents:

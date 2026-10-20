@@ -26,7 +26,7 @@ class WindowTests(unittest.TestCase):
 
     def test_the_game_folder_is_for_experts_and_links_open_it(self):
         self.assertIn('game', L.EXPERT_PAGES)
-        show = SOURCE[SOURCE.index('    def show(self, name):'):]
+        show = SOURCE[SOURCE.index('    def show_page(self, name):'):]
         show = show[:show.index('\n    def ', 10)]
         self.assertIn('self.expert_var.set(True)', show)  # a check's link to the game folder turns the view on
 

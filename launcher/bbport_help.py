@@ -144,13 +144,34 @@ TOPICS = {
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next '
         'starts.',
         ['Play on: it gets smooth once an area has been seen. After a driver update the cache is built again.']),
+    'save_lost': (
+        'A character is gone or the save is broken',
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every '
+        'start the launcher backs up your saves, so you can go back to how they were.',
+        ['Close the game.',
+         'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the '
+         'date of your last good session).',
+         'Your current saves are backed up first: trying an older backup loses nothing.',
+         'Only one character is affected: under Your characters, open its earlier states and put back just that '
+         'one.',
+         'The character came from another version and there is no backup yet: import it again under '
+         '"From other versions".']),
+    'controller': (
+        'The controller does nothing',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up '
+        'there reaches the game.',
+        ['Open the controller test and press the buttons.',
+         'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it '
+         'over, like DS4Windows.',
+         'Started from Steam: in the game\'s Steam properties, try Steam Input on or off.']),
     'smartscreen': (
         '"Windows protected your PC"',
         'Windows shows this for programs it does not know yet.',
         ['Click More info, then Run anyway.']),
 }
 TOPIC_ORDER = ['eboot_modified', 'eboot_truncated', 'eboot_unreadable', 'version', 'update_only', 'empty_files',
-               'page_file', 'antivirus', 'location', 'black_screen', 'vram', 'driver', 'shader_cache', 'smartscreen']
+               'page_file', 'antivirus', 'location', 'save_lost', 'controller', 'black_screen', 'vram', 'driver',
+               'shader_cache', 'smartscreen']
 # Buttons under a topic's steps: (text, launcher method). They do the step for the player.
 TOPIC_ACTIONS = {'black_screen': [('Clear the shader cache', 'clear_cache')],
                  'page_file': [('Open the memory settings', 'open_memory_settings')],
@@ -158,7 +179,9 @@ TOPIC_ACTIONS = {'black_screen': [('Clear the shader cache', 'clear_cache')],
                  'location': [('Open the port folder', 'open_port_folder')],
                  'eboot_modified': [('Open the game folder', 'open_game_folder')],
                  'eboot_truncated': [('Open the game folder', 'open_game_folder')],
-                 'update_only': [('Choose the game folder', 'choose_game_page')]}
+                 'update_only': [('Choose the game folder', 'choose_game_page')],
+                 'save_lost': [('Open the backups', 'open_backups')],
+                 'controller': [('Open the controller test', 'open_controller_test')]}
 
 # The game's and run.py's messages that name the cause of a failed start or crash.
 LOG_HINTS = [
@@ -522,6 +545,16 @@ class HelpMixin:
 
     def choose_game_page(self):
         self.show('game')
+
+    def open_backups(self):
+        self.show('saves')
+        self.root.update_idletasks()
+        self.scroll_to(self.backups_view, above=self.px(40))
+
+    def open_controller_test(self):
+        self.show('controls')
+        self.root.update_idletasks()
+        self.scroll_to(self.pad_card, above=self.px(40))
 
     def link_to_topic(self, parent, topic):
         label = self.tk.Label(parent, text=_('How to fix') + '  ›', bg=theme.CARD, fg=theme.GOLD_LIGHT,

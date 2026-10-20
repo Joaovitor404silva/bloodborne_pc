@@ -166,7 +166,7 @@ def picture_section(folder, runs, start):
                 parts.append(f'<div class="crophead">{esc(label(r, start))}<br><small>{fmt(r.get("fps"))} FPS'
                              f'</small></div>')
             for index, box in enumerate(regions):
-                for r, f in group:
+                for _run, f in group:
                     out = f'crop-{Path(f).stem}-{index}.png'
                     Image.open(folder / f).convert('RGB').crop(box).save(folder / out)
                     parts.append(f'<img class="crop" src="{esc(out)}" alt="">')

@@ -51,6 +51,10 @@ WORLD = {
             '90 FPS',
         'A PS4 (exported save)':
             'PS4 (экспортированное сохранение)',
+        'A character is gone or the save is broken':
+            'Персонаж пропал или сохранение повреждено',
+        'A character without a readable name':
+            'Персонаж без читаемого имени',
         'A controller (PlayStation, Xbox, Switch)':
             'Геймпад (PlayStation, Xbox, Switch)',
         'A few steps to your first hunt. Every setting can be changed in the launcher afterwards.':
@@ -67,6 +71,10 @@ WORLD = {
             'Намёк на то, что скрыто за лаунчером: размытая строка заголовка (Windows 11) и окно с непрозрачностью 98,5 %. Выкл.: окно полностью непрозрачное, читать легче всего.',
         'A key, the mouse or a controller used during the test ends it.':
             'Клавиша, мышь или контроллер во время теста прерывают его.',
+        'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+            'Название этой копии. Enter сохраняет, Esc оставляет как было.',
+        'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+            'Вместо этого сервер shadNet и все настройки: страница «Онлайн-игра». Для офлайна ничего не нужно: снимите галочку.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
             'Стабильные 60 FPS с лучшим изображением, на которое хватает запаса вашей видеокарты.',
         'A test scenario (scenario.json, a .json or a .zip)':
@@ -83,6 +91,8 @@ WORLD = {
             'Около 35 ГБ для дампа игры и 1 ГБ для порта; рекомендуется SSD',
         'Above minimum':
             'Выше минимума',
+        'Add a backup file…':
+            'Добавить файл копии…',
         'Add a test…':
             'Добавить тест…',
         'Added. Choose it under Scenario (the list is updated when the launcher starts next).':
@@ -127,10 +137,22 @@ WORLD = {
             'Порт от Awaken',
         'Awakening':
             'Пробуждение',
+        'Back up automatically before every start':
+            'Автоматически создавать копию перед каждым запуском',
+        'Back up now':
+            'Создать копию сейчас',
+        "Backup put back. Your characters are in the game's Load Game menu.":
+            'Копия восстановлена. Ваши персонажи — в меню игры «Загрузить игру».',
         'Backups':
             'Резервные копии',
         'Balanced (goal)':
             'Баланс',
+        'Before a restore':
+            'Перед восстановлением',
+        'Before an import':
+            'Перед импортом',
+        'Before playing':
+            'Перед запуском игры',
         'Below minimum':
             'Ниже минимума',
         'Best for your goal: {} with {:.0f} FPS.':
@@ -143,6 +165,8 @@ WORLD = {
             'Бой с боссом (ваше сохранение перед боссом)',
         'Boss: Cleric Beast':
             'Босс: Чудовище-священник',
+        'Bosses':
+            'Боссы',
         'Bring your saves along, and play with others.':
             'Перенесите свои сохранения и играйте с другими.',
         "But the game's memory grew by {:.1f} GB: see the report.":
@@ -153,6 +177,10 @@ WORLD = {
             'Процессоры без AVX (многие модели Pentium/Celeron) вообще не могут его запустить.',
         'CUSA03173: the Game of the Year Edition, with The Old Hunters.':
             'CUSA03173: издание Game of the Year Edition с The Old Hunters.',
+        'Cache folder':
+            'Папка кэша',
+        'Caches now: {}':
+            'Кэш сейчас: {}',
         'Cancel':
             'Отмена',
         'Cards with 6 GB or less, or the log says ErrorOutOfDeviceMemory or "memory pressure": textures no longer fit, the game stutters, shows broken faces or crashes.':
@@ -177,6 +205,8 @@ WORLD = {
             'Проверка файлов игры…',
         'Checking your PC…':
             'Проверка вашего ПК…',
+        'Choose a backup (zip)':
+            'Выберите резервную копию (zip)',
         'Choose a folder…':
             'Выбрать папку…',
         'Choose at least two values to compare.':
@@ -185,6 +215,8 @@ WORLD = {
             'Выберите желаемые ощущения от игры; настройки для этого подбираются под ваше оборудование.',
         'Choose the base game folder in Game & language. Its dvdroot_ps4 has about 29 GB in about 28,800 files.':
             'Выберите папку базовой игры на странице «Игра и язык». Её dvdroot_ps4 занимает около 29 ГБ, примерно 28\xa0800 файлов.',
+        'Choose the cache folder':
+            'Выберите папку кэша',
         'Choose the folder with the saves':
             'Выберите папку с сохранениями',
         'Choose the game folder':
@@ -207,6 +239,8 @@ WORLD = {
             'Сначала закройте игру.',
         'Close the game first; it writes its saves while it runs.':
             'Сначала закройте игру: пока она запущена, она записывает сохранения.',
+        'Close the game.':
+            'Закройте игру.',
         'Close your browser and other programs while playing.':
             'Во время игры закрывайте браузер и другие программы.',
         'Co-op pool':
@@ -217,6 +251,8 @@ WORLD = {
             'Если вы переходите с другой версии, ваши персонажи найдутся на шаге IV.',
         'Compare one setting: pictures and frame rate':
             'Сравнение одной настройки: скриншоты и частота кадров',
+        'Controller test':
+            'Тест геймпада',
         'Copied: paste it into your message on Discord or in the forum.':
             'Скопировано: вставьте это в своё сообщение в Discord или на форуме.',
         'Copy a summary':
@@ -229,8 +265,22 @@ WORLD = {
             'Скопируйте всё из папки обновления в папку базовой игры и выберите «Заменить файлы в папке назначения».',
         'Copy everything from the update folder into the base game folder and replace the files.':
             'Скопируйте всё из папки обновления в папку базовой игры с заменой файлов.',
+        'Copy the backup to…':
+            'Копировать резервную копию в…',
+        'Copy to…':
+            'Копировать в…',
+        'Could not back up the saves: {}':
+            'Не удалось создать копию сохранений: {}',
+        'Could not copy the backup: {}':
+            'Не удалось скопировать копию: {}',
         'Could not import the saves: {}':
             'Не удалось импортировать сохранения: {}',
+        'Could not move the backup to the Recycle Bin.':
+            'Не удалось переместить копию в корзину.',
+        'Could not put the backup back: {}':
+            'Не удалось восстановить копию: {}',
+        'Could not rename the backup: {}':
+            'Не удалось переименовать копию: {}',
         'Could not save it: {}':
             'Не удалось сохранить: {}',
         'Ctrl+F':
@@ -239,8 +289,14 @@ WORLD = {
             'Свой размер…',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
             'DLSS требует GeForce RTX 20-й серии или новее. Генерации кадров DLSS нужна RTX 40 (2×) или RTX 50 (до 4×). Генерация кадров FSR 3.1 работает на любой видеокарте, лучше всего — примерно от 60 базовых FPS.',
+        'Deaths':
+            'Смерти',
         'Debug':
             'Отладка',
+        'Delete':
+            'Удалить',
+        'Delete this backup? It goes to the Recycle Bin.':
+            'Удалить эту копию? Она будет перемещена в корзину.',
         'Derived from the requirements and the hardware check on bbport.de for your PC at {} ({}). Chromatic aberration, depth of field, motion blur and sharpening are taste and stay as you set them.':
             'Подобрано по системным требованиям и проверке оборудования на bbport.de для вашего ПК при {} ({}). Хроматическая аберрация, глубина резкости, размытие в движении и резкость — дело вкуса и остаются такими, как вы их задали.',
         'Detected automatically':
@@ -251,6 +307,8 @@ WORLD = {
             'Страница загрузки',
         'Download the FSR 4 files now (about 30 MB)':
             'Скачать файлы FSR 4 сейчас (около 30 МБ)',
+        'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+            'Перетащите мод за маркер, чтобы изменить порядок. Ниже в списке — загружается позже и перекрывает.',
         'Driver notes':
             'Примечания о драйверах',
         'Duration':
@@ -259,6 +317,10 @@ WORLD = {
             'ЭКСПЕРТ',
         'Each':
             'Каждое значение',
+        'Earlier backup':
+            'Более ранняя копия',
+        'Earlier states in your backups ({})':
+            'Прежние состояния в резервных копиях ({})',
         'Earlier tests':
             'Прошлые тесты',
         'Effects are game patches for version 1.09, applied at start.':
@@ -267,6 +329,8 @@ WORLD = {
             'В папке игры есть пустые файлы, например {}.',
         'Enough for 4K (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 class).':
             'Хватает для 4K (класс RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070).',
+        'Every character in this backup goes back to this state.':
+            'Все персонажи из этой копии вернутся к этому состоянию.',
         'Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.':
             'Все настройки графики и частоты кадров. Хранятся в bbport.ini; внутриигровое меню (Insert или L3+R3) меняет те же значения.',
         'Every graphics setting one by one:':
@@ -299,10 +363,16 @@ WORLD = {
             'Для вашего ПК',
         'Found automatically: {}':
             'Определено автоматически: {}',
+        'From a file':
+            'Из файла',
+        'From other versions':
+            'Из других версий',
         'From your last save: the camera turns once around the hunter and back (24 s). Quick and the same every time; for the frame rate and for comparing settings.':
             'С вашего последнего сохранения: камера делает один оборот вокруг охотника и обратно (24 с). Быстро и каждый раз одинаково; для замера частоты кадров и сравнения настроек.',
         'Fullscreen (recommended)':
             'Полный экран (рекомендуется)',
+        'Fullscreen, HDR and the taste effects are on Picture & performance.':
+            'Полный экран, HDR и эффекты из раздела «Дело вкуса» находятся на странице «Изображение и FPS».',
         'Fullscreen, HDR, field of view and the taste effects are on Picture & performance.':
             'Полный экран, HDR, поле зрения и эффекты из раздела «Дело вкуса» находятся на странице «Изображение и FPS».',
         'GPU':
@@ -329,6 +399,8 @@ WORLD = {
             'Графика: пресет Balanced или Performance (DLSS на видеокартах GeForce RTX).',
         'Hard limits':
             'Жёсткие ограничения',
+        'Hide the earlier states':
+            'Скрыть прежние состояния',
         'Hide the settings':
             'Скрыть настройки',
         'Highest model detail: your card has room to spare at this resolution.':
@@ -353,6 +425,8 @@ WORLD = {
             'В окне: размер при открытии. Края окна по-прежнему можно тянуть; «Как в прошлый раз» открывает его в том размере, который был при последнем закрытии игры.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'В игре меню порта открывается клавишей Insert (клавиатура) или L3 + R3 (геймпад).',
+        'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+            'В игре «{}» загружает последнего персонажа, за которого вы играли; «{}» на титульном экране показывает всех.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
             'На открывшейся странице ({0}) войдите через Discord и введите этот код:',
         'In the page that opened, sign in with Discord and enter this code:':
@@ -381,6 +455,8 @@ WORLD = {
             'Это не тот файл, что лежит в PKG обновления (файл PS4 SELF): его преобразовала другая программа, или он не из Bloodborne.',
         'It may start, but expect low frame rates and problems.':
             'Порт может запуститься, но ожидайте низкую частоту кадров и проблемы.',
+        'Its level, weapons and bosses cannot be read from this save.':
+            'Уровень, оружие и боссов из этого сохранения прочитать нельзя.',
         'Keyboard and mouse: the Dark Souls III layout with the mouse camera':
             'Клавиатура и мышь: раскладка Dark Souls III с управлением камерой мышью',
         'Language':
@@ -443,8 +519,14 @@ WORLD = {
             'В следующий раз Play Bloodborne.exe сразу запустит игру с этими настройками.',
         'No add-on in this folder: The Old Hunters is a folder named {} in it.':
             'В этой папке нет дополнений: The Old Hunters — это папка {} внутри неё.',
+        'No backups yet.':
+            'Резервных копий пока нет.',
+        'No characters yet. The game makes them, or bring yours from another version (below).':
+            'Персонажей пока нет. Игра создаст их, или перенесите своих из другой версии (ниже).',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'В папке {} и её подпапках нет полного сохранения Bloodborne: нужны userdata0010 и хотя бы один персонаж (с userdata0000 по userdata0009).',
+        'No controller found. Connect it by cable or Bluetooth.':
+            'Геймпад не найден. Подключите его кабелем или по Bluetooth.',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
             'Ни вылетов, ни зависаний за {:.0f} мин (в среднем {:.0f} FPS).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
@@ -459,6 +541,8 @@ WORLD = {
             'На этом ПК не найдено сохранений shadPS4, порта от Awaken или bbhost. Если ваши лежат в другом месте (резервная копия, экспорт с PS4), выберите их папку.',
         'No setting kept the goal; this one came closest.':
             'Ни один вариант не достиг цели; этот ближе всего.',
+        'None beaten yet':
+            'Пока никто не побеждён',
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next starts.':
             'Это нормально: порт строит кэш шейдеров, когда впервые встречает каждый эффект. Кэш сохраняется для следующих запусков.',
         "Not in the website's list; it has every instruction the port needs. Counted as the minimum.":
@@ -483,6 +567,8 @@ WORLD = {
             'Не поддерживается: {} ГБ видеопамяти, а порту нужно не менее 4 ГБ.',
         'Nothing found. Try other words, or open Help.':
             'Ничего не найдено. Попробуйте другие слова или откройте «Помощь».',
+        'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+            'Ничего не подсвечивается: подключите геймпад заново (надёжнее всего кабелем) и закройте программы, которые его перехватывают, например DS4Windows.',
         'Nothing was recorded (press F9 to start and F9 to stop).':
             'Ничего не записано (F9 начинает и останавливает запись).',
         'Now':
@@ -509,8 +595,14 @@ WORLD = {
             'Онлайн-игра',
         'Only a black screen':
             'Только чёрный экран',
+        'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+            'Пострадал только один персонаж: в разделе «Ваши персонажи» откройте его прежние состояния и верните только его.',
         'Only the update folder was chosen':
             'Выбрана только папка обновления',
+        'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+            'Изменится только этот персонаж, остальные останутся как есть. Его текущее состояние сначала сохраняется в копию («{}»), так что ничего не потеряется.',
+        'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+            'Только если вы играли после последней копии. Хранятся последние {} автоматических копий, ваши собственные — всегда.',
         'Only with your own copy of the game':
             'Только с вашей собственной копией игры',
         'Open Windows Security':
@@ -519,8 +611,14 @@ WORLD = {
             'Откройте её, нажмите Ctrl + A, затем Ctrl + C.',
         'Open the Discord':
             'Открыть Discord',
+        'Open the backups':
+            'Открыть резервные копии',
         'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the destination.':
             'Откройте папку базовой игры (ту, где лежит dvdroot_ps4), нажмите Ctrl + V и выберите «Заменить файлы в папке назначения».',
+        'Open the controller test':
+            'Открыть тест геймпада',
+        'Open the controller test and press the buttons.':
+            'Откройте тест геймпада и нажимайте кнопки.',
         'Open the folder':
             'Открыть папку',
         'Open the game folder':
@@ -577,10 +675,16 @@ WORLD = {
             'Подготовка ({}). Игра откроется в полноэкранном режиме; не трогайте ПК до завершения.',
         'Press Win + R, type sysdm.cpl, press Enter.':
             'Нажмите Win + R, введите sysdm.cpl и нажмите Enter.',
+        'Press the buttons: what lights up here reaches the game.':
+            'Нажимайте кнопки: что здесь подсвечивается, доходит до игры.',
         'Problems and their fixes':
             'Проблемы и их решения',
         'Processor':
             'Процессор',
+        'Put this backup back?':
+            'Восстановить эту копию?',
+        'Put {} back to this state?':
+            'Вернуть {} к этому состоянию?',
         'Quiet (goal)':
             'Тишина',
         'RAM':
@@ -603,12 +707,16 @@ WORLD = {
             'Записать маршрут…',
         'Recorded: every test of this scenario now replays your route.':
             'Записано: каждый тест этого сценария теперь воспроизводит ваш маршрут.',
+        'Rename':
+            'Переименовать',
         'Rename the folder {} to {}: the game looks for that exact name.':
             'Переименуйте папку {} в {}: игра ищет именно это имя.',
         'Repeat the setup':
             'Пройти настройку заново',
         'Restart the PC after installing it.':
             'После установки перезагрузите ПК.',
+        'Restore':
+            'Восстановить',
         'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.':
             'Правый клик по eboot.bin > «Свойства»: чистый файл — ровно 93\xa0825\xa0704 байт.',
         'Route':
@@ -621,6 +729,8 @@ WORLD = {
             'Пробег: Старый Ярнам',
         'Runs the same two-minute route through this area and back every time, from the save of the mod “All Boss Save Files Ready to Fight” (Nexus Mods). The hunter cannot die and enemies leave him alone: for frame rate, loading and stutter while moving, and for comparing settings.':
             'Каждый раз проходит один и тот же двухминутный маршрут по этой местности и обратно, с сохранения из мода «All Boss Save Files Ready to Fight» (Nexus Mods). Охотник не может умереть, враги его не трогают: для частоты кадров, подгрузки и подтормаживаний в движении и для сравнения настроек.',
+        "SDL3.dll is missing in the port's bin folder.":
+            'В папке bin порта нет SDL3.dll.',
         'SSD':
             'SSD',
         'Same as the monitor':
@@ -633,14 +743,20 @@ WORLD = {
             'Сохранить отчёт',
         'Save as zip':
             'Сохранить как ZIP',
+        'Saved by hand':
+            'Сохранено вручную',
         'Saved: {}':
             'Сохранено: {}',
         'Saves':
             'Сохранения',
         'Saves & online':
             'Сохранения и онлайн',
+        'Saves backed up: {}':
+            'Сохранения скопированы: {}',
         "Saves imported. Your characters are in the game's Load Game menu.":
             'Сохранения импортированы. Ваши персонажи — в игровом меню «Загрузить игру».',
+        'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+            'Страница «Сохранения», резервные копии: восстановите самую новую копию до проблемы («Перед запуском игры» с датой последней удачной сессии).',
         'Scenario':
             'Сценарий',
         'Screen':
@@ -669,8 +785,16 @@ WORLD = {
             'Настройки: {} отличаются от рекомендуемых для вашего ПК',
         'Setup':
             'Мастер настройки',
+        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+            'Шейдеры, журналы и временные файлы этого ПК. Пусто: в папке сохранений, а если папка сохранений находится в облачной папке (OneDrive, Dropbox, Google Drive) — на этом ПК, чтобы у каждого ПК были свои шейдеры.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Тени от динамических источников: включены с уровня «Выше минимума».',
+        'Show all ({})':
+            'Показать все ({})',
+        'Show fewer':
+            'Показать меньше',
+        'Show in folder':
+            'Показать в папке',
         'Show me on the live map':
             'Показывать меня на карте в реальном времени',
         'Show the fix?':
@@ -697,6 +821,8 @@ WORLD = {
             'Пропустить: всё настрою самостоятельно',
         'Slightly translucent window':
             'Слегка прозрачное окно',
+        'Slot {}':
+            'Слот {}',
         'Smooth (goal)':
             'Плавность',
         'Stability run':
@@ -711,6 +837,8 @@ WORLD = {
             'Пуск > Безопасность Windows > Защита от вирусов и угроз > Управление настройками.',
         'Start the test':
             'Начать тест',
+        "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+            'Запуск из Steam: в свойствах игры в Steam попробуйте включить или выключить Steam Input.',
         'Starting the sign-in…':
             'Запуск входа…',
         'Starts in front of this boss with the save from the mod “All Boss Save Files Ready to Fight” (Nexus Mods), walks in and keeps the boss busy for two minutes: dodging, strafing, now and then an attack. The hunter cannot die; the boss fights as usual. For stability and a worst case, not for exact comparisons.':
@@ -755,6 +883,12 @@ WORLD = {
             "The Hunter's Dream (с игроками bbhost)",
         "The Hunter's Dream account":
             "Учётная запись The Hunter's Dream",
+        "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+            "The Hunter's Dream: кооператив вместе с игроками bbhost после бесплатного входа через Discord. shadNet: любой сервер shadNet и его учётная запись.",
+        "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+            "The Hunter's Dream: сейчас в сети {} охотников ({} bbhost · {} shadNet)",
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+            'Меню «Загрузить игру» пустое, персонажа нет или игра сообщает о повреждённом сохранении. Перед каждым запуском лаунчер делает копию сохранений, так что можно вернуть всё как было.',
         'The Old Hunters found ({}).':
             'The Old Hunters найдено ({}).',
         'The Old Hunters found in the saves folder (addcont).':
@@ -763,12 +897,20 @@ WORLD = {
             'The Old Hunters: не найдено. Нужно, только если оно у вас есть; без него его области закрыты.',
         'The account you made at supermedo.com.':
             'Учётная запись, которую вы создали на supermedo.com.',
+        'The automatic backup of the saves failed: {}':
+            'Не удалось автоматически создать копию сохранений: {}',
+        'The character came from another version and there is no backup yet: import it again under "From other versions".':
+            'Персонаж пришёл из другой версии, а копии ещё нет: импортируйте его снова в разделе «Из других версий».',
         'The check stopped: {}':
             'Проверка прервана: {}',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
             'Патчи сообщества (60 FPS и выше, параметры эффектов) есть только для 1.09; другие версии работают в 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "Подключение к The Hunter's Dream — это порт сетевого кода bbhost от Awaken; автор bbhost и The Hunter's Dream — droogie.",
+        'The controller does nothing':
+            'Геймпад не работает',
+        'The controller test cannot start: {}':
+            'Тест геймпада не может запуститься: {}',
         'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
             'Режим эксперта включён, чтобы это показать. Переключатель — внизу боковой панели.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
@@ -785,8 +927,12 @@ WORLD = {
             'Игра не версии 1.09',
         'The game is open: load the save, press F9, run the route and back, press F9 again, quit the game.':
             'Игра открыта: загрузите сохранение, нажмите F9, пройдите маршрут туда и обратно, снова нажмите F9, выйдите из игры.',
+        'The game is running: the test waits until it is closed.':
+            'Игра запущена: тест подождёт, пока она не закроется.',
         'The game needs Vulkan 1.3 and a current driver; an old or crashed driver ends the game with "device lost".':
             'Игре нужны Vulkan 1.3 и актуальный драйвер; старый или сбойный драйвер завершает игру с ошибкой «device lost».',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+            'Игра читает геймпады так же, как тест геймпада на странице «Управление»: что там подсвечивается, доходит до игры.',
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest memory").':
             'При запуске игра резервирует около 6 ГБ (10 ГБ в 1440p и 4K) одним блоком — из ОЗУ и файла подкачки вместе. Если Windows отказывает, игра сразу закрывается с кодом 3 (в журнале: «cannot create … MiB of guest memory»).',
         'The game shows the buttons of whatever you use; the keys can be changed on the Controls page.':
@@ -849,6 +995,8 @@ WORLD = {
             'В этой папке нет eboot.bin. Выберите папку, в которой прямо лежит eboot.bin, а не папку уровнем выше.',
         'There is no save of this port, shadPS4 or bbhost in that folder (SPRJ0005 with userdata0000 …).':
             'В этой папке нет сохранений этого порта, shadPS4 или bbhost (SPRJ0005 с userdata0000 …).',
+        'There is no save to back up yet.':
+            'Пока нет сохранения для копии.',
         "These are a PS4's own encrypted backups (sdimg_…); they cannot be used. Export the save with Apollo Save Tool on the PS4 instead.":
             'Это собственные зашифрованные резервные копии PS4 (sdimg_…); их нельзя использовать. Вместо этого экспортируйте сохранение с помощью Apollo Save Tool на PS4.',
         'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':
@@ -859,6 +1007,10 @@ WORLD = {
             'На этом ПК порт не запустится.',
         'This PC does not meet the requirements. You can still go on, but the game will probably not run.':
             'Этот ПК не соответствует требованиям. Можно продолжить, но игра, скорее всего, не запустится.',
+        'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+            'Этого персонажа нельзя вернуть отдельно ({}). Вместо этого восстановите всю копию в разделе «Резервные копии».',
+        'This file is no Bloodborne save backup: {}':
+            'Этот файл не является резервной копией сохранений Bloodborne: {}',
         'This is not a test scenario: {}':
             'Это не тестовый сценарий: {}',
         'This is the add-on itself: choose the folder that contains {}.':
@@ -915,6 +1067,8 @@ WORLD = {
             'Версия 01.09: доступны все патчи сообщества.',
         'Version {}: the game runs at 30 FPS only. Copy everything from the 1.09 update into this folder and replace the files.':
             'Версия {}: игра работает только в 30 FPS. Скопируйте всё из обновления 1.09 в эту папку с заменой файлов.',
+        'Weapons':
+            'Оружие',
         'Welcome':
             'Добро пожаловать',
         'Welcome, good hunter':
@@ -963,12 +1117,20 @@ WORLD = {
             'Рекомендация для вашего ПК',
         'Your PC: {} · {}':
             'Ваш ПК: {} · {}',
+        'Your characters':
+            'Ваши персонажи',
         'Your characters and online play':
             'Ваши персонажи и онлайн-игра',
         'Your characters from other versions':
             'Ваши персонажи из других версий',
+        'Your characters, their backups and the trophies. Empty: {}.':
+            'Ваши персонажи, их резервные копии и трофеи. Пусто: {}.',
         'Your characters: bring them from another version, back them up, put a backup back.':
             'Ваши персонажи: перенос из другой версии, резервное копирование и восстановление из копии.',
+        'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+            'Ваши текущие сохранения ({}) сначала будут сохранены («{}»), так что ничего не потеряется.',
+        'Your current saves are backed up first: trying an older backup loses nothing.':
+            'Текущие сохранения сначала копируются: попытка с более старой копией ничего не стоит.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Ваш монитор: {} × {}. Рекомендуется для вашего ПК: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
@@ -1001,6 +1163,8 @@ WORLD = {
             'Ваши прежние сохранения: {}',
         'Your processor sets the limit.':
             'Предел задаёт ваш процессор.',
+        'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+            'Папка сохранений находится в облачной папке: сохранения переносятся с вами, шейдеры остаются на этом ПК. Играйте одновременно только на одном ПК и дождитесь окончания синхронизации, прежде чем запускать игру на другом; в OneDrive включите для папки «Всегда сохранять на этом устройстве».',
         'Your setup':
             'Ваша конфигурация',
         'above':
@@ -1093,6 +1257,10 @@ WORLD = {
             'проблема',
         'round {}, {} min left':
             'круг {}, осталось {} мин',
+        'same as now':
+            'как сейчас',
+        'saved {}':
+            'сохранён {}',
         'sce_module, sce_sys and dvdroot_ps4 are there.':
             'sce_module, sce_sys и dvdroot_ps4 на месте.',
         'shadNet server':
@@ -1135,8 +1303,12 @@ WORLD = {
             'Генерация кадров {}: выше частота кадров, чуть больше задержка ввода',
         '{} is available on your card for even higher frame rates.':
             'Ваша видеокарта поддерживает {} — для ещё более высокой частоты кадров.',
+        '{} is back at this state.':
+            '{} снова в этом состоянии.',
         '{} minutes':
             '{} мин',
+        '{} online':
+            '{} в сети',
         '{} runs':
             'прогонов: {}',
         '{} settings differ from the recommendation.':
@@ -1206,6 +1378,10 @@ WORLD = {
             '90 FPS',
         'A PS4 (exported save)':
             'جهاز PS4 (ملف حفظ مُصدَّر)',
+        'A character is gone or the save is broken':
+            'اختفت شخصية أو تلف ملف الحفظ',
+        'A character without a readable name':
+            'شخصية بلا اسم مقروء',
         'A constant added on top of sensitivity; raises the floor for slow movements without affecting fast ones as much.':
             'قيمة ثابتة تُضاف إلى الحساسية؛ ترفع الحد الأدنى للحركات البطيئة دون أن تؤثر كثيرًا في الحركات السريعة.',
         'A controller (PlayStation, Xbox, Switch)':
@@ -1224,6 +1400,10 @@ WORLD = {
             'لمحة مما يقع خلف المشغّل: شريط عنوان ضبابي (Windows 11) ونافذة بعتامة 98.5 %. عند الإيقاف: معتمة تمامًا وأسهل للقراءة.',
         'A key, the mouse or a controller used during the test ends it.':
             'استخدام مفتاح أو الفأرة أو وحدة تحكم أثناء الاختبار يُنهيه.',
+        'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+            'اسم لهذه النسخة. Enter يحفظه، وEsc يُبقي كل شيء كما كان.',
+        'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+            'خادم shadNet بدلًا من ذلك وكل الخيارات: صفحة اللعب عبر الإنترنت. اللعب دون اتصال لا يحتاج شيئًا: ألغِ التحديد.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
             '60 FPS ثابتة مع أفضل صورة تتسع لها بطاقة الرسومات.',
         'A stick direction can only be bound to a key, not a mouse button.':
@@ -1246,6 +1426,8 @@ WORLD = {
             'فوق الحد الأدنى',
         'Achievements':
             'الإنجازات',
+        'Add a backup file…':
+            'إضافة ملف نسخة احتياطية…',
         'Add a test…':
             'إضافة اختبار…',
         'Added. Choose it under Scenario (the list is updated when the launcher starts next).':
@@ -1296,10 +1478,22 @@ WORLD = {
             'الاستيقاظ',
         'Back':
             'رجوع',
+        'Back up automatically before every start':
+            'انسخ احتياطيًا تلقائيًا قبل كل تشغيل',
+        'Back up now':
+            'انسخ الآن',
+        "Backup put back. Your characters are in the game's Load Game menu.":
+            'تم استرجاع النسخة. شخصياتك موجودة في قائمة «تحميل اللعبة» داخل اللعبة.',
         'Backups':
             'النسخ الاحتياطية',
         'Balanced (goal)':
             'متوازن',
+        'Before a restore':
+            'قبل الاسترجاع',
+        'Before an import':
+            'قبل الاستيراد',
+        'Before playing':
+            'قبل بدء اللعب',
         'Below minimum':
             'دون الحد الأدنى',
         'Best for your goal: {} with {:.0f} FPS.':
@@ -1314,6 +1508,8 @@ WORLD = {
             'قتال زعيم (ملف حفظك عند زعيم)',
         'Boss: Cleric Beast':
             'زعيم: Cleric Beast',
+        'Bosses':
+            'الزعماء',
         'Bring your saves along, and play with others.':
             'انقل ملفات حفظك معك، والعب مع الآخرين.',
         'Bronze':
@@ -1328,6 +1524,10 @@ WORLD = {
             'المعالجات التي لا تدعم AVX (كثير من طرازات Pentium/Celeron) لا يمكنها تشغيله إطلاقًا.',
         'CUSA03173: the Game of the Year Edition, with The Old Hunters.':
             'CUSA03173: إصدار Game of the Year Edition، مع The Old Hunters.',
+        'Cache folder':
+            'مجلد الكاش',
+        'Caches now: {}':
+            'الكاش الآن: {}',
         'Camera':
             'الكاميرا',
         'Camera (right stick)':
@@ -1368,6 +1568,8 @@ WORLD = {
             'جارٍ فحص ملفات اللعبة…',
         'Checking your PC…':
             'جارٍ فحص حاسوبك…',
+        'Choose a backup (zip)':
+            'اختر نسخة احتياطية (zip)',
         'Choose a folder…':
             'اختر مجلدًا…',
         'Choose at least two values to compare.':
@@ -1376,6 +1578,8 @@ WORLD = {
             'اختر الإحساس الذي تريده؛ والإعدادات اللازمة لذلك تأتي من عتادك.',
         'Choose the base game folder in Game & language. Its dvdroot_ps4 has about 29 GB in about 28,800 files.':
             'اختر مجلد اللعبة الأساسية في «اللعبة واللغة». يحتوي dvdroot_ps4 فيه على نحو 29 GB في نحو 28,800 ملف.',
+        'Choose the cache folder':
+            'اختر مجلد الكاش',
         'Choose the folder with the saves':
             'اختر المجلد الذي يحتوي ملفات الحفظ',
         'Choose the game folder':
@@ -1402,6 +1606,8 @@ WORLD = {
             'أغلق اللعبة أولًا.',
         'Close the game first; it writes its saves while it runs.':
             'أغلق اللعبة أولًا؛ فهي تكتب ملفات الحفظ أثناء تشغيلها.',
+        'Close the game.':
+            'أغلق اللعبة.',
         'Close your browser and other programs while playing.':
             'أغلق المتصفح والبرامج الأخرى أثناء اللعب.',
         'Co-op pool':
@@ -1416,6 +1622,8 @@ WORLD = {
             'إذا كنت قادمًا من إصدار آخر، فسيُعثر على شخصياتك في الخطوة IV.',
         'Compare one setting: pictures and frame rate':
             'مقارنة إعداد واحد: الصور ومعدل الإطارات',
+        'Controller test':
+            'اختبار وحدة التحكم',
         'Controls':
             'التحكم',
         'Copied: paste it into your message on Discord or in the forum.':
@@ -1430,10 +1638,24 @@ WORLD = {
             'انسخ كل محتويات مجلد التحديث إلى مجلد اللعبة الأساسية واختر «استبدال الملفات في الوجهة».',
         'Copy everything from the update folder into the base game folder and replace the files.':
             'انسخ كل محتويات مجلد التحديث إلى مجلد اللعبة الأساسية واستبدل الملفات.',
+        'Copy the backup to…':
+            'نسخ النسخة الاحتياطية إلى…',
+        'Copy to…':
+            'نسخ إلى…',
+        'Could not back up the saves: {}':
+            'تعذّر نسخ ملفات الحفظ احتياطيًا: {}',
+        'Could not copy the backup: {}':
+            'تعذّر نسخ النسخة: {}',
         'Could not import the saves: {}':
             'تعذّر استيراد ملفات الحفظ: {}',
         'Could not load the list of versions: {}':
             'تعذّر تحميل قائمة الإصدارات: {}',
+        'Could not move the backup to the Recycle Bin.':
+            'تعذّر نقل النسخة إلى سلة المحذوفات.',
+        'Could not put the backup back: {}':
+            'تعذّر استرجاع النسخة: {}',
+        'Could not rename the backup: {}':
+            'تعذّرت إعادة تسمية النسخة: {}',
         'Could not save it: {}':
             'تعذّر الحفظ: {}',
         'Ctrl+F':
@@ -1446,8 +1668,14 @@ WORLD = {
             'يتطلب DLSS بطاقة GeForce RTX 20 أو أحدث. ويتطلب DLSS Frame Generation بطاقة RTX 40 (2×) أو RTX 50 (حتى 4×). يعمل توليد الإطارات FSR 3.1 على أي بطاقة، ويكون في أفضل حالاته بدءًا من نحو 60 FPS أساسية.',
         'Dark Souls III layout':
             'تخطيط Dark Souls III',
+        'Deaths':
+            'مرات الموت',
         'Debug':
             'التصحيح',
+        'Delete':
+            'حذف',
+        'Delete this backup? It goes to the Recycle Bin.':
+            'حذف هذه النسخة؟ ستنتقل إلى سلة المحذوفات.',
         'Derived from the requirements and the hardware check on bbport.de for your PC at {} ({}). Chromatic aberration, depth of field, motion blur and sharpening are taste and stay as you set them.':
             'مستمدة من المتطلبات وفحص العتاد على bbport.de لحاسوبك عند {} ({}). الانحراف اللوني وعمق المجال وضبابية الحركة والحدة مسألة ذوق، وتبقى كما ضبطتها.',
         'Detected automatically':
@@ -1464,6 +1692,8 @@ WORLD = {
             'صفحة التنزيل',
         'Download the FSR 4 files now (about 30 MB)':
             'تنزيل ملفات FSR 4 الآن (نحو 30 MB)',
+        'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+            'اسحب التعديل من مقبضه لتغيير الترتيب. ما يأتي أسفل القائمة يُحمَّل لاحقًا ويفوز عند التعارض.',
         'Driver notes':
             'ملاحظات التعريف',
         'Duration':
@@ -1472,6 +1702,10 @@ WORLD = {
             'خبير',
         'Each':
             'كل قيمة',
+        'Earlier backup':
+            'نسخة احتياطية سابقة',
+        'Earlier states in your backups ({})':
+            'حالات سابقة في نسخك الاحتياطية ({})',
         'Earlier tests':
             'الاختبارات السابقة',
         'Earned':
@@ -1484,6 +1718,8 @@ WORLD = {
             'تفعيل النظر بالماوس',
         'Enough for 4K (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 class).':
             'كافية لدقة 4K (فئة RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070).',
+        'Every character in this backup goes back to this state.':
+            'ستعود كل الشخصيات في هذه النسخة الاحتياطية إلى هذه الحالة.',
         'Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.':
             'كل إعدادات الرسومات ومعدل الإطارات. تُحفظ في bbport.ini؛ وقائمة المنفذ داخل اللعبة (Insert أو L3+R3) تغيّر القيم نفسها.',
         'Every graphics setting one by one:':
@@ -1534,10 +1770,16 @@ WORLD = {
             'توليد الإطارات',
         "Frames made between two of the game's: 60 FPS on screen becomes 120. Needs a display with that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce RTX 40 or newer, otherwise FSR 3.1 is used.":
             'إطارات تُولَّد بين كل إطارين من إطارات اللعبة: تصبح 60 FPS على الشاشة 120. يحتاج إلى شاشة بهذا التردد (120 Hz أو أكثر عند 60 FPS)؛ ويتوقف مؤقتًا عندما لا تستطيع الشاشة عرض الإطارات الإضافية. يضيف تأخيرًا طفيفًا في الاستجابة. لا تُولَّد إطارات للقوائم والمقاطع السينمائية. يتطلب DLSS بطاقة GeForce RTX 40 أو أحدث، وإلا يُستخدم FSR 3.1.',
+        'From a file':
+            'من ملف',
+        'From other versions':
+            'من إصدارات أخرى',
         'From your last save: the camera turns once around the hunter and back (24 s). Quick and the same every time; for the frame rate and for comparing settings.':
             'من آخر ملف حفظ لك: تدور الكاميرا مرة واحدة حول الصياد وتعود (24 ثانية). سريع ومتطابق في كل مرة؛ لقياس معدل الإطارات ومقارنة الإعدادات.',
         'Fullscreen (recommended)':
             'ملء الشاشة (موصى به)',
+        'Fullscreen, HDR and the taste effects are on Picture & performance.':
+            'ملء الشاشة وHDR ومؤثرات الذوق موجودة في «الصورة والأداء».',
         'Fullscreen, HDR, field of view and the taste effects are on Picture & performance.':
             'ملء الشاشة وHDR ومجال الرؤية ومؤثرات الذوق موجودة في «الصورة والأداء».',
         'GPU':
@@ -1578,6 +1820,8 @@ WORLD = {
             'حدود صارمة',
         'Help':
             'المساعدة',
+        'Hide the earlier states':
+            'إخفاء الحالات السابقة',
         'Hide the settings':
             'إخفاء الإعدادات',
         'Highest model detail: your card has room to spare at this resolution.':
@@ -1606,6 +1850,8 @@ WORLD = {
             'في نافذة: الحجم الذي تُفتح به. لا يزال بإمكانك سحب حوافها؛ «كما في المرة السابقة» يفتحها بالحجم الذي كانت عليه عند آخر إغلاق للعبة.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'داخل اللعبة، يفتح Insert (لوحة المفاتيح) أو L3 + R3 (يد التحكم) قائمة المنفذ.',
+        'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+            'في اللعبة، يحمّل «{}» آخر شخصية لعبت بها؛ ويعرض «{}» في شاشة العنوان جميع الشخصيات.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
             'في الصفحة التي فُتحت ({0})، سجّل الدخول باستخدام Discord وأدخل هذا الرمز:',
         'In the page that opened, sign in with Discord and enter this code:':
@@ -1650,6 +1896,8 @@ WORLD = {
             'قد يبدأ التشغيل، لكن توقّع معدلات إطارات منخفضة ومشكلات.',
         'Items and menus':
             'الأغراض والقوائم',
+        'Its level, weapons and bosses cannot be read from this save.':
+            'لا يمكن قراءة المستوى والأسلحة والزعماء من ملف الحفظ هذا.',
         'Jump while dashing (L3)':
             'القفز أثناء الاندفاع (L3)',
         'Keyboard and mouse':
@@ -1758,8 +2006,14 @@ WORLD = {
             'في المرة القادمة، يشغّل Play Bloodborne.exe اللعبة مباشرةً بهذه الإعدادات.',
         'No add-on in this folder: The Old Hunters is a folder named {} in it.':
             'لا توجد إضافة في هذا المجلد: The Old Hunters هو مجلد باسم {} بداخله.',
+        'No backups yet.':
+            'لا توجد نسخ احتياطية بعد.',
+        'No characters yet. The game makes them, or bring yours from another version (below).':
+            'لا توجد شخصيات بعد. تنشئها اللعبة، أو انقل شخصياتك من إصدار آخر (في الأسفل).',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'لا يوجد ملف حفظ كامل لـ Bloodborne في {} أو مجلداته الفرعية: يلزم userdata0010 وشخصية واحدة على الأقل (من userdata0000 إلى userdata0009).',
+        'No controller found. Connect it by cable or Bluetooth.':
+            'لم يُعثر على وحدة تحكم. وصّلها بكابل أو عبر Bluetooth.',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
             'لا تعطّل ولا تجمّد خلال {:.0f} دقيقة ({:.0f} FPS في المتوسط).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
@@ -1780,6 +2034,8 @@ WORLD = {
             'لا توجد جوائز بعد. ستظهر هنا فور أن تفتحها اللعبة.',
         'No versions found.':
             'لم يتم العثور على إصدارات.',
+        'None beaten yet':
+            'لم يُهزم أي زعيم بعد',
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next starts.':
             'أمر طبيعي: يبني المنفذ كاش الشيدر في أول مرة يرى فيها كل مؤثر، ويُحفظ لمرات التشغيل التالية.',
         "Not in the website's list; it has every instruction the port needs. Counted as the minimum.":
@@ -1806,6 +2062,8 @@ WORLD = {
             'غير مدعوم: ذاكرة فيديو {} GB، ويحتاج المنفذ إلى 4 GB على الأقل.',
         'Nothing found. Try other words, or open Help.':
             'لم يتم العثور على شيء. جرّب كلمات أخرى، أو افتح «المساعدة».',
+        'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+            'لا شيء يضيء: أعد توصيل وحدة التحكم (الكابل هو الأضمن)، وأغلق البرامج التي تستحوذ عليها مثل DS4Windows.',
         'Nothing was recorded (press F9 to start and F9 to stop).':
             'لم يُسجَّل شيء (F9 للبدء وF9 للإيقاف).',
         'Now':
@@ -1834,8 +2092,14 @@ WORLD = {
             'اللعب عبر الإنترنت',
         'Only a black screen':
             'شاشة سوداء فقط',
+        'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+            'تأثرت شخصية واحدة فقط: في «شخصياتك» افتح حالاتها السابقة وأعِد تلك الشخصية وحدها.',
         'Only the update folder was chosen':
             'تم اختيار مجلد التحديث فقط',
+        'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+            'تتغير هذه الشخصية فقط، وتبقى شخصياتك الأخرى كما هي. تُنسخ حالتها الحالية احتياطيًا أولًا («{}»)، فلا يضيع شيء.',
+        'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+            'فقط إذا لعبت منذ آخر نسخة. تُحفظ آخر {} نسخ تلقائية، أما نسخك أنت فتبقى دائمًا.',
         'Only with your own copy of the game':
             'فقط مع نسختك الخاصة من اللعبة',
         'Open Windows Security':
@@ -1844,8 +2108,14 @@ WORLD = {
             'افتحه، واضغط Ctrl + A، ثم Ctrl + C.',
         'Open the Discord':
             'فتح Discord',
+        'Open the backups':
+            'فتح النسخ الاحتياطية',
         'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the destination.':
             'افتح مجلد اللعبة الأساسية (الذي يحتوي dvdroot_ps4)، واضغط Ctrl + V، ثم اختر «استبدال الملفات في الوجهة».',
+        'Open the controller test':
+            'فتح اختبار وحدة التحكم',
+        'Open the controller test and press the buttons.':
+            'افتح اختبار وحدة التحكم واضغط الأزرار.',
         'Open the folder':
             'فتح المجلد',
         'Open the game folder':
@@ -1908,12 +2178,18 @@ WORLD = {
             'جارٍ التجهيز ({}). تفتح اللعبة بملء الشاشة؛ لا تستخدم الحاسوب حتى ينتهي.',
         'Press Win + R, type sysdm.cpl, press Enter.':
             'اضغط Win + R، واكتب sysdm.cpl، ثم اضغط Enter.',
+        'Press the buttons: what lights up here reaches the game.':
+            'اضغط الأزرار: ما يضيء هنا يصل إلى اللعبة.',
         'Press…':
             'اضغط…',
         'Problems and their fixes':
             'المشكلات وحلولها',
         'Processor':
             'المعالج',
+        'Put this backup back?':
+            'استرجاع هذه النسخة؟',
+        'Put {} back to this state?':
+            'هل تريد إعادة {} إلى هذه الحالة؟',
         'Quiet (goal)':
             'هادئ',
         'Quit to Desktop in the title menu and in the System menu':
@@ -1938,6 +2214,8 @@ WORLD = {
             'تسجيل المسار…',
         'Recorded: every test of this scenario now replays your route.':
             'تم التسجيل: كل اختبار لهذا السيناريو يعيد الآن تشغيل مسارك.',
+        'Rename':
+            'إعادة تسمية',
         'Rename the folder {} to {}: the game looks for that exact name.':
             'أعد تسمية المجلد {} إلى {}: اللعبة تبحث عن هذا الاسم بالضبط.',
         'Repeat the setup':
@@ -1950,6 +2228,8 @@ WORLD = {
             'محجوزة: Insert/Escape (قائمة المنفذ)، وF9 (تسجيل المسار)، وأي مفتاح يبدّل النظر بالماوس أو يعيد تحميل input.ini (F7/F8 افتراضيًا).',
         'Restart the PC after installing it.':
             'أعد تشغيل الحاسوب بعد التثبيت.',
+        'Restore':
+            'استرجاع',
         'Right half of the touchpad (debug menu)':
             'النصف الأيمن من لوحة اللمس (قائمة التصحيح)',
         'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.':
@@ -1964,6 +2244,8 @@ WORLD = {
             'جولة: يارنام القديمة',
         'Runs the same two-minute route through this area and back every time, from the save of the mod “All Boss Save Files Ready to Fight” (Nexus Mods). The hunter cannot die and enemies leave him alone: for frame rate, loading and stutter while moving, and for comparing settings.':
             'يقطع المسار نفسه لمدة دقيقتين عبر هذه المنطقة ذهابًا وإيابًا في كل مرة، من ملف الحفظ في التعديل «All Boss Save Files Ready to Fight» (Nexus Mods). لا يمكن أن يموت الصياد ويتركه الأعداء وشأنه: لمعدل الإطارات والتحميل والتقطيع أثناء الحركة ولمقارنة الإعدادات.',
+        "SDL3.dll is missing in the port's bin folder.":
+            'ملف SDL3.dll مفقود في مجلد bin الخاص بالمنفذ.',
         'SSD':
             'SSD',
         'Same as the monitor':
@@ -1976,14 +2258,20 @@ WORLD = {
             'حفظ تقرير',
         'Save as zip':
             'حفظ كملف zip',
+        'Saved by hand':
+            'حُفظت يدويًا',
         'Saved: {}':
             'تم الحفظ: {}',
         'Saves':
             'ملفات الحفظ',
         'Saves & online':
             'ملفات الحفظ والإنترنت',
+        'Saves backed up: {}':
+            'تم نسخ ملفات الحفظ: {}',
         "Saves imported. Your characters are in the game's Load Game menu.":
             'تم استيراد ملفات الحفظ. شخصياتك موجودة في قائمة «تحميل اللعبة» داخل اللعبة.',
+        'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+            'صفحة ملفات الحفظ، النسخ الاحتياطية: استرجع أحدث نسخة من قبل المشكلة («قبل بدء اللعب» بتاريخ آخر جلسة سليمة).',
         'Scenario':
             'السيناريو',
         'Screen':
@@ -2018,8 +2306,16 @@ WORLD = {
             'الإعدادات: {} تختلف عن التوصية لحاسوبك',
         'Setup':
             'الإعداد الأولي',
+        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+            'الشيدر والسجلات والملفات المؤقتة لهذا الحاسوب. فارغ: في مجلد الحفظ، أو على هذا الحاسوب إذا كان مجلد الحفظ داخل مجلد سحابي (OneDrive أو Dropbox أو Google Drive)، كي يحتفظ كل حاسوب بالشيدر الخاص به.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'ظلال الأضواء المتحركة: مفعّلة بدءًا من «فوق الحد الأدنى».',
+        'Show all ({})':
+            'عرض الكل ({})',
+        'Show fewer':
+            'عرض أقل',
+        'Show in folder':
+            'إظهار في المجلد',
         'Show me on the live map':
             'إظهاري على الخريطة المباشرة',
         'Show the fix?':
@@ -2048,6 +2344,8 @@ WORLD = {
             'تخطي: سأضبط كل شيء بنفسي',
         'Slightly translucent window':
             'نافذة شفافة قليلًا',
+        'Slot {}':
+            'الخانة {}',
         'Smooth (goal)':
             'سلس',
         'Stability run':
@@ -2062,6 +2360,8 @@ WORLD = {
             'قائمة ابدأ > أمن Windows > الحماية من الفيروسات والمخاطر > إدارة الإعدادات.',
         'Start the test':
             'بدء الاختبار',
+        "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+            'إذا شغّلتها من Steam: جرّب تشغيل Steam Input أو إيقافه في خصائص اللعبة على Steam.',
         'Starting the sign-in…':
             'جارٍ بدء تسجيل الدخول…',
         'Starts in front of this boss with the save from the mod “All Boss Save Files Ready to Fight” (Nexus Mods), walks in and keeps the boss busy for two minutes: dodging, strafing, now and then an attack. The hunter cannot die; the boss fights as usual. For stability and a worst case, not for exact comparisons.':
@@ -2122,6 +2422,12 @@ WORLD = {
             "The Hunter's Dream (مع لاعبي bbhost)",
         "The Hunter's Dream account":
             "حساب The Hunter's Dream",
+        "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+            "The Hunter's Dream: لعب تعاوني مع لاعبي bbhost بعد تسجيل دخول مجاني عبر Discord. shadNet: خادم shadNet تختاره وحسابه.",
+        "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+            "The Hunter's Dream: {} صيادًا متصلًا الآن ({} bbhost · {} shadNet)",
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+            'قائمة «تحميل اللعبة» فارغة، أو شخصية مفقودة، أو تقول اللعبة إن ملف الحفظ تالف. قبل كل تشغيل ينسخ المشغّل ملفات حفظك احتياطيًا، لذا يمكنك العودة إلى ما كانت عليه.',
         'The Old Hunters found ({}).':
             'تم العثور على The Old Hunters ({}).',
         'The Old Hunters found in the saves folder (addcont).':
@@ -2130,12 +2436,20 @@ WORLD = {
             'The Old Hunters: غير موجود. مطلوب فقط إذا كنت تملكه؛ بدونه تبقى مناطقه مغلقة.',
         'The account you made at supermedo.com.':
             'الحساب الذي أنشأته على supermedo.com.',
+        'The automatic backup of the saves failed: {}':
+            'فشل النسخ الاحتياطي التلقائي لملفات الحفظ: {}',
+        'The character came from another version and there is no backup yet: import it again under "From other versions".':
+            'جاءت الشخصية من إصدار آخر ولا توجد نسخة احتياطية بعد: استوردها مجددًا من «من إصدارات أخرى».',
         'The check stopped: {}':
             'توقف الفحص: {}',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
             'رقع المجتمع (60 FPS وأكثر، وخيارات المؤثرات) متاحة للإصدار 1.09 فقط؛ وتعمل الإصدارات الأخرى بـ 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "الاتصال بـ The Hunter's Dream هو منفذ Awaken لشيفرة الشبكة الخاصة بـ bbhost؛ وbbhost وThe Hunter's Dream من تطوير droogie.",
+        'The controller does nothing':
+            'وحدة التحكم لا تستجيب',
+        'The controller test cannot start: {}':
+            'لا يمكن بدء اختبار وحدة التحكم: {}',
         'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
             'وضع الخبير مفعّل الآن لعرض هذا. المفتاح في أسفل الشريط الجانبي.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
@@ -2152,8 +2466,12 @@ WORLD = {
             'اللعبة ليست بالإصدار 1.09',
         'The game is open: load the save, press F9, run the route and back, press F9 again, quit the game.':
             'اللعبة مفتوحة: حمّل ملف الحفظ، اضغط F9، اقطع المسار ذهابًا وإيابًا، اضغط F9 مرة أخرى، أغلق اللعبة.',
+        'The game is running: the test waits until it is closed.':
+            'اللعبة تعمل: ينتظر الاختبار حتى تُغلق.',
         'The game needs Vulkan 1.3 and a current driver; an old or crashed driver ends the game with "device lost".':
             'تحتاج اللعبة إلى Vulkan 1.3 وتعريف حديث؛ التعريف القديم أو المتعطل يُنهي اللعبة برسالة «device lost».',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+            'تقرأ اللعبة وحدات التحكم بالطريقة نفسها التي يقرأها بها اختبار وحدة التحكم في صفحة التحكم: ما يضيء هناك يصل إلى اللعبة.',
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest memory").':
             'تحجز اللعبة عند بدئها نحو 6 GB (10 GB بدقة 1440p و4K) في كتلة واحدة، من RAM وملف ترحيل الصفحات معًا. عندما يرفض Windows، تُغلق اللعبة فورًا بالرمز 3 (يذكر السجل «cannot create … MiB of guest memory»).',
         'The game shows the buttons of whatever you use; the keys can be changed on the Controls page.':
@@ -2218,6 +2536,8 @@ WORLD = {
             'لا يوجد eboot.bin في هذا المجلد. اختر المجلد الذي يحتوي eboot.bin مباشرةً، لا المجلد الذي فوقه.',
         'There is no save of this port, shadPS4 or bbhost in that folder (SPRJ0005 with userdata0000 …).':
             'لا يوجد ملف حفظ لهذا المنفذ أو لـ shadPS4 أو bbhost في هذا المجلد (SPRJ0005 مع userdata0000 …).',
+        'There is no save to back up yet.':
+            'لا يوجد ملف حفظ لنسخه بعد.',
         "These are a PS4's own encrypted backups (sdimg_…); they cannot be used. Export the save with Apollo Save Tool on the PS4 instead.":
             'هذه نسخ احتياطية مشفرة خاصة بجهاز PS4 (sdimg_…)؛ ولا يمكن استخدامها. بدلًا من ذلك، صدّر ملف الحفظ باستخدام Apollo Save Tool على PS4.',
         'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':
@@ -2228,6 +2548,10 @@ WORLD = {
             'لا يستطيع هذا الحاسوب تشغيل المنفذ.',
         'This PC does not meet the requirements. You can still go on, but the game will probably not run.':
             'هذا الحاسوب لا يلبي المتطلبات. لا يزال بإمكانك المتابعة، لكن على الأرجح لن تعمل اللعبة.',
+        'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+            'لا يمكن إعادة هذه الشخصية وحدها ({}). استرجع النسخة الاحتياطية كاملة من قسم النسخ الاحتياطية بدلًا من ذلك.',
+        'This file is no Bloodborne save backup: {}':
+            'هذا الملف ليس نسخة احتياطية لحفظ Bloodborne: {}',
         'This is not a test scenario: {}':
             'هذا ليس سيناريو اختبار: {}',
         'This is the add-on itself: choose the folder that contains {}.':
@@ -2312,6 +2636,8 @@ WORLD = {
             'WASD، وSpace للمراوغة، ونقرة يسرى / Shift + نقرة يسرى للهجوم، ونقرة يمنى / Shift + نقرة يمنى (أو Ctrl) لليد اليسرى، وE للتفاعل، وR للغرض، وF للقارورة، وQ للتثبيت على الهدف، وTab أو Esc للقائمة، وكاميرا الماوس 1:1. يستبدل تعيينات لوحة المفاتيح والماوس؛ وتحتفظ يد التحكم بتعييناتها.',
         'Walk (hold)':
             'المشي (مع الضغط المستمر)',
+        'Weapons':
+            'الأسلحة',
         'Welcome':
             'مرحبًا',
         'Welcome, good hunter':
@@ -2360,12 +2686,20 @@ WORLD = {
             'التوصية لحاسوبك',
         'Your PC: {} · {}':
             'حاسوبك: {} · {}',
+        'Your characters':
+            'شخصياتك',
         'Your characters and online play':
             'شخصياتك واللعب عبر الإنترنت',
         'Your characters from other versions':
             'شخصياتك من إصدارات أخرى',
+        'Your characters, their backups and the trophies. Empty: {}.':
+            'شخصياتك ونسخها الاحتياطية والجوائز. فارغ: {}.',
         'Your characters: bring them from another version, back them up, put a backup back.':
             'شخصياتك: انقلها من إصدار آخر، وانسخها احتياطيًا، واستعد نسخة احتياطية.',
+        'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+            'تُنسخ ملفات حفظك الحالية ({}) أولًا («{}»)، فلا يضيع شيء.',
+        'Your current saves are backed up first: trying an older backup loses nothing.':
+            'تُنسخ ملفات حفظك الحالية أولًا: تجربة نسخة أقدم لا تُفقدك شيئًا.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'شاشتك: {} × {}. الموصى به لحاسوبك: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
@@ -2398,6 +2732,8 @@ WORLD = {
             'ملفات حفظك السابقة: {}',
         'Your processor sets the limit.':
             'المعالج هو العامل المحدِّد.',
+        'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+            'مجلد الحفظ موجود داخل مجلد سحابي: ملفات الحفظ تنتقل معك، والشيدر يبقى على هذا الحاسوب. العب على حاسوب واحد في كل مرة، وانتظر حتى تكتمل المزامنة قبل أن تبدأ على حاسوب آخر؛ وفي OneDrive اضبط المجلد على «الاحتفاظ دائمًا على هذا الجهاز».',
         'Your setup':
             'إعدادك',
         'above':
@@ -2492,6 +2828,10 @@ WORLD = {
             'مشكلة',
         'round {}, {} min left':
             'الدورة {}، تبقى {} دقيقة',
+        'same as now':
+            'مثل الآن',
+        'saved {}':
+            'حُفظت {}',
         'sce_module, sce_sys and dvdroot_ps4 are there.':
             'sce_module وsce_sys وdvdroot_ps4 موجودة.',
         'shadNet server':
@@ -2534,12 +2874,16 @@ WORLD = {
             'توليد الإطارات {}: معدلات إطارات أعلى، وتأخير أكبر قليلًا في الاستجابة',
         '{} is available on your card for even higher frame rates.':
             '{} متاح على بطاقتك لمعدلات إطارات أعلى بكثير.',
+        '{} is back at this state.':
+            'عادت {} إلى هذه الحالة.',
         '{} is reserved (menu, recording, or a hotkey) and cannot be bound to a game action.':
             '{} محجوز (القائمة، أو التسجيل، أو مفتاح اختصار) ولا يمكن تعيينه لإجراء في اللعبة.',
         '{} minutes':
             '{} دقيقة',
         '{} of {} trophies earned':
             'تم الحصول على {} من {} جائزة',
+        '{} online':
+            '{} متصل',
         '{} runs':
             '{} جولات',
         '{} settings differ from the recommendation.':
@@ -2609,6 +2953,10 @@ WORLD = {
             '90 FPS',
         'A PS4 (exported save)':
             'Una PS4 (partida exportada)',
+        'A character is gone or the save is broken':
+            'Falta un personaje o la partida está dañada',
+        'A character without a readable name':
+            'Un personaje sin nombre legible',
         'A constant added on top of sensitivity; raises the floor for slow movements without affecting fast ones as much.':
             'Un valor fijo que se suma a la sensibilidad; eleva el mínimo de los movimientos lentos sin afectar tanto a los rápidos.',
         'A controller (PlayStation, Xbox, Switch)':
@@ -2627,6 +2975,10 @@ WORLD = {
             'Un atisbo de lo que hay detrás del lanzador: una barra de título difuminada (Windows 11) y la ventana al 98,5 %. Desactivado: totalmente opaca, lo más legible.',
         'A key, the mouse or a controller used during the test ends it.':
             'Usar una tecla, el ratón o un mando durante la prueba la termina.',
+        'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+            'Un nombre para esta copia. Enter lo guarda, Esc lo deja como estaba.',
+        'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+            'Un servidor shadNet en su lugar, y todas las opciones: la página Jugar en línea. Sin conexión no necesita nada: desmárcalo.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
             '60 FPS estables con la mejor imagen que permita tu tarjeta gráfica.',
         'A stick direction can only be bound to a key, not a mouse button.':
@@ -2649,6 +3001,8 @@ WORLD = {
             'Por encima del mínimo',
         'Achievements':
             'Logros',
+        'Add a backup file…':
+            'Añadir un archivo de copia…',
         'Add a test…':
             'Añadir una prueba…',
         'Added. Choose it under Scenario (the list is updated when the launcher starts next).':
@@ -2699,10 +3053,22 @@ WORLD = {
             'Despertar',
         'Back':
             'Atrás',
+        'Back up automatically before every start':
+            'Hacer una copia automática antes de cada inicio',
+        'Back up now':
+            'Hacer copia ahora',
+        "Backup put back. Your characters are in the game's Load Game menu.":
+            'Copia restaurada. Tus personajes están en el menú Cargar partida del juego.',
         'Backups':
             'Copias de seguridad',
         'Balanced (goal)':
             'Equilibrado',
+        'Before a restore':
+            'Antes de restaurar',
+        'Before an import':
+            'Antes de una importación',
+        'Before playing':
+            'Antes de jugar',
         'Below minimum':
             'Por debajo del mínimo',
         'Best for your goal: {} with {:.0f} FPS.':
@@ -2717,6 +3083,8 @@ WORLD = {
             'Combate contra jefe (tu partida ante un jefe)',
         'Boss: Cleric Beast':
             'Jefe: Cleric Beast',
+        'Bosses':
+            'Jefes',
         'Bring your saves along, and play with others.':
             'Trae tus partidas y juega con otros.',
         'Bronze':
@@ -2731,6 +3099,10 @@ WORLD = {
             'Las CPU sin AVX (muchos modelos Pentium/Celeron) no pueden ejecutarlo en absoluto.',
         'CUSA03173: the Game of the Year Edition, with The Old Hunters.':
             'CUSA03173: la Game of the Year Edition, con The Old Hunters.',
+        'Cache folder':
+            'Carpeta de caché',
+        'Caches now: {}':
+            'Cachés ahora: {}',
         'Camera':
             'Cámara',
         'Camera (right stick)':
@@ -2771,6 +3143,8 @@ WORLD = {
             'Comprobando los archivos del juego…',
         'Checking your PC…':
             'Comprobando tu PC…',
+        'Choose a backup (zip)':
+            'Elige una copia de seguridad (zip)',
         'Choose a folder…':
             'Elegir una carpeta…',
         'Choose at least two values to compare.':
@@ -2779,6 +3153,8 @@ WORLD = {
             'Elige cómo quieres que se sienta; los ajustes para ello salen de tu hardware.',
         'Choose the base game folder in Game & language. Its dvdroot_ps4 has about 29 GB in about 28,800 files.':
             'Elige la carpeta del juego base en Juego e idioma. Su dvdroot_ps4 tiene unos 29 GB en unos 28.800 archivos.',
+        'Choose the cache folder':
+            'Elige la carpeta de caché',
         'Choose the folder with the saves':
             'Elige la carpeta con las partidas',
         'Choose the game folder':
@@ -2805,6 +3181,8 @@ WORLD = {
             'Primero cierra el juego.',
         'Close the game first; it writes its saves while it runs.':
             'Primero cierra el juego; escribe sus partidas mientras está en marcha.',
+        'Close the game.':
+            'Cierra el juego.',
         'Close your browser and other programs while playing.':
             'Cierra el navegador y otros programas mientras juegas.',
         'Co-op pool':
@@ -2819,6 +3197,8 @@ WORLD = {
             'Si vienes de otra versión, tus personajes se buscan en el paso IV.',
         'Compare one setting: pictures and frame rate':
             'Comparar un ajuste: imágenes y FPS',
+        'Controller test':
+            'Prueba del mando',
         'Controls':
             'Controles',
         'Copied: paste it into your message on Discord or in the forum.':
@@ -2833,10 +3213,24 @@ WORLD = {
             'Copia todo el contenido de la carpeta de la actualización en la carpeta del juego base y elige «Reemplazar los archivos en el destino».',
         'Copy everything from the update folder into the base game folder and replace the files.':
             'Copia todo el contenido de la carpeta de la actualización en la carpeta del juego base y reemplaza los archivos.',
+        'Copy the backup to…':
+            'Copiar la copia de seguridad a…',
+        'Copy to…':
+            'Copiar a…',
+        'Could not back up the saves: {}':
+            'No se pudieron copiar las partidas: {}',
+        'Could not copy the backup: {}':
+            'No se pudo copiar la copia: {}',
         'Could not import the saves: {}':
             'No se pudieron importar las partidas: {}',
         'Could not load the list of versions: {}':
             'No se pudo cargar la lista de versiones: {}',
+        'Could not move the backup to the Recycle Bin.':
+            'No se pudo mover la copia a la Papelera.',
+        'Could not put the backup back: {}':
+            'No se pudo restaurar la copia: {}',
+        'Could not rename the backup: {}':
+            'No se pudo renombrar la copia: {}',
         'Could not save it: {}':
             'No se pudo guardar: {}',
         'Ctrl+F':
@@ -2849,8 +3243,14 @@ WORLD = {
             'DLSS necesita una GeForce RTX serie 20 o posterior. DLSS Frame Generation necesita una RTX 40 (2×) o RTX 50 (hasta 4×). La generación de fotogramas de FSR 3.1 funciona en cualquier tarjeta y rinde mejor a partir de unos 60 FPS base.',
         'Dark Souls III layout':
             'Esquema de Dark Souls III',
+        'Deaths':
+            'Muertes',
         'Debug':
             'Depuración',
+        'Delete':
+            'Eliminar',
+        'Delete this backup? It goes to the Recycle Bin.':
+            '¿Eliminar esta copia? Irá a la Papelera de reciclaje.',
         'Derived from the requirements and the hardware check on bbport.de for your PC at {} ({}). Chromatic aberration, depth of field, motion blur and sharpening are taste and stay as you set them.':
             'Basado en los requisitos y la comprobación de hardware de bbport.de para tu PC a {} ({}). La aberración cromática, la profundidad de campo, el desenfoque de movimiento y la nitidez son cuestión de gusto y se quedan como los pusiste.',
         'Detected automatically':
@@ -2867,6 +3267,8 @@ WORLD = {
             'Página de descarga',
         'Download the FSR 4 files now (about 30 MB)':
             'Descargar ahora los archivos de FSR 4 (unos 30 MB)',
+        'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+            'Arrastra un mod por su asa para cambiar el orden. Lo que está más abajo se carga después y gana en los conflictos.',
         'Driver notes':
             'Notas sobre controladores',
         'Duration':
@@ -2875,6 +3277,10 @@ WORLD = {
             'EXPERTO',
         'Each':
             'Cada valor',
+        'Earlier backup':
+            'Copia anterior',
+        'Earlier states in your backups ({})':
+            'Estados anteriores en tus copias de seguridad ({})',
         'Earlier tests':
             'Pruebas anteriores',
         'Earned':
@@ -2887,6 +3293,8 @@ WORLD = {
             'Activar la vista con ratón',
         'Enough for 4K (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 class).':
             'Suficiente para 4K (gama RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070).',
+        'Every character in this backup goes back to this state.':
+            'Todos los personajes de esta copia vuelven a este estado.',
         'Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.':
             'Todos los ajustes de gráficos y de velocidad de fotogramas. Se guardan en bbport.ini; el menú del juego (Insert o L3+R3) cambia los mismos valores.',
         'Every graphics setting one by one:':
@@ -2937,10 +3345,16 @@ WORLD = {
             'Generación de fotogramas',
         "Frames made between two of the game's: 60 FPS on screen becomes 120. Needs a display with that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce RTX 40 or newer, otherwise FSR 3.1 is used.":
             'Fotogramas generados entre dos del juego: 60 FPS en pantalla pasan a ser 120. Necesita una pantalla con esa frecuencia de actualización (120 Hz o más a 60 FPS); se pausa cuando la pantalla no puede mostrar los fotogramas extra. Añade algo de latencia de entrada. En menús y vídeos no se generan fotogramas. DLSS necesita una GeForce RTX 40 o posterior; si no, se usa FSR 3.1.',
+        'From a file':
+            'Desde un archivo',
+        'From other versions':
+            'De otras versiones',
         'From your last save: the camera turns once around the hunter and back (24 s). Quick and the same every time; for the frame rate and for comparing settings.':
             'Desde tu última partida: la cámara da una vuelta alrededor del cazador y vuelve (24 s). Rápido e igual cada vez; para medir los FPS y comparar ajustes.',
         'Fullscreen (recommended)':
             'Pantalla completa (recomendado)',
+        'Fullscreen, HDR and the taste effects are on Picture & performance.':
+            'La pantalla completa, el HDR y los efectos al gusto están en Imagen y rendimiento.',
         'Fullscreen, HDR, field of view and the taste effects are on Picture & performance.':
             'La pantalla completa, el HDR, el campo de visión y los efectos al gusto están en Imagen y rendimiento.',
         'GPU':
@@ -2981,6 +3395,8 @@ WORLD = {
             'Límites estrictos',
         'Help':
             'Ayuda',
+        'Hide the earlier states':
+            'Ocultar los estados anteriores',
         'Hide the settings':
             'Ocultar los ajustes',
         'Highest model detail: your card has room to spare at this resolution.':
@@ -3009,6 +3425,8 @@ WORLD = {
             'En ventana: el tamaño con el que se abre. Puedes seguir arrastrando sus bordes; «Como la última vez» la abre con el tamaño que tenía al cerrar el juego por última vez.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'En el juego, Insert (teclado) o L3 + R3 (mando) abre el menú del port.',
+        'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+            'En el juego, «{}» carga el último personaje con el que jugaste; «{}» en la pantalla de título los muestra todos.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
             'En la página que se abrió ({0}), inicia sesión con Discord e introduce este código:',
         'In the page that opened, sign in with Discord and enter this code:':
@@ -3053,6 +3471,8 @@ WORLD = {
             'Puede que se inicie, pero espera FPS bajos y problemas.',
         'Items and menus':
             'Objetos y menús',
+        'Its level, weapons and bosses cannot be read from this save.':
+            'No se pueden leer su nivel, sus armas ni sus jefes de esta partida.',
         'Jump while dashing (L3)':
             'Saltar al correr (L3)',
         'Keyboard and mouse':
@@ -3161,8 +3581,14 @@ WORLD = {
             'La próxima vez, Play Bloodborne.exe iniciará el juego directamente con estos ajustes.',
         'No add-on in this folder: The Old Hunters is a folder named {} in it.':
             'No hay ningún add-on en esta carpeta: The Old Hunters es una carpeta llamada {} dentro de ella.',
+        'No backups yet.':
+            'Aún no hay copias de seguridad.',
+        'No characters yet. The game makes them, or bring yours from another version (below).':
+            'Aún no hay personajes. El juego los crea, o trae los tuyos de otra versión (abajo).',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'No hay una partida completa de Bloodborne en {} ni en sus subcarpetas: necesita userdata0010 y al menos un personaje (userdata0000 a userdata0009).',
+        'No controller found. Connect it by cable or Bluetooth.':
+            'No se encontró ningún mando. Conéctalo por cable o Bluetooth.',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
             'Ningún cierre ni congelación en {:.0f} minutos ({:.0f} FPS de media).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
@@ -3183,6 +3609,8 @@ WORLD = {
             'Aún no hay trofeos. Aparecerán aquí en cuanto el juego los desbloquee.',
         'No versions found.':
             'No se encontraron versiones.',
+        'None beaten yet':
+            'Ninguno derrotado aún',
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next starts.':
             'Normal: el port genera su caché de shaders la primera vez que ve cada efecto. Se conserva para los siguientes inicios.',
         "Not in the website's list; it has every instruction the port needs. Counted as the minimum.":
@@ -3209,6 +3637,8 @@ WORLD = {
             'No compatible: {} GB de memoria de vídeo; el port necesita al menos 4 GB.',
         'Nothing found. Try other words, or open Help.':
             'No se encontró nada. Prueba con otras palabras o abre Ayuda.',
+        'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+            'No se ilumina nada: vuelve a conectar el mando (con cable es lo más seguro) y cierra programas que lo acaparan, como DS4Windows.',
         'Nothing was recorded (press F9 to start and F9 to stop).':
             'No se grabó nada (F9 empieza y F9 detiene).',
         'Now':
@@ -3237,8 +3667,14 @@ WORLD = {
             'Juego en línea',
         'Only a black screen':
             'Solo una pantalla negra',
+        'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+            'Solo afecta a un personaje: en Tus personajes, abre sus estados anteriores y devuelve solo ese.',
         'Only the update folder was chosen':
             'Solo se eligió la carpeta de la actualización',
+        'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+            'Solo cambia este personaje; tus otros personajes se quedan como están. Antes se hace una copia de su estado actual («{}»), así que no se pierde nada.',
+        'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+            'Solo si has jugado desde la última copia. Se conservan las últimas {} copias automáticas; las tuyas, siempre.',
         'Only with your own copy of the game':
             'Solo con tu propia copia del juego',
         'Open Windows Security':
@@ -3247,8 +3683,14 @@ WORLD = {
             'Ábrela, pulsa Ctrl + A y luego Ctrl + C.',
         'Open the Discord':
             'Abrir el Discord',
+        'Open the backups':
+            'Abrir las copias',
         'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the destination.':
             'Abre la carpeta del juego base (la que tiene dvdroot_ps4), pulsa Ctrl + V y elige «Reemplazar los archivos en el destino».',
+        'Open the controller test':
+            'Abrir la prueba del mando',
+        'Open the controller test and press the buttons.':
+            'Abre la prueba del mando y pulsa los botones.',
         'Open the folder':
             'Abrir la carpeta',
         'Open the game folder':
@@ -3311,12 +3753,18 @@ WORLD = {
             'Preparando ({}). El juego se abre en pantalla completa; no toques el PC hasta que termine.',
         'Press Win + R, type sysdm.cpl, press Enter.':
             'Pulsa Win + R, escribe sysdm.cpl y pulsa Intro.',
+        'Press the buttons: what lights up here reaches the game.':
+            'Pulsa los botones: lo que se ilumina aquí llega al juego.',
         'Press…':
             'Pulsa…',
         'Problems and their fixes':
             'Problemas y sus soluciones',
         'Processor':
             'Procesador',
+        'Put this backup back?':
+            '¿Restaurar esta copia?',
+        'Put {} back to this state?':
+            '¿Devolver a {} a este estado?',
         'Quiet (goal)':
             'Silencioso',
         'Quit to Desktop in the title menu and in the System menu':
@@ -3341,6 +3789,8 @@ WORLD = {
             'Grabar la ruta…',
         'Recorded: every test of this scenario now replays your route.':
             'Grabada: cada prueba de este escenario reproduce ahora tu ruta.',
+        'Rename':
+            'Renombrar',
         'Rename the folder {} to {}: the game looks for that exact name.':
             'Cambia el nombre de la carpeta {} a {}: el juego busca exactamente ese nombre.',
         'Repeat the setup':
@@ -3353,6 +3803,8 @@ WORLD = {
             'Reservadas: Insert/Esc (el menú del port), F9 (grabación de rutas) y las teclas que activan la vista con ratón o recargan input.ini (F7/F8 por defecto).',
         'Restart the PC after installing it.':
             'Reinicia el PC después de instalarlo.',
+        'Restore':
+            'Restaurar',
         'Right half of the touchpad (debug menu)':
             'Mitad derecha del touchpad (menú de depuración)',
         'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.':
@@ -3367,6 +3819,8 @@ WORLD = {
             'Recorrido: Antigua Yharnam',
         'Runs the same two-minute route through this area and back every time, from the save of the mod “All Boss Save Files Ready to Fight” (Nexus Mods). The hunter cannot die and enemies leave him alone: for frame rate, loading and stutter while moving, and for comparing settings.':
             'Recorre cada vez la misma ruta de dos minutos por esta zona, ida y vuelta, desde la partida del mod «All Boss Save Files Ready to Fight» (Nexus Mods). El cazador no puede morir y los enemigos lo dejan en paz: para la tasa de fotogramas, la carga y los tirones en movimiento, y para comparar ajustes.',
+        "SDL3.dll is missing in the port's bin folder.":
+            'Falta SDL3.dll en la carpeta bin del port.',
         'SSD':
             'SSD',
         'Same as the monitor':
@@ -3379,14 +3833,20 @@ WORLD = {
             'Guardar un informe',
         'Save as zip':
             'Guardar como ZIP',
+        'Saved by hand':
+            'Guardada a mano',
         'Saved: {}':
             'Guardado: {}',
         'Saves':
             'Partidas',
         'Saves & online':
             'Partidas y en línea',
+        'Saves backed up: {}':
+            'Partidas copiadas: {}',
         "Saves imported. Your characters are in the game's Load Game menu.":
             'Partidas importadas. Tus personajes están en el menú «Cargar partida» del juego.',
+        'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+            'Página Partidas, Copias de seguridad: restaura la copia más reciente de antes del problema («Antes de jugar» con la fecha de tu última sesión buena).',
         'Scenario':
             'Escenario',
         'Screen':
@@ -3421,8 +3881,16 @@ WORLD = {
             'Ajustes: {} difieren de la recomendación para tu PC',
         'Setup':
             'Configuración',
+        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+            'Shaders, registros y archivos temporales de este PC. Vacío: en la carpeta de partidas, o en este PC si la carpeta de partidas está en una carpeta en la nube (OneDrive, Dropbox, Google Drive), para que cada PC conserve sus propios shaders.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Sombras de luces dinámicas: activadas a partir de «Por encima del mínimo».',
+        'Show all ({})':
+            'Mostrar todas ({})',
+        'Show fewer':
+            'Mostrar menos',
+        'Show in folder':
+            'Mostrar en la carpeta',
         'Show me on the live map':
             'Mostrarme en el mapa en directo',
         'Show the fix?':
@@ -3451,6 +3919,8 @@ WORLD = {
             'Omitir: lo configuro todo yo',
         'Slightly translucent window':
             'Ventana ligeramente translúcida',
+        'Slot {}':
+            'Ranura {}',
         'Smooth (goal)':
             'Fluido',
         'Stability run':
@@ -3465,6 +3935,8 @@ WORLD = {
             'Menú Inicio > Seguridad de Windows > Protección antivirus y contra amenazas > Administrar la configuración.',
         'Start the test':
             'Iniciar la prueba',
+        "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+            'Iniciado desde Steam: en las propiedades del juego en Steam, prueba con Steam Input activado o desactivado.',
         'Starting the sign-in…':
             'Preparando el inicio de sesión…',
         'Starts in front of this boss with the save from the mod “All Boss Save Files Ready to Fight” (Nexus Mods), walks in and keeps the boss busy for two minutes: dodging, strafing, now and then an attack. The hunter cannot die; the boss fights as usual. For stability and a worst case, not for exact comparisons.':
@@ -3525,6 +3997,12 @@ WORLD = {
             "The Hunter's Dream (con jugadores de bbhost)",
         "The Hunter's Dream account":
             "Cuenta de The Hunter's Dream",
+        "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+            "The Hunter's Dream: cooperativo junto con jugadores de bbhost, tras un inicio de sesión gratuito con Discord. shadNet: un servidor shadNet de tu elección y su cuenta.",
+        "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+            "The Hunter's Dream: {} cazadores en línea ahora mismo ({} bbhost · {} shadNet)",
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+            'El menú Cargar partida está vacío, falta un personaje o el juego dice que la partida está dañada. Antes de cada inicio el lanzador hace una copia de tus partidas, así que puedes volver a como estaban.',
         'The Old Hunters found ({}).':
             'The Old Hunters encontrado ({}).',
         'The Old Hunters found in the saves folder (addcont).':
@@ -3533,12 +4011,20 @@ WORLD = {
             'The Old Hunters: no encontrado. Solo hace falta si lo tienes; sin él, sus zonas siguen cerradas.',
         'The account you made at supermedo.com.':
             'La cuenta que creaste en supermedo.com.',
+        'The automatic backup of the saves failed: {}':
+            'Falló la copia automática de las partidas: {}',
+        'The character came from another version and there is no backup yet: import it again under "From other versions".':
+            'El personaje vino de otra versión y aún no hay copia: vuelve a importarlo en «De otras versiones».',
         'The check stopped: {}':
             'La comprobación se detuvo: {}',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
             'Los parches de la comunidad (60 FPS y más, las opciones de efectos) solo existen para la 1.09; las demás versiones van a 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "La conexión con The Hunter's Dream es el port de Awaken del código de red de bbhost; bbhost y The Hunter's Dream son obra de droogie.",
+        'The controller does nothing':
+            'El mando no hace nada',
+        'The controller test cannot start: {}':
+            'La prueba del mando no puede iniciarse: {}',
         'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
             'La vista experta está activada para mostrar esto. El interruptor está abajo en la barra lateral.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
@@ -3555,8 +4041,12 @@ WORLD = {
             'El juego no es la versión 1.09',
         'The game is open: load the save, press F9, run the route and back, press F9 again, quit the game.':
             'El juego está abierto: carga la partida, pulsa F9, recorre la ruta ida y vuelta, pulsa F9 otra vez y sal del juego.',
+        'The game is running: the test waits until it is closed.':
+            'El juego está en marcha: la prueba espera a que se cierre.',
         'The game needs Vulkan 1.3 and a current driver; an old or crashed driver ends the game with "device lost".':
             'El juego necesita Vulkan 1.3 y un controlador actual; un controlador antiguo o que ha fallado cierra el juego con «device lost».',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+            'El juego lee los mandos igual que la prueba del mando en la página Controles: lo que se ilumina allí llega al juego.',
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest memory").':
             'El juego reserva unos 6 GB al iniciarse (10 GB a 1440p y 4K) en un solo bloque, entre la RAM y el archivo de paginación. Si Windows se niega, el juego se cierra al instante con el código 3 (el registro dice «cannot create … MiB of guest memory»).',
         'The game shows the buttons of whatever you use; the keys can be changed on the Controls page.':
@@ -3621,6 +4111,8 @@ WORLD = {
             'No hay eboot.bin en esta carpeta. Elige la carpeta que tiene eboot.bin directamente dentro, no la que está por encima.',
         'There is no save of this port, shadPS4 or bbhost in that folder (SPRJ0005 with userdata0000 …).':
             'No hay ninguna partida de este port, de shadPS4 ni de bbhost en esa carpeta (SPRJ0005 con userdata0000 …).',
+        'There is no save to back up yet.':
+            'Aún no hay ninguna partida que copiar.',
         "These are a PS4's own encrypted backups (sdimg_…); they cannot be used. Export the save with Apollo Save Tool on the PS4 instead.":
             'Son copias de seguridad cifradas propias de una PS4 (sdimg_…); no se pueden usar. En su lugar, exporta la partida con Apollo Save Tool en la PS4.',
         'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':
@@ -3631,6 +4123,10 @@ WORLD = {
             'Este PC no puede ejecutar el port.',
         'This PC does not meet the requirements. You can still go on, but the game will probably not run.':
             'Este PC no cumple los requisitos. Puedes continuar de todos modos, pero lo más probable es que el juego no funcione.',
+        'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+            'Este personaje no se puede restaurar por separado ({}). Restaura la copia completa en Copias de seguridad.',
+        'This file is no Bloodborne save backup: {}':
+            'Este archivo no es una copia de partidas de Bloodborne: {}',
         'This is not a test scenario: {}':
             'Esto no es un escenario de prueba: {}',
         'This is the add-on itself: choose the folder that contains {}.':
@@ -3715,6 +4211,8 @@ WORLD = {
             'WASD, Espacio para esquivar, clic izquierdo / Mayús + clic izquierdo para atacar, clic derecho / Mayús + clic derecho (o Ctrl) para la mano secundaria, E interactuar, R objeto, F vial, Q fijar objetivo, Tab o Esc menú, y la cámara de ratón 1:1. Reemplaza las asignaciones de teclado y ratón; el mando conserva las suyas.',
         'Walk (hold)':
             'Caminar (mantener)',
+        'Weapons':
+            'Armas',
         'Welcome':
             'Bienvenida',
         'Welcome, good hunter':
@@ -3763,12 +4261,20 @@ WORLD = {
             'La recomendación para tu PC',
         'Your PC: {} · {}':
             'Tu PC: {} · {}',
+        'Your characters':
+            'Tus personajes',
         'Your characters and online play':
             'Tus personajes y el juego en línea',
         'Your characters from other versions':
             'Tus personajes de otras versiones',
+        'Your characters, their backups and the trophies. Empty: {}.':
+            'Tus personajes, sus copias de seguridad y los trofeos. Vacío: {}.',
         'Your characters: bring them from another version, back them up, put a backup back.':
             'Tus personajes: tráelos de otra versión, haz copias de seguridad y restaura una copia.',
+        'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+            'Tus partidas actuales ({}) se copian antes («{}»), así que no se pierde nada.',
+        'Your current saves are backed up first: trying an older backup loses nothing.':
+            'Tus partidas actuales se copian antes: probar una copia más antigua no hace perder nada.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Tu pantalla: {} × {}. Recomendado para tu PC: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
@@ -3801,6 +4307,8 @@ WORLD = {
             'Tus partidas anteriores: {}',
         'Your processor sets the limit.':
             'El límite lo pone tu procesador.',
+        'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+            'Tu carpeta de partidas está en una carpeta en la nube: las partidas van contigo y los shaders se quedan en este PC. Juega en un solo PC a la vez y deja que termine de sincronizar antes de empezar en otro; en OneDrive, configura la carpeta como «Mantener siempre en este dispositivo».',
         'Your setup':
             'Tu configuración',
         'above':
@@ -3895,6 +4403,10 @@ WORLD = {
             'problema',
         'round {}, {} min left':
             'ronda {}, quedan {} min',
+        'same as now':
+            'igual que ahora',
+        'saved {}':
+            'guardado {}',
         'sce_module, sce_sys and dvdroot_ps4 are there.':
             'sce_module, sce_sys y dvdroot_ps4 están presentes.',
         'shadNet server':
@@ -3937,12 +4449,16 @@ WORLD = {
             'Generación de fotogramas {}: más FPS, algo más de latencia de entrada',
         '{} is available on your card for even higher frame rates.':
             '{} está disponible en tu tarjeta para lograr aún más FPS.',
+        '{} is back at this state.':
+            '{} ha vuelto a este estado.',
         '{} is reserved (menu, recording, or a hotkey) and cannot be bound to a game action.':
             'La tecla {} está reservada (menú, grabación o atajo) y no se puede asignar a una acción del juego.',
         '{} minutes':
             '{} minutos',
         '{} of {} trophies earned':
             '{} de {} trofeos obtenidos',
+        '{} online':
+            '{} en línea',
         '{} runs':
             '{} pasadas',
         '{} settings differ from the recommendation.':
@@ -4012,6 +4528,10 @@ WORLD = {
             '90 FPS',
         'A PS4 (exported save)':
             'Um PS4 (save exportado)',
+        'A character is gone or the save is broken':
+            'Um personagem sumiu ou o save está corrompido',
+        'A character without a readable name':
+            'Um personagem sem nome legível',
         'A constant added on top of sensitivity; raises the floor for slow movements without affecting fast ones as much.':
             'Um valor constante somado à sensibilidade; acelera os movimentos lentos sem afetar tanto os rápidos.',
         'A controller (PlayStation, Xbox, Switch)':
@@ -4030,6 +4550,10 @@ WORLD = {
             'Um vislumbre do que há por trás do launcher: barra de título desfocada (Windows 11) e a janela a 98,5 %. Desligado: totalmente opaca, mais fácil de ler.',
         'A key, the mouse or a controller used during the test ends it.':
             'Usar uma tecla, o mouse ou um controle durante o teste o encerra.',
+        'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+            'Um nome para este backup. Enter salva, Esc deixa como estava.',
+        'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+            'Um servidor shadNet em vez disso, e todas as opções: a página Jogar online. Offline não precisa de nada: desmarque.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
             '60 FPS estáveis com a melhor imagem que a sua placa de vídeo comporta.',
         'A stick direction can only be bound to a key, not a mouse button.':
@@ -4052,6 +4576,8 @@ WORLD = {
             'Acima do mínimo',
         'Achievements':
             'Conquistas',
+        'Add a backup file…':
+            'Adicionar um arquivo de backup…',
         'Add a test…':
             'Adicionar um teste…',
         'Added. Choose it under Scenario (the list is updated when the launcher starts next).':
@@ -4100,10 +4626,22 @@ WORLD = {
             'Despertar',
         'Back':
             'Voltar',
+        'Back up automatically before every start':
+            'Fazer backup automático antes de cada início',
+        'Back up now':
+            'Fazer backup agora',
+        "Backup put back. Your characters are in the game's Load Game menu.":
+            'Backup restaurado. Os seus personagens estão em Carregar jogo, no menu do jogo.',
         'Backups':
             'Backups',
         'Balanced (goal)':
             'Equilibrado',
+        'Before a restore':
+            'Antes de restaurar',
+        'Before an import':
+            'Antes de uma importação',
+        'Before playing':
+            'Antes de jogar',
         'Below minimum':
             'Abaixo do mínimo',
         'Best for your goal: {} with {:.0f} FPS.':
@@ -4118,6 +4656,8 @@ WORLD = {
             'Luta contra chefe (seu save diante de um chefe)',
         'Boss: Cleric Beast':
             'Chefe: Cleric Beast',
+        'Bosses':
+            'Chefes',
         'Bring your saves along, and play with others.':
             'Traga os seus saves e jogue com outros.',
         'Bronze':
@@ -4132,6 +4672,10 @@ WORLD = {
             'CPUs sem AVX (muitos modelos Pentium/Celeron) não conseguem rodá-lo de jeito nenhum.',
         'CUSA03173: the Game of the Year Edition, with The Old Hunters.':
             'CUSA03173: a Game of the Year Edition, com The Old Hunters.',
+        'Cache folder':
+            'Pasta de cache',
+        'Caches now: {}':
+            'Caches agora: {}',
         'Camera':
             'Câmera',
         'Camera (right stick)':
@@ -4172,6 +4716,8 @@ WORLD = {
             'Verificando os arquivos do jogo…',
         'Checking your PC…':
             'Verificando o seu PC…',
+        'Choose a backup (zip)':
+            'Escolha um backup (zip)',
         'Choose a folder…':
             'Escolher uma pasta…',
         'Choose at least two values to compare.':
@@ -4180,6 +4726,8 @@ WORLD = {
             'Escolha como você quer que o jogo rode; as configurações para isso vêm do seu hardware.',
         'Choose the base game folder in Game & language. Its dvdroot_ps4 has about 29 GB in about 28,800 files.':
             'Escolha a pasta do jogo base em Jogo e idioma. O dvdroot_ps4 dela tem cerca de 29 GB em cerca de 28.800 arquivos.',
+        'Choose the cache folder':
+            'Escolha a pasta de cache',
         'Choose the folder with the saves':
             'Escolha a pasta com os saves',
         'Choose the game folder':
@@ -4206,6 +4754,8 @@ WORLD = {
             'Feche o jogo primeiro.',
         'Close the game first; it writes its saves while it runs.':
             'Feche o jogo primeiro; ele grava os saves enquanto está rodando.',
+        'Close the game.':
+            'Feche o jogo.',
         'Close your browser and other programs while playing.':
             'Feche o navegador e outros programas enquanto joga.',
         'Co-op pool':
@@ -4220,6 +4770,8 @@ WORLD = {
             'Se você vem de outra versão, seus personagens serão encontrados na etapa IV.',
         'Compare one setting: pictures and frame rate':
             'Comparar uma configuração: imagens e taxa de quadros',
+        'Controller test':
+            'Teste de controle',
         'Controls':
             'Controles',
         'Copied: paste it into your message on Discord or in the forum.':
@@ -4234,10 +4786,24 @@ WORLD = {
             'Copie tudo da pasta da atualização para a pasta do jogo base e escolha "Substituir os arquivos no destino".',
         'Copy everything from the update folder into the base game folder and replace the files.':
             'Copie tudo da pasta da atualização para a pasta do jogo base e substitua os arquivos.',
+        'Copy the backup to…':
+            'Copiar o backup para…',
+        'Copy to…':
+            'Copiar para…',
+        'Could not back up the saves: {}':
+            'Não foi possível fazer backup dos saves: {}',
+        'Could not copy the backup: {}':
+            'Não foi possível copiar o backup: {}',
         'Could not import the saves: {}':
             'Não foi possível importar os saves: {}',
         'Could not load the list of versions: {}':
             'Não foi possível carregar a lista de versões: {}',
+        'Could not move the backup to the Recycle Bin.':
+            'Não foi possível mover o backup para a Lixeira.',
+        'Could not put the backup back: {}':
+            'Não foi possível restaurar o backup: {}',
+        'Could not rename the backup: {}':
+            'Não foi possível renomear o backup: {}',
         'Could not save it: {}':
             'Não foi possível salvar: {}',
         'Ctrl+F':
@@ -4250,8 +4816,14 @@ WORLD = {
             'O DLSS precisa de uma GeForce RTX série 20 ou mais nova. O DLSS Frame Generation precisa de RTX 40 (2×) ou RTX 50 (até 4×). A geração de quadros do FSR 3.1 funciona em qualquer placa e funciona melhor a partir de cerca de 60 FPS base.',
         'Dark Souls III layout':
             'Layout do Dark Souls III',
+        'Deaths':
+            'Mortes',
         'Debug':
             'Depuração',
+        'Delete':
+            'Excluir',
+        'Delete this backup? It goes to the Recycle Bin.':
+            'Excluir este backup? Ele vai para a Lixeira.',
         'Derived from the requirements and the hardware check on bbport.de for your PC at {} ({}). Chromatic aberration, depth of field, motion blur and sharpening are taste and stay as you set them.':
             'Derivado dos requisitos e da verificação de hardware do bbport.de para o seu PC em {} ({}). Aberração cromática, profundidade de campo, desfoque de movimento e nitidez são questão de gosto e ficam como você definiu.',
         'Detected automatically':
@@ -4268,6 +4840,8 @@ WORLD = {
             'Página de download',
         'Download the FSR 4 files now (about 30 MB)':
             'Baixar os arquivos do FSR 4 agora (cerca de 30 MB)',
+        'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+            'Arraste um mod pela alça para mudar a ordem. Quem está mais abaixo carrega depois e vence os conflitos.',
         'Driver notes':
             'Notas sobre drivers',
         'Duration':
@@ -4276,6 +4850,10 @@ WORLD = {
             'ESPECIALISTA',
         'Each':
             'Cada valor',
+        'Earlier backup':
+            'Backup anterior',
+        'Earlier states in your backups ({})':
+            'Estados anteriores nos seus backups ({})',
         'Earlier tests':
             'Testes anteriores',
         'Earned':
@@ -4288,6 +4866,8 @@ WORLD = {
             'Ativar a câmera pelo mouse',
         'Enough for 4K (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 class).':
             'Suficiente para 4K (classe RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070).',
+        'Every character in this backup goes back to this state.':
+            'Todos os personagens deste backup voltam a este estado.',
         'Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.':
             'Todas as configurações de gráficos e de taxa de quadros. Salvas no bbport.ini; o menu dentro do jogo (Insert ou L3+R3) altera os mesmos valores.',
         'Every graphics setting one by one:':
@@ -4338,10 +4918,16 @@ WORLD = {
             'Geração de quadros',
         "Frames made between two of the game's: 60 FPS on screen becomes 120. Needs a display with that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce RTX 40 or newer, otherwise FSR 3.1 is used.":
             'Quadros criados entre dois quadros do jogo: 60 FPS na tela viram 120. Precisa de uma tela com essa taxa de atualização (120 Hz ou mais a 60 FPS); a geração pausa quando a tela não consegue mostrar os quadros extras. Adiciona um pouco de latência de entrada. Menus e vídeos não recebem quadros gerados. O DLSS precisa de uma GeForce RTX 40 ou mais nova; caso contrário, usa-se o FSR 3.1.',
+        'From a file':
+            'De um arquivo',
+        'From other versions':
+            'De outras versões',
         'From your last save: the camera turns once around the hunter and back (24 s). Quick and the same every time; for the frame rate and for comparing settings.':
             'A partir do seu último save: a câmera dá uma volta ao redor do caçador e volta (24 s). Rápido e sempre igual; para medir a taxa de quadros e comparar configurações.',
         'Fullscreen (recommended)':
             'Tela cheia (recomendado)',
+        'Fullscreen, HDR and the taste effects are on Picture & performance.':
+            'Tela cheia, HDR e os efeitos de gosto pessoal ficam em Imagem e desempenho.',
         'Fullscreen, HDR, field of view and the taste effects are on Picture & performance.':
             'Tela cheia, HDR, campo de visão e os efeitos de gosto pessoal ficam em Imagem e desempenho.',
         'GPU':
@@ -4382,6 +4968,8 @@ WORLD = {
             'Limites rígidos',
         'Help':
             'Ajuda',
+        'Hide the earlier states':
+            'Ocultar os estados anteriores',
         'Hide the settings':
             'Ocultar as configurações',
         'Highest model detail: your card has room to spare at this resolution.':
@@ -4410,6 +4998,8 @@ WORLD = {
             'Em janela: o tamanho com que ela abre. Você ainda pode arrastar as bordas; "Como da última vez" abre no tamanho que tinha quando você fechou o jogo pela última vez.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'No jogo, Insert (teclado) ou L3 + R3 (controle) abre o menu do port.',
+        'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+            'No jogo, "{}" carrega o último personagem que você jogou; "{}" na tela de título mostra todos.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
             'Na página que abriu ({0}), entre com o Discord e digite este código:',
         'In the page that opened, sign in with Discord and enter this code:':
@@ -4454,6 +5044,8 @@ WORLD = {
             'O jogo pode até iniciar, mas espere taxas de quadros baixas e problemas.',
         'Items and menus':
             'Itens e menus',
+        'Its level, weapons and bosses cannot be read from this save.':
+            'Não é possível ler o nível, as armas e os chefes deste save.',
         'Jump while dashing (L3)':
             'Pular ao correr (L3)',
         'Keyboard and mouse':
@@ -4562,8 +5154,14 @@ WORLD = {
             'Da próxima vez, o Play Bloodborne.exe inicia o jogo direto com estas configurações.',
         'No add-on in this folder: The Old Hunters is a folder named {} in it.':
             'Nenhum add-on nesta pasta: The Old Hunters é uma pasta chamada {} dentro dela.',
+        'No backups yet.':
+            'Ainda não há backups.',
+        'No characters yet. The game makes them, or bring yours from another version (below).':
+            'Ainda não há personagens. O jogo os cria, ou traga os seus de outra versão (abaixo).',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'Nenhum save completo do Bloodborne em {} ou nas subpastas: é preciso o userdata0010 e pelo menos um personagem (userdata0000 a userdata0009).',
+        'No controller found. Connect it by cable or Bluetooth.':
+            'Nenhum controle encontrado. Conecte-o por cabo ou Bluetooth.',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
             'Nenhum travamento nem congelamento em {:.0f} minutos ({:.0f} FPS em média).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
@@ -4584,6 +5182,8 @@ WORLD = {
             'Nenhum troféu ainda. Eles aparecem aqui assim que o jogo os desbloquear.',
         'No versions found.':
             'Nenhuma versão encontrada.',
+        'None beaten yet':
+            'Nenhum derrotado ainda',
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next starts.':
             'Normal: o port monta o cache de shaders na primeira vez que vê cada efeito. Ele fica guardado para as próximas vezes.',
         "Not in the website's list; it has every instruction the port needs. Counted as the minimum.":
@@ -4610,6 +5210,8 @@ WORLD = {
             'Não suportado: {} GB de memória de vídeo; o port precisa de pelo menos 4 GB.',
         'Nothing found. Try other words, or open Help.':
             'Nada encontrado. Tente outras palavras ou abra a Ajuda.',
+        'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+            'Nada acende: conecte o controle de novo (o cabo é o mais seguro) e feche programas que o assumem, como DS4Windows.',
         'Nothing was recorded (press F9 to start and F9 to stop).':
             'Nada foi gravado (F9 começa e F9 para).',
         'Now':
@@ -4638,8 +5240,14 @@ WORLD = {
             'Jogo online',
         'Only a black screen':
             'Só uma tela preta',
+        'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+            'Só um personagem foi afetado: em Seus personagens, abra os estados anteriores dele e restaure só esse.',
         'Only the update folder was chosen':
             'Só a pasta da atualização foi escolhida',
+        'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+            'Só este personagem muda; seus outros personagens ficam como estão. O estado atual dele é salvo em backup antes ("{}"), então nada se perde.',
+        'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+            'Só se você jogou desde o último backup. Os últimos {} backups automáticos são mantidos; os seus, sempre.',
         'Only with your own copy of the game':
             'Só com a sua própria cópia do jogo',
         'Open Windows Security':
@@ -4648,8 +5256,14 @@ WORLD = {
             'Abra-a, pressione Ctrl + A e depois Ctrl + C.',
         'Open the Discord':
             'Abrir o Discord',
+        'Open the backups':
+            'Abrir os backups',
         'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the destination.':
             'Abra a pasta do jogo base (a que tem dvdroot_ps4), pressione Ctrl + V e escolha Substituir os arquivos no destino.',
+        'Open the controller test':
+            'Abrir o teste de controle',
+        'Open the controller test and press the buttons.':
+            'Abra o teste de controle e aperte os botões.',
         'Open the folder':
             'Abrir a pasta',
         'Open the game folder':
@@ -4712,12 +5326,18 @@ WORLD = {
             'Preparando ({}). O jogo abre em tela cheia; não mexa no PC até terminar.',
         'Press Win + R, type sysdm.cpl, press Enter.':
             'Pressione Win + R, digite sysdm.cpl e pressione Enter.',
+        'Press the buttons: what lights up here reaches the game.':
+            'Aperte os botões: o que acende aqui chega ao jogo.',
         'Press…':
             'Pressione…',
         'Problems and their fixes':
             'Problemas e soluções',
         'Processor':
             'Processador',
+        'Put this backup back?':
+            'Restaurar este backup?',
+        'Put {} back to this state?':
+            'Voltar {} para este estado?',
         'Quiet (goal)':
             'Silencioso',
         'Quit to Desktop in the title menu and in the System menu':
@@ -4742,6 +5362,8 @@ WORLD = {
             'Gravar o trajeto…',
         'Recorded: every test of this scenario now replays your route.':
             'Gravado: cada teste deste cenário agora reproduz o seu trajeto.',
+        'Rename':
+            'Renomear',
         'Rename the folder {} to {}: the game looks for that exact name.':
             'Renomeie a pasta {} para {}: o jogo procura exatamente esse nome.',
         'Repeat the setup':
@@ -4754,6 +5376,8 @@ WORLD = {
             'Reservadas: Insert/Esc (o menu do port), F9 (gravação de rota) e as teclas que alternam a câmera pelo mouse ou recarregam o input.ini (F7/F8 por padrão).',
         'Restart the PC after installing it.':
             'Reinicie o PC depois de instalar.',
+        'Restore':
+            'Restaurar',
         'Right half of the touchpad (debug menu)':
             'Metade direita do touchpad (menu de depuração)',
         'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.':
@@ -4768,6 +5392,8 @@ WORLD = {
             'Percurso: Velha Yharnam',
         'Runs the same two-minute route through this area and back every time, from the save of the mod “All Boss Save Files Ready to Fight” (Nexus Mods). The hunter cannot die and enemies leave him alone: for frame rate, loading and stutter while moving, and for comparing settings.':
             'Percorre sempre o mesmo trajeto de dois minutos por esta área, ida e volta, a partir do save do mod “All Boss Save Files Ready to Fight” (Nexus Mods). O caçador não pode morrer e os inimigos o deixam em paz: para taxa de quadros, carregamento e engasgos em movimento e para comparar configurações.',
+        "SDL3.dll is missing in the port's bin folder.":
+            'Falta o SDL3.dll na pasta bin do port.',
         'SSD':
             'SSD',
         'Same as the monitor':
@@ -4780,14 +5406,20 @@ WORLD = {
             'Salvar um relatório',
         'Save as zip':
             'Salvar como ZIP',
+        'Saved by hand':
+            'Salvo manualmente',
         'Saved: {}':
             'Salvo: {}',
         'Saves':
             'Saves',
         'Saves & online':
             'Saves e online',
+        'Saves backed up: {}':
+            'Backup dos saves feito: {}',
         "Saves imported. Your characters are in the game's Load Game menu.":
             'Saves importados. Os seus personagens estão em Carregar jogo, no menu do jogo.',
+        'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+            'Página Saves, Backups: restaure o backup mais recente de antes do problema ("Antes de jogar" com a data da sua última sessão boa).',
         'Scenario':
             'Cenário',
         'Screen':
@@ -4822,8 +5454,16 @@ WORLD = {
             'Configurações: {} diferem da recomendação para o seu PC',
         'Setup':
             'Configuração inicial',
+        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+            'Shaders, logs e arquivos temporários deste PC. Vazio: na pasta de saves, ou neste PC quando a pasta de saves estiver numa pasta na nuvem (OneDrive, Dropbox, Google Drive), para que cada PC mantenha seus próprios shaders.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Sombras de luzes dinâmicas: ligadas a partir de "Acima do mínimo".',
+        'Show all ({})':
+            'Mostrar todos ({})',
+        'Show fewer':
+            'Mostrar menos',
+        'Show in folder':
+            'Mostrar na pasta',
         'Show me on the live map':
             'Mostrar-me no mapa ao vivo',
         'Show the fix?':
@@ -4852,6 +5492,8 @@ WORLD = {
             'Pular: eu configuro tudo sozinho',
         'Slightly translucent window':
             'Janela levemente translúcida',
+        'Slot {}':
+            'Slot {}',
         'Smooth (goal)':
             'Fluido',
         'Stability run':
@@ -4866,6 +5508,8 @@ WORLD = {
             'Menu Iniciar > Segurança do Windows > Proteção contra vírus e ameaças > Gerenciar configurações.',
         'Start the test':
             'Iniciar o teste',
+        "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+            'Iniciado pela Steam: nas propriedades do jogo na Steam, teste o Steam Input ligado ou desligado.',
         'Starting the sign-in…':
             'Iniciando o login…',
         'Starts in front of this boss with the save from the mod “All Boss Save Files Ready to Fight” (Nexus Mods), walks in and keeps the boss busy for two minutes: dodging, strafing, now and then an attack. The hunter cannot die; the boss fights as usual. For stability and a worst case, not for exact comparisons.':
@@ -4924,6 +5568,12 @@ WORLD = {
             "The Hunter's Dream (com jogadores do bbhost)",
         "The Hunter's Dream account":
             "Conta do The Hunter's Dream",
+        "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+            "The Hunter's Dream: cooperativo junto com jogadores do bbhost, após um login gratuito com o Discord. shadNet: um servidor shadNet à sua escolha e a conta dele.",
+        "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+            "The Hunter's Dream: {} caçadores online agora ({} bbhost · {} shadNet)",
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+            'O menu Carregar jogo está vazio, falta um personagem ou o jogo diz que o save está danificado. Antes de cada início o launcher faz backup dos seus saves, então você pode voltar ao que eram.',
         'The Old Hunters found ({}).':
             'The Old Hunters encontrado ({}).',
         'The Old Hunters found in the saves folder (addcont).':
@@ -4932,12 +5582,20 @@ WORLD = {
             'The Old Hunters: não encontrado. Só é necessário se você o tiver; sem ele, suas áreas continuam fechadas.',
         'The account you made at supermedo.com.':
             'A conta que você criou em supermedo.com.',
+        'The automatic backup of the saves failed: {}':
+            'O backup automático dos saves falhou: {}',
+        'The character came from another version and there is no backup yet: import it again under "From other versions".':
+            'O personagem veio de outra versão e ainda não há backup: importe-o de novo em "De outras versões".',
         'The check stopped: {}':
             'A verificação parou: {}',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
             'Os patches da comunidade (60 FPS e mais, as opções de efeitos) existem só para a 1.09; outras versões rodam a 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "A conexão com o The Hunter's Dream é o port do Awaken do código de rede do bbhost; o bbhost e o The Hunter's Dream são de droogie.",
+        'The controller does nothing':
+            'O controle não faz nada',
+        'The controller test cannot start: {}':
+            'O teste de controle não pode iniciar: {}',
         'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
             'O modo especialista foi ativado para mostrar isto. A chave fica na parte de baixo da barra lateral.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
@@ -4954,8 +5612,12 @@ WORLD = {
             'O jogo não está na versão 1.09',
         'The game is open: load the save, press F9, run the route and back, press F9 again, quit the game.':
             'O jogo está aberto: carregue o save, pressione F9, percorra o trajeto ida e volta, pressione F9 de novo e saia do jogo.',
+        'The game is running: the test waits until it is closed.':
+            'O jogo está rodando: o teste espera até ele fechar.',
         'The game needs Vulkan 1.3 and a current driver; an old or crashed driver ends the game with "device lost".':
             'O jogo precisa de Vulkan 1.3 e de um driver atual; um driver antigo ou que travou encerra o jogo com "device lost".',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+            'O jogo lê os controles do mesmo jeito que o teste de controle na página Controles: o que acende lá chega ao jogo.',
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest memory").':
             'O jogo reserva cerca de 6 GB ao iniciar (10 GB em 1440p e 4K) em um só bloco, da RAM e do arquivo de paginação juntos. Quando o Windows recusa, o jogo fecha na hora com o código 3 (o registro diz "cannot create … MiB of guest memory").',
         'The game shows the buttons of whatever you use; the keys can be changed on the Controls page.':
@@ -5020,6 +5682,8 @@ WORLD = {
             'Não há eboot.bin nesta pasta. Escolha a pasta que tem o eboot.bin diretamente dentro, não a pasta acima dela.',
         'There is no save of this port, shadPS4 or bbhost in that folder (SPRJ0005 with userdata0000 …).':
             'Não há save deste port, do shadPS4 ou do bbhost nessa pasta (SPRJ0005 com userdata0000 …).',
+        'There is no save to back up yet.':
+            'Ainda não há save para fazer backup.',
         "These are a PS4's own encrypted backups (sdimg_…); they cannot be used. Export the save with Apollo Save Tool on the PS4 instead.":
             'Estes são backups criptografados do próprio PS4 (sdimg_…); eles não podem ser usados. Em vez disso, exporte o save com o Apollo Save Tool no PS4.',
         'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':
@@ -5030,6 +5694,10 @@ WORLD = {
             'Este PC não consegue rodar o port.',
         'This PC does not meet the requirements. You can still go on, but the game will probably not run.':
             'Este PC não atende aos requisitos. Você ainda pode continuar, mas o jogo provavelmente não vai rodar.',
+        'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+            'Este personagem não pode ser restaurado sozinho ({}). Restaure o backup inteiro em Backups.',
+        'This file is no Bloodborne save backup: {}':
+            'Este arquivo não é um backup de saves do Bloodborne: {}',
         'This is not a test scenario: {}':
             'Isto não é um cenário de teste: {}',
         'This is the add-on itself: choose the folder that contains {}.':
@@ -5112,6 +5780,8 @@ WORLD = {
             'WASD, Espaço para esquivar, clique esquerdo / Shift + clique esquerdo para atacar, clique direito / Shift + clique direito (ou Ctrl) para a mão secundária, E interagir, R item, F frasco, Q travar alvo, Tab ou Esc menu, e a câmera 1:1 pelo mouse. Substitui o mapeamento de teclado e mouse; o controle mantém o dele.',
         'Walk (hold)':
             'Andar (segurar)',
+        'Weapons':
+            'Armas',
         'Welcome':
             'Boas-vindas',
         'Welcome, good hunter':
@@ -5160,12 +5830,20 @@ WORLD = {
             'A recomendação para o seu PC',
         'Your PC: {} · {}':
             'Seu PC: {} · {}',
+        'Your characters':
+            'Seus personagens',
         'Your characters and online play':
             'Seus personagens e o jogo online',
         'Your characters from other versions':
             'Seus personagens de outras versões',
+        'Your characters, their backups and the trophies. Empty: {}.':
+            'Seus personagens, os backups deles e os troféus. Vazio: {}.',
         'Your characters: bring them from another version, back them up, put a backup back.':
             'Seus personagens: traga-os de outra versão, faça backup deles, restaure um backup.',
+        'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+            'Seus saves atuais ({}) recebem backup antes ("{}"), então nada se perde.',
+        'Your current saves are backed up first: trying an older backup loses nothing.':
+            'Seus saves atuais recebem backup antes: testar um backup mais antigo não perde nada.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Sua tela: {} × {}. Recomendado para o seu PC: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
@@ -5198,6 +5876,8 @@ WORLD = {
             'Seus saves anteriores: {}',
         'Your processor sets the limit.':
             'Seu processador é o limite.',
+        'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+            'Sua pasta de saves está numa pasta na nuvem: os saves vão com você, os shaders ficam neste PC. Jogue em um PC por vez e deixe a sincronização terminar antes de começar em outro; no OneDrive, defina a pasta como "Sempre manter neste dispositivo".',
         'Your setup':
             'Sua configuração',
         'above':
@@ -5292,6 +5972,10 @@ WORLD = {
             'problema',
         'round {}, {} min left':
             'rodada {}, faltam {} min',
+        'same as now':
+            'igual a agora',
+        'saved {}':
+            'salvo {}',
         'sce_module, sce_sys and dvdroot_ps4 are there.':
             'sce_module, sce_sys e dvdroot_ps4 estão lá.',
         'shadNet server':
@@ -5334,12 +6018,16 @@ WORLD = {
             'Geração de quadros {}: taxas de quadros mais altas, um pouco mais de latência de entrada',
         '{} is available on your card for even higher frame rates.':
             '{} está disponível na sua placa para taxas de quadros ainda mais altas.',
+        '{} is back at this state.':
+            '{} voltou a este estado.',
         '{} is reserved (menu, recording, or a hotkey) and cannot be bound to a game action.':
             '{} está reservada (menu, gravação ou atalho) e não pode ser atribuída a uma ação do jogo.',
         '{} minutes':
             '{} minutos',
         '{} of {} trophies earned':
             '{} de {} troféus obtidos',
+        '{} online':
+            '{} online',
         '{} runs':
             '{} execuções',
         '{} settings differ from the recommendation.':
@@ -5409,6 +6097,10 @@ WORLD = {
             '90 FPS',
         'A PS4 (exported save)':
             'Une PS4 (sauvegarde exportée)',
+        'A character is gone or the save is broken':
+            'Un personnage a disparu ou la sauvegarde est abîmée',
+        'A character without a readable name':
+            'Un personnage sans nom lisible',
         'A constant added on top of sensitivity; raises the floor for slow movements without affecting fast ones as much.':
             'Une constante ajoutée à la sensibilité ; relève le plancher des mouvements lents sans trop modifier les mouvements rapides.',
         'A controller (PlayStation, Xbox, Switch)':
@@ -5427,6 +6119,10 @@ WORLD = {
             'Un aperçu de ce qui se trouve derrière le lanceur : une barre de titre floutée (Windows 11) et la fenêtre à 98,5 %. Désactivé : entièrement opaque, le plus lisible.',
         'A key, the mouse or a controller used during the test ends it.':
             'Une touche, la souris ou une manette utilisée pendant le test l’arrête.',
+        'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+            "Un nom pour cette copie. Entrée l'enregistre, Échap laisse tout comme avant.",
+        'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+            'Un serveur shadNet à la place, et toutes les options : la page Jeu en ligne. Hors ligne, rien à faire : décochez.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
             '60 FPS stables avec la meilleure image que votre carte graphique peut offrir.',
         'A stick direction can only be bound to a key, not a mouse button.':
@@ -5449,6 +6145,8 @@ WORLD = {
             'Au-dessus du minimum',
         'Achievements':
             'Succès',
+        'Add a backup file…':
+            'Ajouter un fichier de copie…',
         'Add a test…':
             'Ajouter un test…',
         'Added. Choose it under Scenario (the list is updated when the launcher starts next).':
@@ -5499,10 +6197,22 @@ WORLD = {
             'Éveil',
         'Back':
             'Retour',
+        'Back up automatically before every start':
+            'Faire une copie automatique avant chaque lancement',
+        'Back up now':
+            'Copier maintenant',
+        "Backup put back. Your characters are in the game's Load Game menu.":
+            'Copie restaurée. Vos personnages sont dans le menu « Charger une partie » du jeu.',
         'Backups':
             'Copies de sauvegarde',
         'Balanced (goal)':
             'Équilibré',
+        'Before a restore':
+            'Avant une restauration',
+        'Before an import':
+            'Avant une importation',
+        'Before playing':
+            'Avant de jouer',
         'Below minimum':
             'En dessous du minimum',
         'Best for your goal: {} with {:.0f} FPS.':
@@ -5517,6 +6227,8 @@ WORLD = {
             'Combat de boss (votre sauvegarde devant un boss)',
         'Boss: Cleric Beast':
             'Boss : Cleric Beast',
+        'Bosses':
+            'Boss',
         'Bring your saves along, and play with others.':
             'Importez vos sauvegardes et jouez avec d’autres.',
         'Bronze':
@@ -5531,6 +6243,10 @@ WORLD = {
             'Les processeurs sans AVX (beaucoup de modèles Pentium/Celeron) ne peuvent pas du tout le faire tourner.',
         'CUSA03173: the Game of the Year Edition, with The Old Hunters.':
             'CUSA03173 : la Game of the Year Edition, avec The Old Hunters.',
+        'Cache folder':
+            'Dossier du cache',
+        'Caches now: {}':
+            'Caches actuellement : {}',
         'Camera':
             'Caméra',
         'Camera (right stick)':
@@ -5571,6 +6287,8 @@ WORLD = {
             'Vérification des fichiers du jeu…',
         'Checking your PC…':
             'Vérification de votre PC…',
+        'Choose a backup (zip)':
+            'Choisissez une copie de sauvegarde (zip)',
         'Choose a folder…':
             'Choisir un dossier…',
         'Choose at least two values to compare.':
@@ -5579,6 +6297,8 @@ WORLD = {
             'Choisissez la sensation de jeu ; les réglages correspondants dépendent de votre matériel.',
         'Choose the base game folder in Game & language. Its dvdroot_ps4 has about 29 GB in about 28,800 files.':
             'Choisissez le dossier du jeu de base dans Jeu et langue. Son dvdroot_ps4 fait environ 29 Go répartis en environ 28 800 fichiers.',
+        'Choose the cache folder':
+            'Choisissez le dossier du cache',
         'Choose the folder with the saves':
             'Choisir le dossier contenant les sauvegardes',
         'Choose the game folder':
@@ -5605,6 +6325,8 @@ WORLD = {
             'Fermez d’abord le jeu.',
         'Close the game first; it writes its saves while it runs.':
             'Fermez d’abord le jeu ; il écrit ses sauvegardes tant qu’il tourne.',
+        'Close the game.':
+            'Fermez le jeu.',
         'Close your browser and other programs while playing.':
             'Fermez votre navigateur et les autres programmes pendant que vous jouez.',
         'Co-op pool':
@@ -5619,6 +6341,8 @@ WORLD = {
             'Si vous venez d’une autre version, vos personnages sont retrouvés à l’étape IV.',
         'Compare one setting: pictures and frame rate':
             'Comparer un réglage : images et fréquence d’images',
+        'Controller test':
+            'Test de manette',
         'Controls':
             'Commandes',
         'Copied: paste it into your message on Discord or in the forum.':
@@ -5633,10 +6357,24 @@ WORLD = {
             'Copiez tout le contenu du dossier de la mise à jour dans le dossier du jeu de base et choisissez « Remplacer les fichiers dans la destination ».',
         'Copy everything from the update folder into the base game folder and replace the files.':
             'Copiez tout le contenu du dossier de la mise à jour dans le dossier du jeu de base et remplacez les fichiers.',
+        'Copy the backup to…':
+            'Copier la copie de sauvegarde vers…',
+        'Copy to…':
+            'Copier vers…',
+        'Could not back up the saves: {}':
+            'Impossible de copier les sauvegardes : {}',
+        'Could not copy the backup: {}':
+            'Impossible de copier la copie : {}',
         'Could not import the saves: {}':
             'Impossible d’importer les sauvegardes : {}',
         'Could not load the list of versions: {}':
             'Impossible de charger la liste des versions : {}',
+        'Could not move the backup to the Recycle Bin.':
+            'Impossible de mettre la copie dans la Corbeille.',
+        'Could not put the backup back: {}':
+            'Impossible de restaurer la copie : {}',
+        'Could not rename the backup: {}':
+            'Impossible de renommer la copie : {}',
         'Could not save it: {}':
             'Impossible de l’enregistrer : {}',
         'Ctrl+F':
@@ -5649,8 +6387,14 @@ WORLD = {
             'DLSS nécessite une GeForce RTX série 20 ou plus récente. DLSS Frame Generation nécessite une RTX 40 (2×) ou une RTX 50 (jusqu’à 4×). La génération d’images FSR 3.1 fonctionne sur toutes les cartes, idéalement à partir d’environ 60 FPS de base.',
         'Dark Souls III layout':
             'Disposition Dark Souls III',
+        'Deaths':
+            'Morts',
         'Debug':
             'Débogage',
+        'Delete':
+            'Supprimer',
+        'Delete this backup? It goes to the Recycle Bin.':
+            'Supprimer cette copie ? Elle va dans la Corbeille.',
         'Derived from the requirements and the hardware check on bbport.de for your PC at {} ({}). Chromatic aberration, depth of field, motion blur and sharpening are taste and stay as you set them.':
             'Déduit de la configuration requise et de la vérification du matériel de bbport.de pour votre PC en {} ({}). L’aberration chromatique, la profondeur de champ, le flou de mouvement et la netteté sont une affaire de goût et restent tels que vous les avez réglés.',
         'Detected automatically':
@@ -5667,6 +6411,8 @@ WORLD = {
             'Téléchargement',
         'Download the FSR 4 files now (about 30 MB)':
             'Télécharger les fichiers FSR 4 maintenant (environ 30 Mo)',
+        'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+            'Faites glisser un mod par sa poignée pour changer l’ordre. Plus bas dans la liste, il se charge plus tard et l’emporte en cas de conflit.',
         'Driver notes':
             'Notes sur les pilotes',
         'Duration':
@@ -5675,6 +6421,10 @@ WORLD = {
             'EXPERT',
         'Each':
             'Chaque valeur',
+        'Earlier backup':
+            'Copie antérieure',
+        'Earlier states in your backups ({})':
+            'États précédents dans vos copies de sauvegarde ({})',
         'Earlier tests':
             'Tests précédents',
         'Earned':
@@ -5687,6 +6437,8 @@ WORLD = {
             'Activer la caméra à la souris',
         'Enough for 4K (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 class).':
             'Suffisant pour la 4K (classe RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070).',
+        'Every character in this backup goes back to this state.':
+            'Tous les personnages de cette copie reviennent à cet état.',
         'Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.':
             'Tous les réglages de graphismes et de fréquence d’images. Enregistrés dans bbport.ini ; le menu en jeu (Inser ou L3+R3) modifie les mêmes valeurs.',
         'Every graphics setting one by one:':
@@ -5737,10 +6489,16 @@ WORLD = {
             'Génération d’images',
         "Frames made between two of the game's: 60 FPS on screen becomes 120. Needs a display with that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce RTX 40 or newer, otherwise FSR 3.1 is used.":
             'Des images créées entre deux images du jeu : 60 FPS à l’écran deviennent 120. Nécessite un écran ayant cette fréquence de rafraîchissement (120 Hz ou plus à 60 FPS) ; elle se met en pause quand l’écran ne peut pas afficher les images supplémentaires. Ajoute un peu de latence d’entrée. Les menus et les vidéos ne sont pas générés. DLSS nécessite une GeForce RTX 40 ou plus récente, sinon FSR 3.1 est utilisé.',
+        'From a file':
+            "D'un fichier",
+        'From other versions':
+            "D'autres versions",
         'From your last save: the camera turns once around the hunter and back (24 s). Quick and the same every time; for the frame rate and for comparing settings.':
             'Depuis votre dernière sauvegarde : la caméra fait un tour complet autour du chasseur puis revient (24 s). Rapide et identique à chaque fois ; pour la fréquence d’images et pour comparer des réglages.',
         'Fullscreen (recommended)':
             'Plein écran (recommandé)',
+        'Fullscreen, HDR and the taste effects are on Picture & performance.':
+            'Le plein écran, le HDR et les effets selon vos goûts se trouvent dans Image et performances.',
         'Fullscreen, HDR, field of view and the taste effects are on Picture & performance.':
             'Le plein écran, le HDR, le champ de vision et les effets selon vos goûts se trouvent dans Image et performances.',
         'GPU':
@@ -5781,6 +6539,8 @@ WORLD = {
             'Limites strictes',
         'Help':
             'Aide',
+        'Hide the earlier states':
+            'Masquer les états précédents',
         'Hide the settings':
             'Masquer les réglages',
         'Highest model detail: your card has room to spare at this resolution.':
@@ -5809,6 +6569,8 @@ WORLD = {
             "En fenêtre : la taille à l'ouverture. Vous pouvez toujours en tirer les bords ; « Comme la dernière fois » l'ouvre à la taille qu'elle avait quand vous avez fermé le jeu.",
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'En jeu, Inser (clavier) ou L3 + R3 (manette) ouvre le menu du portage.',
+        'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+            'Dans le jeu, « {} » charge le dernier personnage joué ; « {} » sur l’écran titre les affiche tous.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
             'Sur la page qui s’est ouverte ({0}), connectez-vous avec Discord et saisissez ce code :',
         'In the page that opened, sign in with Discord and enter this code:':
@@ -5853,6 +6615,8 @@ WORLD = {
             'Le jeu peut démarrer, mais attendez-vous à des fréquences d’images basses et à des problèmes.',
         'Items and menus':
             'Objets et menus',
+        'Its level, weapons and bosses cannot be read from this save.':
+            'Son niveau, ses armes et ses boss ne peuvent pas être lus dans cette sauvegarde.',
         'Jump while dashing (L3)':
             'Sauter en sprintant (L3)',
         'Keyboard and mouse':
@@ -5961,8 +6725,14 @@ WORLD = {
             'La prochaine fois, Play Bloodborne.exe lancera directement le jeu avec ces réglages.',
         'No add-on in this folder: The Old Hunters is a folder named {} in it.':
             "Aucune extension dans ce dossier : The Old Hunters est un dossier nommé {} à l'intérieur.",
+        'No backups yet.':
+            'Pas encore de copie de sauvegarde.',
+        'No characters yet. The game makes them, or bring yours from another version (below).':
+            "Aucun personnage pour l'instant. Le jeu les crée, ou récupérez les vôtres d'une autre version (ci-dessous).",
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'Aucune sauvegarde Bloodborne complète dans {} ou ses sous-dossiers : il faut userdata0010 et au moins un personnage (userdata0000 à userdata0009).',
+        'No controller found. Connect it by cable or Bluetooth.':
+            'Aucune manette trouvée. Branchez-la par câble ou Bluetooth.',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
             'Aucun plantage ni blocage en {:.0f} minutes ({:.0f} FPS en moyenne).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
@@ -5983,6 +6753,8 @@ WORLD = {
             'Pas encore de trophées. Ils apparaissent ici dès que le jeu les débloque.',
         'No versions found.':
             'Aucune version trouvée.',
+        'None beaten yet':
+            'Aucun vaincu pour l’instant',
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next starts.':
             'Normal : le portage construit son cache des shaders la première fois qu’il rencontre chaque effet. Il est conservé pour les lancements suivants.',
         "Not in the website's list; it has every instruction the port needs. Counted as the minimum.":
@@ -6009,6 +6781,8 @@ WORLD = {
             'Non pris en charge : {} Go de mémoire vidéo, le portage nécessite au moins 4 Go.',
         'Nothing found. Try other words, or open Help.':
             'Aucun résultat. Essayez d’autres mots, ou ouvrez l’Aide.',
+        'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+            "Rien ne s'allume : reconnectez la manette (un câble est le plus sûr) et fermez les outils qui la prennent en charge, comme DS4Windows.",
         'Nothing was recorded (press F9 to start and F9 to stop).':
             'Rien n’a été enregistré (F9 pour démarrer, F9 pour arrêter).',
         'Now':
@@ -6037,8 +6811,14 @@ WORLD = {
             'Jeu en ligne',
         'Only a black screen':
             'Seulement un écran noir',
+        'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+            'Un seul personnage est touché : dans Vos personnages, ouvrez ses états précédents et remettez seulement celui-ci.',
         'Only the update folder was chosen':
             'Seul le dossier de la mise à jour a été choisi',
+        'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+            'Seul ce personnage change ; vos autres personnages restent tels quels. Son état actuel est d’abord mis à l’abri (« {} »), rien n’est donc perdu.',
+        'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+            'Seulement si vous avez joué depuis la dernière copie. Les {} dernières copies automatiques sont gardées ; les vôtres, toujours.',
         'Only with your own copy of the game':
             'Uniquement avec votre propre copie du jeu',
         'Open Windows Security':
@@ -6047,8 +6827,14 @@ WORLD = {
             'Ouvrez-le, appuyez sur Ctrl + A, puis sur Ctrl + C.',
         'Open the Discord':
             'Ouvrir le Discord',
+        'Open the backups':
+            'Ouvrir les copies',
         'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the destination.':
             'Ouvrez le dossier du jeu de base (celui avec dvdroot_ps4), appuyez sur Ctrl + V et choisissez Remplacer les fichiers dans la destination.',
+        'Open the controller test':
+            'Ouvrir le test de manette',
+        'Open the controller test and press the buttons.':
+            'Ouvrez le test de manette et appuyez sur les boutons.',
         'Open the folder':
             'Ouvrir le dossier',
         'Open the game folder':
@@ -6111,12 +6897,18 @@ WORLD = {
             'Préparation ({}). Le jeu s’ouvre en plein écran ; ne touchez pas au PC jusqu’à la fin.',
         'Press Win + R, type sysdm.cpl, press Enter.':
             'Appuyez sur Win + R, tapez sysdm.cpl, puis appuyez sur Entrée.',
+        'Press the buttons: what lights up here reaches the game.':
+            "Appuyez sur les boutons : ce qui s'allume ici arrive au jeu.",
         'Press…':
             'Appuyez…',
         'Problems and their fixes':
             'Problèmes et solutions',
         'Processor':
             'Processeur',
+        'Put this backup back?':
+            'Restaurer cette copie ?',
+        'Put {} back to this state?':
+            'Remettre {} dans cet état ?',
         'Quiet (goal)':
             'Silencieux',
         'Quit to Desktop in the title menu and in the System menu':
@@ -6141,6 +6933,8 @@ WORLD = {
             'Enregistrer le trajet…',
         'Recorded: every test of this scenario now replays your route.':
             'Enregistré : chaque test de ce scénario rejoue maintenant votre trajet.',
+        'Rename':
+            'Renommer',
         'Rename the folder {} to {}: the game looks for that exact name.':
             'Renommez le dossier {} en {} : le jeu cherche exactement ce nom.',
         'Repeat the setup':
@@ -6153,6 +6947,8 @@ WORLD = {
             'Réservé : Inser/Échap (le menu du portage), F9 (enregistrement de trajet) et les touches qui activent la caméra à la souris ou rechargent input.ini (F7/F8 par défaut).',
         'Restart the PC after installing it.':
             'Redémarrez le PC après l’installation.',
+        'Restore':
+            'Restaurer',
         'Right half of the touchpad (debug menu)':
             'Moitié droite du touchpad (menu de débogage)',
         'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.':
@@ -6167,6 +6963,8 @@ WORLD = {
             'Parcours : Vieux Yharnam',
         'Runs the same two-minute route through this area and back every time, from the save of the mod “All Boss Save Files Ready to Fight” (Nexus Mods). The hunter cannot die and enemies leave him alone: for frame rate, loading and stutter while moving, and for comparing settings.':
             'Parcourt à chaque fois le même trajet de deux minutes dans cette zone, aller et retour, depuis la sauvegarde du mod « All Boss Save Files Ready to Fight » (Nexus Mods). Le chasseur ne peut pas mourir et les ennemis le laissent tranquille : pour la fréquence d’images, le chargement et les saccades en mouvement, et pour comparer des réglages.',
+        "SDL3.dll is missing in the port's bin folder.":
+            'SDL3.dll manque dans le dossier bin du port.',
         'SSD':
             'SSD',
         'Same as the monitor':
@@ -6179,14 +6977,20 @@ WORLD = {
             'Enregistrer un rapport',
         'Save as zip':
             'Enregistrer en ZIP',
+        'Saved by hand':
+            'Sauvegardé à la main',
         'Saved: {}':
             'Enregistré : {}',
         'Saves':
             'Sauvegardes',
         'Saves & online':
             'Sauvegardes et en ligne',
+        'Saves backed up: {}':
+            'Sauvegardes copiées : {}',
         "Saves imported. Your characters are in the game's Load Game menu.":
             'Sauvegardes importées. Vos personnages se trouvent dans le menu « Charger une partie » du jeu.',
+        'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+            "Page Sauvegardes, Copies de sauvegarde : restaurez la copie la plus récente d'avant le problème (« Avant de jouer » avec la date de votre dernière bonne session).",
         'Scenario':
             'Scénario',
         'Screen':
@@ -6221,8 +7025,16 @@ WORLD = {
             'Réglages : {} diffèrent de la recommandation pour votre PC',
         'Setup':
             'Configuration',
+        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+            'Shaders, journaux et fichiers temporaires de ce PC. Vide : dans le dossier des sauvegardes, ou sur ce PC si le dossier des sauvegardes est dans un dossier cloud (OneDrive, Dropbox, Google Drive), pour que chaque PC garde ses propres shaders.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Ombres des lumières dynamiques : activées à partir de « Au-dessus du minimum ».',
+        'Show all ({})':
+            'Tout afficher ({})',
+        'Show fewer':
+            'Afficher moins',
+        'Show in folder':
+            'Afficher dans le dossier',
         'Show me on the live map':
             'M’afficher sur la carte en direct',
         'Show the fix?':
@@ -6251,6 +7063,8 @@ WORLD = {
             'Passer : je règle tout moi-même',
         'Slightly translucent window':
             'Fenêtre légèrement translucide',
+        'Slot {}':
+            'Emplacement {}',
         'Smooth (goal)':
             'Fluide',
         'Stability run':
@@ -6265,6 +7079,8 @@ WORLD = {
             'Menu Démarrer > Sécurité Windows > Protection contre les virus et menaces > Gérer les paramètres.',
         'Start the test':
             'Lancer le test',
+        "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+            'Lancé depuis Steam : dans les propriétés du jeu sur Steam, essayez Steam Input activé ou désactivé.',
         'Starting the sign-in…':
             'Démarrage de la connexion…',
         'Starts in front of this boss with the save from the mod “All Boss Save Files Ready to Fight” (Nexus Mods), walks in and keeps the boss busy for two minutes: dodging, strafing, now and then an attack. The hunter cannot die; the boss fights as usual. For stability and a worst case, not for exact comparisons.':
@@ -6325,6 +7141,12 @@ WORLD = {
             "The Hunter's Dream (avec les joueurs bbhost)",
         "The Hunter's Dream account":
             "Compte The Hunter's Dream",
+        "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+            "The Hunter's Dream : coopération avec les joueurs bbhost, après une connexion gratuite avec Discord. shadNet : un serveur shadNet de votre choix et son compte.",
+        "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+            "The Hunter's Dream : {} chasseurs en ligne en ce moment ({} bbhost · {} shadNet)",
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+            "Le menu « Charger une partie » est vide, un personnage manque ou le jeu dit que la sauvegarde est endommagée. Avant chaque lancement, le lanceur copie vos sauvegardes : vous pouvez revenir à leur état d'avant.",
         'The Old Hunters found ({}).':
             'The Old Hunters trouvé ({}).',
         'The Old Hunters found in the saves folder (addcont).':
@@ -6333,12 +7155,20 @@ WORLD = {
             'The Old Hunters : introuvable. Nécessaire seulement si vous le possédez ; sans lui, ses zones restent fermées.',
         'The account you made at supermedo.com.':
             'Le compte que vous avez créé sur supermedo.com.',
+        'The automatic backup of the saves failed: {}':
+            'La copie automatique des sauvegardes a échoué : {}',
+        'The character came from another version and there is no backup yet: import it again under "From other versions".':
+            "Le personnage vient d'une autre version et il n'y a pas encore de copie : importez-le à nouveau sous « D'autres versions ».",
         'The check stopped: {}':
             'La vérification s’est arrêtée : {}',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
             'Les patchs de la communauté (60 FPS et plus, les options d’effets) n’existent que pour la 1.09 ; les autres versions tournent à 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "La connexion à The Hunter's Dream est le portage par Awaken du code réseau de bbhost ; bbhost et The Hunter's Dream sont l’œuvre de droogie.",
+        'The controller does nothing':
+            'La manette ne fait rien',
+        'The controller test cannot start: {}':
+            'Le test de manette ne peut pas démarrer : {}',
         'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
             'Le mode expert est activé pour afficher ceci. Le bouton se trouve en bas de la barre latérale.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
@@ -6355,8 +7185,12 @@ WORLD = {
             'Le jeu n’est pas en version 1.09',
         'The game is open: load the save, press F9, run the route and back, press F9 again, quit the game.':
             'Le jeu est ouvert : chargez la sauvegarde, appuyez sur F9, parcourez le trajet aller et retour, appuyez de nouveau sur F9, quittez le jeu.',
+        'The game is running: the test waits until it is closed.':
+            "Le jeu tourne : le test attend qu'il soit fermé.",
         'The game needs Vulkan 1.3 and a current driver; an old or crashed driver ends the game with "device lost".':
             'Le jeu nécessite Vulkan 1.3 et un pilote à jour ; un pilote ancien ou planté arrête le jeu avec « device lost ».',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+            "Le jeu lit les manettes de la même façon que le test de manette de la page Commandes : ce qui s'allume là-bas arrive au jeu.",
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest memory").':
             'Le jeu réserve environ 6 Go au lancement (10 Go en 1440p et en 4K) d’un seul bloc, sur la RAM et le fichier d’échange réunis. Si Windows refuse, le jeu se ferme aussitôt avec le code 3 (le journal indique « cannot create … MiB of guest memory »).',
         'The game shows the buttons of whatever you use; the keys can be changed on the Controls page.':
@@ -6421,6 +7255,8 @@ WORLD = {
             'Il n’y a pas de eboot.bin dans ce dossier. Choisissez le dossier qui contient directement eboot.bin, pas celui du dessus.',
         'There is no save of this port, shadPS4 or bbhost in that folder (SPRJ0005 with userdata0000 …).':
             'Il n’y a aucune sauvegarde de ce portage, de shadPS4 ou de bbhost dans ce dossier (SPRJ0005 avec userdata0000 …).',
+        'There is no save to back up yet.':
+            "Il n'y a pas encore de sauvegarde à copier.",
         "These are a PS4's own encrypted backups (sdimg_…); they cannot be used. Export the save with Apollo Save Tool on the PS4 instead.":
             'Ce sont des copies de sauvegarde chiffrées propres à une PS4 (sdimg_…) ; elles sont inutilisables. Exportez plutôt la sauvegarde avec Apollo Save Tool sur la PS4.',
         'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':
@@ -6431,6 +7267,10 @@ WORLD = {
             'Ce PC ne peut pas faire tourner le portage.',
         'This PC does not meet the requirements. You can still go on, but the game will probably not run.':
             'Ce PC ne remplit pas la configuration requise. Vous pouvez continuer quand même, mais le jeu ne fonctionnera probablement pas.',
+        'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+            'Ce personnage ne peut pas être restauré seul ({}). Restaurez plutôt la copie entière dans Copies de sauvegarde.',
+        'This file is no Bloodborne save backup: {}':
+            "Ce fichier n'est pas une copie de sauvegarde de Bloodborne : {}",
         'This is not a test scenario: {}':
             'Ce n’est pas un scénario de test : {}',
         'This is the add-on itself: choose the folder that contains {}.':
@@ -6515,6 +7355,8 @@ WORLD = {
             'WASD, Espace pour esquiver, clic gauche / Maj + clic gauche pour attaquer, clic droit / Maj + clic droit (ou Ctrl) pour la main secondaire, E interagir, R objet, F fiole, Q verrouiller, Tab ou Échap menu, et la caméra à la souris 1:1. Remplace les assignations clavier et souris ; la manette garde les siennes.',
         'Walk (hold)':
             'Marcher (maintenir)',
+        'Weapons':
+            'Armes',
         'Welcome':
             'Bienvenue',
         'Welcome, good hunter':
@@ -6563,12 +7405,20 @@ WORLD = {
             'La recommandation pour votre PC',
         'Your PC: {} · {}':
             'Votre PC : {} · {}',
+        'Your characters':
+            'Vos personnages',
         'Your characters and online play':
             'Vos personnages et le jeu en ligne',
         'Your characters from other versions':
             'Vos personnages d’autres versions',
+        'Your characters, their backups and the trophies. Empty: {}.':
+            'Vos personnages, leurs copies de sauvegarde et les trophées. Vide : {}.',
         'Your characters: bring them from another version, back them up, put a backup back.':
             'Vos personnages : les importer d’une autre version, en faire une copie de sauvegarde, restaurer une copie.',
+        'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+            'Vos sauvegardes actuelles ({}) sont copiées avant (« {} »), rien ne se perd.',
+        'Your current saves are backed up first: trying an older backup loses nothing.':
+            'Vos sauvegardes actuelles sont copiées avant : essayer une copie plus ancienne ne fait rien perdre.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Votre écran : {} × {}. Recommandé pour votre PC : {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
@@ -6601,6 +7451,8 @@ WORLD = {
             'Vos sauvegardes précédentes : {}',
         'Your processor sets the limit.':
             'Votre processeur fixe la limite.',
+        'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+            'Votre dossier des sauvegardes est dans un dossier cloud : les sauvegardes vous suivent, les shaders restent sur ce PC. Jouez sur un seul PC à la fois et laissez la synchronisation se terminer avant de lancer le jeu sur un autre ; dans OneDrive, réglez le dossier sur « Toujours conserver sur cet appareil ».',
         'Your setup':
             'Votre configuration',
         'above':
@@ -6695,6 +7547,10 @@ WORLD = {
             'problème',
         'round {}, {} min left':
             'tour {}, {} min restantes',
+        'same as now':
+            'identique à maintenant',
+        'saved {}':
+            'enregistré {}',
         'sce_module, sce_sys and dvdroot_ps4 are there.':
             'sce_module, sce_sys et dvdroot_ps4 sont présents.',
         'shadNet server':
@@ -6737,12 +7593,16 @@ WORLD = {
             'Génération d’images {} : des fréquences d’images plus élevées, un peu plus de latence d’entrée',
         '{} is available on your card for even higher frame rates.':
             '{} est disponible sur votre carte pour des fréquences d’images encore plus élevées.',
+        '{} is back at this state.':
+            '{} est revenu à cet état.',
         '{} is reserved (menu, recording, or a hotkey) and cannot be bound to a game action.':
             'La touche {} est réservée (menu, enregistrement ou raccourci) et ne peut pas être assignée à une action du jeu.',
         '{} minutes':
             '{} minutes',
         '{} of {} trophies earned':
             '{} trophées obtenus sur {}',
+        '{} online':
+            '{} en ligne',
         '{} runs':
             '{} essais',
         '{} settings differ from the recommendation.':
@@ -6812,6 +7672,10 @@ WORLD = {
             '90 FPS',
         'A PS4 (exported save)':
             'Una PS4 (salvataggio esportato)',
+        'A character is gone or the save is broken':
+            'Un personaggio è sparito o il salvataggio è danneggiato',
+        'A character without a readable name':
+            'Un personaggio senza nome leggibile',
         'A constant added on top of sensitivity; raises the floor for slow movements without affecting fast ones as much.':
             'Una costante aggiunta alla sensibilità; alza la soglia per i movimenti lenti senza influire altrettanto su quelli veloci.',
         'A controller (PlayStation, Xbox, Switch)':
@@ -6830,6 +7694,10 @@ WORLD = {
             'Un accenno di ciò che c’è dietro il launcher: una barra del titolo sfocata (Windows 11) e la finestra al 98,5 %. Disattivato: completamente opaca, la più leggibile.',
         'A key, the mouse or a controller used during the test ends it.':
             'Un tasto, il mouse o un controller usato durante il test lo interrompe.',
+        'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+            'Un nome per questo backup. Invio lo salva, Esc lascia tutto com’era.',
+        'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+            'Un server shadNet invece, e tutte le opzioni: la pagina Gioco online. Offline non serve nulla: togli la spunta.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
             '60 FPS stabili con la migliore immagine che la tua scheda video può permettersi.',
         'A stick direction can only be bound to a key, not a mouse button.':
@@ -6852,6 +7720,8 @@ WORLD = {
             'Sopra il minimo',
         'Achievements':
             'Obiettivi',
+        'Add a backup file…':
+            'Aggiungi un file di backup…',
         'Add a test…':
             'Aggiungi un test…',
         'Added. Choose it under Scenario (the list is updated when the launcher starts next).':
@@ -6902,10 +7772,22 @@ WORLD = {
             'Risveglio',
         'Back':
             'Indietro',
+        'Back up automatically before every start':
+            'Backup automatico prima di ogni avvio',
+        'Back up now':
+            'Fai un backup ora',
+        "Backup put back. Your characters are in the game's Load Game menu.":
+            'Backup ripristinato. I tuoi personaggi sono nel menu "Carica partita" del gioco.',
         'Backups':
             'Backup',
         'Balanced (goal)':
             'Bilanciato',
+        'Before a restore':
+            'Prima di un ripristino',
+        'Before an import':
+            'Prima di un’importazione',
+        'Before playing':
+            'Prima di giocare',
         'Below minimum':
             'Sotto il minimo',
         'Best for your goal: {} with {:.0f} FPS.':
@@ -6920,6 +7802,8 @@ WORLD = {
             'Scontro con un boss (il tuo salvataggio davanti a un boss)',
         'Boss: Cleric Beast':
             'Boss: Cleric Beast',
+        'Bosses':
+            'Boss',
         'Bring your saves along, and play with others.':
             'Porta con te i tuoi salvataggi e gioca con gli altri.',
         'Bronze':
@@ -6934,6 +7818,10 @@ WORLD = {
             'Le CPU senza AVX (molti modelli Pentium/Celeron) non possono eseguirlo affatto.',
         'CUSA03173: the Game of the Year Edition, with The Old Hunters.':
             'CUSA03173: la Game of the Year Edition, con The Old Hunters.',
+        'Cache folder':
+            'Cartella della cache',
+        'Caches now: {}':
+            'Cache ora: {}',
         'Camera':
             'Telecamera',
         'Camera (right stick)':
@@ -6974,6 +7862,8 @@ WORLD = {
             'Verifica dei file del gioco…',
         'Checking your PC…':
             'Verifica del tuo PC…',
+        'Choose a backup (zip)':
+            'Scegli un backup (zip)',
         'Choose a folder…':
             'Scegli una cartella…',
         'Choose at least two values to compare.':
@@ -6982,6 +7872,8 @@ WORLD = {
             'Scegli come vuoi che sia il gioco; le impostazioni adatte dipendono dal tuo hardware.',
         'Choose the base game folder in Game & language. Its dvdroot_ps4 has about 29 GB in about 28,800 files.':
             'Scegli la cartella del gioco base in Gioco e lingua. Il suo dvdroot_ps4 contiene circa 29 GB in circa 28.800 file.',
+        'Choose the cache folder':
+            'Scegli la cartella della cache',
         'Choose the folder with the saves':
             'Scegli la cartella con i salvataggi',
         'Choose the game folder':
@@ -7008,6 +7900,8 @@ WORLD = {
             'Chiudi prima il gioco.',
         'Close the game first; it writes its saves while it runs.':
             'Chiudi prima il gioco; scrive i salvataggi mentre è in esecuzione.',
+        'Close the game.':
+            'Chiudi il gioco.',
         'Close your browser and other programs while playing.':
             'Chiudi il browser e gli altri programmi mentre giochi.',
         'Co-op pool':
@@ -7022,6 +7916,8 @@ WORLD = {
             'Se vieni da un’altra versione, i tuoi personaggi vengono trovati al passaggio IV.',
         'Compare one setting: pictures and frame rate':
             'Confronta un’impostazione: immagini e frequenza fotogrammi',
+        'Controller test':
+            'Test del controller',
         'Controls':
             'Comandi',
         'Copied: paste it into your message on Discord or in the forum.':
@@ -7036,10 +7932,24 @@ WORLD = {
             'Copia tutto dalla cartella dell’aggiornamento nella cartella del gioco base e scegli "Sostituisci i file nella destinazione".',
         'Copy everything from the update folder into the base game folder and replace the files.':
             'Copia tutto dalla cartella dell’aggiornamento nella cartella del gioco base e sostituisci i file.',
+        'Copy the backup to…':
+            'Copia il backup in…',
+        'Copy to…':
+            'Copia in…',
+        'Could not back up the saves: {}':
+            'Impossibile fare il backup dei salvataggi: {}',
+        'Could not copy the backup: {}':
+            'Impossibile copiare il backup: {}',
         'Could not import the saves: {}':
             'Impossibile importare i salvataggi: {}',
         'Could not load the list of versions: {}':
             'Impossibile caricare l’elenco delle versioni: {}',
+        'Could not move the backup to the Recycle Bin.':
+            'Impossibile spostare il backup nel Cestino.',
+        'Could not put the backup back: {}':
+            'Impossibile ripristinare il backup: {}',
+        'Could not rename the backup: {}':
+            'Impossibile rinominare il backup: {}',
         'Could not save it: {}':
             'Impossibile salvarlo: {}',
         'Ctrl+F':
@@ -7052,8 +7962,14 @@ WORLD = {
             'DLSS richiede una GeForce RTX serie 20 o più recente. DLSS Frame Generation richiede una RTX 40 (2×) o RTX 50 (fino a 4×). La generazione di fotogrammi FSR 3.1 funziona su qualsiasi scheda e rende al meglio da circa 60 FPS di base.',
         'Dark Souls III layout':
             'Layout di Dark Souls III',
+        'Deaths':
+            'Morti',
         'Debug':
             'Debug',
+        'Delete':
+            'Elimina',
+        'Delete this backup? It goes to the Recycle Bin.':
+            'Eliminare questo backup? Finisce nel Cestino.',
         'Derived from the requirements and the hardware check on bbport.de for your PC at {} ({}). Chromatic aberration, depth of field, motion blur and sharpening are taste and stay as you set them.':
             'Ricavate dai requisiti e dalla verifica hardware su bbport.de per il tuo PC a {} ({}). Aberrazione cromatica, profondità di campo, sfocatura di movimento e nitidezza sono questione di gusti e restano come le hai impostate.',
         'Detected automatically':
@@ -7070,6 +7986,8 @@ WORLD = {
             'Pagina di download',
         'Download the FSR 4 files now (about 30 MB)':
             'Scarica ora i file di FSR 4 (circa 30 MB)',
+        'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+            'Trascina una mod dalla sua maniglia per cambiare l’ordine. Più in basso nell’elenco si carica dopo e vince i conflitti.',
         'Driver notes':
             'Note sui driver',
         'Duration':
@@ -7078,6 +7996,10 @@ WORLD = {
             'ESPERTO',
         'Each':
             'Ogni valore',
+        'Earlier backup':
+            'Backup precedente',
+        'Earlier states in your backups ({})':
+            'Stati precedenti nei tuoi backup ({})',
         'Earlier tests':
             'Test precedenti',
         'Earned':
@@ -7090,6 +8012,8 @@ WORLD = {
             'Attiva la visuale col mouse',
         'Enough for 4K (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 class).':
             'Sufficiente per il 4K (classe RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070).',
+        'Every character in this backup goes back to this state.':
+            'Tutti i personaggi di questo backup tornano a questo stato.',
         'Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.':
             'Tutte le impostazioni di grafica e frequenza fotogrammi. Salvate in bbport.ini; il menu nel gioco (Ins o L3+R3) modifica gli stessi valori.',
         'Every graphics setting one by one:':
@@ -7140,10 +8064,16 @@ WORLD = {
             'Generazione di fotogrammi',
         "Frames made between two of the game's: 60 FPS on screen becomes 120. Needs a display with that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce RTX 40 or newer, otherwise FSR 3.1 is used.":
             'Fotogrammi creati tra due fotogrammi del gioco: 60 FPS sullo schermo diventano 120. Richiede uno schermo con quella frequenza di aggiornamento (120 Hz o più a 60 FPS); si mette in pausa quando lo schermo non può mostrare i fotogrammi in più. Aggiunge un po’ di latenza di input. Menu e filmati non vengono generati. DLSS richiede una GeForce RTX 40 o più recente, altrimenti si usa FSR 3.1.',
+        'From a file':
+            'Da un file',
+        'From other versions':
+            'Da altre versioni',
         'From your last save: the camera turns once around the hunter and back (24 s). Quick and the same every time; for the frame rate and for comparing settings.':
             'Dal tuo ultimo salvataggio: la telecamera fa un giro attorno al cacciatore e ritorna (24 s). Rapido e sempre uguale; per la frequenza fotogrammi e per confrontare le impostazioni.',
         'Fullscreen (recommended)':
             'Schermo intero (consigliato)',
+        'Fullscreen, HDR and the taste effects are on Picture & performance.':
+            'Schermo intero, HDR e gli effetti a gusto personale sono in Immagine e prestazioni.',
         'Fullscreen, HDR, field of view and the taste effects are on Picture & performance.':
             'Schermo intero, HDR, campo visivo e gli effetti a gusto personale sono in Immagine e prestazioni.',
         'GPU':
@@ -7184,6 +8114,8 @@ WORLD = {
             'Limiti invalicabili',
         'Help':
             'Aiuto',
+        'Hide the earlier states':
+            'Nascondi gli stati precedenti',
         'Hide the settings':
             'Nascondi le impostazioni',
         'Highest model detail: your card has room to spare at this resolution.':
@@ -7212,6 +8144,8 @@ WORLD = {
             "In finestra: la dimensione all'apertura. Puoi comunque trascinarne i bordi; «Come l'ultima volta» la apre con la dimensione che aveva quando hai chiuso il gioco l'ultima volta.",
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'Nel gioco, Ins (tastiera) o L3 + R3 (controller) apre il menu del port.',
+        'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+            'Nel gioco, «{}» carica l’ultimo personaggio usato; «{}» nella schermata del titolo li mostra tutti.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
             'Nella pagina che si è aperta ({0}), accedi con Discord e inserisci questo codice:',
         'In the page that opened, sign in with Discord and enter this code:':
@@ -7256,6 +8190,8 @@ WORLD = {
             'Potrebbe avviarsi, ma aspettati frequenze fotogrammi basse e problemi.',
         'Items and menus':
             'Oggetti e menu',
+        'Its level, weapons and bosses cannot be read from this save.':
+            'Livello, armi e boss non si possono leggere da questo salvataggio.',
         'Jump while dashing (L3)':
             'Salto durante lo scatto (L3)',
         'Keyboard and mouse':
@@ -7364,8 +8300,14 @@ WORLD = {
             'La prossima volta, Play Bloodborne.exe avvia subito il gioco con queste impostazioni.',
         'No add-on in this folder: The Old Hunters is a folder named {} in it.':
             'Nessun contenuto aggiuntivo in questa cartella: The Old Hunters è una cartella chiamata {} al suo interno.',
+        'No backups yet.':
+            'Ancora nessun backup.',
+        'No characters yet. The game makes them, or bring yours from another version (below).':
+            'Ancora nessun personaggio. Li crea il gioco, oppure porta i tuoi da un’altra versione (sotto).',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'Nessun salvataggio completo di Bloodborne in {} o nelle sue sottocartelle: servono userdata0010 e almeno un personaggio (da userdata0000 a userdata0009).',
+        'No controller found. Connect it by cable or Bluetooth.':
+            'Nessun controller trovato. Collegalo via cavo o Bluetooth.',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
             'Nessun crash né blocco in {:.0f} minuti ({:.0f} FPS in media).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
@@ -7386,6 +8328,8 @@ WORLD = {
             'Ancora nessun trofeo. Compaiono qui appena il gioco li sblocca.',
         'No versions found.':
             'Nessuna versione trovata.',
+        'None beaten yet':
+            'Nessuno sconfitto finora',
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next starts.':
             'Normale: il port crea la cache degli shader la prima volta che incontra ciascun effetto. Viene conservata per gli avvii successivi.',
         "Not in the website's list; it has every instruction the port needs. Counted as the minimum.":
@@ -7412,6 +8356,8 @@ WORLD = {
             'Non supportato: {} GB di memoria video, il port richiede almeno 4 GB.',
         'Nothing found. Try other words, or open Help.':
             'Nessun risultato. Prova altre parole o apri Aiuto.',
+        'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+            'Non si illumina nulla: ricollega il controller (il cavo è la via più sicura) e chiudi i programmi che lo prendono in carico, come DS4Windows.',
         'Nothing was recorded (press F9 to start and F9 to stop).':
             'Non è stato registrato nulla (F9 avvia, F9 ferma).',
         'Now':
@@ -7440,8 +8386,14 @@ WORLD = {
             'Gioco online',
         'Only a black screen':
             'Solo uno schermo nero',
+        'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+            'È coinvolto un solo personaggio: in I tuoi personaggi apri i suoi stati precedenti e riporta indietro solo quello.',
         'Only the update folder was chosen':
             'È stata scelta solo la cartella dell’aggiornamento',
+        'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+            'Cambia solo questo personaggio; gli altri restano come sono. Prima viene fatto un backup del suo stato attuale («{}»), quindi non si perde nulla.',
+        'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+            'Solo se hai giocato dall’ultimo backup. Si tengono gli ultimi {} backup automatici; i tuoi, sempre.',
         'Only with your own copy of the game':
             'Solo con la tua copia del gioco',
         'Open Windows Security':
@@ -7450,8 +8402,14 @@ WORLD = {
             'Aprila, premi Ctrl + A, poi Ctrl + C.',
         'Open the Discord':
             'Apri il Discord',
+        'Open the backups':
+            'Apri i backup',
         'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the destination.':
             'Apri la cartella del gioco base (quella con dvdroot_ps4), premi Ctrl + V e scegli Sostituisci i file nella destinazione.',
+        'Open the controller test':
+            'Apri il test del controller',
+        'Open the controller test and press the buttons.':
+            'Apri il test del controller e premi i tasti.',
         'Open the folder':
             'Apri la cartella',
         'Open the game folder':
@@ -7514,12 +8472,18 @@ WORLD = {
             'Preparazione ({}). Il gioco si apre a schermo intero; non toccare il PC finché non ha finito.',
         'Press Win + R, type sysdm.cpl, press Enter.':
             'Premi Win + R, digita sysdm.cpl, premi Invio.',
+        'Press the buttons: what lights up here reaches the game.':
+            'Premi i tasti: ciò che si illumina qui arriva al gioco.',
         'Press…':
             'Premi…',
         'Problems and their fixes':
             'Problemi e soluzioni',
         'Processor':
             'Processore',
+        'Put this backup back?':
+            'Ripristinare questo backup?',
+        'Put {} back to this state?':
+            'Riportare {} a questo stato?',
         'Quiet (goal)':
             'Silenzioso',
         'Quit to Desktop in the title menu and in the System menu':
@@ -7544,6 +8508,8 @@ WORLD = {
             'Registra il tragitto…',
         'Recorded: every test of this scenario now replays your route.':
             'Registrato: ogni test di questo scenario ora riproduce il tuo tragitto.',
+        'Rename':
+            'Rinomina',
         'Rename the folder {} to {}: the game looks for that exact name.':
             'Rinomina la cartella {} in {}: il gioco cerca esattamente quel nome.',
         'Repeat the setup':
@@ -7556,6 +8522,8 @@ WORLD = {
             'Riservati: Ins/Esc (il menu del port), F9 (registrazione del percorso) e i tasti che attivano la visuale col mouse o ricaricano input.ini (F7/F8 per impostazione predefinita).',
         'Restart the PC after installing it.':
             'Riavvia il PC dopo averlo installato.',
+        'Restore':
+            'Ripristina',
         'Right half of the touchpad (debug menu)':
             'Metà destra del touchpad (menu di debug)',
         'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.':
@@ -7570,6 +8538,8 @@ WORLD = {
             'Percorso: Vecchia Yharnam',
         'Runs the same two-minute route through this area and back every time, from the save of the mod “All Boss Save Files Ready to Fight” (Nexus Mods). The hunter cannot die and enemies leave him alone: for frame rate, loading and stutter while moving, and for comparing settings.':
             'Percorre ogni volta lo stesso tragitto di due minuti in quest’area, andata e ritorno, dal salvataggio della mod «All Boss Save Files Ready to Fight» (Nexus Mods). Il cacciatore non può morire e i nemici lo lasciano in pace: per frequenza fotogrammi, caricamenti e scatti in movimento e per confrontare le impostazioni.',
+        "SDL3.dll is missing in the port's bin folder.":
+            'Manca SDL3.dll nella cartella bin del port.',
         'SSD':
             'SSD',
         'Same as the monitor':
@@ -7582,14 +8552,20 @@ WORLD = {
             'Salva un rapporto',
         'Save as zip':
             'Salva come ZIP',
+        'Saved by hand':
+            'Salvato a mano',
         'Saved: {}':
             'Salvato: {}',
         'Saves':
             'Salvataggi',
         'Saves & online':
             'Salvataggi e online',
+        'Saves backed up: {}':
+            'Backup dei salvataggi fatto: {}',
         "Saves imported. Your characters are in the game's Load Game menu.":
             'Salvataggi importati. I tuoi personaggi sono nel menu "Carica partita" del gioco.',
+        'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+            'Pagina Salvataggi, Backup: ripristina il backup più recente di prima del problema ("Prima di giocare" con la data dell\'ultima sessione buona).',
         'Scenario':
             'Scenario',
         'Screen':
@@ -7624,8 +8600,16 @@ WORLD = {
             'Impostazioni: {} diverse da quelle consigliate per il tuo PC',
         'Setup':
             'Configurazione',
+        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+            'Shader, log e file temporanei di questo PC. Vuoto: nella cartella dei salvataggi, oppure su questo PC se la cartella dei salvataggi è in una cartella cloud (OneDrive, Dropbox, Google Drive), così ogni PC conserva i propri shader.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Ombre delle luci dinamiche: attive da "Sopra il minimo".',
+        'Show all ({})':
+            'Mostra tutti ({})',
+        'Show fewer':
+            'Mostra meno',
+        'Show in folder':
+            'Mostra nella cartella',
         'Show me on the live map':
             'Mostrami sulla mappa dal vivo',
         'Show the fix?':
@@ -7654,6 +8638,8 @@ WORLD = {
             'Salta: configuro tutto da solo',
         'Slightly translucent window':
             'Finestra leggermente traslucida',
+        'Slot {}':
+            'Slot {}',
         'Smooth (goal)':
             'Fluido',
         'Stability run':
@@ -7668,6 +8654,8 @@ WORLD = {
             'Menu Start > Sicurezza di Windows > Protezione da virus e minacce > Gestisci impostazioni.',
         'Start the test':
             'Avvia il test',
+        "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+            'Avviato da Steam: nelle proprietà del gioco su Steam, prova Steam Input attivo o disattivo.',
         'Starting the sign-in…':
             'Avvio dell’accesso…',
         'Starts in front of this boss with the save from the mod “All Boss Save Files Ready to Fight” (Nexus Mods), walks in and keeps the boss busy for two minutes: dodging, strafing, now and then an attack. The hunter cannot die; the boss fights as usual. For stability and a worst case, not for exact comparisons.':
@@ -7728,6 +8716,12 @@ WORLD = {
             "The Hunter's Dream (con i giocatori di bbhost)",
         "The Hunter's Dream account":
             "Account The Hunter's Dream",
+        "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+            "The Hunter's Dream: cooperativa insieme ai giocatori bbhost, dopo un accesso gratuito con Discord. shadNet: un server shadNet a tua scelta e il suo account.",
+        "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+            "The Hunter's Dream: {} cacciatori online adesso ({} bbhost · {} shadNet)",
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+            'Il menu "Carica partita" è vuoto, manca un personaggio o il gioco dice che il salvataggio è danneggiato. Prima di ogni avvio il launcher fa un backup dei salvataggi, quindi puoi tornare a com\'erano.',
         'The Old Hunters found ({}).':
             'The Old Hunters trovato ({}).',
         'The Old Hunters found in the saves folder (addcont).':
@@ -7736,12 +8730,20 @@ WORLD = {
             'The Old Hunters: non trovato. Serve solo se lo possiedi; senza, le sue aree restano chiuse.',
         'The account you made at supermedo.com.':
             'L’account che hai creato su supermedo.com.',
+        'The automatic backup of the saves failed: {}':
+            'Il backup automatico dei salvataggi non è riuscito: {}',
+        'The character came from another version and there is no backup yet: import it again under "From other versions".':
+            'Il personaggio viene da un\'altra versione e non c\'è ancora un backup: importalo di nuovo in "Da altre versioni".',
         'The check stopped: {}':
             'La verifica si è interrotta: {}',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
             'Le patch della community (60 FPS e oltre, le opzioni degli effetti) esistono solo per la 1.09; le altre versioni girano a 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "La connessione a The Hunter's Dream è il port del codice di rete di bbhost realizzato da Awaken; bbhost e The Hunter's Dream sono di droogie.",
+        'The controller does nothing':
+            'Il controller non fa nulla',
+        'The controller test cannot start: {}':
+            'Il test del controller non può avviarsi: {}',
         'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
             'La modalità esperto ora è attiva, per mostrare questo. L’interruttore è in fondo alla barra laterale.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
@@ -7758,8 +8760,12 @@ WORLD = {
             'Il gioco non è la versione 1.09',
         'The game is open: load the save, press F9, run the route and back, press F9 again, quit the game.':
             'Il gioco è aperto: carica il salvataggio, premi F9, percorri il tragitto andata e ritorno, premi di nuovo F9, esci dal gioco.',
+        'The game is running: the test waits until it is closed.':
+            'Il gioco è in esecuzione: il test aspetta che venga chiuso.',
         'The game needs Vulkan 1.3 and a current driver; an old or crashed driver ends the game with "device lost".':
             'Il gioco richiede Vulkan 1.3 e un driver aggiornato; un driver vecchio o andato in crash chiude il gioco con "device lost".',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+            'Il gioco legge i controller come il test del controller nella pagina Comandi: ciò che si illumina lì arriva al gioco.',
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest memory").':
             'Il gioco riserva circa 6 GB all’avvio (10 GB a 1440p e 4K) in un unico blocco, da RAM e file di paging insieme. Se Windows rifiuta, il gioco si chiude subito con codice 3 (il registro riporta "cannot create … MiB of guest memory").',
         'The game shows the buttons of whatever you use; the keys can be changed on the Controls page.':
@@ -7824,6 +8830,8 @@ WORLD = {
             'In questa cartella non c’è eboot.bin. Scegli la cartella che contiene direttamente eboot.bin, non quella sopra.',
         'There is no save of this port, shadPS4 or bbhost in that folder (SPRJ0005 with userdata0000 …).':
             'In quella cartella non c’è alcun salvataggio di questo port, di shadPS4 o di bbhost (SPRJ0005 con userdata0000 …).',
+        'There is no save to back up yet.':
+            'Non c’è ancora un salvataggio di cui fare il backup.',
         "These are a PS4's own encrypted backups (sdimg_…); they cannot be used. Export the save with Apollo Save Tool on the PS4 instead.":
             'Questi sono backup cifrati della PS4 stessa (sdimg_…); non si possono usare. Esporta invece il salvataggio con Apollo Save Tool sulla PS4.',
         'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':
@@ -7834,6 +8842,10 @@ WORLD = {
             'Questo PC non può eseguire il port.',
         'This PC does not meet the requirements. You can still go on, but the game will probably not run.':
             'Questo PC non soddisfa i requisiti. Puoi comunque proseguire, ma probabilmente il gioco non funzionerà.',
+        'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+            'Questo personaggio non può essere ripristinato da solo ({}). Ripristina invece l’intero backup in Backup.',
+        'This file is no Bloodborne save backup: {}':
+            'Questo file non è un backup dei salvataggi di Bloodborne: {}',
         'This is not a test scenario: {}':
             'Questo non è uno scenario di test: {}',
         'This is the add-on itself: choose the folder that contains {}.':
@@ -7918,6 +8930,8 @@ WORLD = {
             'WASD, Spazio per schivare, clic sinistro / Maiusc + clic sinistro per attaccare, clic destro / Maiusc + clic destro (o Ctrl) per la mano secondaria, E interagisci, R oggetto, F fiala, Q aggancia il bersaglio, Tab o Esc menu, e la telecamera col mouse 1:1. Sostituisce le assegnazioni di tastiera e mouse; il controller mantiene le sue.',
         'Walk (hold)':
             'Cammina (tieni premuto)',
+        'Weapons':
+            'Armi',
         'Welcome':
             'Benvenuto',
         'Welcome, good hunter':
@@ -7966,12 +8980,20 @@ WORLD = {
             'Consigliato per il tuo PC',
         'Your PC: {} · {}':
             'Il tuo PC: {} · {}',
+        'Your characters':
+            'I tuoi personaggi',
         'Your characters and online play':
             'I tuoi personaggi e il gioco online',
         'Your characters from other versions':
             'I tuoi personaggi da altre versioni',
+        'Your characters, their backups and the trophies. Empty: {}.':
+            'I tuoi personaggi, i loro backup e i trofei. Vuoto: {}.',
         'Your characters: bring them from another version, back them up, put a backup back.':
             'I tuoi personaggi: portali da un’altra versione, fanne un backup, ripristina un backup.',
+        'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+            'I tuoi salvataggi attuali ({}) vengono salvati prima ("{}"), quindi non si perde nulla.',
+        'Your current saves are backed up first: trying an older backup loses nothing.':
+            'I salvataggi attuali vengono salvati prima: provare un backup più vecchio non fa perdere nulla.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Il tuo schermo: {} × {}. Consigliata per il tuo PC: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
@@ -8004,6 +9026,8 @@ WORLD = {
             'I tuoi salvataggi precedenti: {}',
         'Your processor sets the limit.':
             'Il limite è il tuo processore.',
+        'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+            'La tua cartella dei salvataggi è in una cartella cloud: i salvataggi ti seguono, gli shader restano su questo PC. Gioca su un PC alla volta e lascia finire la sincronizzazione prima di iniziare su un altro; in OneDrive imposta la cartella su «Mantieni sempre su questo dispositivo».',
         'Your setup':
             'La tua configurazione',
         'above':
@@ -8098,6 +9122,10 @@ WORLD = {
             'problema',
         'round {}, {} min left':
             'ciclo {}, mancano {} min',
+        'same as now':
+            'come adesso',
+        'saved {}':
+            'salvato {}',
         'sce_module, sce_sys and dvdroot_ps4 are there.':
             'sce_module, sce_sys e dvdroot_ps4 sono presenti.',
         'shadNet server':
@@ -8140,12 +9168,16 @@ WORLD = {
             'Generazione di fotogrammi {}: frequenza fotogrammi più alta, un po’ più di latenza di input',
         '{} is available on your card for even higher frame rates.':
             '{} è disponibile sulla tua scheda per frequenze fotogrammi ancora più alte.',
+        '{} is back at this state.':
+            '{} è tornato a questo stato.',
         '{} is reserved (menu, recording, or a hotkey) and cannot be bound to a game action.':
             '{} è riservato (menu, registrazione o tasto di scelta rapida) e non può essere assegnato a un’azione di gioco.',
         '{} minutes':
             '{} minuti',
         '{} of {} trophies earned':
             '{} su {} trofei ottenuti',
+        '{} online':
+            '{} online',
         '{} runs':
             '{} esecuzioni',
         '{} settings differ from the recommendation.':
@@ -8215,6 +9247,10 @@ WORLD = {
             '90 FPS',
         'A PS4 (exported save)':
             'PS4 (wyeksportowany zapis)',
+        'A character is gone or the save is broken':
+            'Postać zniknęła lub zapis jest uszkodzony',
+        'A character without a readable name':
+            'Postać bez czytelnej nazwy',
         'A constant added on top of sensitivity; raises the floor for slow movements without affecting fast ones as much.':
             'Stała wartość dodawana do czułości; podnosi minimum dla wolnych ruchów, nie wpływając tak bardzo na szybkie.',
         'A controller (PlayStation, Xbox, Switch)':
@@ -8233,6 +9269,10 @@ WORLD = {
             'Widać odrobinę tego, co jest za launcherem: rozmyty pasek tytułu (Windows 11) i okno kryjące w 98,5 %. Wył.: całkowicie nieprzezroczyste, najczytelniejsze.',
         'A key, the mouse or a controller used during the test ends it.':
             'Klawisz, mysz lub kontroler użyte w trakcie testu przerywają go.',
+        'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+            'Nazwa tej kopii. Enter zapisuje, Esc zostawia wszystko bez zmian.',
+        'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+            'Zamiast tego serwer shadNet i wszystkie opcje: strona Gra online. Tryb offline nie wymaga niczego: odznacz.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
             'Stałe 60 FPS z najlepszym obrazem, na jaki pozwala twoja karta graficzna.',
         'A stick direction can only be bound to a key, not a mouse button.':
@@ -8255,6 +9295,8 @@ WORLD = {
             'Powyżej minimum',
         'Achievements':
             'Osiągnięcia',
+        'Add a backup file…':
+            'Dodaj plik kopii…',
         'Add a test…':
             'Dodaj test…',
         'Added. Choose it under Scenario (the list is updated when the launcher starts next).':
@@ -8305,10 +9347,22 @@ WORLD = {
             'Przebudzenie',
         'Back':
             'Wstecz',
+        'Back up automatically before every start':
+            'Twórz kopię automatycznie przed każdym uruchomieniem',
+        'Back up now':
+            'Utwórz kopię teraz',
+        "Backup put back. Your characters are in the game's Load Game menu.":
+            'Kopia przywrócona. Twoje postacie są w menu gry „Wczytaj grę”.',
         'Backups':
             'Kopie zapasowe',
         'Balanced (goal)':
             'Wyważony',
+        'Before a restore':
+            'Przed przywróceniem',
+        'Before an import':
+            'Przed importem',
+        'Before playing':
+            'Przed grą',
         'Below minimum':
             'Poniżej minimum',
         'Best for your goal: {} with {:.0f} FPS.':
@@ -8323,6 +9377,8 @@ WORLD = {
             'Walka z bossem (twój zapis przy bossie)',
         'Boss: Cleric Beast':
             'Boss: Cleric Beast',
+        'Bosses':
+            'Bossowie',
         'Bring your saves along, and play with others.':
             'Przenieś swoje zapisy i graj z innymi.',
         'Bronze':
@@ -8337,6 +9393,10 @@ WORLD = {
             'Procesory bez AVX (wiele modeli Pentium/Celeron) w ogóle go nie uruchomią.',
         'CUSA03173: the Game of the Year Edition, with The Old Hunters.':
             'CUSA03173: Game of the Year Edition, z The Old Hunters.',
+        'Cache folder':
+            'Folder pamięci podręcznej',
+        'Caches now: {}':
+            'Pamięć podręczna teraz: {}',
         'Camera':
             'Kamera',
         'Camera (right stick)':
@@ -8377,6 +9437,8 @@ WORLD = {
             'Sprawdzanie plików gry…',
         'Checking your PC…':
             'Sprawdzanie twojego PC…',
+        'Choose a backup (zip)':
+            'Wybierz kopię zapasową (zip)',
         'Choose a folder…':
             'Wybierz folder…',
         'Choose at least two values to compare.':
@@ -8385,6 +9447,8 @@ WORLD = {
             'Wybierz, jak gra ma działać; ustawienia zostaną dobrane do twojego sprzętu.',
         'Choose the base game folder in Game & language. Its dvdroot_ps4 has about 29 GB in about 28,800 files.':
             'Wybierz folder gry podstawowej na stronie „Gra i język”. Jego dvdroot_ps4 ma ok. 29 GB w ok. 28\xa0800 plikach.',
+        'Choose the cache folder':
+            'Wybierz folder pamięci podręcznej',
         'Choose the folder with the saves':
             'Wybierz folder z zapisami',
         'Choose the game folder':
@@ -8411,6 +9475,8 @@ WORLD = {
             'Najpierw zamknij grę.',
         'Close the game first; it writes its saves while it runs.':
             'Najpierw zamknij grę; podczas działania zapisuje ona swoje pliki zapisu.',
+        'Close the game.':
+            'Zamknij grę.',
         'Close your browser and other programs while playing.':
             'Podczas gry zamknij przeglądarkę i inne programy.',
         'Co-op pool':
@@ -8425,6 +9491,8 @@ WORLD = {
             'Jeśli przechodzisz z innej wersji, twoje postacie zostaną znalezione w kroku IV.',
         'Compare one setting: pictures and frame rate':
             'Porównaj jedno ustawienie: obrazy i liczba klatek',
+        'Controller test':
+            'Test kontrolera',
         'Controls':
             'Sterowanie',
         'Copied: paste it into your message on Discord or in the forum.':
@@ -8439,10 +9507,24 @@ WORLD = {
             'Skopiuj całą zawartość folderu aktualizacji do folderu gry podstawowej i wybierz „Zamień pliki w miejscu docelowym”.',
         'Copy everything from the update folder into the base game folder and replace the files.':
             'Skopiuj całą zawartość folderu aktualizacji do folderu gry podstawowej i zastąp pliki.',
+        'Copy the backup to…':
+            'Kopiuj kopię zapasową do…',
+        'Copy to…':
+            'Kopiuj do…',
+        'Could not back up the saves: {}':
+            'Nie udało się utworzyć kopii zapisów: {}',
+        'Could not copy the backup: {}':
+            'Nie udało się skopiować kopii: {}',
         'Could not import the saves: {}':
             'Nie udało się zaimportować zapisów: {}',
         'Could not load the list of versions: {}':
             'Nie udało się wczytać listy wersji: {}',
+        'Could not move the backup to the Recycle Bin.':
+            'Nie udało się przenieść kopii do Kosza.',
+        'Could not put the backup back: {}':
+            'Nie udało się przywrócić kopii: {}',
+        'Could not rename the backup: {}':
+            'Nie udało się zmienić nazwy kopii: {}',
         'Could not save it: {}':
             'Nie udało się zapisać: {}',
         'Ctrl+F':
@@ -8455,8 +9537,14 @@ WORLD = {
             'DLSS wymaga karty GeForce RTX serii 20 lub nowszej. Generowanie klatek DLSS wymaga RTX 40 (2×) lub RTX 50 (do 4×). Generowanie klatek FSR 3.1 działa na każdej karcie, najlepiej od ok. 60 bazowych FPS.',
         'Dark Souls III layout':
             'Układ z Dark Souls III',
+        'Deaths':
+            'Śmierci',
         'Debug':
             'Debugowanie',
+        'Delete':
+            'Usuń',
+        'Delete this backup? It goes to the Recycle Bin.':
+            'Usunąć tę kopię? Trafi do Kosza.',
         'Derived from the requirements and the hardware check on bbport.de for your PC at {} ({}). Chromatic aberration, depth of field, motion blur and sharpening are taste and stay as you set them.':
             'Wyznaczone na podstawie wymagań i testu sprzętu z bbport.de dla twojego PC przy {} ({}). Aberracja chromatyczna, głębia ostrości, rozmycie ruchu i wyostrzanie to kwestia gustu i pozostają tak, jak je ustawiono.',
         'Detected automatically':
@@ -8473,6 +9561,8 @@ WORLD = {
             'Strona pobierania',
         'Download the FSR 4 files now (about 30 MB)':
             'Pobierz teraz pliki FSR 4 (ok. 30 MB)',
+        'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+            'Przeciągnij mod za uchwyt, aby zmienić kolejność. Niżej na liście ładuje się później i wygrywa konflikty.',
         'Driver notes':
             'Uwagi o sterownikach',
         'Duration':
@@ -8481,6 +9571,10 @@ WORLD = {
             'EKSPERT',
         'Each':
             'Każda wartość',
+        'Earlier backup':
+            'Wcześniejsza kopia',
+        'Earlier states in your backups ({})':
+            'Wcześniejsze stany w twoich kopiach zapasowych ({})',
         'Earlier tests':
             'Wcześniejsze testy',
         'Earned':
@@ -8493,6 +9587,8 @@ WORLD = {
             'Włącz rozglądanie myszą',
         'Enough for 4K (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 class).':
             'Wystarczy do 4K (klasa RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070).',
+        'Every character in this backup goes back to this state.':
+            'Wszystkie postacie z tej kopii wrócą do tego stanu.',
         'Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.':
             'Wszystkie ustawienia grafiki i liczby klatek. Zapisywane w bbport.ini; menu w grze (Insert lub L3+R3) zmienia te same wartości.',
         'Every graphics setting one by one:':
@@ -8543,10 +9639,16 @@ WORLD = {
             'Generowanie klatek',
         "Frames made between two of the game's: 60 FPS on screen becomes 120. Needs a display with that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce RTX 40 or newer, otherwise FSR 3.1 is used.":
             'Klatki tworzone pomiędzy dwiema klatkami gry: 60 FPS na ekranie zmienia się w 120. Wymaga ekranu o takiej częstotliwości odświeżania (120 Hz lub więcej przy 60 FPS); wstrzymuje się, gdy ekran nie może pokazać dodatkowych klatek. Nieco zwiększa opóźnienie sterowania. Menu i filmy nie są generowane. DLSS wymaga GeForce RTX 40 lub nowszej, w przeciwnym razie używany jest FSR 3.1.',
+        'From a file':
+            'Z pliku',
+        'From other versions':
+            'Z innych wersji',
         'From your last save: the camera turns once around the hunter and back (24 s). Quick and the same every time; for the frame rate and for comparing settings.':
             'Od twojego ostatniego zapisu: kamera obraca się raz wokół łowcy i z powrotem (24 s). Szybki i za każdym razem taki sam; do pomiaru liczby klatek i porównywania ustawień.',
         'Fullscreen (recommended)':
             'Pełny ekran (zalecane)',
+        'Fullscreen, HDR and the taste effects are on Picture & performance.':
+            'Pełny ekran, HDR i efekty będące kwestią gustu są na stronie „Obraz i wydajność”.',
         'Fullscreen, HDR, field of view and the taste effects are on Picture & performance.':
             'Pełny ekran, HDR, pole widzenia i efekty będące kwestią gustu są na stronie „Obraz i wydajność”.',
         'GPU':
@@ -8587,6 +9689,8 @@ WORLD = {
             'Twarde limity',
         'Help':
             'Pomoc',
+        'Hide the earlier states':
+            'Ukryj wcześniejsze stany',
         'Hide the settings':
             'Ukryj ustawienia',
         'Highest model detail: your card has room to spare at this resolution.':
@@ -8615,6 +9719,8 @@ WORLD = {
             'W oknie: rozmiar przy otwarciu. Nadal możesz przeciągać jego krawędzie; „Jak ostatnio” otwiera je w rozmiarze, jaki miało przy ostatnim zamknięciu gry.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'W grze Insert (klawiatura) lub L3 + R3 (kontroler) otwiera menu portu.',
+        'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+            'W grze „{}” wczytuje postać, którą grano ostatnio; „{}” na ekranie tytułowym pokazuje wszystkie.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
             'Na stronie, która się otworzyła ({0}), zaloguj się przez Discord i wpisz ten kod:',
         'In the page that opened, sign in with Discord and enter this code:':
@@ -8659,6 +9765,8 @@ WORLD = {
             'Może się uruchomić, ale spodziewaj się niskiej liczby klatek i problemów.',
         'Items and menus':
             'Przedmioty i menu',
+        'Its level, weapons and bosses cannot be read from this save.':
+            'Z tego zapisu nie da się odczytać poziomu, broni ani bossów.',
         'Jump while dashing (L3)':
             'Skok podczas sprintu (L3)',
         'Keyboard and mouse':
@@ -8767,8 +9875,14 @@ WORLD = {
             'Następnym razem Play Bloodborne.exe od razu uruchomi grę z tymi ustawieniami.',
         'No add-on in this folder: The Old Hunters is a folder named {} in it.':
             'Brak dodatków w tym folderze: The Old Hunters to folder o nazwie {} w jego wnętrzu.',
+        'No backups yet.':
+            'Brak kopii zapasowych.',
+        'No characters yet. The game makes them, or bring yours from another version (below).':
+            'Brak postaci. Gra je tworzy albo przenieś swoje z innej wersji (poniżej).',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'Brak kompletnego zapisu Bloodborne w {} ani w jego podfolderach: potrzebny jest userdata0010 i co najmniej jedna postać (userdata0000 do userdata0009).',
+        'No controller found. Connect it by cable or Bluetooth.':
+            'Nie znaleziono kontrolera. Podłącz go kablem lub przez Bluetooth.',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
             'Bez awarii i zawieszeń przez {:.0f} min (średnio {:.0f} FPS).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
@@ -8789,6 +9903,8 @@ WORLD = {
             'Brak trofeów. Pojawią się tutaj, gdy tylko gra je odblokuje.',
         'No versions found.':
             'Nie znaleziono wersji.',
+        'None beaten yet':
+            'Jeszcze żaden nie pokonany',
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next starts.':
             'To normalne: port buduje pamięć podręczną shaderów, gdy pierwszy raz widzi dany efekt. Zostaje ona zachowana na kolejne uruchomienia.',
         "Not in the website's list; it has every instruction the port needs. Counted as the minimum.":
@@ -8815,6 +9931,8 @@ WORLD = {
             'Nieobsługiwane: {} GB pamięci wideo, a port wymaga co najmniej 4 GB.',
         'Nothing found. Try other words, or open Help.':
             'Nic nie znaleziono. Spróbuj innych słów albo otwórz „Pomoc”.',
+        'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+            'Nic się nie podświetla: podłącz kontroler ponownie (najpewniej kablem) i zamknij programy, które go przejmują, np. DS4Windows.',
         'Nothing was recorded (press F9 to start and F9 to stop).':
             'Nic nie nagrano (F9 zaczyna, F9 kończy).',
         'Now':
@@ -8843,8 +9961,14 @@ WORLD = {
             'Gra online',
         'Only a black screen':
             'Tylko czarny ekran',
+        'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+            'Dotyczy to tylko jednej postaci: w sekcji Twoje postacie otwórz jej wcześniejsze stany i przywróć tylko ją.',
         'Only the update folder was chosen':
             'Wybrano tylko folder aktualizacji',
+        'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+            'Zmieni się tylko ta postać; pozostałe zostaną bez zmian. Jej obecny stan zostanie najpierw zapisany w kopii („{}”), więc nic nie przepadnie.',
+        'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+            'Tylko jeśli grano od ostatniej kopii. Zachowywanych jest {} ostatnich kopii automatycznych; twoje — zawsze.',
         'Only with your own copy of the game':
             'Tylko z własną kopią gry',
         'Open Windows Security':
@@ -8853,8 +9977,14 @@ WORLD = {
             'Otwórz go, naciśnij Ctrl + A, a potem Ctrl + C.',
         'Open the Discord':
             'Otwórz Discord',
+        'Open the backups':
+            'Otwórz kopie zapasowe',
         'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the destination.':
             'Otwórz folder gry podstawowej (ten z dvdroot_ps4), naciśnij Ctrl + V i wybierz „Zamień pliki w miejscu docelowym”.',
+        'Open the controller test':
+            'Otwórz test kontrolera',
+        'Open the controller test and press the buttons.':
+            'Otwórz test kontrolera i naciskaj przyciski.',
         'Open the folder':
             'Otwórz folder',
         'Open the game folder':
@@ -8917,12 +10047,18 @@ WORLD = {
             'Przygotowanie ({}). Gra otworzy się na pełnym ekranie; nie używaj PC, dopóki się nie skończy.',
         'Press Win + R, type sysdm.cpl, press Enter.':
             'Naciśnij Win + R, wpisz sysdm.cpl, naciśnij Enter.',
+        'Press the buttons: what lights up here reaches the game.':
+            'Naciskaj przyciski: co tu się podświetla, dociera do gry.',
         'Press…':
             'Naciśnij…',
         'Problems and their fixes':
             'Problemy i ich rozwiązania',
         'Processor':
             'Procesor',
+        'Put this backup back?':
+            'Przywrócić tę kopię?',
+        'Put {} back to this state?':
+            'Przywrócić postać {} do tego stanu?',
         'Quiet (goal)':
             'Cichy',
         'Quit to Desktop in the title menu and in the System menu':
@@ -8947,6 +10083,8 @@ WORLD = {
             'Nagraj trasę…',
         'Recorded: every test of this scenario now replays your route.':
             'Nagrano: każdy test tego scenariusza odtwarza teraz twoją trasę.',
+        'Rename':
+            'Zmień nazwę',
         'Rename the folder {} to {}: the game looks for that exact name.':
             'Zmień nazwę folderu {} na {}: gra szuka dokładnie tej nazwy.',
         'Repeat the setup':
@@ -8959,6 +10097,8 @@ WORLD = {
             'Zarezerwowane: Insert/Esc (menu portu), F9 (nagrywanie trasy) oraz klawisz, który przełącza rozglądanie myszą lub ponownie wczytuje input.ini (domyślnie F7/F8).',
         'Restart the PC after installing it.':
             'Po instalacji uruchom ponownie PC.',
+        'Restore':
+            'Przywróć',
         'Right half of the touchpad (debug menu)':
             'Prawa połowa touchpada (menu debugowania)',
         'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.':
@@ -8973,6 +10113,8 @@ WORLD = {
             'Trasa: Stary Yharnam',
         'Runs the same two-minute route through this area and back every time, from the save of the mod “All Boss Save Files Ready to Fight” (Nexus Mods). The hunter cannot die and enemies leave him alone: for frame rate, loading and stutter while moving, and for comparing settings.':
             'Za każdym razem przebiega tę samą dwuminutową trasę przez ten obszar i z powrotem, z zapisu z moda „All Boss Save Files Ready to Fight” (Nexus Mods). Łowca nie może zginąć, a wrogowie zostawiają go w spokoju: do liczby klatek, doczytywania i zacięć w ruchu oraz do porównywania ustawień.',
+        "SDL3.dll is missing in the port's bin folder.":
+            'Brak SDL3.dll w folderze bin portu.',
         'SSD':
             'SSD',
         'Same as the monitor':
@@ -8985,14 +10127,20 @@ WORLD = {
             'Zapisz raport',
         'Save as zip':
             'Zapisz jako ZIP',
+        'Saved by hand':
+            'Zapisano ręcznie',
         'Saved: {}':
             'Zapisano: {}',
         'Saves':
             'Zapisy',
         'Saves & online':
             'Zapisy i online',
+        'Saves backed up: {}':
+            'Zapisy skopiowane: {}',
         "Saves imported. Your characters are in the game's Load Game menu.":
             'Zapisy zaimportowane. Twoje postacie są w menu gry „Wczytaj grę”.',
+        'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+            'Strona Zapisy, Kopie zapasowe: przywróć najnowszą kopię sprzed problemu („Przed grą” z datą ostatniej udanej sesji).',
         'Scenario':
             'Scenariusz',
         'Screen':
@@ -9027,8 +10175,16 @@ WORLD = {
             'Ustawienia: niektóre ({}) odbiegają od zalecenia dla twojego PC',
         'Setup':
             'Konfiguracja',
+        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+            'Shadery, logi i pliki tymczasowe tego PC. Puste: w folderze zapisów albo na tym PC, gdy folder zapisów leży w folderze w chmurze (OneDrive, Dropbox, Google Drive), aby każdy PC miał własne shadery.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Cienie dynamicznych świateł: włączone od „Powyżej minimum”.',
+        'Show all ({})':
+            'Pokaż wszystkie ({})',
+        'Show fewer':
+            'Pokaż mniej',
+        'Show in folder':
+            'Pokaż w folderze',
         'Show me on the live map':
             'Pokazuj mnie na mapie na żywo',
         'Show the fix?':
@@ -9057,6 +10213,8 @@ WORLD = {
             'Pomiń: skonfiguruję wszystko samodzielnie',
         'Slightly translucent window':
             'Lekko przezroczyste okno',
+        'Slot {}':
+            'Miejsce {}',
         'Smooth (goal)':
             'Płynny',
         'Stability run':
@@ -9071,6 +10229,8 @@ WORLD = {
             'Menu Start > Zabezpieczenia Windows > Ochrona przed wirusami i zagrożeniami > Zarządzaj ustawieniami.',
         'Start the test':
             'Rozpocznij test',
+        "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+            'Uruchomione ze Steam: we właściwościach gry w Steam spróbuj włączyć lub wyłączyć Steam Input.',
         'Starting the sign-in…':
             'Rozpoczynanie logowania…',
         'Starts in front of this boss with the save from the mod “All Boss Save Files Ready to Fight” (Nexus Mods), walks in and keeps the boss busy for two minutes: dodging, strafing, now and then an attack. The hunter cannot die; the boss fights as usual. For stability and a worst case, not for exact comparisons.':
@@ -9131,6 +10291,12 @@ WORLD = {
             "The Hunter's Dream (z graczami bbhost)",
         "The Hunter's Dream account":
             "Konto The Hunter's Dream",
+        "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+            "The Hunter's Dream: kooperacja razem z graczami bbhost po darmowym logowaniu przez Discord. shadNet: wybrany serwer shadNet i jego konto.",
+        "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+            "The Hunter's Dream: teraz online {} łowców ({} bbhost · {} shadNet)",
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+            'Menu „Wczytaj grę” jest puste, brakuje postaci albo gra zgłasza uszkodzony zapis. Przed każdym uruchomieniem launcher tworzy kopię zapisów, więc możesz wrócić do poprzedniego stanu.',
         'The Old Hunters found ({}).':
             'Znaleziono The Old Hunters ({}).',
         'The Old Hunters found in the saves folder (addcont).':
@@ -9139,12 +10305,20 @@ WORLD = {
             'The Old Hunters: nie znaleziono. Potrzebne tylko, jeśli je posiadasz; bez niego jego obszary pozostają zamknięte.',
         'The account you made at supermedo.com.':
             'Konto założone na supermedo.com.',
+        'The automatic backup of the saves failed: {}':
+            'Automatyczna kopia zapisów nie powiodła się: {}',
+        'The character came from another version and there is no backup yet: import it again under "From other versions".':
+            'Postać pochodzi z innej wersji, a kopii jeszcze nie ma: zaimportuj ją ponownie w „Z innych wersji”.',
         'The check stopped: {}':
             'Sprawdzanie przerwane: {}',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
             'Łatki społeczności (60 FPS i więcej, opcje efektów) istnieją tylko dla 1.09; inne wersje działają w 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "Połączenie z The Hunter's Dream to wykonany przez Awakena port kodu sieciowego bbhost; bbhost i The Hunter's Dream są autorstwa droogie.",
+        'The controller does nothing':
+            'Kontroler nie działa',
+        'The controller test cannot start: {}':
+            'Nie można uruchomić testu kontrolera: {}',
         'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
             'Widok eksperta jest teraz włączony, żeby to pokazać. Przełącznik jest na dole paska bocznego.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
@@ -9161,8 +10335,12 @@ WORLD = {
             'Gra nie jest w wersji 1.09',
         'The game is open: load the save, press F9, run the route and back, press F9 again, quit the game.':
             'Gra jest otwarta: wczytaj zapis, naciśnij F9, przebiegnij trasę tam i z powrotem, naciśnij ponownie F9, wyjdź z gry.',
+        'The game is running: the test waits until it is closed.':
+            'Gra działa: test poczeka, aż zostanie zamknięta.',
         'The game needs Vulkan 1.3 and a current driver; an old or crashed driver ends the game with "device lost".':
             'Gra wymaga Vulkan 1.3 i aktualnego sterownika; stary sterownik lub jego awaria kończy grę błędem „device lost”.',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+            'Gra odczytuje kontrolery tak samo jak test kontrolera na stronie Sterowanie: co tam się podświetla, dociera do gry.',
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest memory").':
             'Gra rezerwuje przy starcie ok. 6 GB (10 GB w 1440p i 4K) w jednym bloku, z RAM i pliku stronicowania łącznie. Gdy Windows odmówi, gra natychmiast się zamyka z kodem 3 (w dzienniku jest „cannot create … MiB of guest memory”).',
         'The game shows the buttons of whatever you use; the keys can be changed on the Controls page.':
@@ -9227,6 +10405,8 @@ WORLD = {
             'W tym folderze nie ma eboot.bin. Wybierz folder, w którym bezpośrednio znajduje się eboot.bin, a nie folder nadrzędny.',
         'There is no save of this port, shadPS4 or bbhost in that folder (SPRJ0005 with userdata0000 …).':
             'W tym folderze nie ma zapisu tego portu, shadPS4 ani bbhost (SPRJ0005 z userdata0000 …).',
+        'There is no save to back up yet.':
+            'Nie ma jeszcze zapisu do skopiowania.',
         "These are a PS4's own encrypted backups (sdimg_…); they cannot be used. Export the save with Apollo Save Tool on the PS4 instead.":
             'To zaszyfrowane kopie zapasowe samej PS4 (sdimg_…); nie da się ich użyć. Zamiast tego wyeksportuj zapis za pomocą Apollo Save Tool na PS4.',
         'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':
@@ -9237,6 +10417,10 @@ WORLD = {
             'Ten PC nie uruchomi portu.',
         'This PC does not meet the requirements. You can still go on, but the game will probably not run.':
             'Ten PC nie spełnia wymagań. Możesz kontynuować, ale gra prawdopodobnie nie zadziała.',
+        'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+            'Tej postaci nie da się przywrócić osobno ({}). Zamiast tego przywróć całą kopię w sekcji Kopie zapasowe.',
+        'This file is no Bloodborne save backup: {}':
+            'Ten plik nie jest kopią zapisów Bloodborne: {}',
         'This is not a test scenario: {}':
             'To nie jest scenariusz testowy: {}',
         'This is the add-on itself: choose the folder that contains {}.':
@@ -9321,6 +10505,8 @@ WORLD = {
             'WASD, Spacja – unik, lewy klik / Shift + lewy klik – atak, prawy klik / Shift + prawy klik (lub Ctrl) – druga ręka, E – interakcja, R – przedmiot, F – fiolka, Q – namierzanie, Tab lub Esc – menu, oraz kamera myszy 1:1. Zastępuje przypisania klawiatury i myszy; kontroler zachowuje swoje.',
         'Walk (hold)':
             'Chód (przytrzymaj)',
+        'Weapons':
+            'Broń',
         'Welcome':
             'Witaj',
         'Welcome, good hunter':
@@ -9369,12 +10555,20 @@ WORLD = {
             'Zalecenie dla twojego PC',
         'Your PC: {} · {}':
             'Twój PC: {} · {}',
+        'Your characters':
+            'Twoje postacie',
         'Your characters and online play':
             'Twoje postacie i gra online',
         'Your characters from other versions':
             'Twoje postacie z innych wersji',
+        'Your characters, their backups and the trophies. Empty: {}.':
+            'Twoje postacie, ich kopie zapasowe i trofea. Puste: {}.',
         'Your characters: bring them from another version, back them up, put a backup back.':
             'Twoje postacie: przenieś je z innej wersji, utwórz kopię zapasową, przywróć kopię.',
+        'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+            'Twoje obecne zapisy ({}) zostaną najpierw skopiowane („{}”), więc nic nie przepadnie.',
+        'Your current saves are backed up first: trying an older backup loses nothing.':
+            'Obecne zapisy są najpierw kopiowane: wypróbowanie starszej kopii niczego nie odbiera.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Twój ekran: {} × {}. Zalecane dla twojego PC: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
@@ -9407,6 +10601,8 @@ WORLD = {
             'Twoje poprzednie zapisy: {}',
         'Your processor sets the limit.':
             'Limit wyznacza twój procesor.',
+        'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+            'Twój folder zapisów jest w folderze w chmurze: zapisy idą z tobą, shadery zostają na tym PC. Graj naraz tylko na jednym PC i poczekaj na koniec synchronizacji, zanim zaczniesz na innym; w OneDrive ustaw dla folderu „Zawsze zachowuj na tym urządzeniu”.',
         'Your setup':
             'Twoja konfiguracja',
         'above':
@@ -9501,6 +10697,10 @@ WORLD = {
             'problem',
         'round {}, {} min left':
             'runda {}, pozostało: {} min',
+        'same as now':
+            'tak jak teraz',
+        'saved {}':
+            'zapisano {}',
         'sce_module, sce_sys and dvdroot_ps4 are there.':
             'sce_module, sce_sys i dvdroot_ps4 są na miejscu.',
         'shadNet server':
@@ -9543,12 +10743,16 @@ WORLD = {
             'Generowanie klatek {}: wyższa liczba klatek, nieco większe opóźnienie sterowania',
         '{} is available on your card for even higher frame rates.':
             'Twoja karta obsługuje {}, co daje jeszcze wyższą liczbę klatek.',
+        '{} is back at this state.':
+            'Postać {} jest znów w tym stanie.',
         '{} is reserved (menu, recording, or a hotkey) and cannot be bound to a game action.':
             'Klawisz {} jest zarezerwowany (menu, nagrywanie lub skrót klawiszowy) i nie można go przypisać do akcji w grze.',
         '{} minutes':
             '{} min',
         '{} of {} trophies earned':
             'Zdobyte trofea: {} z {}',
+        '{} online':
+            '{} online',
         '{} runs':
             'przebiegi: {}',
         '{} settings differ from the recommendation.':
@@ -9618,6 +10822,10 @@ WORLD = {
             '90 FPS',
         'A PS4 (exported save)':
             'Bir PS4 (dışa aktarılmış kayıt)',
+        'A character is gone or the save is broken':
+            'Bir karakter kayboldu ya da kayıt bozuk',
+        'A character without a readable name':
+            'Adı okunamayan bir karakter',
         'A constant added on top of sensitivity; raises the floor for slow movements without affecting fast ones as much.':
             'Hassasiyete eklenen sabit bir değer; yavaş hareketlerin alt sınırını yükseltir, hızlı hareketleri o kadar etkilemez.',
         'A controller (PlayStation, Xbox, Switch)':
@@ -9636,6 +10844,10 @@ WORLD = {
             'Başlatıcının arkasında kalanlardan bir iz: bulanık bir başlık çubuğu (Windows 11) ve %98,5 opak pencere. Kapalı: tamamen opak, en kolay okunur.',
         'A key, the mouse or a controller used during the test ends it.':
             'Test sırasında bir tuş, fare veya kumanda kullanılırsa test sona erer.',
+        'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+            'Bu yedek için bir ad. Enter kaydeder, Esc her şeyi olduğu gibi bırakır.',
+        'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+            'Bunun yerine bir shadNet sunucusu ve tüm seçenekler: Çevrimiçi oyun sayfası. Çevrimdışı için bir şey gerekmez: işareti kaldır.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
             'Ekran kartınızın kaldırabildiği en iyi görüntüyle sabit 60 FPS.',
         'A stick direction can only be bound to a key, not a mouse button.':
@@ -9658,6 +10870,8 @@ WORLD = {
             'Minimum üstü',
         'Achievements':
             'Başarımlar',
+        'Add a backup file…':
+            'Yedek dosyası ekle…',
         'Add a test…':
             'Test ekle…',
         'Added. Choose it under Scenario (the list is updated when the launcher starts next).':
@@ -9708,10 +10922,22 @@ WORLD = {
             'Uyanış',
         'Back':
             'Geri',
+        'Back up automatically before every start':
+            'Her başlatmadan önce otomatik yedekle',
+        'Back up now':
+            'Şimdi yedekle',
+        "Backup put back. Your characters are in the game's Load Game menu.":
+            'Yedek geri yüklendi. Karakterlerin oyunun Load Game menüsünde.',
         'Backups':
             'Yedekler',
         'Balanced (goal)':
             'Dengeli',
+        'Before a restore':
+            'Geri yüklemeden önce',
+        'Before an import':
+            'İçe aktarmadan önce',
+        'Before playing':
+            'Oynamadan önce',
         'Below minimum':
             'Minimum altı',
         'Best for your goal: {} with {:.0f} FPS.':
@@ -9726,6 +10952,8 @@ WORLD = {
             'Boss savaşı (bir boss önündeki kaydınız)',
         'Boss: Cleric Beast':
             'Boss: Cleric Beast',
+        'Bosses':
+            'Boss’lar',
         'Bring your saves along, and play with others.':
             'Kayıtlarınızı getirin ve başkalarıyla oynayın.',
         'Bronze':
@@ -9740,6 +10968,10 @@ WORLD = {
             'AVX desteği olmayan işlemciler (birçok Pentium/Celeron modeli) portu hiç çalıştıramaz.',
         'CUSA03173: the Game of the Year Edition, with The Old Hunters.':
             'CUSA03173: The Old Hunters’ı içeren Game of the Year Edition.',
+        'Cache folder':
+            'Önbellek klasörü',
+        'Caches now: {}':
+            'Önbellekler şu an: {}',
         'Camera':
             'Kamera',
         'Camera (right stick)':
@@ -9780,6 +11012,8 @@ WORLD = {
             'Oyun dosyaları kontrol ediliyor…',
         'Checking your PC…':
             'Bilgisayarınız kontrol ediliyor…',
+        'Choose a backup (zip)':
+            'Bir yedek seç (zip)',
         'Choose a folder…':
             'Klasör seçin…',
         'Choose at least two values to compare.':
@@ -9788,6 +11022,8 @@ WORLD = {
             'Nasıl hissettirmesi gerektiğini seçin; gerekli ayarlar donanımınıza göre belirlenir.',
         'Choose the base game folder in Game & language. Its dvdroot_ps4 has about 29 GB in about 28,800 files.':
             'Oyun ve dil sayfasında ana oyun klasörünü seçin. Bu klasördeki dvdroot_ps4, yaklaşık 28.800 dosyada yaklaşık 29 GB içerir.',
+        'Choose the cache folder':
+            'Önbellek klasörünü seçin',
         'Choose the folder with the saves':
             'Kayıtların bulunduğu klasörü seçin',
         'Choose the game folder':
@@ -9814,6 +11050,8 @@ WORLD = {
             'Önce oyunu kapatın.',
         'Close the game first; it writes its saves while it runs.':
             'Önce oyunu kapatın; oyun çalışırken kayıtlarını yazar.',
+        'Close the game.':
+            'Oyunu kapat.',
         'Close your browser and other programs while playing.':
             'Oynarken tarayıcınızı ve diğer programları kapatın.',
         'Co-op pool':
@@ -9828,6 +11066,8 @@ WORLD = {
             'Başka bir sürümden geliyorsanız karakterleriniz IV. adımda bulunur.',
         'Compare one setting: pictures and frame rate':
             'Bir ayarı karşılaştır: görüntüler ve kare hızı',
+        'Controller test':
+            'Kumanda testi',
         'Controls':
             'Kontroller',
         'Copied: paste it into your message on Discord or in the forum.':
@@ -9842,10 +11082,24 @@ WORLD = {
             'Güncelleme klasöründeki her şeyi ana oyun klasörüne kopyalayın ve "Hedefteki dosyaları değiştir"i seçin.',
         'Copy everything from the update folder into the base game folder and replace the files.':
             'Güncelleme klasöründeki her şeyi ana oyun klasörüne kopyalayın ve dosyaları değiştirin.',
+        'Copy the backup to…':
+            'Yedeği şuraya kopyala…',
+        'Copy to…':
+            'Şuraya kopyala…',
+        'Could not back up the saves: {}':
+            'Kayıtlar yedeklenemedi: {}',
+        'Could not copy the backup: {}':
+            'Yedek kopyalanamadı: {}',
         'Could not import the saves: {}':
             'Kayıtlar içe aktarılamadı: {}',
         'Could not load the list of versions: {}':
             'Sürüm listesi yüklenemedi: {}',
+        'Could not move the backup to the Recycle Bin.':
+            'Yedek Geri Dönüşüm Kutusu’na taşınamadı.',
+        'Could not put the backup back: {}':
+            'Yedek geri yüklenemedi: {}',
+        'Could not rename the backup: {}':
+            'Yedek yeniden adlandırılamadı: {}',
         'Could not save it: {}':
             'Kaydedilemedi: {}',
         'Ctrl+F':
@@ -9858,8 +11112,14 @@ WORLD = {
             'DLSS için GeForce RTX 20 serisi veya daha yenisi gerekir. DLSS Kare Oluşturma için RTX 40 (2×) veya RTX 50 (4×’e kadar) gerekir. FSR 3.1 kare oluşturma her kartta çalışır ve en iyi sonucu yaklaşık 60 temel FPS’ten itibaren verir.',
         'Dark Souls III layout':
             'Dark Souls III düzeni',
+        'Deaths':
+            'Ölümler',
         'Debug':
             'Hata ayıklama',
+        'Delete':
+            'Sil',
+        'Delete this backup? It goes to the Recycle Bin.':
+            'Bu yedek silinsin mi? Geri Dönüşüm Kutusu’na gider.',
         'Derived from the requirements and the hardware check on bbport.de for your PC at {} ({}). Chromatic aberration, depth of field, motion blur and sharpening are taste and stay as you set them.':
             'bbport.de’deki gereksinimlerden ve donanım kontrolünden, bilgisayarınız için {} çözünürlükte ({}) türetildi. Renk sapması, alan derinliği, hareket bulanıklığı ve keskinleştirme kişisel tercihtir ve ayarladığınız gibi kalır.',
         'Detected automatically':
@@ -9876,6 +11136,8 @@ WORLD = {
             'İndirme sayfası',
         'Download the FSR 4 files now (about 30 MB)':
             'FSR 4 dosyalarını şimdi indir (yaklaşık 30 MB)',
+        'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+            'Sırayı değiştirmek için bir modu tutamağından sürükle. Listede daha aşağıdaki daha sonra yüklenir ve çakışmalarda kazanır.',
         'Driver notes':
             'Sürücü notları',
         'Duration':
@@ -9884,6 +11146,10 @@ WORLD = {
             'UZMAN',
         'Each':
             'Her değer',
+        'Earlier backup':
+            'Önceki yedek',
+        'Earlier states in your backups ({})':
+            'Yedeklerindeki önceki durumlar ({})',
         'Earlier tests':
             'Önceki testler',
         'Earned':
@@ -9896,6 +11162,8 @@ WORLD = {
             'Fareyle bakışı etkinleştir',
         'Enough for 4K (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 class).':
             '4K için yeterli (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 sınıfı).',
+        'Every character in this backup goes back to this state.':
+            'Bu yedekteki tüm karakterler bu duruma geri döner.',
         'Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.':
             'Tüm grafik ve kare hızı ayarları. bbport.ini dosyasında saklanır; oyun içi menü (Insert veya L3+R3) aynı değerleri değiştirir.',
         'Every graphics setting one by one:':
@@ -9946,10 +11214,16 @@ WORLD = {
             'Kare oluşturma',
         "Frames made between two of the game's: 60 FPS on screen becomes 120. Needs a display with that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce RTX 40 or newer, otherwise FSR 3.1 is used.":
             'Oyunun iki karesi arasına eklenen kareler: ekrandaki 60 FPS, 120 olur. Bu yenileme hızına sahip bir ekran gerekir (60 FPS’te 120 Hz veya üzeri); ekran ek kareleri gösteremediğinde duraklar. Giriş gecikmesini biraz artırır. Menüler ve videolar için kare oluşturulmaz. DLSS için GeForce RTX 40 veya daha yenisi gerekir, aksi halde FSR 3.1 kullanılır.',
+        'From a file':
+            'Bir dosyadan',
+        'From other versions':
+            'Diğer sürümlerden',
         'From your last save: the camera turns once around the hunter and back (24 s). Quick and the same every time; for the frame rate and for comparing settings.':
             'Son kaydınızdan: kamera avcının etrafında bir kez dönüp geri gelir (24 sn). Hızlıdır ve her seferinde aynıdır; kare hızı ve ayar karşılaştırması için.',
         'Fullscreen (recommended)':
             'Tam ekran (önerilen)',
+        'Fullscreen, HDR and the taste effects are on Picture & performance.':
+            'Tam ekran, HDR ve kişisel tercih efektleri Görüntü ve performans sayfasında.',
         'Fullscreen, HDR, field of view and the taste effects are on Picture & performance.':
             'Tam ekran, HDR, görüş alanı ve kişisel tercih efektleri Görüntü ve performans sayfasında.',
         'GPU':
@@ -9990,6 +11264,8 @@ WORLD = {
             'Kesin sınırlar',
         'Help':
             'Yardım',
+        'Hide the earlier states':
+            'Önceki durumları gizle',
         'Hide the settings':
             'Ayarları gizle',
         'Highest model detail: your card has room to spare at this resolution.':
@@ -10018,6 +11294,8 @@ WORLD = {
             'Pencerede: açılırken kullanılan boyut. Kenarlarını yine sürükleyebilirsin; "Son seferki gibi" onu oyunu son kapattığındaki boyutta açar.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'Oyunda Insert (klavye) veya L3 + R3 (kumanda) portun menüsünü açar.',
+        'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+            'Oyunda “{}” en son oynadığın karakteri yükler; başlık ekranındaki “{}” hepsini listeler.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
             'Açılan sayfada ({0}) Discord ile oturum açın ve şu kodu girin:',
         'In the page that opened, sign in with Discord and enter this code:':
@@ -10062,6 +11340,8 @@ WORLD = {
             'Başlayabilir ama düşük kare hızları ve sorunlar beklenebilir.',
         'Items and menus':
             'Eşyalar ve menüler',
+        'Its level, weapons and bosses cannot be read from this save.':
+            'Bu kayıttan seviye, silahlar ve boss’lar okunamıyor.',
         'Jump while dashing (L3)':
             'Koşarken zıpla (L3)',
         'Keyboard and mouse':
@@ -10170,8 +11450,14 @@ WORLD = {
             'Bir dahaki sefere Play Bloodborne.exe oyunu doğrudan bu ayarlarla başlatır.',
         'No add-on in this folder: The Old Hunters is a folder named {} in it.':
             'Bu klasörde eklenti yok: The Old Hunters, içinde {} adlı bir klasördür.',
+        'No backups yet.':
+            'Henüz yedek yok.',
+        'No characters yet. The game makes them, or bring yours from another version (below).':
+            'Henüz karakter yok. Oyun onları oluşturur ya da kendi karakterlerini başka bir sürümden getir (aşağıda).',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             '{} veya alt klasörlerinde eksiksiz bir Bloodborne kaydı yok: userdata0010 ve en az bir karakter (userdata0000 ile userdata0009 arası) gerekli.',
+        'No controller found. Connect it by cable or Bluetooth.':
+            'Kumanda bulunamadı. Kabloyla ya da Bluetooth ile bağla.',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
             '{:.0f} dakika boyunca çökme veya donma yok (ortalama {:.0f} FPS).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
@@ -10192,6 +11478,8 @@ WORLD = {
             'Henüz kupa yok. Oyun kupaların kilidini açtığı anda burada görünürler.',
         'No versions found.':
             'Sürüm bulunamadı.',
+        'None beaten yet':
+            'Henüz hiçbiri yenilmedi',
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next starts.':
             'Normal: port, her efekti ilk gördüğünde shader önbelleğini oluşturur. Önbellek sonraki başlatmalar için saklanır.',
         "Not in the website's list; it has every instruction the port needs. Counted as the minimum.":
@@ -10218,6 +11506,8 @@ WORLD = {
             'Desteklenmiyor: {} GB video belleği; port en az 4 GB gerektirir.',
         'Nothing found. Try other words, or open Help.':
             'Hiçbir şey bulunamadı. Başka kelimeler deneyin veya Yardım’ı açın.',
+        'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+            'Hiçbir şey yanmıyor: kumandayı yeniden bağla (en garantisi kablo) ve onu devralan DS4Windows gibi programları kapat.',
         'Nothing was recorded (press F9 to start and F9 to stop).':
             'Hiçbir şey kaydedilmedi (F9 başlatır, F9 durdurur).',
         'Now':
@@ -10246,8 +11536,14 @@ WORLD = {
             'Çevrim içi oyun',
         'Only a black screen':
             'Yalnızca siyah ekran',
+        'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+            'Yalnızca bir karakter etkilendiyse: Karakterlerin bölümünde önceki durumlarını aç ve yalnızca onu geri yükle.',
         'Only the update folder was chosen':
             'Yalnızca güncelleme klasörü seçildi',
+        'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+            'Yalnızca bu karakter değişir; diğer karakterlerin olduğu gibi kalır. Mevcut durumu önce yedeklenir (“{}”), yani hiçbir şey kaybolmaz.',
+        'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+            'Yalnızca son yedekten beri oynadıysan. Son {} otomatik yedek saklanır; kendi yedeklerin her zaman.',
         'Only with your own copy of the game':
             'Yalnızca kendi oyun kopyanızla',
         'Open Windows Security':
@@ -10256,8 +11552,14 @@ WORLD = {
             'Klasörü açın, Ctrl + A’ya, ardından Ctrl + C’ye basın.',
         'Open the Discord':
             'Discord’u aç',
+        'Open the backups':
+            'Yedekleri aç',
         'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the destination.':
             'Ana oyun klasörünü (dvdroot_ps4’ün bulunduğu klasör) açın, Ctrl + V’ye basın ve "Hedefteki dosyaları değiştir"i seçin.',
+        'Open the controller test':
+            'Kumanda testini aç',
+        'Open the controller test and press the buttons.':
+            'Kumanda testini aç ve tuşlara bas.',
         'Open the folder':
             'Klasörü aç',
         'Open the game folder':
@@ -10320,12 +11622,18 @@ WORLD = {
             'Hazırlanıyor ({}). Oyun tam ekran açılır; işlem bitene kadar bilgisayara dokunmayın.',
         'Press Win + R, type sysdm.cpl, press Enter.':
             'Win + R’ye basın, sysdm.cpl yazın, Enter’a basın.',
+        'Press the buttons: what lights up here reaches the game.':
+            'Tuşlara bas: burada yanan, oyuna ulaşır.',
         'Press…':
             'Tuşa basın…',
         'Problems and their fixes':
             'Sorunlar ve çözümleri',
         'Processor':
             'İşlemci',
+        'Put this backup back?':
+            'Bu yedek geri yüklensin mi?',
+        'Put {} back to this state?':
+            '{} bu duruma geri döndürülsün mü?',
         'Quiet (goal)':
             'Sessiz',
         'Quit to Desktop in the title menu and in the System menu':
@@ -10350,6 +11658,8 @@ WORLD = {
             'Rotayı kaydet…',
         'Recorded: every test of this scenario now replays your route.':
             'Kaydedildi: bu senaryonun her testi artık sizin rotanızı oynatır.',
+        'Rename':
+            'Yeniden adlandır',
         'Rename the folder {} to {}: the game looks for that exact name.':
             '{} klasörünü {} olarak yeniden adlandır: oyun tam olarak bu adı arar.',
         'Repeat the setup':
@@ -10362,6 +11672,8 @@ WORLD = {
             'Ayrılmış: Insert/Esc (portun menüsü), F9 (rota kaydı) ve fareyle bakışı açıp kapatan ya da input.ini’yi yeniden yükleyen tuşlar (varsayılan olarak F7/F8).',
         'Restart the PC after installing it.':
             'Kurduktan sonra bilgisayarı yeniden başlatın.',
+        'Restore':
+            'Geri yükle',
         'Right half of the touchpad (debug menu)':
             'Dokunmatik yüzeyin sağ yarısı (hata ayıklama menüsü)',
         'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.':
@@ -10376,6 +11688,8 @@ WORLD = {
             'Koşu: Eski Yharnam',
         'Runs the same two-minute route through this area and back every time, from the save of the mod “All Boss Save Files Ready to Fight” (Nexus Mods). The hunter cannot die and enemies leave him alone: for frame rate, loading and stutter while moving, and for comparing settings.':
             'Her seferinde bu bölgede aynı iki dakikalık rotayı gidip gelir; “All Boss Save Files Ready to Fight” modunun (Nexus Mods) kaydından başlar. Avcı ölemez ve düşmanlar ona dokunmaz: hareket halindeyken kare hızı, yükleme ve takılmalar için ve ayarları karşılaştırmak için.',
+        "SDL3.dll is missing in the port's bin folder.":
+            'Portun bin klasöründe SDL3.dll eksik.',
         'SSD':
             'SSD',
         'Same as the monitor':
@@ -10388,14 +11702,20 @@ WORLD = {
             'Rapor kaydet',
         'Save as zip':
             'ZIP olarak kaydet',
+        'Saved by hand':
+            'Elle kaydedildi',
         'Saved: {}':
             'Kaydedildi: {}',
         'Saves':
             'Kayıtlar',
         'Saves & online':
             'Kayıtlar ve çevrim içi',
+        'Saves backed up: {}':
+            'Kayıtlar yedeklendi: {}',
         "Saves imported. Your characters are in the game's Load Game menu.":
             'Kayıtlar içe aktarıldı. Karakterleriniz oyunun Load Game menüsünde.',
+        'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+            'Kayıtlar sayfası, Yedekler: sorundan önceki en yeni yedeği geri yükle (son iyi oturumunun tarihli "Oynamadan önce" yedeği).',
         'Scenario':
             'Senaryo',
         'Screen':
@@ -10430,8 +11750,16 @@ WORLD = {
             'Ayarlar: {} ayar bilgisayarınız için önerilenden farklı',
         'Setup':
             'Kurulum',
+        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+            'Bu bilgisayarın shader’ları, günlükleri ve geçici dosyaları. Boş: kayıt klasöründe; kayıt klasörü bir bulut klasöründeyse (OneDrive, Dropbox, Google Drive) bu bilgisayarda, böylece her bilgisayar kendi shader’larını tutar.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Dinamik ışık gölgeleri: "Minimum üstü" seviyesinden itibaren açık.',
+        'Show all ({})':
+            'Tümünü göster ({})',
+        'Show fewer':
+            'Daha az göster',
+        'Show in folder':
+            'Klasörde göster',
         'Show me on the live map':
             'Beni canlı haritada göster',
         'Show the fix?':
@@ -10460,6 +11788,8 @@ WORLD = {
             'Atla: her şeyi kendim ayarlayacağım',
         'Slightly translucent window':
             'Hafif saydam pencere',
+        'Slot {}':
+            'Yuva {}',
         'Smooth (goal)':
             'Akıcı',
         'Stability run':
@@ -10474,6 +11804,8 @@ WORLD = {
             'Başlat menüsü > Windows Güvenliği > Virüs ve tehdit koruması > Ayarları yönet.',
         'Start the test':
             'Testi başlat',
+        "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+            "Steam'den başlatıldıysa: oyunun Steam özelliklerinde Steam Input'u açıp kapatmayı dene.",
         'Starting the sign-in…':
             'Oturum açma başlatılıyor…',
         'Starts in front of this boss with the save from the mod “All Boss Save Files Ready to Fight” (Nexus Mods), walks in and keeps the boss busy for two minutes: dodging, strafing, now and then an attack. The hunter cannot die; the boss fights as usual. For stability and a worst case, not for exact comparisons.':
@@ -10534,6 +11866,12 @@ WORLD = {
             "The Hunter's Dream (bbhost oyuncularıyla)",
         "The Hunter's Dream account":
             "The Hunter's Dream hesabı",
+        "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+            "The Hunter's Dream: Discord ile ücretsiz giriş yaptıktan sonra bbhost oyuncularıyla birlikte ortak oyun. shadNet: seçtiğin bir shadNet sunucusu ve hesabı.",
+        "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+            "The Hunter's Dream: şu an {} avcı çevrimiçi ({} bbhost · {} shadNet)",
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+            'Load Game menüsü boş, bir karakter eksik ya da oyun kaydın bozuk olduğunu söylüyor. Başlatıcı her başlatmadan önce kayıtlarını yedekler; böylece eski haline dönebilirsin.',
         'The Old Hunters found ({}).':
             'The Old Hunters bulundu ({}).',
         'The Old Hunters found in the saves folder (addcont).':
@@ -10542,12 +11880,20 @@ WORLD = {
             'The Old Hunters: bulunamadı. Yalnızca ona sahipsen gerekir; o olmadan bölgeleri kapalı kalır.',
         'The account you made at supermedo.com.':
             'supermedo.com’da oluşturduğunuz hesap.',
+        'The automatic backup of the saves failed: {}':
+            'Kayıtların otomatik yedeklenmesi başarısız oldu: {}',
+        'The character came from another version and there is no backup yet: import it again under "From other versions".':
+            'Karakter başka bir sürümden geldi ve henüz yedek yok: "Diğer sürümlerden" altında yeniden içe aktar.',
         'The check stopped: {}':
             'Kontrol durdu: {}',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
             'Topluluk yamaları (60 FPS ve üzeri, efekt seçenekleri) yalnızca 1.09 için mevcut; diğer sürümler 30 FPS’te çalışır.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "The Hunter's Dream bağlantısı, bbhost’un ağ kodunun Awaken tarafından yapılmış portudur; bbhost ve The Hunter's Dream droogie’ye aittir.",
+        'The controller does nothing':
+            'Kumanda hiçbir şey yapmıyor',
+        'The controller test cannot start: {}':
+            'Kumanda testi başlatılamıyor: {}',
         'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
             'Bunu göstermek için uzman görünümü açıldı. Anahtar kenar çubuğunun altında.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
@@ -10564,8 +11910,12 @@ WORLD = {
             'Oyun 1.09 sürümü değil',
         'The game is open: load the save, press F9, run the route and back, press F9 again, quit the game.':
             "Oyun açık: kaydı yükleyin, F9'a basın, rotayı gidip gelin, tekrar F9'a basın, oyundan çıkın.",
+        'The game is running: the test waits until it is closed.':
+            'Oyun çalışıyor: test, oyun kapanana kadar bekler.',
         'The game needs Vulkan 1.3 and a current driver; an old or crashed driver ends the game with "device lost".':
             'Oyun Vulkan 1.3 ve güncel bir sürücü gerektirir; eski veya çökmüş bir sürücü oyunu "device lost" hatasıyla sonlandırır.',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+            'Oyun kumandaları Kontroller sayfasındaki kumanda testiyle aynı şekilde okur: orada yanan, oyuna ulaşır.',
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest memory").':
             'Oyun başlarken RAM ve disk belleği dosyasından birlikte, tek blok halinde yaklaşık 6 GB (1440p ve 4K’da 10 GB) ayırır. Windows bunu reddederse oyun hemen kod 3 ile kapanır (günlükte "cannot create … MiB of guest memory" yazar).',
         'The game shows the buttons of whatever you use; the keys can be changed on the Controls page.':
@@ -10630,6 +11980,8 @@ WORLD = {
             'Bu klasörde eboot.bin yok. Bir üst klasörü değil, eboot.bin’in doğrudan içinde bulunduğu klasörü seçin.',
         'There is no save of this port, shadPS4 or bbhost in that folder (SPRJ0005 with userdata0000 …).':
             'Bu klasörde bu portun, shadPS4’ün veya bbhost’un kaydı yok (userdata0000 … içeren SPRJ0005).',
+        'There is no save to back up yet.':
+            'Henüz yedeklenecek bir kayıt yok.',
         "These are a PS4's own encrypted backups (sdimg_…); they cannot be used. Export the save with Apollo Save Tool on the PS4 instead.":
             'Bunlar PS4’ün kendi şifreli yedekleri (sdimg_…); kullanılamazlar. Bunun yerine kaydı PS4’te Apollo Save Tool ile dışa aktarın.',
         'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':
@@ -10640,6 +11992,10 @@ WORLD = {
             'Bu bilgisayar portu çalıştıramaz.',
         'This PC does not meet the requirements. You can still go on, but the game will probably not run.':
             'Bu bilgisayar gereksinimleri karşılamıyor. Yine de devam edebilirsiniz ama oyun büyük olasılıkla çalışmayacak.',
+        'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+            'Bu karakter tek başına geri yüklenemiyor ({}). Bunun yerine Yedekler bölümünden yedeğin tamamını geri yükle.',
+        'This file is no Bloodborne save backup: {}':
+            'Bu dosya bir Bloodborne kayıt yedeği değil: {}',
         'This is not a test scenario: {}':
             'Bu bir test senaryosu değil: {}',
         'This is the add-on itself: choose the folder that contains {}.':
@@ -10724,6 +12080,8 @@ WORLD = {
             'WASD, kaçınmak için Boşluk, saldırmak için sol tık / Shift + sol tık, ikinci el için sağ tık / Shift + sağ tık (veya Ctrl), E etkileşim, R eşya, F şişe, Q hedefe kilitlenme, Tab veya Esc menü ve 1:1 fare kamerası. Klavye ve fare atamalarının yerini alır; kumanda kendi atamalarını korur.',
         'Walk (hold)':
             'Yürü (basılı tut)',
+        'Weapons':
+            'Silahlar',
         'Welcome':
             'Hoş geldiniz',
         'Welcome, good hunter':
@@ -10772,12 +12130,20 @@ WORLD = {
             'Bilgisayarınız için öneri',
         'Your PC: {} · {}':
             'Bilgisayarınız: {} · {}',
+        'Your characters':
+            'Karakterlerin',
         'Your characters and online play':
             'Karakterleriniz ve çevrim içi oyun',
         'Your characters from other versions':
             'Diğer sürümlerdeki karakterleriniz',
+        'Your characters, their backups and the trophies. Empty: {}.':
+            'Karakterlerin, yedekleri ve kupalar. Boş: {}.',
         'Your characters: bring them from another version, back them up, put a backup back.':
             'Karakterleriniz: başka bir sürümden getirin, yedekleyin, bir yedeği geri yükleyin.',
+        'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+            'Mevcut kayıtların ({}) önce yedeklenir ("{}"), yani hiçbir şey kaybolmaz.',
+        'Your current saves are backed up first: trying an older backup loses nothing.':
+            'Mevcut kayıtların önce yedeklenir: daha eski bir yedeği denemek hiçbir şey kaybettirmez.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Ekranınız: {} × {}. Bilgisayarınız için önerilen: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
@@ -10810,6 +12176,8 @@ WORLD = {
             'Önceki kayıtlarınız: {}',
         'Your processor sets the limit.':
             'Sınırı işlemciniz belirliyor.',
+        'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+            'Kayıt klasörün bir bulut klasöründe: kayıtlar seninle gelir, shader’lar bu bilgisayarda kalır. Aynı anda yalnızca bir bilgisayarda oyna ve başka birinde başlamadan önce eşitlemenin bitmesini bekle; OneDrive’da klasörü “Her zaman bu cihazda tut” olarak ayarla.',
         'Your setup':
             'Kurulumunuz',
         'above':
@@ -10904,6 +12272,10 @@ WORLD = {
             'sorun',
         'round {}, {} min left':
             '{}. tur, {} dk kaldı',
+        'same as now':
+            'şimdikiyle aynı',
+        'saved {}':
+            'kaydedildi {}',
         'sce_module, sce_sys and dvdroot_ps4 are there.':
             'sce_module, sce_sys ve dvdroot_ps4 mevcut.',
         'shadNet server':
@@ -10946,12 +12318,16 @@ WORLD = {
             '{} kare oluşturma: daha yüksek kare hızı, biraz daha fazla giriş gecikmesi',
         '{} is available on your card for even higher frame rates.':
             '{}, daha da yüksek kare hızları için kartınızda kullanılabilir.',
+        '{} is back at this state.':
+            '{} yeniden bu durumda.',
         '{} is reserved (menu, recording, or a hotkey) and cannot be bound to a game action.':
             '{} ayrılmış (menü, rota kaydı veya kısayol tuşu) ve bir oyun eylemine atanamaz.',
         '{} minutes':
             '{} dakika',
         '{} of {} trophies earned':
             '{}/{} kupa kazanıldı',
+        '{} online':
+            '{} çevrimiçi',
         '{} runs':
             '{} çalıştırma',
         '{} settings differ from the recommendation.':
@@ -11021,6 +12397,10 @@ WORLD = {
             '90 FPS',
         'A PS4 (exported save)':
             'PS4（导出的存档）',
+        'A character is gone or the save is broken':
+            '角色不见了或存档损坏',
+        'A character without a readable name':
+            '无法读取名称的角色',
         'A constant added on top of sensitivity; raises the floor for slow movements without affecting fast ones as much.':
             '在灵敏度之上额外叠加的固定值；提高慢速移动时的转动速度，对快速移动的影响较小。',
         'A controller (PlayStation, Xbox, Switch)':
@@ -11039,6 +12419,10 @@ WORLD = {
             '隐约透出启动器背后的内容：模糊的标题栏（Windows 11），窗口不透明度为 98.5%。关闭：完全不透明，最易阅读。',
         'A key, the mouse or a controller used during the test ends it.':
             '测试期间使用按键、鼠标或手柄会使测试结束。',
+        'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+            '为此备份命名。按 Enter 保存，按 Esc 保持不变。',
+        'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+            '改用 shadNet 服务器及全部选项：见“在线游玩”页面。离线游玩无需任何操作：取消勾选即可。',
         'A steady 60 FPS with the best picture your graphics card has room for.':
             '稳定 60 FPS，并在显卡能力范围内提供最佳画面。',
         'A stick direction can only be bound to a key, not a mouse button.':
@@ -11061,6 +12445,8 @@ WORLD = {
             '高于最低',
         'Achievements':
             '成就',
+        'Add a backup file…':
+            '添加备份文件…',
         'Add a test…':
             '添加测试…',
         'Added. Choose it under Scenario (the list is updated when the launcher starts next).':
@@ -11111,10 +12497,22 @@ WORLD = {
             '苏醒',
         'Back':
             '返回',
+        'Back up automatically before every start':
+            '每次启动前自动备份',
+        'Back up now':
+            '立即备份',
+        "Backup put back. Your characters are in the game's Load Game menu.":
+            '备份已恢复。你的角色在游戏的“读取游戏”菜单中。',
         'Backups':
             '备份',
         'Balanced (goal)':
             '均衡',
+        'Before a restore':
+            '恢复前',
+        'Before an import':
+            '导入前',
+        'Before playing':
+            '游戏开始前',
         'Below minimum':
             '低于最低',
         'Best for your goal: {} with {:.0f} FPS.':
@@ -11129,6 +12527,8 @@ WORLD = {
             'Boss 战（你在 Boss 前的存档）',
         'Boss: Cleric Beast':
             'Boss：圣职者野兽',
+        'Bosses':
+            'Boss',
         'Bring your saves along, and play with others.':
             '带上你的存档，与其他玩家一起游玩。',
         'Bronze':
@@ -11143,6 +12543,10 @@ WORLD = {
             '不支持 AVX 的 CPU（许多 Pentium/Celeron 型号）完全无法运行。',
         'CUSA03173: the Game of the Year Edition, with The Old Hunters.':
             'CUSA03173：年度版，含“老猎人”DLC。',
+        'Cache folder':
+            '缓存文件夹',
+        'Caches now: {}':
+            '当前缓存位置：{}',
         'Camera':
             '镜头',
         'Camera (right stick)':
@@ -11183,6 +12587,8 @@ WORLD = {
             '正在检查游戏文件…',
         'Checking your PC…':
             '正在检查你的电脑…',
+        'Choose a backup (zip)':
+            '选择备份（zip）',
         'Choose a folder…':
             '选择文件夹…',
         'Choose at least two values to compare.':
@@ -11191,6 +12597,8 @@ WORLD = {
             '选择你想要的游戏体验；相应的设置根据你的硬件决定。',
         'Choose the base game folder in Game & language. Its dvdroot_ps4 has about 29 GB in about 28,800 files.':
             '在“游戏与语言”中选择本体游戏文件夹。其中的 dvdroot_ps4 约有 29 GB，约 28,800 个文件。',
+        'Choose the cache folder':
+            '选择缓存文件夹',
         'Choose the folder with the saves':
             '选择存档所在的文件夹',
         'Choose the game folder':
@@ -11217,6 +12625,8 @@ WORLD = {
             '请先关闭游戏。',
         'Close the game first; it writes its saves while it runs.':
             '请先关闭游戏；游戏运行时会写入存档。',
+        'Close the game.':
+            '关闭游戏。',
         'Close your browser and other programs while playing.':
             '游玩时请关闭浏览器和其他程序。',
         'Co-op pool':
@@ -11231,6 +12641,8 @@ WORLD = {
             '如果你来自其他版本，会在第 IV 步找到你的角色。',
         'Compare one setting: pictures and frame rate':
             '比较单项设置：画面和帧率',
+        'Controller test':
+            '手柄测试',
         'Controls':
             '操作',
         'Copied: paste it into your message on Discord or in the forum.':
@@ -11245,10 +12657,24 @@ WORLD = {
             '将更新文件夹中的所有内容复制到本体游戏文件夹，并选择“替换目标中的文件”。',
         'Copy everything from the update folder into the base game folder and replace the files.':
             '将更新文件夹中的所有内容复制到本体游戏文件夹并替换文件。',
+        'Copy the backup to…':
+            '将备份复制到…',
+        'Copy to…':
+            '复制到…',
+        'Could not back up the saves: {}':
+            '无法备份存档：{}',
+        'Could not copy the backup: {}':
+            '无法复制备份：{}',
         'Could not import the saves: {}':
             '无法导入存档：{}',
         'Could not load the list of versions: {}':
             '无法加载版本列表：{}',
+        'Could not move the backup to the Recycle Bin.':
+            '无法将备份移到回收站。',
+        'Could not put the backup back: {}':
+            '无法恢复备份：{}',
+        'Could not rename the backup: {}':
+            '无法重命名备份：{}',
         'Could not save it: {}':
             '无法保存：{}',
         'Ctrl+F':
@@ -11261,8 +12687,14 @@ WORLD = {
             'DLSS 需要 GeForce RTX 20 系列或更新的显卡。DLSS 帧生成需要 RTX 40（2×）或 RTX 50（最高 4×）。FSR 3.1 帧生成适用于任何显卡，基础帧率约 60 FPS 以上时效果最佳。',
         'Dark Souls III layout':
             'Dark Souls III 布局',
+        'Deaths':
+            '死亡次数',
         'Debug':
             '调试',
+        'Delete':
+            '删除',
+        'Delete this backup? It goes to the Recycle Bin.':
+            '删除此备份？它会被移到回收站。',
         'Derived from the requirements and the hardware check on bbport.de for your PC at {} ({}). Chromatic aberration, depth of field, motion blur and sharpening are taste and stay as you set them.':
             '根据 bbport.de 上的配置要求和硬件检测，针对你的电脑在 {}（{}）下得出。色差、景深、动态模糊和锐化属于个人喜好，会保持你的设置不变。',
         'Detected automatically':
@@ -11279,6 +12711,8 @@ WORLD = {
             '下载页面',
         'Download the FSR 4 files now (about 30 MB)':
             '立即下载 FSR 4 文件（约 30 MB）',
+        'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+            '拖动模组左侧的手柄可调整顺序。列表中越靠下越晚加载，冲突时优先生效。',
         'Driver notes':
             '驱动说明',
         'Duration':
@@ -11287,6 +12721,10 @@ WORLD = {
             '专家',
         'Each':
             '每个值',
+        'Earlier backup':
+            '较早的备份',
+        'Earlier states in your backups ({})':
+            '备份中的早期状态（{}）',
         'Earlier tests':
             '以往测试',
         'Earned':
@@ -11299,6 +12737,8 @@ WORLD = {
             '启用鼠标视角',
         'Enough for 4K (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 class).':
             '足以应对 4K（RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 级别）。',
+        'Every character in this backup goes back to this state.':
+            '此备份中的所有角色都会回到这个状态。',
         'Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.':
             '所有图形和帧率设置。保存在 bbport.ini 中；游戏内菜单（Insert 或 L3+R3）修改的是相同的值。',
         'Every graphics setting one by one:':
@@ -11349,10 +12789,16 @@ WORLD = {
             '帧生成',
         "Frames made between two of the game's: 60 FPS on screen becomes 120. Needs a display with that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce RTX 40 or newer, otherwise FSR 3.1 is used.":
             '在游戏的两帧之间生成新帧：屏幕上的 60 FPS 变为 120。需要支持相应刷新率的显示器（60 FPS 时需 120 Hz 或以上）；显示器无法显示额外帧时会暂停。会略微增加输入延迟。菜单和影片不会生成帧。DLSS 需要 GeForce RTX 40 或更新的显卡，否则使用 FSR 3.1。',
+        'From a file':
+            '来自文件',
+        'From other versions':
+            '来自其他版本',
         'From your last save: the camera turns once around the hunter and back (24 s). Quick and the same every time; for the frame rate and for comparing settings.':
             '从你最后的存档开始：镜头绕猎人转一圈再转回来（24 秒）。快速且每次都相同；用于测量帧率和比较设置。',
         'Fullscreen (recommended)':
             '全屏（推荐）',
+        'Fullscreen, HDR and the taste effects are on Picture & performance.':
+            '全屏、HDR 和个人喜好类效果位于“画面与性能”页面。',
         'Fullscreen, HDR, field of view and the taste effects are on Picture & performance.':
             '全屏、HDR、视野和个人喜好类效果位于“画面与性能”页面。',
         'GPU':
@@ -11393,6 +12839,8 @@ WORLD = {
             '硬性限制',
         'Help':
             '帮助',
+        'Hide the earlier states':
+            '隐藏早期状态',
         'Hide the settings':
             '隐藏设置',
         'Highest model detail: your card has room to spare at this resolution.':
@@ -11421,6 +12869,8 @@ WORLD = {
             '窗口模式：打开时的大小。你仍可拖动窗口边缘；“与上次相同”会以你上次关闭游戏时的大小打开。',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             '在游戏中，按 Insert（键盘）或 L3 + R3（手柄）可打开移植版菜单。',
+        'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+            '在游戏中，“{}”会载入你上次游玩的角色；标题画面的“{}”会列出所有角色。',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
             '在已打开的页面（{0}）中使用 Discord 登录，并输入此代码：',
         'In the page that opened, sign in with Discord and enter this code:':
@@ -11465,6 +12915,8 @@ WORLD = {
             '也许能启动，但帧率会很低，并可能出现问题。',
         'Items and menus':
             '道具与菜单',
+        'Its level, weapons and bosses cannot be read from this save.':
+            '无法从此存档读取等级、武器和 Boss。',
         'Jump while dashing (L3)':
             '冲刺时跳跃（L3）',
         'Keyboard and mouse':
@@ -11573,8 +13025,14 @@ WORLD = {
             '下次运行 Play Bloodborne.exe 会直接以这些设置启动游戏。',
         'No add-on in this folder: The Old Hunters is a folder named {} in it.':
             '此文件夹中没有追加内容：The Old Hunters 是其中名为 {} 的文件夹。',
+        'No backups yet.':
+            '还没有备份。',
+        'No characters yet. The game makes them, or bring yours from another version (below).':
+            '还没有角色。游戏会创建它们，或从其他版本导入你的角色（见下方）。',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             '{} 及其子文件夹中没有完整的 Bloodborne 存档：需要 userdata0010 和至少一个角色（userdata0000 到 userdata0009）。',
+        'No controller found. Connect it by cable or Bluetooth.':
+            '未找到手柄。请通过有线或蓝牙连接。',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
             '{:.0f} 分钟内没有崩溃，也没有卡死（平均 {:.0f} FPS）。',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
@@ -11595,6 +13053,8 @@ WORLD = {
             '还没有奖杯。游戏解锁奖杯后会立即显示在这里。',
         'No versions found.':
             '未找到任何版本。',
+        'None beaten yet':
+            '尚未击败任何 Boss',
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next starts.':
             '这是正常现象：移植版第一次遇到每种效果时会构建着色器缓存。缓存会保留，供以后启动时使用。',
         "Not in the website's list; it has every instruction the port needs. Counted as the minimum.":
@@ -11621,6 +13081,8 @@ WORLD = {
             '不支持：{} GB 显存，移植版至少需要 4 GB。',
         'Nothing found. Try other words, or open Help.':
             '未找到结果。请尝试其他关键词，或打开“帮助”。',
+        'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+            '没有任何亮起：重新连接手柄（有线最可靠），并关闭会接管手柄的工具，例如 DS4Windows。',
         'Nothing was recorded (press F9 to start and F9 to stop).':
             '没有录制到任何内容（F9 开始，F9 停止）。',
         'Now':
@@ -11649,8 +13111,14 @@ WORLD = {
             '在线游玩',
         'Only a black screen':
             '只有黑屏',
+        'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+            '只有一个角色受影响：在“你的角色”中展开它的早期状态，只恢复这个角色。',
         'Only the update folder was chosen':
             '只选择了更新文件夹',
+        'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+            '只有这个角色会改变，你的其他角色保持不变。它的当前状态会先被备份（“{}”），因此不会丢失任何内容。',
+        'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+            '仅在上次备份后玩过时才备份。保留最近 {} 个自动备份；你自己创建的备份始终保留。',
         'Only with your own copy of the game':
             '仅限使用你自己的游戏副本',
         'Open Windows Security':
@@ -11659,8 +13127,14 @@ WORLD = {
             '打开它，按 Ctrl + A，然后按 Ctrl + C。',
         'Open the Discord':
             '打开 Discord',
+        'Open the backups':
+            '打开备份',
         'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the destination.':
             '打开本体游戏文件夹（包含 dvdroot_ps4 的那个），按 Ctrl + V，然后选择“替换目标中的文件”。',
+        'Open the controller test':
+            '打开手柄测试',
+        'Open the controller test and press the buttons.':
+            '打开手柄测试并按下按键。',
         'Open the folder':
             '打开文件夹',
         'Open the game folder':
@@ -11723,12 +13197,18 @@ WORLD = {
             '正在准备（{}）。游戏将以全屏打开；完成之前请不要操作电脑。',
         'Press Win + R, type sysdm.cpl, press Enter.':
             '按 Win + R，输入 sysdm.cpl，然后按 Enter。',
+        'Press the buttons: what lights up here reaches the game.':
+            '按下按键：这里亮起的，游戏里也能收到。',
         'Press…':
             '请按键…',
         'Problems and their fixes':
             '问题与解决方法',
         'Processor':
             '处理器',
+        'Put this backup back?':
+            '恢复此备份？',
+        'Put {} back to this state?':
+            '将 {} 恢复到这个状态？',
         'Quiet (goal)':
             '安静',
         'Quit to Desktop in the title menu and in the System menu':
@@ -11753,6 +13233,8 @@ WORLD = {
             '录制路线…',
         'Recorded: every test of this scenario now replays your route.':
             '已录制：此场景的每次测试现在都会重放你的路线。',
+        'Rename':
+            '重命名',
         'Rename the folder {} to {}: the game looks for that exact name.':
             '请将文件夹 {} 重命名为 {}：游戏只认这个确切的名称。',
         'Repeat the setup':
@@ -11765,6 +13247,8 @@ WORLD = {
             '保留按键：Insert/Esc（移植版菜单）、F9（路线录制），以及切换鼠标视角或重新加载 input.ini 的按键（默认 F7/F8）。',
         'Restart the PC after installing it.':
             '安装后请重启电脑。',
+        'Restore':
+            '恢复',
         'Right half of the touchpad (debug menu)':
             '触摸板右半部分（调试菜单）',
         'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.':
@@ -11779,6 +13263,8 @@ WORLD = {
             '跑图：旧亚楠',
         'Runs the same two-minute route through this area and back every time, from the save of the mod “All Boss Save Files Ready to Fight” (Nexus Mods). The hunter cannot die and enemies leave him alone: for frame rate, loading and stutter while moving, and for comparing settings.':
             '每次都从 “All Boss Save Files Ready to Fight” 模组（Nexus Mods）的存档出发，在这一区域往返跑同一条两分钟的路线。猎人不会死亡，敌人也不会理会他：用于测试移动中的帧率、加载和卡顿，以及比较设置。',
+        "SDL3.dll is missing in the port's bin folder.":
+            '移植版的 bin 文件夹中缺少 SDL3.dll。',
         'SSD':
             'SSD',
         'Same as the monitor':
@@ -11791,14 +13277,20 @@ WORLD = {
             '保存报告',
         'Save as zip':
             '另存为 ZIP',
+        'Saved by hand':
+            '手动备份',
         'Saved: {}':
             '已保存：{}',
         'Saves':
             '存档',
         'Saves & online':
             '存档与在线',
+        'Saves backed up: {}':
+            '存档已备份：{}',
         "Saves imported. Your characters are in the game's Load Game menu.":
             '存档已导入。你的角色在游戏的“载入游戏”菜单中。',
+        'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+            '“存档”页面的“备份”：恢复问题出现前最新的备份（带有你上次正常游玩日期的“游戏开始前”）。',
         'Scenario':
             '场景',
         'Screen':
@@ -11833,8 +13325,16 @@ WORLD = {
             '设置：有 {} 项与你电脑的推荐设置不一致',
         'Setup':
             '初始设置',
+        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+            '本机的着色器、日志和临时文件。为空：放在存档文件夹中；若存档文件夹位于云同步文件夹（OneDrive、Dropbox、Google Drive）中，则放在本机，让每台电脑保留自己的着色器。',
         'Shadows of dynamic lights: on from "Above minimum".':
             '动态光源阴影：从“高于最低”档起开启。',
+        'Show all ({})':
+            '显示全部（{}）',
+        'Show fewer':
+            '收起',
+        'Show in folder':
+            '在文件夹中显示',
         'Show me on the live map':
             '在实时地图上显示我',
         'Show the fix?':
@@ -11863,6 +13363,8 @@ WORLD = {
             '跳过：我自己设置所有内容',
         'Slightly translucent window':
             '轻微半透明窗口',
+        'Slot {}':
+            '栏位 {}',
         'Smooth (goal)':
             '流畅',
         'Stability run':
@@ -11877,6 +13379,8 @@ WORLD = {
             '开始菜单 > Windows 安全中心 > 病毒和威胁防护 > 管理设置。',
         'Start the test':
             '开始测试',
+        "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+            '从 Steam 启动：在游戏的 Steam 属性中尝试开启或关闭 Steam Input。',
         'Starting the sign-in…':
             '正在开始登录…',
         'Starts in front of this boss with the save from the mod “All Boss Save Files Ready to Fight” (Nexus Mods), walks in and keeps the boss busy for two minutes: dodging, strafing, now and then an attack. The hunter cannot die; the boss fights as usual. For stability and a worst case, not for exact comparisons.':
@@ -11937,6 +13441,12 @@ WORLD = {
             "The Hunter's Dream（与 bbhost 玩家一起）",
         "The Hunter's Dream account":
             "The Hunter's Dream 账户",
+        "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+            "The Hunter's Dream：使用 Discord 免费登录后，与 bbhost 玩家一起联机合作。shadNet：你选择的 shadNet 服务器及其账号。",
+        "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+            "The Hunter's Dream：当前 {} 名猎人在线（{} bbhost · {} shadNet）",
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+            '“读取游戏”菜单为空、缺少角色，或游戏提示存档损坏。每次启动前启动器都会备份你的存档，所以你可以恢复到之前的状态。',
         'The Old Hunters found ({}).':
             '已找到 The Old Hunters（{}）。',
         'The Old Hunters found in the saves folder (addcont).':
@@ -11945,12 +13455,20 @@ WORLD = {
             'The Old Hunters：未找到。仅在你拥有它时才需要；没有它，其区域将保持关闭。',
         'The account you made at supermedo.com.':
             '你在 supermedo.com 注册的账户。',
+        'The automatic backup of the saves failed: {}':
+            '存档自动备份失败：{}',
+        'The character came from another version and there is no backup yet: import it again under "From other versions".':
+            '角色来自其他版本且还没有备份：在“来自其他版本”中重新导入。',
         'The check stopped: {}':
             '检查已中止：{}',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
             '社区补丁（60 FPS 及以上、效果选项）仅适用于 1.09；其他版本以 30 FPS 运行。',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "与 The Hunter's Dream 的连接是 Awaken 对 bbhost 网络代码的移植；bbhost 和 The Hunter's Dream 的作者是 droogie。",
+        'The controller does nothing':
+            '手柄没有反应',
+        'The controller test cannot start: {}':
+            '手柄测试无法启动：{}',
         'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
             '为显示此项，已开启专家视图。开关位于侧边栏底部。',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
@@ -11967,8 +13485,12 @@ WORLD = {
             '游戏不是 1.09 版本',
         'The game is open: load the save, press F9, run the route and back, press F9 again, quit the game.':
             '游戏已打开：读取存档，按 F9，往返跑完路线，再按 F9，退出游戏。',
+        'The game is running: the test waits until it is closed.':
+            '游戏正在运行：测试会等到游戏关闭。',
         'The game needs Vulkan 1.3 and a current driver; an old or crashed driver ends the game with "device lost".':
             '游戏需要 Vulkan 1.3 和最新驱动；旧驱动或驱动崩溃会导致游戏以“device lost”结束。',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+            '游戏读取手柄的方式与“操作”页面上的手柄测试相同：在那里亮起的，游戏里也能收到。',
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest memory").':
             '游戏启动时会一次性预留一整块约 6 GB 的内存（1440p 和 4K 下为 10 GB），由内存和分页文件共同提供。如果 Windows 拒绝，游戏会立即以代码 3 关闭（日志显示“cannot create … MiB of guest memory”）。',
         'The game shows the buttons of whatever you use; the keys can be changed on the Controls page.':
@@ -12033,6 +13555,8 @@ WORLD = {
             '此文件夹中没有 eboot.bin。请选择直接包含 eboot.bin 的文件夹，而不是它的上一级文件夹。',
         'There is no save of this port, shadPS4 or bbhost in that folder (SPRJ0005 with userdata0000 …).':
             '该文件夹中没有本移植版、shadPS4 或 bbhost 的存档（包含 userdata0000 … 的 SPRJ0005）。',
+        'There is no save to back up yet.':
+            '还没有可备份的存档。',
         "These are a PS4's own encrypted backups (sdimg_…); they cannot be used. Export the save with Apollo Save Tool on the PS4 instead.":
             '这些是 PS4 自身的加密备份（sdimg_…），无法使用。请改用 PS4 上的 Apollo Save Tool 导出存档。',
         'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':
@@ -12043,6 +13567,10 @@ WORLD = {
             '这台电脑无法运行移植版。',
         'This PC does not meet the requirements. You can still go on, but the game will probably not run.':
             '这台电脑不满足配置要求。你仍然可以继续，但游戏很可能无法运行。',
+        'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+            '无法单独恢复这个角色（{}）。请改为在“备份”中恢复整个备份。',
+        'This file is no Bloodborne save backup: {}':
+            '此文件不是 Bloodborne 存档备份：{}',
         'This is not a test scenario: {}':
             '这不是测试场景：{}',
         'This is the add-on itself: choose the folder that contains {}.':
@@ -12127,6 +13655,8 @@ WORLD = {
             'WASD 移动，空格键闪避，左键 / Shift + 左键攻击，右键 / Shift + 右键（或 Ctrl）使用副手，E 互动，R 道具，F 采血瓶，Q 锁定，Tab 或 Esc 打开菜单，以及 1:1 鼠标镜头。将替换键盘和鼠标绑定；手柄保留自己的绑定。',
         'Walk (hold)':
             '行走（按住）',
+        'Weapons':
+            '武器',
         'Welcome':
             '欢迎',
         'Welcome, good hunter':
@@ -12175,12 +13705,20 @@ WORLD = {
             '为你的电脑推荐的设置',
         'Your PC: {} · {}':
             '你的电脑：{} · {}',
+        'Your characters':
+            '你的角色',
         'Your characters and online play':
             '你的角色和在线游玩',
         'Your characters from other versions':
             '来自其他版本的角色',
+        'Your characters, their backups and the trophies. Empty: {}.':
+            '你的角色、它们的备份和奖杯。为空：{}。',
         'Your characters: bring them from another version, back them up, put a backup back.':
             '你的角色：从其他版本导入、备份、恢复备份。',
+        'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+            '你当前的存档（{}）会先被备份（“{}”），不会丢失任何内容。',
+        'Your current saves are backed up first: trying an older backup loses nothing.':
+            '你当前的存档会先被备份：尝试更早的备份不会丢失任何内容。',
         'Your display: {} × {}. Recommended for your PC: {}.':
             '你的显示器：{} × {}。为你的电脑推荐：{}。',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
@@ -12213,6 +13751,8 @@ WORLD = {
             '你之前的存档：{}',
         'Your processor sets the limit.':
             '瓶颈在于你的处理器。',
+        'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+            '你的存档文件夹位于云同步文件夹中：存档随你同步，着色器留在本机。一次只在一台电脑上游玩，并在另一台电脑上开始前等待同步完成；在 OneDrive 中，将该文件夹设为“始终保留在此设备上”。',
         'Your setup':
             '你的配置',
         'above':
@@ -12307,6 +13847,10 @@ WORLD = {
             '问题',
         'round {}, {} min left':
             '第 {} 轮，剩余 {} 分钟',
+        'same as now':
+            '与现在相同',
+        'saved {}':
+            '保存于 {}',
         'sce_module, sce_sys and dvdroot_ps4 are there.':
             'sce_module、sce_sys 和 dvdroot_ps4 均存在。',
         'shadNet server':
@@ -12349,12 +13893,16 @@ WORLD = {
             '{} 帧生成：帧率更高，输入延迟略有增加',
         '{} is available on your card for even higher frame rates.':
             '你的显卡支持 {}，可获得更高的帧率。',
+        '{} is back at this state.':
+            '{} 已恢复到这个状态。',
         '{} is reserved (menu, recording, or a hotkey) and cannot be bound to a game action.':
             '{} 是保留按键（菜单、录制或快捷键），不能绑定到游戏操作。',
         '{} minutes':
             '{} 分钟',
         '{} of {} trophies earned':
             '已获得 {}/{} 个奖杯',
+        '{} online':
+            '{} 人在线',
         '{} runs':
             '{} 次运行',
         '{} settings differ from the recommendation.':
@@ -12424,6 +13972,10 @@ WORLD = {
             '90 FPS',
         'A PS4 (exported save)':
             'PS4（エクスポートしたセーブデータ）',
+        'A character is gone or the save is broken':
+            'キャラクターが消えた、またはセーブデータが壊れた',
+        'A character without a readable name':
+            '名前を読み取れないキャラクター',
         'A constant added on top of sensitivity; raises the floor for slow movements without affecting fast ones as much.':
             '感度に上乗せされる一定値です。速い動きにはあまり影響させずに、遅い動きの最低速度を引き上げます。',
         'A controller (PlayStation, Xbox, Switch)':
@@ -12442,6 +13994,10 @@ WORLD = {
             'ランチャーの背後がうっすら透けて見えます：タイトルバーをぼかし（Windows 11）、ウィンドウを 98.5 % の不透明度にします。オフ：完全に不透明で、最も読みやすくなります。',
         'A key, the mouse or a controller used during the test ends it.':
             'テスト中にキー、マウス、コントローラーを使うとテストは終了します。',
+        'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+            'このバックアップの名前。Enter で確定、Esc で元のまま。',
+        'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+            '代わりに shadNet サーバーとすべての設定：「オンラインプレイ」ページ。オフラインなら何も不要です。チェックを外してください。',
         'A steady 60 FPS with the best picture your graphics card has room for.':
             'グラフィックカードの余力の範囲で最高の画質を保ち、安定した 60 FPS で動作します。',
         'A stick direction can only be bound to a key, not a mouse button.':
@@ -12464,6 +14020,8 @@ WORLD = {
             '最低より上',
         'Achievements':
             'トロフィー',
+        'Add a backup file…':
+            'バックアップファイルを追加…',
         'Add a test…':
             'テストを追加…',
         'Added. Choose it under Scenario (the list is updated when the launcher starts next).':
@@ -12514,10 +14072,22 @@ WORLD = {
             '目覚め',
         'Back':
             '戻る',
+        'Back up automatically before every start':
+            '起動のたびに自動でバックアップ',
+        'Back up now':
+            '今すぐバックアップ',
+        "Backup put back. Your characters are in the game's Load Game menu.":
+            'バックアップを復元しました。キャラクターはゲームの「ロード」メニューにあります。',
         'Backups':
             'バックアップ',
         'Balanced (goal)':
             'バランス',
+        'Before a restore':
+            '復元前',
+        'Before an import':
+            'インポート前',
+        'Before playing':
+            'プレイ開始前',
         'Below minimum':
             '最低未満',
         'Best for your goal: {} with {:.0f} FPS.':
@@ -12532,6 +14102,8 @@ WORLD = {
             'ボス戦（ボス前のセーブデータ）',
         'Boss: Cleric Beast':
             'ボス：聖職者の獣',
+        'Bosses':
+            'ボス',
         'Bring your saves along, and play with others.':
             'セーブデータを引き継いで、ほかのプレイヤーと遊びましょう。',
         'Bronze':
@@ -12546,6 +14118,10 @@ WORLD = {
             'AVX 非対応の CPU（Pentium/Celeron の多くのモデル）ではまったく動作しません。',
         'CUSA03173: the Game of the Year Edition, with The Old Hunters.':
             'CUSA03173：The Old Hunters を収録した Game of the Year Edition。',
+        'Cache folder':
+            'キャッシュフォルダー',
+        'Caches now: {}':
+            '現在のキャッシュ：{}',
         'Camera':
             'カメラ',
         'Camera (right stick)':
@@ -12586,6 +14162,8 @@ WORLD = {
             'ゲームファイルを確認中…',
         'Checking your PC…':
             'PC を確認中…',
+        'Choose a backup (zip)':
+            'バックアップを選択（zip）',
         'Choose a folder…':
             'フォルダーを選択…',
         'Choose at least two values to compare.':
@@ -12594,6 +14172,8 @@ WORLD = {
             'どんなプレイ感覚にしたいかを選んでください。そのための設定はハードウェアに合わせて決まります。',
         'Choose the base game folder in Game & language. Its dvdroot_ps4 has about 29 GB in about 28,800 files.':
             '「ゲームと言語」で本編のフォルダーを選択してください。その dvdroot_ps4 は約 28,800 ファイル、約 29 GB です。',
+        'Choose the cache folder':
+            'キャッシュフォルダーを選択',
         'Choose the folder with the saves':
             'セーブデータのあるフォルダーを選択',
         'Choose the game folder':
@@ -12620,6 +14200,8 @@ WORLD = {
             '先にゲームを終了してください。',
         'Close the game first; it writes its saves while it runs.':
             '先にゲームを終了してください。ゲームは実行中にセーブデータを書き込みます。',
+        'Close the game.':
+            'ゲームを終了してください。',
         'Close your browser and other programs while playing.':
             'プレイ中はブラウザーやその他のプログラムを閉じてください。',
         'Co-op pool':
@@ -12634,6 +14216,8 @@ WORLD = {
             '別のバージョンから移行する場合は、ステップ IV でキャラクターを探します。',
         'Compare one setting: pictures and frame rate':
             '1 つの設定を比較：画像とフレームレート',
+        'Controller test':
+            'コントローラーテスト',
         'Controls':
             '操作設定',
         'Copied: paste it into your message on Discord or in the forum.':
@@ -12648,10 +14232,24 @@ WORLD = {
             'アップデートフォルダーの中身をすべて本編のフォルダーにコピーし、「ファイルを置き換える」を選択します。',
         'Copy everything from the update folder into the base game folder and replace the files.':
             'アップデートフォルダーの中身をすべて本編のフォルダーにコピーし、ファイルを置き換えてください。',
+        'Copy the backup to…':
+            'バックアップのコピー先…',
+        'Copy to…':
+            'コピー先…',
+        'Could not back up the saves: {}':
+            'セーブデータをバックアップできませんでした：{}',
+        'Could not copy the backup: {}':
+            'バックアップをコピーできませんでした：{}',
         'Could not import the saves: {}':
             'セーブデータをインポートできませんでした：{}',
         'Could not load the list of versions: {}':
             'バージョン一覧を読み込めませんでした：{}',
+        'Could not move the backup to the Recycle Bin.':
+            'バックアップをごみ箱に移動できませんでした。',
+        'Could not put the backup back: {}':
+            'バックアップを復元できませんでした：{}',
+        'Could not rename the backup: {}':
+            'バックアップの名前を変更できませんでした：{}',
         'Could not save it: {}':
             '保存できませんでした：{}',
         'Ctrl+F':
@@ -12664,8 +14262,14 @@ WORLD = {
             'DLSS には GeForce RTX 20 シリーズ以降が必要です。DLSS フレーム生成には RTX 40（2×）または RTX 50（最大 4×）が必要です。FSR 3.1 のフレーム生成はすべてのカードで動作し、ベース FPS が約 60 以上のときに最も効果的です。',
         'Dark Souls III layout':
             'DARK SOULS III 配置',
+        'Deaths':
+            '死亡回数',
         'Debug':
             'デバッグ',
+        'Delete':
+            '削除',
+        'Delete this backup? It goes to the Recycle Bin.':
+            'このバックアップを削除しますか？ごみ箱に移動します。',
         'Derived from the requirements and the hardware check on bbport.de for your PC at {} ({}). Chromatic aberration, depth of field, motion blur and sharpening are taste and stay as you set them.':
             'bbport.de の動作環境とハードウェアチェックをもとに、この PC の {}（{}）向けに算出しました。色収差、被写界深度、モーションブラー、シャープ化は好みの問題なので、設定したままになります。',
         'Detected automatically':
@@ -12682,6 +14286,8 @@ WORLD = {
             'ダウンロードページ',
         'Download the FSR 4 files now (about 30 MB)':
             'FSR 4 ファイルを今すぐダウンロード（約 30 MB）',
+        'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+            'MOD をつまみ部分でドラッグすると順番を変えられます。リストの下にあるものほど後に読み込まれ、競合時に優先されます。',
         'Driver notes':
             'ドライバーに関する注意',
         'Duration':
@@ -12690,6 +14296,10 @@ WORLD = {
             'エキスパート',
         'Each':
             '各値の測定',
+        'Earlier backup':
+            '以前のバックアップ',
+        'Earlier states in your backups ({})':
+            'バックアップ内の以前の状態（{}）',
         'Earlier tests':
             '過去のテスト',
         'Earned':
@@ -12702,6 +14312,8 @@ WORLD = {
             'マウス視点を有効にする',
         'Enough for 4K (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 class).':
             '4K に十分な性能です（RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 クラス）。',
+        'Every character in this backup goes back to this state.':
+            'このバックアップ内のすべてのキャラクターがこの状態に戻ります。',
         'Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.':
             'グラフィックとフレームレートの全設定。bbport.ini に保存され、ゲーム内メニュー（Insert または L3+R3）でも同じ値を変更できます。',
         'Every graphics setting one by one:':
@@ -12752,10 +14364,16 @@ WORLD = {
             'フレーム生成',
         "Frames made between two of the game's: 60 FPS on screen becomes 120. Needs a display with that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce RTX 40 or newer, otherwise FSR 3.1 is used.":
             'ゲームのフレームとフレームの間に新たなフレームを生成します。画面上の 60 FPS が 120 になります。そのリフレッシュレートに対応したディスプレイが必要です（60 FPS なら 120 Hz 以上）。ディスプレイが追加フレームを表示できないときは一時停止します。入力遅延がわずかに増えます。メニューとムービーでは生成されません。DLSS には GeForce RTX 40 以降が必要で、それ以外では FSR 3.1 が使用されます。',
+        'From a file':
+            'ファイルから',
+        'From other versions':
+            '他のバージョンから',
         'From your last save: the camera turns once around the hunter and back (24 s). Quick and the same every time; for the frame rate and for comparing settings.':
             '最後のセーブデータから開始：カメラが狩人の周りを一周して戻ります（24 秒）。短時間で毎回同じ内容なので、フレームレートの測定や設定の比較に向いています。',
         'Fullscreen (recommended)':
             'フルスクリーン（推奨）',
+        'Fullscreen, HDR and the taste effects are on Picture & performance.':
+            'フルスクリーン、HDR、好みで選ぶエフェクトは「画質とパフォーマンス」にあります。',
         'Fullscreen, HDR, field of view and the taste effects are on Picture & performance.':
             'フルスクリーン、HDR、視野角、好みで選ぶエフェクトは「画質とパフォーマンス」にあります。',
         'GPU':
@@ -12796,6 +14414,8 @@ WORLD = {
             'ハードウェアの制約',
         'Help':
             'ヘルプ',
+        'Hide the earlier states':
+            '以前の状態を隠す',
         'Hide the settings':
             '設定を隠す',
         'Highest model detail: your card has room to spare at this resolution.':
@@ -12824,6 +14444,8 @@ WORLD = {
             'ウィンドウ時：開くときのサイズ。端をドラッグして変えることもできます。「前回と同じ」は、前回ゲームを閉じたときのサイズで開きます。',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'ゲーム中に Insert（キーボード）または L3 + R3（コントローラー）を押すと、移植版メニューが開きます。',
+        'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+            'ゲーム内では「{}」で最後に遊んだキャラクターを読み込み、タイトル画面の「{}」ですべてのキャラクターを表示します。',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
             '開いたページ（{0}）で Discord でサインインし、次のコードを入力してください：',
         'In the page that opened, sign in with Discord and enter this code:':
@@ -12868,6 +14490,8 @@ WORLD = {
             '起動はするかもしれませんが、フレームレートが低く、問題が起きる可能性があります。',
         'Items and menus':
             'アイテムとメニュー',
+        'Its level, weapons and bosses cannot be read from this save.':
+            'このセーブデータからはレベル、武器、ボスを読み取れません。',
         'Jump while dashing (L3)':
             'ダッシュ中にジャンプ (L3)',
         'Keyboard and mouse':
@@ -12976,8 +14600,14 @@ WORLD = {
             '次回からは、Play Bloodborne.exe でこの設定のままゲームがすぐに起動します。',
         'No add-on in this folder: The Old Hunters is a folder named {} in it.':
             'このフォルダーに追加コンテンツがありません。The Old Hunters はこの中の {} という名前のフォルダーです。',
+        'No backups yet.':
+            'まだバックアップはありません。',
+        'No characters yet. The game makes them, or bring yours from another version (below).':
+            'まだキャラクターがいません。ゲームが作成するか、他のバージョンから移せます（下）。',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             '{} またはそのサブフォルダーに完全な Bloodborne のセーブデータがありません。userdata0010 と、少なくとも 1 人のキャラクター（userdata0000〜userdata0009）が必要です。',
+        'No controller found. Connect it by cable or Bluetooth.':
+            'コントローラーが見つかりません。ケーブルか Bluetooth で接続してください。',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
             '{:.0f} 分間、クラッシュもフリーズもありませんでした（平均 {:.0f} FPS）。',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
@@ -12998,6 +14628,8 @@ WORLD = {
             'トロフィーはまだありません。ゲームで獲得するとすぐにここに表示されます。',
         'No versions found.':
             'バージョンが見つかりません。',
+        'None beaten yet':
+            'まだ撃破なし',
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next starts.':
             '正常です：移植版は各エフェクトを初めて表示するときにシェーダーキャッシュを作成します。キャッシュは次回以降の起動のために保持されます。',
         "Not in the website's list; it has every instruction the port needs. Counted as the minimum.":
@@ -13024,6 +14656,8 @@ WORLD = {
             '非対応：ビデオメモリが {} GB です。移植版には 4 GB 以上が必要です。',
         'Nothing found. Try other words, or open Help.':
             '見つかりませんでした。別の言葉で試すか、ヘルプを開いてください。',
+        'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+            '何も光らない場合：コントローラーを接続し直し（ケーブルが最も確実）、DS4Windows などコントローラーを横取りするツールを終了してください。',
         'Nothing was recorded (press F9 to start and F9 to stop).':
             '何も記録されませんでした（F9 で開始、F9 で停止）。',
         'Now':
@@ -13052,8 +14686,14 @@ WORLD = {
             'オンラインプレイ',
         'Only a black screen':
             '黒い画面しか表示されない',
+        'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+            '影響を受けたのが 1 人だけなら：「あなたのキャラクター」でそのキャラクターの以前の状態を開き、そのキャラクターだけを戻します。',
         'Only the update folder was chosen':
             'アップデートフォルダーだけが選択されている',
+        'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+            '変わるのはこのキャラクターだけで、ほかのキャラクターはそのままです。現在の状態は先にバックアップされる（「{}」）ので、何も失われません。',
+        'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+            '前回のバックアップ以降にプレイした場合のみ。自動バックアップは最新 {} 件を保持し、自分で作成したものは常に残ります。',
         'Only with your own copy of the game':
             '自分のゲームのコピーでのみ',
         'Open Windows Security':
@@ -13062,8 +14702,14 @@ WORLD = {
             'フォルダーを開き、Ctrl + A、続けて Ctrl + C を押します。',
         'Open the Discord':
             'Discord を開く',
+        'Open the backups':
+            'バックアップを開く',
         'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the destination.':
             '本編のフォルダー（dvdroot_ps4 のあるフォルダー）を開き、Ctrl + V を押して「ファイルを置き換える」を選択します。',
+        'Open the controller test':
+            'コントローラーテストを開く',
+        'Open the controller test and press the buttons.':
+            'コントローラーテストを開いてボタンを押してください。',
         'Open the folder':
             'フォルダーを開く',
         'Open the game folder':
@@ -13126,12 +14772,18 @@ WORLD = {
             '準備中（{}）。ゲームがフルスクリーンで開きます。終了するまで PC を操作しないでください。',
         'Press Win + R, type sysdm.cpl, press Enter.':
             'Win + R を押し、sysdm.cpl と入力して Enter を押します。',
+        'Press the buttons: what lights up here reaches the game.':
+            'ボタンを押してください。ここで光るものはゲームに届きます。',
         'Press…':
             '入力…',
         'Problems and their fixes':
             '問題と解決方法',
         'Processor':
             'プロセッサー',
+        'Put this backup back?':
+            'このバックアップを復元しますか？',
+        'Put {} back to this state?':
+            '{} をこの状態に戻しますか？',
         'Quiet (goal)':
             '静音',
         'Quit to Desktop in the title menu and in the System menu':
@@ -13156,6 +14808,8 @@ WORLD = {
             'ルートを記録…',
         'Recorded: every test of this scenario now replays your route.':
             '記録しました：このシナリオのテストはすべてあなたのルートを再生します。',
+        'Rename':
+            '名前を変更',
         'Rename the folder {} to {}: the game looks for that exact name.':
             'フォルダー {} の名前を {} に変更してください。ゲームはこの名前そのままを探します。',
         'Repeat the setup':
@@ -13168,6 +14822,8 @@ WORLD = {
             '予約済み：Insert/Esc（移植版メニュー）、F9（ルート記録）、およびマウス視点の切り替えと input.ini の再読み込みに使うキー（既定は F7/F8）。',
         'Restart the PC after installing it.':
             'インストール後に PC を再起動してください。',
+        'Restore':
+            '復元',
         'Right half of the touchpad (debug menu)':
             'タッチパッドの右半分（デバッグメニュー）',
         'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.':
@@ -13182,6 +14838,8 @@ WORLD = {
             '走行：旧市街',
         'Runs the same two-minute route through this area and back every time, from the save of the mod “All Boss Save Files Ready to Fight” (Nexus Mods). The hunter cannot die and enemies leave him alone: for frame rate, loading and stutter while moving, and for comparing settings.':
             'MOD「All Boss Save Files Ready to Fight」（Nexus Mods）のセーブデータから、毎回同じ 2 分間のルートでこのエリアを往復します。狩人は死なず、敵にも構われません：移動中のフレームレート、読み込み、カクつきの確認や設定の比較に。',
+        "SDL3.dll is missing in the port's bin folder.":
+            'ポートの bin フォルダーに SDL3.dll がありません。',
         'SSD':
             'SSD',
         'Same as the monitor':
@@ -13194,14 +14852,20 @@ WORLD = {
             'レポートを保存',
         'Save as zip':
             'ZIP で保存',
+        'Saved by hand':
+            '手動でバックアップ',
         'Saved: {}':
             '保存しました：{}',
         'Saves':
             'セーブデータ',
         'Saves & online':
             'セーブデータとオンライン',
+        'Saves backed up: {}':
+            'セーブデータをバックアップしました：{}',
         "Saves imported. Your characters are in the game's Load Game menu.":
             'セーブデータをインポートしました。キャラクターはゲームの「ロードゲーム」メニューにあります。',
+        'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+            'セーブデータ ページの「バックアップ」：問題が起きる前の最新のバックアップを復元します（最後に正常に遊んだ日付の「プレイ開始前」）。',
         'Scenario':
             'シナリオ',
         'Screen':
@@ -13236,8 +14900,16 @@ WORLD = {
             '設定：{} 項目がこの PC の推奨と異なります',
         'Setup':
             'セットアップ',
+        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+            'この PC のシェーダー、ログ、一時ファイル。空欄：セーブフォルダー内。ただしセーブフォルダーがクラウドフォルダー（OneDrive、Dropbox、Google Drive）にある場合は、PC ごとに自分のシェーダーを持てるようこの PC 上に置きます。',
         'Shadows of dynamic lights: on from "Above minimum".':
             '動的ライトの影：「最低より上」からオン。',
+        'Show all ({})':
+            'すべて表示（{}）',
+        'Show fewer':
+            '表示を減らす',
+        'Show in folder':
+            'フォルダーで表示',
         'Show me on the live map':
             'ライブマップに自分を表示',
         'Show the fix?':
@@ -13266,6 +14938,8 @@ WORLD = {
             'スキップ：すべて自分で設定する',
         'Slightly translucent window':
             'ウィンドウを少し半透明にする',
+        'Slot {}':
+            'スロット {}',
         'Smooth (goal)':
             'なめらか',
         'Stability run':
@@ -13280,6 +14954,8 @@ WORLD = {
             'スタートメニュー > Windows セキュリティ > ウイルスと脅威の防止 > 設定の管理。',
         'Start the test':
             'テストを開始',
+        "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+            'Steam から起動した場合：ゲームの Steam プロパティで Steam Input のオン／オフを試してください。',
         'Starting the sign-in…':
             'サインインを開始しています…',
         'Starts in front of this boss with the save from the mod “All Boss Save Files Ready to Fight” (Nexus Mods), walks in and keeps the boss busy for two minutes: dodging, strafing, now and then an attack. The hunter cannot die; the boss fights as usual. For stability and a worst case, not for exact comparisons.':
@@ -13340,6 +15016,12 @@ WORLD = {
             "The Hunter's Dream（bbhost のプレイヤーと）",
         "The Hunter's Dream account":
             "The Hunter's Dream のアカウント",
+        "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+            "The Hunter's Dream：Discord で無料サインインすると、bbhost のプレイヤーとも協力プレイできます。shadNet：選んだ shadNet サーバーとそのアカウント。",
+        "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+            "The Hunter's Dream：現在 {} 人の狩人がオンライン（{} bbhost · {} shadNet）",
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+            '「ロード」メニューが空、キャラクターがいない、またはセーブデータが破損しているとゲームが表示します。ランチャーは起動のたびにセーブデータをバックアップするので、元の状態に戻せます。',
         'The Old Hunters found ({}).':
             'The Old Hunters が見つかりました（{}）。',
         'The Old Hunters found in the saves folder (addcont).':
@@ -13348,12 +15030,20 @@ WORLD = {
             'The Old Hunters：見つかりません。所有している場合のみ必要です。ない場合、そのエリアは閉じたままです。',
         'The account you made at supermedo.com.':
             'supermedo.com で作成したアカウント。',
+        'The automatic backup of the saves failed: {}':
+            'セーブデータの自動バックアップに失敗しました：{}',
+        'The character came from another version and there is no backup yet: import it again under "From other versions".':
+            'キャラクターが他のバージョンから来ていて、まだバックアップがない場合：「他のバージョンから」で再度インポートします。',
         'The check stopped: {}':
             '確認が中断されました：{}',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
             'コミュニティパッチ（60 FPS 以上、エフェクトのオプション）は 1.09 専用です。他のバージョンは 30 FPS で動作します。',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "The Hunter's Dream への接続は、bbhost のネットワークコードを Awaken が移植したものです。bbhost と The Hunter's Dream は droogie によるものです。",
+        'The controller does nothing':
+            'コントローラーが反応しない',
+        'The controller test cannot start: {}':
+            'コントローラーテストを開始できません：{}',
         'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
             'これを表示するため、エキスパート表示をオンにしました。切り替えはサイドバーの下部にあります。',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
@@ -13370,8 +15060,12 @@ WORLD = {
             'ゲームがバージョン 1.09 ではない',
         'The game is open: load the save, press F9, run the route and back, press F9 again, quit the game.':
             'ゲームが開いています：セーブデータを読み込み、F9 を押し、ルートを往復し、もう一度 F9 を押してゲームを終了してください。',
+        'The game is running: the test waits until it is closed.':
+            'ゲームが実行中です。終了するまでテストは待機します。',
         'The game needs Vulkan 1.3 and a current driver; an old or crashed driver ends the game with "device lost".':
             'ゲームには Vulkan 1.3 と最新のドライバーが必要です。古いドライバーやクラッシュしたドライバーでは、ゲームが「device lost」で終了します。',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+            'ゲームは「操作設定」ページのコントローラーテストと同じ方法でコントローラーを読み取ります。そこで光るものはゲームに届きます。',
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest memory").':
             'ゲームは起動時に約 6 GB（1440p と 4K では 10 GB）を、RAM とページングファイルを合わせた領域から一括で確保します。Windows が拒否すると、ゲームはすぐにコード 3 で終了します（ログに「cannot create … MiB of guest memory」と出ます）。',
         'The game shows the buttons of whatever you use; the keys can be changed on the Controls page.':
@@ -13436,6 +15130,8 @@ WORLD = {
             'このフォルダーには eboot.bin がありません。その上の階層ではなく、eboot.bin が直下にあるフォルダーを選択してください。',
         'There is no save of this port, shadPS4 or bbhost in that folder (SPRJ0005 with userdata0000 …).':
             'そのフォルダーには、この移植版、shadPS4、bbhost のセーブデータがありません（userdata0000 … を含む SPRJ0005）。',
+        'There is no save to back up yet.':
+            'バックアップするセーブデータがまだありません。',
         "These are a PS4's own encrypted backups (sdimg_…); they cannot be used. Export the save with Apollo Save Tool on the PS4 instead.":
             'これは PS4 独自の暗号化されたバックアップ（sdimg_…）なので使用できません。代わりに PS4 の Apollo Save Tool でセーブデータをエクスポートしてください。',
         'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':
@@ -13446,6 +15142,10 @@ WORLD = {
             'この PC では移植版を実行できません。',
         'This PC does not meet the requirements. You can still go on, but the game will probably not run.':
             'この PC は動作環境を満たしていません。続行はできますが、ゲームはおそらく動作しません。',
+        'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+            'このキャラクターだけを戻すことはできません（{}）。代わりに「バックアップ」でバックアップ全体を復元してください。',
+        'This file is no Bloodborne save backup: {}':
+            'このファイルは Bloodborne のセーブデータのバックアップではありません：{}',
         'This is not a test scenario: {}':
             'テストシナリオではありません：{}',
         'This is the add-on itself: choose the folder that contains {}.':
@@ -13530,6 +15230,8 @@ WORLD = {
             'WASD、スペースで回避、左クリック / Shift + 左クリックで攻撃、右クリック / Shift + 右クリック（または Ctrl）で左手、E で調べる、R でアイテム、F で輸血液、Q でロックオン、Tab または Esc でメニュー、そして 1:1 のマウスカメラ。キーボードとマウスの割り当てを置き換えます。コントローラーの割り当てはそのままです。',
         'Walk (hold)':
             '歩く（長押し）',
+        'Weapons':
+            '武器',
         'Welcome':
             'ようこそ',
         'Welcome, good hunter':
@@ -13578,12 +15280,20 @@ WORLD = {
             'この PC への推奨',
         'Your PC: {} · {}':
             'あなたの PC：{} · {}',
+        'Your characters':
+            'あなたのキャラクター',
         'Your characters and online play':
             'キャラクターとオンラインプレイ',
         'Your characters from other versions':
             '他のバージョンのキャラクター',
+        'Your characters, their backups and the trophies. Empty: {}.':
+            'キャラクター、そのバックアップ、トロフィー。空欄：{}。',
         'Your characters: bring them from another version, back them up, put a backup back.':
             'キャラクター：別のバージョンから引き継ぐ、バックアップする、バックアップから戻す。',
+        'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+            '現在のセーブデータ（{}）は先にバックアップされます（「{}」）。何も失われません。',
+        'Your current saves are backed up first: trying an older backup loses nothing.':
+            '現在のセーブデータは先にバックアップされます。古いバックアップを試しても何も失いません。',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'ディスプレイ：{} × {}。この PC への推奨：{}。',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
@@ -13616,6 +15326,8 @@ WORLD = {
             '以前のセーブデータ：{}',
         'Your processor sets the limit.':
             'プロセッサーが上限を決めています。',
+        'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+            'セーブフォルダーはクラウドフォルダー内にあります。セーブデータは一緒に移動し、シェーダーはこの PC に残ります。一度にプレイするのは 1 台の PC だけにし、別の PC で始める前に同期の完了を待ってください。OneDrive では、フォルダーを「このデバイス上に常に保持する」に設定してください。',
         'Your setup':
             'あなたの環境',
         'above':
@@ -13710,6 +15422,10 @@ WORLD = {
             '問題',
         'round {}, {} min left':
             'ラウンド {}、残り {} 分',
+        'same as now':
+            '現在と同じ',
+        'saved {}':
+            '保存 {}',
         'sce_module, sce_sys and dvdroot_ps4 are there.':
             'sce_module、sce_sys、dvdroot_ps4 があります。',
         'shadNet server':
@@ -13752,12 +15468,16 @@ WORLD = {
             '{} フレーム生成：フレームレートが上がり、入力遅延がわずかに増えます',
         '{} is available on your card for even higher frame rates.':
             'お使いのカードでは、さらに高いフレームレートを出せる {} を利用できます。',
+        '{} is back at this state.':
+            '{} はこの状態に戻りました。',
         '{} is reserved (menu, recording, or a hotkey) and cannot be bound to a game action.':
             '{} は予約済み（メニュー、記録、ホットキー）のため、ゲームのアクションに割り当てられません。',
         '{} minutes':
             '{} 分',
         '{} of {} trophies earned':
             '{} / {} 個のトロフィーを獲得',
+        '{} online':
+            '{} 人オンライン',
         '{} runs':
             '{} 回の実行',
         '{} settings differ from the recommendation.':
@@ -13827,6 +15547,10 @@ WORLD = {
             '90 FPS',
         'A PS4 (exported save)':
             'PS4 (내보낸 세이브)',
+        'A character is gone or the save is broken':
+            '캐릭터가 사라졌거나 세이브가 손상됨',
+        'A character without a readable name':
+            '이름을 읽을 수 없는 캐릭터',
         'A constant added on top of sensitivity; raises the floor for slow movements without affecting fast ones as much.':
             '감도에 더해지는 고정값입니다. 빠른 움직임에는 영향을 덜 주면서 느린 움직임의 최소 속도를 높입니다.',
         'A controller (PlayStation, Xbox, Switch)':
@@ -13845,6 +15569,10 @@ WORLD = {
             '런처 뒤가 살짝 비쳐 보입니다: 흐린 제목 표시줄 (Windows 11)과 98.5% 불투명한 창. 끄면: 완전히 불투명해 가장 읽기 쉽습니다.',
         'A key, the mouse or a controller used during the test ends it.':
             '테스트 중 키, 마우스 또는 컨트롤러를 사용하면 테스트가 끝납니다.',
+        'A name for this backup. Enter keeps it, Esc leaves it as it was.':
+            '이 백업의 이름입니다. Enter로 저장, Esc로 그대로 둡니다.',
+        'A shadNet server instead, and every option: the Online play page. Offline needs nothing: untick it.':
+            '대신 shadNet 서버와 모든 옵션: 온라인 플레이 페이지. 오프라인은 필요 없음: 체크를 해제하세요.',
         'A steady 60 FPS with the best picture your graphics card has room for.':
             '그래픽 카드가 감당할 수 있는 최고의 화질로 안정적인 60 FPS.',
         'A stick direction can only be bound to a key, not a mouse button.':
@@ -13867,6 +15595,8 @@ WORLD = {
             '최소 이상',
         'Achievements':
             '업적',
+        'Add a backup file…':
+            '백업 파일 추가…',
         'Add a test…':
             '테스트 추가…',
         'Added. Choose it under Scenario (the list is updated when the launcher starts next).':
@@ -13917,10 +15647,22 @@ WORLD = {
             '각성',
         'Back':
             '뒤로',
+        'Back up automatically before every start':
+            '시작할 때마다 자동 백업',
+        'Back up now':
+            '지금 백업',
+        "Backup put back. Your characters are in the game's Load Game menu.":
+            '백업을 복원했습니다. 캐릭터는 게임의 불러오기 메뉴에 있습니다.',
         'Backups':
             '백업',
         'Balanced (goal)':
             '균형',
+        'Before a restore':
+            '복원 전',
+        'Before an import':
+            '가져오기 전',
+        'Before playing':
+            '플레이 전',
         'Below minimum':
             '최소 미만',
         'Best for your goal: {} with {:.0f} FPS.':
@@ -13935,6 +15677,8 @@ WORLD = {
             '보스전 (보스 앞에서 한 세이브)',
         'Boss: Cleric Beast':
             '보스: 성직자 짐승',
+        'Bosses':
+            '보스',
         'Bring your saves along, and play with others.':
             '세이브를 가져오고, 다른 플레이어와 함께 플레이하세요.',
         'Bronze':
@@ -13949,6 +15693,10 @@ WORLD = {
             'AVX가 없는 CPU (여러 Pentium/Celeron 모델)에서는 아예 실행할 수 없습니다.',
         'CUSA03173: the Game of the Year Edition, with The Old Hunters.':
             'CUSA03173: The Old Hunters가 포함된 Game of the Year Edition.',
+        'Cache folder':
+            '캐시 폴더',
+        'Caches now: {}':
+            '현재 캐시: {}',
         'Camera':
             '카메라',
         'Camera (right stick)':
@@ -13989,6 +15737,8 @@ WORLD = {
             '게임 파일 확인 중…',
         'Checking your PC…':
             'PC 확인 중…',
+        'Choose a backup (zip)':
+            '백업 선택(zip)',
         'Choose a folder…':
             '폴더 선택…',
         'Choose at least two values to compare.':
@@ -13997,6 +15747,8 @@ WORLD = {
             '원하는 플레이 느낌을 고르세요. 그에 맞는 설정은 하드웨어에 따라 정해집니다.',
         'Choose the base game folder in Game & language. Its dvdroot_ps4 has about 29 GB in about 28,800 files.':
             '게임 및 언어에서 기본 게임 폴더를 선택하세요. 그 안의 dvdroot_ps4는 약 28,800개 파일, 약 29 GB입니다.',
+        'Choose the cache folder':
+            '캐시 폴더 선택',
         'Choose the folder with the saves':
             '세이브가 있는 폴더 선택',
         'Choose the game folder':
@@ -14023,6 +15775,8 @@ WORLD = {
             '먼저 게임을 종료하세요.',
         'Close the game first; it writes its saves while it runs.':
             '먼저 게임을 종료하세요. 게임은 실행 중에 세이브를 기록합니다.',
+        'Close the game.':
+            '게임을 닫으세요.',
         'Close your browser and other programs while playing.':
             '플레이하는 동안에는 브라우저와 다른 프로그램을 닫으세요.',
         'Co-op pool':
@@ -14037,6 +15791,8 @@ WORLD = {
             '다른 버전에서 넘어왔다면 IV단계에서 캐릭터를 찾습니다.',
         'Compare one setting: pictures and frame rate':
             '설정 하나 비교: 화면과 프레임 속도',
+        'Controller test':
+            '컨트롤러 테스트',
         'Controls':
             '조작',
         'Copied: paste it into your message on Discord or in the forum.':
@@ -14051,10 +15807,24 @@ WORLD = {
             '업데이트 폴더의 모든 파일을 기본 게임 폴더에 복사하고 "대상 폴더의 파일 덮어쓰기"를 선택하세요.',
         'Copy everything from the update folder into the base game folder and replace the files.':
             '업데이트 폴더의 모든 파일을 기본 게임 폴더에 복사하고 파일을 덮어쓰세요.',
+        'Copy the backup to…':
+            '백업 복사 위치…',
+        'Copy to…':
+            '복사 위치…',
+        'Could not back up the saves: {}':
+            '세이브를 백업할 수 없습니다: {}',
+        'Could not copy the backup: {}':
+            '백업을 복사할 수 없습니다: {}',
         'Could not import the saves: {}':
             '세이브를 가져올 수 없습니다: {}',
         'Could not load the list of versions: {}':
             '버전 목록을 불러올 수 없습니다: {}',
+        'Could not move the backup to the Recycle Bin.':
+            '백업을 휴지통으로 옮길 수 없습니다.',
+        'Could not put the backup back: {}':
+            '백업을 복원할 수 없습니다: {}',
+        'Could not rename the backup: {}':
+            '백업 이름을 바꿀 수 없습니다: {}',
         'Could not save it: {}':
             '저장할 수 없습니다: {}',
         'Ctrl+F':
@@ -14067,8 +15837,14 @@ WORLD = {
             'DLSS는 GeForce RTX 20 시리즈 이상이 필요합니다. DLSS 프레임 생성은 RTX 40 (2×) 또는 RTX 50 (최대 4×)이 필요합니다. FSR 3.1 프레임 생성은 모든 카드에서 작동하며, 기본 FPS가 약 60 이상일 때 가장 좋습니다.',
         'Dark Souls III layout':
             '다크 소울 III 배치',
+        'Deaths':
+            '사망',
         'Debug':
             '디버그',
+        'Delete':
+            '삭제',
+        'Delete this backup? It goes to the Recycle Bin.':
+            '이 백업을 삭제할까요? 휴지통으로 이동합니다.',
         'Derived from the requirements and the hardware check on bbport.de for your PC at {} ({}). Chromatic aberration, depth of field, motion blur and sharpening are taste and stay as you set them.':
             'bbport.de의 요구 사양과 하드웨어 검사를 바탕으로 이 PC의 {} ({})에 맞춘 설정입니다. 색수차, 피사계 심도, 모션 블러, 선명화는 취향의 문제이므로 설정한 그대로 유지됩니다.',
         'Detected automatically':
@@ -14085,6 +15861,8 @@ WORLD = {
             '다운로드 페이지',
         'Download the FSR 4 files now (about 30 MB)':
             '지금 FSR 4 파일 다운로드 (약 30 MB)',
+        'Drag a mod by its grip to change the order. Lower in the list loads later and wins conflicts.':
+            '모드의 손잡이를 끌어 순서를 바꾸세요. 목록에서 아래에 있을수록 나중에 로드되며 충돌 시 우선합니다.',
         'Driver notes':
             '드라이버 참고 사항',
         'Duration':
@@ -14093,6 +15871,10 @@ WORLD = {
             '전문가',
         'Each':
             '값마다',
+        'Earlier backup':
+            '이전 백업',
+        'Earlier states in your backups ({})':
+            '백업에 있는 이전 상태 ({})',
         'Earlier tests':
             '이전 테스트',
         'Earned':
@@ -14105,6 +15887,8 @@ WORLD = {
             '마우스 시점 사용',
         'Enough for 4K (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070 class).':
             '4K에 충분 (RTX 4070 / RTX 5070 / RX 7800 XT / RX 9070급).',
+        'Every character in this backup goes back to this state.':
+            '이 백업에 있는 모든 캐릭터가 이 상태로 돌아갑니다.',
         'Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.':
             '모든 그래픽 및 프레임 속도 설정. bbport.ini에 저장되며, 게임 내 메뉴 (Insert 또는 L3+R3)에서도 같은 값을 바꿉니다.',
         'Every graphics setting one by one:':
@@ -14155,10 +15939,16 @@ WORLD = {
             '프레임 생성',
         "Frames made between two of the game's: 60 FPS on screen becomes 120. Needs a display with that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce RTX 40 or newer, otherwise FSR 3.1 is used.":
             '게임의 두 프레임 사이에 프레임을 만들어 화면의 60 FPS가 120이 됩니다. 그만큼의 주사율을 지원하는 디스플레이가 필요하며 (60 FPS일 때 120 Hz 이상), 디스플레이가 추가 프레임을 표시할 수 없으면 일시 중지됩니다. 입력 지연이 약간 늘어납니다. 메뉴와 동영상에는 프레임을 생성하지 않습니다. DLSS는 GeForce RTX 40 이상이 필요하며, 그렇지 않으면 FSR 3.1을 사용합니다.',
+        'From a file':
+            '파일에서',
+        'From other versions':
+            '다른 버전에서',
         'From your last save: the camera turns once around the hunter and back (24 s). Quick and the same every time; for the frame rate and for comparing settings.':
             '마지막 세이브에서 시작: 카메라가 사냥꾼 주위를 한 바퀴 돌고 돌아옵니다 (24초). 빠르고 매번 똑같아서 프레임 속도 측정과 설정 비교에 적합합니다.',
         'Fullscreen (recommended)':
             '전체 화면 (권장)',
+        'Fullscreen, HDR and the taste effects are on Picture & performance.':
+            '전체 화면, HDR, 취향에 따른 효과는 화면 및 성능에 있습니다.',
         'Fullscreen, HDR, field of view and the taste effects are on Picture & performance.':
             '전체 화면, HDR, 시야각, 취향에 따른 효과는 화면 및 성능에 있습니다.',
         'GPU':
@@ -14199,6 +15989,8 @@ WORLD = {
             '필수 조건',
         'Help':
             '도움말',
+        'Hide the earlier states':
+            '이전 상태 숨기기',
         'Hide the settings':
             '설정 숨기기',
         'Highest model detail: your card has room to spare at this resolution.':
@@ -14227,6 +16019,8 @@ WORLD = {
             '창 모드: 열릴 때의 크기입니다. 가장자리를 끌어 계속 조절할 수 있으며, "지난번처럼"은 마지막으로 게임을 닫았을 때의 크기로 엽니다.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             '게임 중에 Insert (키보드) 또는 L3 + R3 (컨트롤러)를 누르면 포트 메뉴가 열립니다.',
+        'In the game, {} loads the character you played last; {} on the title screen lists all of them.':
+            '게임에서 "{}"는 마지막으로 플레이한 캐릭터를 불러오고, 타이틀 화면의 "{}"는 모든 캐릭터를 보여 줍니다.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
             '열린 페이지 ({0})에서 Discord로 로그인하고 이 코드를 입력하세요:',
         'In the page that opened, sign in with Discord and enter this code:':
@@ -14271,6 +16065,8 @@ WORLD = {
             '시작은 될 수 있지만 낮은 프레임 속도와 여러 문제를 각오하세요.',
         'Items and menus':
             '아이템 및 메뉴',
+        'Its level, weapons and bosses cannot be read from this save.':
+            '이 세이브에서는 레벨, 무기, 보스를 읽을 수 없습니다.',
         'Jump while dashing (L3)':
             '달리는 중 점프 (L3)',
         'Keyboard and mouse':
@@ -14379,8 +16175,14 @@ WORLD = {
             '다음부터는 Play Bloodborne.exe가 이 설정으로 게임을 바로 시작합니다.',
         'No add-on in this folder: The Old Hunters is a folder named {} in it.':
             '이 폴더에 추가 콘텐츠가 없습니다. The Old Hunters는 그 안의 {} 폴더입니다.',
+        'No backups yet.':
+            '아직 백업이 없습니다.',
+        'No characters yet. The game makes them, or bring yours from another version (below).':
+            '아직 캐릭터가 없습니다. 게임이 만들거나, 다른 버전에서 가져오세요(아래).',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             '{} 또는 그 하위 폴더에 완전한 Bloodborne 세이브가 없습니다. userdata0010과 캐릭터 하나 이상 (userdata0000~userdata0009)이 필요합니다.',
+        'No controller found. Connect it by cable or Bluetooth.':
+            '컨트롤러를 찾을 수 없습니다. 케이블이나 블루투스로 연결하세요.',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
             '{:.0f}분 동안 충돌이나 멈춤 없음 (평균 {:.0f} FPS).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
@@ -14401,6 +16203,8 @@ WORLD = {
             '아직 트로피가 없습니다. 게임에서 트로피를 획득하면 바로 여기에 표시됩니다.',
         'No versions found.':
             '버전을 찾을 수 없습니다.',
+        'None beaten yet':
+            '아직 처치한 보스 없음',
         'Normal: the port builds its shader cache the first time it sees each effect. It is kept for the next starts.':
             '정상입니다: 포트는 각 효과를 처음 볼 때 셰이더 캐시를 만듭니다. 캐시는 다음 시작 때도 유지됩니다.',
         "Not in the website's list; it has every instruction the port needs. Counted as the minimum.":
@@ -14427,6 +16231,8 @@ WORLD = {
             '지원되지 않음: 비디오 메모리 {} GB, 포트에는 최소 4 GB가 필요합니다.',
         'Nothing found. Try other words, or open Help.':
             '찾은 항목이 없습니다. 다른 단어로 검색하거나 도움말을 여세요.',
+        'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it over, like DS4Windows.':
+            '아무것도 켜지지 않으면: 컨트롤러를 다시 연결하고(케이블이 가장 확실), DS4Windows처럼 컨트롤러를 가로채는 프로그램을 닫으세요.',
         'Nothing was recorded (press F9 to start and F9 to stop).':
             '아무것도 녹화되지 않았습니다(F9로 시작, F9로 중지).',
         'Now':
@@ -14455,8 +16261,14 @@ WORLD = {
             '온라인 플레이',
         'Only a black screen':
             '검은 화면만 보임',
+        'Only one character is affected: under Your characters, open its earlier states and put back just that one.':
+            '한 캐릭터만 문제라면: 내 캐릭터에서 그 캐릭터의 이전 상태를 열고 그 캐릭터만 되돌리세요.',
         'Only the update folder was chosen':
             '업데이트 폴더만 선택됨',
+        'Only this character changes; your other characters stay as they are. Its current state is backed up first ("{}"), so nothing is lost.':
+            '이 캐릭터만 바뀌고 다른 캐릭터는 그대로 유지됩니다. 현재 상태는 먼저 백업되므로("{}") 잃는 것은 없습니다.',
+        'Only when you played since the last backup. The last {} automatic backups are kept; the ones you make yourself always.':
+            '마지막 백업 이후 플레이한 경우에만. 자동 백업은 최근 {}개를 보관하고, 직접 만든 백업은 항상 남습니다.',
         'Only with your own copy of the game':
             '본인 소유의 게임 사본으로만',
         'Open Windows Security':
@@ -14465,8 +16277,14 @@ WORLD = {
             '폴더를 열고 Ctrl + A, Ctrl + C를 차례로 누르세요.',
         'Open the Discord':
             'Discord 열기',
+        'Open the backups':
+            '백업 열기',
         'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the destination.':
             '기본 게임 폴더 (dvdroot_ps4가 있는 폴더)를 열고 Ctrl + V를 누른 다음 "대상 폴더의 파일 덮어쓰기"를 선택하세요.',
+        'Open the controller test':
+            '컨트롤러 테스트 열기',
+        'Open the controller test and press the buttons.':
+            '컨트롤러 테스트를 열고 버튼을 누르세요.',
         'Open the folder':
             '폴더 열기',
         'Open the game folder':
@@ -14529,12 +16347,18 @@ WORLD = {
             '준비 중 ({}). 게임이 전체 화면으로 열립니다. 끝날 때까지 PC를 조작하지 마세요.',
         'Press Win + R, type sysdm.cpl, press Enter.':
             'Win + R을 누르고 sysdm.cpl을 입력한 뒤 Enter를 누르세요.',
+        'Press the buttons: what lights up here reaches the game.':
+            '버튼을 누르세요. 여기서 불이 들어오면 게임에도 전달됩니다.',
         'Press…':
             '누르세요…',
         'Problems and their fixes':
             '문제와 해결 방법',
         'Processor':
             '프로세서',
+        'Put this backup back?':
+            '이 백업을 복원할까요?',
+        'Put {} back to this state?':
+            '{}을(를) 이 상태로 되돌릴까요?',
         'Quiet (goal)':
             '저소음',
         'Quit to Desktop in the title menu and in the System menu':
@@ -14559,6 +16383,8 @@ WORLD = {
             '경로 녹화…',
         'Recorded: every test of this scenario now replays your route.':
             '녹화됨: 이제 이 시나리오의 모든 테스트가 당신의 경로를 재생합니다.',
+        'Rename':
+            '이름 바꾸기',
         'Rename the folder {} to {}: the game looks for that exact name.':
             '폴더 {}의 이름을 {}(으)로 바꾸세요. 게임은 정확히 이 이름을 찾습니다.',
         'Repeat the setup':
@@ -14571,6 +16397,8 @@ WORLD = {
             '예약됨: Insert/Esc (포트 메뉴), F9 (경로 녹화), 마우스 시점 전환 키와 input.ini 다시 불러오기 키 (기본값 F7/F8).',
         'Restart the PC after installing it.':
             '설치한 후 PC를 다시 시작하세요.',
+        'Restore':
+            '복원',
         'Right half of the touchpad (debug menu)':
             '터치패드 오른쪽 절반 (디버그 메뉴)',
         'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.':
@@ -14585,6 +16413,8 @@ WORLD = {
             '달리기: 옛 야남',
         'Runs the same two-minute route through this area and back every time, from the save of the mod “All Boss Save Files Ready to Fight” (Nexus Mods). The hunter cannot die and enemies leave him alone: for frame rate, loading and stutter while moving, and for comparing settings.':
             '“All Boss Save Files Ready to Fight” 모드(Nexus Mods)의 세이브에서 매번 같은 2분짜리 경로로 이 지역을 왕복합니다. 사냥꾼은 죽지 않고 적도 건드리지 않습니다: 이동 중 프레임 속도, 로딩, 끊김 확인과 설정 비교용입니다.',
+        "SDL3.dll is missing in the port's bin folder.":
+            '포트의 bin 폴더에 SDL3.dll이 없습니다.',
         'SSD':
             'SSD',
         'Same as the monitor':
@@ -14597,14 +16427,20 @@ WORLD = {
             '보고서 저장',
         'Save as zip':
             'ZIP으로 저장',
+        'Saved by hand':
+            '직접 백업함',
         'Saved: {}':
             '저장됨: {}',
         'Saves':
             '세이브',
         'Saves & online':
             '세이브 및 온라인',
+        'Saves backed up: {}':
+            '세이브를 백업했습니다: {}',
         "Saves imported. Your characters are in the game's Load Game menu.":
             '세이브를 가져왔습니다. 캐릭터는 게임의 불러오기 메뉴에 있습니다.',
+        'Saves page, Backups: put back the newest backup from before the problem ("Before playing" with the date of your last good session).':
+            '세이브 페이지의 백업: 문제가 생기기 전의 가장 최근 백업을 복원하세요(마지막으로 정상 플레이한 날짜의 "플레이 전").',
         'Scenario':
             '시나리오',
         'Screen':
@@ -14639,8 +16475,16 @@ WORLD = {
             '설정: {}개가 PC 권장값과 다름',
         'Setup':
             '초기 설정',
+        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
+            '이 PC의 셰이더, 로그, 임시 파일. 비워 두면: 세이브 폴더에 두며, 세이브 폴더가 클라우드 폴더(OneDrive, Dropbox, Google Drive)에 있으면 각 PC가 자신의 셰이더를 갖도록 이 PC에 둡니다.',
         'Shadows of dynamic lights: on from "Above minimum".':
             '동적 조명 그림자: "최소 이상"부터 켬.',
+        'Show all ({})':
+            '모두 보기({})',
+        'Show fewer':
+            '간단히 보기',
+        'Show in folder':
+            '폴더에서 보기',
         'Show me on the live map':
             '실시간 지도에 내 위치 표시',
         'Show the fix?':
@@ -14669,6 +16513,8 @@ WORLD = {
             '건너뛰기: 모두 직접 설정합니다',
         'Slightly translucent window':
             '살짝 투명한 창',
+        'Slot {}':
+            '슬롯 {}',
         'Smooth (goal)':
             '부드러움',
         'Stability run':
@@ -14683,6 +16529,8 @@ WORLD = {
             '시작 메뉴 > Windows 보안 > 바이러스 및 위협 방지 > 설정 관리.',
         'Start the test':
             '테스트 시작',
+        "Started from Steam: in the game's Steam properties, try Steam Input on or off.":
+            'Steam에서 실행한 경우: 게임의 Steam 속성에서 Steam Input을 켜거나 꺼 보세요.',
         'Starting the sign-in…':
             '로그인 시작 중…',
         'Starts in front of this boss with the save from the mod “All Boss Save Files Ready to Fight” (Nexus Mods), walks in and keeps the boss busy for two minutes: dodging, strafing, now and then an attack. The hunter cannot die; the boss fights as usual. For stability and a worst case, not for exact comparisons.':
@@ -14743,6 +16591,12 @@ WORLD = {
             "The Hunter's Dream (bbhost 플레이어와 함께)",
         "The Hunter's Dream account":
             "The Hunter's Dream 계정",
+        "The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. shadNet: a shadNet server of your choice and its account.":
+            "The Hunter's Dream: Discord로 무료 로그인한 뒤 bbhost 플레이어와 함께 협동 플레이. shadNet: 원하는 shadNet 서버와 그 계정.",
+        "The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)":
+            "The Hunter's Dream: 지금 {}명의 사냥꾼이 온라인({} bbhost · {} shadNet)",
+        'The Load Game menu is empty, a character is missing, or the game says the save is damaged. Before every start the launcher backs up your saves, so you can go back to how they were.':
+            '불러오기 메뉴가 비어 있거나, 캐릭터가 없거나, 게임이 세이브가 손상되었다고 합니다. 런처는 시작할 때마다 세이브를 백업하므로 이전 상태로 되돌릴 수 있습니다.',
         'The Old Hunters found ({}).':
             'The Old Hunters를 찾았습니다({}).',
         'The Old Hunters found in the saves folder (addcont).':
@@ -14751,12 +16605,20 @@ WORLD = {
             'The Old Hunters: 찾을 수 없음. 보유한 경우에만 필요하며, 없으면 해당 지역은 닫힌 채로 남습니다.',
         'The account you made at supermedo.com.':
             'supermedo.com에서 만든 계정.',
+        'The automatic backup of the saves failed: {}':
+            '세이브 자동 백업에 실패했습니다: {}',
+        'The character came from another version and there is no backup yet: import it again under "From other versions".':
+            '캐릭터를 다른 버전에서 가져왔고 아직 백업이 없다면: "다른 버전에서"에서 다시 가져오세요.',
         'The check stopped: {}':
             '검사 중단: {}',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
             '커뮤니티 패치 (60 FPS 등과 효과 옵션)는 1.09 전용입니다. 다른 버전은 30 FPS로 실행됩니다.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "The Hunter's Dream 연결 기능은 Awaken이 bbhost의 네트워크 코드를 이식한 것입니다. bbhost와 The Hunter's Dream은 droogie가 만들었습니다.",
+        'The controller does nothing':
+            '컨트롤러가 반응하지 않음',
+        'The controller test cannot start: {}':
+            '컨트롤러 테스트를 시작할 수 없습니다: {}',
         'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
             '이 항목을 보여 주기 위해 전문가 보기를 켰습니다. 스위치는 사이드바 맨 아래에 있습니다.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
@@ -14773,8 +16635,12 @@ WORLD = {
             '게임이 버전 1.09가 아님',
         'The game is open: load the save, press F9, run the route and back, press F9 again, quit the game.':
             '게임이 열렸습니다: 세이브를 불러오고, F9를 누르고, 경로를 왕복하고, F9를 다시 누른 뒤 게임을 종료하세요.',
+        'The game is running: the test waits until it is closed.':
+            '게임이 실행 중입니다. 종료될 때까지 테스트가 기다립니다.',
         'The game needs Vulkan 1.3 and a current driver; an old or crashed driver ends the game with "device lost".':
             '게임에는 Vulkan 1.3과 최신 드라이버가 필요합니다. 오래되었거나 충돌한 드라이버는 "device lost"로 게임을 종료시킵니다.',
+        'The game reads controllers the same way the controller test on the Controls page does: what lights up there reaches the game.':
+            '게임은 조작 페이지의 컨트롤러 테스트와 같은 방식으로 컨트롤러를 읽습니다. 그곳에서 불이 들어오면 게임에도 전달됩니다.',
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest memory").':
             '게임은 시작할 때 RAM과 페이징 파일을 합쳐 약 6 GB (1440p와 4K에서는 10 GB)를 한 번에 예약합니다. Windows가 거부하면 게임이 코드 3으로 바로 종료됩니다 (로그에 "cannot create … MiB of guest memory"가 표시됨).',
         'The game shows the buttons of whatever you use; the keys can be changed on the Controls page.':
@@ -14839,6 +16705,8 @@ WORLD = {
             '이 폴더에 eboot.bin이 없습니다. 상위 폴더가 아니라 eboot.bin이 바로 안에 있는 폴더를 선택하세요.',
         'There is no save of this port, shadPS4 or bbhost in that folder (SPRJ0005 with userdata0000 …).':
             '이 폴더에 이 포트, shadPS4 또는 bbhost의 세이브가 없습니다 (userdata0000 … 이 들어 있는 SPRJ0005).',
+        'There is no save to back up yet.':
+            '아직 백업할 세이브가 없습니다.',
         "These are a PS4's own encrypted backups (sdimg_…); they cannot be used. Export the save with Apollo Save Tool on the PS4 instead.":
             'PS4 자체의 암호화된 백업 (sdimg_…)이라서 사용할 수 없습니다. 대신 PS4에서 Apollo Save Tool로 세이브를 내보내세요.',
         'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':
@@ -14849,6 +16717,10 @@ WORLD = {
             '이 PC에서는 포트를 실행할 수 없습니다.',
         'This PC does not meet the requirements. You can still go on, but the game will probably not run.':
             '이 PC는 요구 사항을 충족하지 않습니다. 계속 진행할 수는 있지만 게임이 실행되지 않을 가능성이 높습니다.',
+        'This character cannot be put back on its own ({}). Restore the whole backup under Backups instead.':
+            '이 캐릭터만 따로 복원할 수 없습니다({}). 대신 백업에서 전체 백업을 복원하세요.',
+        'This file is no Bloodborne save backup: {}':
+            '이 파일은 Bloodborne 세이브 백업이 아닙니다: {}',
         'This is not a test scenario: {}':
             '테스트 시나리오가 아닙니다: {}',
         'This is the add-on itself: choose the folder that contains {}.':
@@ -14933,6 +16805,8 @@ WORLD = {
             'WASD, 스페이스로 회피, 왼쪽 클릭 / Shift + 왼쪽 클릭으로 공격, 오른쪽 클릭 / Shift + 오른쪽 클릭 (또는 Ctrl)으로 왼손 동작, E 상호작용, R 아이템, F 수혈액, Q 록온, Tab 또는 Esc 메뉴, 1:1 마우스 카메라. 키보드 및 마우스 키 지정을 대체하며, 컨트롤러는 자체 설정을 유지합니다.',
         'Walk (hold)':
             '걷기 (누르고 있기)',
+        'Weapons':
+            '무기',
         'Welcome':
             '환영합니다',
         'Welcome, good hunter':
@@ -14981,12 +16855,20 @@ WORLD = {
             '이 PC 권장 설정',
         'Your PC: {} · {}':
             '내 PC: {} · {}',
+        'Your characters':
+            '내 캐릭터',
         'Your characters and online play':
             '캐릭터와 온라인 플레이',
         'Your characters from other versions':
             '다른 버전의 캐릭터',
+        'Your characters, their backups and the trophies. Empty: {}.':
+            '내 캐릭터, 그 백업, 트로피. 비워 두면: {}.',
         'Your characters: bring them from another version, back them up, put a backup back.':
             '캐릭터: 다른 버전에서 가져오기, 백업하기, 백업 복원하기.',
+        'Your current saves ({}) are backed up first ("{}"), so nothing is lost.':
+            '현재 세이브({})는 먼저 백업되므로("{}") 잃는 것이 없습니다.',
+        'Your current saves are backed up first: trying an older backup loses nothing.':
+            '현재 세이브는 먼저 백업되므로 더 오래된 백업을 시도해도 잃는 것이 없습니다.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             '디스플레이: {} × {}. 이 PC 권장: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
@@ -15019,6 +16901,8 @@ WORLD = {
             '이전 세이브: {}',
         'Your processor sets the limit.':
             '프로세서가 성능의 한계입니다.',
+        'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':
+            '세이브 폴더가 클라우드 폴더에 있습니다. 세이브는 함께 옮겨지고 셰이더는 이 PC에 남습니다. 한 번에 한 PC에서만 플레이하고, 다른 PC에서 시작하기 전에 동기화가 끝날 때까지 기다리세요. OneDrive에서는 폴더를 "항상 이 디바이스에 유지"로 설정하세요.',
         'Your setup':
             '내 구성',
         'above':
@@ -15113,6 +16997,10 @@ WORLD = {
             '문제',
         'round {}, {} min left':
             '{}회차, {}분 남음',
+        'same as now':
+            '현재와 같음',
+        'saved {}':
+            '저장됨 {}',
         'sce_module, sce_sys and dvdroot_ps4 are there.':
             'sce_module, sce_sys, dvdroot_ps4가 있습니다.',
         'shadNet server':
@@ -15155,12 +17043,16 @@ WORLD = {
             '{} 프레임 생성: 더 높은 프레임 속도, 약간 늘어나는 입력 지연',
         '{} is available on your card for even higher frame rates.':
             '이 카드에서는 {}을(를) 사용해 더 높은 프레임 속도를 낼 수 있습니다.',
+        '{} is back at this state.':
+            '{}이(가) 이 상태로 돌아왔습니다.',
         '{} is reserved (menu, recording, or a hotkey) and cannot be bound to a game action.':
             '{}은(는) 예약된 키 (메뉴, 녹화 또는 단축키)라서 게임 동작에 지정할 수 없습니다.',
         '{} minutes':
             '{}분',
         '{} of {} trophies earned':
             '트로피 {}/{}개 획득',
+        '{} online':
+            '{}명 온라인',
         '{} runs':
             '{}회 실행',
         '{} settings differ from the recommendation.':

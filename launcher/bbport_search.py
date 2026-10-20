@@ -8,6 +8,7 @@ Every row, switch and folder field registers itself while the pages are built (i
 the pages, the Help topics and a few cards are added in search_ready(). Words in WORDS add the
 players' words to a setting (by its key), a page or a Help topic, in German and English.
 """
+import re
 import unicodedata
 
 import bbport_theme as theme
@@ -29,36 +30,38 @@ WORDS = {
     'fullscreen': 'vollbild fenster fullscreen window borderless randlos',
     'hdr': 'hdr helligkeit brightness',
     'fps_mode': 'fps bildrate framerate frame rate 30 60 120 unbegrenzt unlock flussig ruckelt lag',
-    'frame_cap': 'fps grenze limit cap 120 144 165 240',
+    'frame_cap': 'begrenzen begrenzung maximal max limiter fps grenze limit cap 120 144 165 240',
     'frames_ahead': 'latenz input lag ruckelt stutter',
     'present_mode': 'vsync tearing mailbox fifo',
     'output_res': 'auflosung resolution 4k 1440p 1080p 2160p 720p scharf unscharf pixelig eigene custom '
                   'benutzerdefiniert monitor',
-    'game_monitor': 'monitor bildschirm zweiter display screen dual mehrere',
+    'game_monitor': 'second multi multiple monitor bildschirm zweiter display screen dual mehrere',
     'window_size': 'fenstergrosse fenster grosse window size fenstermodus windowed',
     'upscaler': 'upscaler fsr dlss taa hochskalierung kantenglattung scharf unscharf',
-    'preset': 'qualitat quality balanced performance native aa scharfer schoner',
-    'sharpen': 'scharf scharfe unscharf blurry verwaschen rcas', 'sharpness': 'scharf scharfe unscharf blurry rcas',
+    'preset': 'preset stufe qualitat quality balanced performance native aa scharfer schoner',
+    'sharpen': 'sharpen sharpening nachscharfen scharf scharfe unscharf blurry verwaschen rcas', 'sharpness': 'sharpness sharpening starke scharf scharfe unscharf blurry rcas',
     'object_motion': 'ghosting schlieren nachziehen bewegungsvektoren',
     'model_lod': 'lod detail modelldetail details pop-in plopp modelle sichtweite',
-    'fov': 'sichtfeld fov field of view weitwinkel kamera',
     'show_fps': 'fps zahler counter anzeige overlay',
-    'frame_gen': 'frame generation zwischenbilder dlss fsr fg',
+    'frame_gen': 'framegen frame generation zwischenbilder dlss fsr fg',
     'hud_position': 'hud ultrawide 21:9 32:9 interface',
     'live_resolution': 'auflosung neustart restart',
     'effect_motion_blur': 'unscharfe motion blur bewegungsunscharfe',
     'effect_dof': 'tiefenscharfe depth of field unscharf hintergrund',
-    'effect_chromatic_aberration': 'farbsaum chromatic aberration farbrander',
+    'effect_chromatic_aberration': 'chromatische aberration farbsaum farbsaum chromatic aberration farbrander',
     'effect_ssao': 'ssao umgebungsverdeckung schatten ambient occlusion',
     'effect_dynamic_shadows': 'schatten shadows licht',
     'effect_ssr': 'spiegelungen reflections ssr',
     'effect_game_aa': 'kantenglattung anti aliasing aa treppen',
-    'language': 'sprache language deutsch englisch untertitel text subtitles',
-    'voice_language': 'stimmen voice sprache synchro audio',
-    'player_name': 'name psn spielername',
-    'game_dir': 'spielordner eboot cusa03173 ordner pfad folder spiel',
+    'language': 'textsprache sprache language deutsch englisch untertitel text subtitles',
+    'voice_language': 'japanisch japanese englisch english deutsch voices sprachausgabe stimmen voice sprache synchro audio',
+    'player_name': 'player psn-name name psn spielername',
+    'game_dir': 'game dump spielordner eboot cusa03173 ordner pfad folder spiel',
     'dlc_dir': 'dlc old hunters erweiterung',
-    'user_dir': 'spielstande saves speicherstand ordner',
+    'cache_dir': 'cache shader shaders logs temp ordner folder onedrive cloud lokal local zwei pcs two pcs',
+    'characters': 'charakter character level stufe waffen weapons bosse bosses besiegt getötet beaten killed '
+                  'attribute stats vitalität spielzeit play time tode deaths früher earlier stand',
+    'user_dir': 'spielstandordner folder speicherort spielstande saves speicherstand ordner',
     'skip_intro': 'intro logos video uberspringen skip',
     'mute_unfocused': 'ton stumm sound mute hintergrund lautstarke volume audio',
     'cheat_no_death': 'unsterblich unverwundbar nie sterben god mode godmode immortal invincible',
@@ -69,36 +72,55 @@ WORDS = {
     'button:report': 'bericht report support zip discord fehler',
     'button:shader_cache': 'shader cache leeren loschen clear',
     'online': 'online koop coop multiplayer freunde glocke beschworen invasion',
-    'online_pool': 'server online shadnet supermedo hunters dream thd bbhost spielen mit play with',
+    'online_pool': 'server online shadnet hunters dream thd bbhost spielen mit play with',
     'mods_enabled': 'mods mod remaster texturen',
     'translucent_window': 'transparent durchsichtig transparenz glas acrylic opacity deckkraft see through '
                           'unreadable unlesbar',
     'ui_language': 'sprache language launcher',
     'draw_pipe': 'absturz crash instabil pipeline',
     'close_on_play': 'schliessen beenden',
+    'windows_title_bar': 'titelleiste title bar caption rahmen fensterrahmen windows',
+    'goal': 'ziel goal flussig ausgewogen leise smooth balanced quiet laptop akku',
+    'auto_backup': 'sicherung sichern backup automatisch spielstand spielstande',
+    'button:backup': 'sicherung sichern backup jetzt spielstand spielstande zuruckholen wiederherstellen restore',
+    'online_npid': 'npid online id konto account shadnet',
+    'online_password': 'passwort password kennwort',
+    'online_server': 'server adresse address shadnet ip',
+    'online_webapi': 'webapi server',
+    'online_community': 'spielserver community server nachrichten blutflecken geister messages',
+    'thd_online_id': 'konto account discord anmelden hunters dream',
+    'extra_env': 'umgebungsvariablen environment variablen env',
+    'mouse:layout': 'dark souls ds3 wasd layout tastenbelegung keyboard tastatur maus',
+    'mouse:stick': 'maus mouse steuert kamera bewegung stick',
+    'mouse:camera': 'kamera camera maus mouse direkt raw input',
+    'mouse:camera_sensitivity': 'empfindlichkeit sensitivity maus mouse dpi kamera schnell langsam',
+    'mouse:speed': 'empfindlichkeit sensitivity maus mouse stick kamera schnell langsam',
+    'mouse:speed_offset': 'drehgeschwindigkeit turn speed maus mouse stick',
+    'mouse:sensitivity_y': 'vertikal vertical maus mouse hoch runter oben unten',
+    'auto_graphics': 'automatisch automatic empfohlen recommended einstellungen settings',
+    'gpu_override': 'grafikkarte gpu graphics card erkannt',
     'page:controls': 'tasten tastatur maus controller gamepad belegung tastenbelegung steuerung keyboard mouse keys '
                      'bindings keybindings keybinds xbox dualsense',
     'page:saves': 'spielstand spielstande save saves import shadps4 bbhost awaken backup sicherung charakter',
     'page:help': 'hilfe help problem fehler absturz crash',
     'page:language': 'sprache ton sound audio stimmen sprachausgabe untertitel language voices lautstarke stumm',
-    'page:game': 'spielordner spieldateien dump dlc ordner game folder files eboot',
     'action:setup': 'einrichtung ersteinrichtung setup assistent guide wizard erster start first start neu '
                     'wiederholen repeat again',
     'page:trophies': 'erfolge trophaen trophies achievements platin',
     'page:online': 'online koop coop multiplayer freunde hunters dream shadnet anmelden discord',
-    'page:mods': 'mods mod remaster patches',
+    'page:mods': 'reihenfolge order ziehen drag drop mods mod remaster patches',
     'page:system': 'pc hardware grafikkarte prozessor anforderungen requirements benchmark test messen stabilitat beta',
     'page:picture': 'grafik bild leistung fps ziel flussig ausgewogen leise laptop akku messen benchmark',
     'page:graphics': 'grafik graphics alle einstellungen',
     'page:cheats': 'cheats unsterblich god mode tricks debug',
     'page:advanced': 'erweitert update verknupfung steam diagnose',
     'page:log': 'log protokoll ausgabe',
-    'page:game': 'spiel sprache ordner eboot dlc',
+    'page:game': 'spieldateien spielordner ordner eboot dlc game files dump',
     'topic:page_file': 'absturz crash code 3 stürzt schliesst startet nicht speicher auslagerungsdatei ram guest memory',
-    'topic:eboot_modified': 'eboot 30 fps 60fps patch lance sauber clean gesten',
+    'topic:eboot_modified': 'eboot 30 60fps patch lance sauber clean gesten',
     'topic:eboot_truncated': 'eboot abgeschnitten out of bounds kaputt',
     'topic:eboot_unreadable': 'eboot lesen self',
-    'topic:version': '1.09 version update 30 fps',
+    'topic:version': '1.09 version update 30',
     'topic:update_only': 'gxshader update ordner startet nicht',
     'topic:empty_files': 'leere dateien entpacken kaputt',
     'topic:antivirus': 'virenscanner antivirus defender winerror blockiert permission',
@@ -106,6 +128,12 @@ WORDS = {
     'topic:vram': 'vram grafikspeicher ruckelt texturen gesichter memory',
     'topic:driver': 'treiber driver device lost absturz grafikkarte',
     'topic:shader_cache': 'ruckeln ruckelt stutter erste minuten shader',
+    'topic:save_lost': 'spielstand weg kaputt beschadigt charakter verschwunden verloren fortschritt save lost '
+                       'corrupted damaged gone missing laden leer sicherung zuruckholen',
+    # symptoms, and the device only as a word's start: a plain "controller" finds the Controls page first
+    'topic:controller': 'controllers gamepads geht nicht funktioniert nicht reagiert nicht erkannt not working',
+    'controller_test': 'controller gamepad test testen erkannt tasten knopfe funktioniert dualsense ps5 ps4 xbox '
+                       'switch',
     'topic:smartscreen': 'smartscreen windows geschutzt schutz warnung',
     'topic:black_screen': 'schwarz schwarzer bildschirm black screen shader cache leeren',
 }
@@ -143,14 +171,36 @@ class SearchMixin:
     """The search field, its index and the jump to a result."""
 
     # ---- the index -------------------------------------------------------------------------------
-    def index_entry(self, widget, title, hint='', key=None, mark=None):
+    def setting_key_of(self, widget):
+        """The setting a row's widget edits: its setting_key, else the first setting's Tk variable in
+        it or below it (an entry, a frame with a slider, radio buttons, the mouse settings)."""
+        names = {str(var): key for key, var in getattr(self, 'vars', {}).items()}
+        names.update({str(var): f'mouse:{key}' for key, var in getattr(self, 'mouse_vars', {}).items()})
+        todo = [widget]
+        while todo:
+            item = todo.pop(0)
+            key = getattr(item, 'setting_key', None)
+            if key:
+                return key
+            for option in ('textvariable', 'variable'):
+                try:
+                    name = str(item.cget(option))
+                except Exception:  # a widget without that option
+                    continue
+                if name in names:
+                    return names[name]
+            todo.extend(item.winfo_children())
+        return None
+
+    def index_entry(self, widget, title, hint='', key=None, mark=None, reveal=None):
         """A setting on a page: found by its title, its hint and WORDS[key]; `mark` is the widget
-        marked after the jump (its label)."""
+        marked after the jump (its label). `reveal` opens the part of the page it is folded into
+        (found while folded; the jump unfolds it)."""
         if not hasattr(self, 'search_settings'):
             self.search_settings = []
         if title:
             self.search_settings.append({'kind': 'setting', 'widget': widget, 'mark': mark or widget,
-                                        'title': str(title), 'hint': str(hint or ''), 'key': key})
+                                        'title': str(title), 'hint': str(hint or ''), 'key': key, 'reveal': reveal})
 
     def search_ready(self):
         """After every page is built: which page each setting is on, then the pages and the Help topics."""
@@ -183,9 +233,10 @@ class SearchMixin:
 
     def search(self, query, limit=7):
         """The best entries for a query: every word must be found; the title counts most."""
-        words = [w for w in fold(query).split() if w]
+        words = ['resolution' if re.fullmatch(r'\d{3,5}x\d{3,5}', w) else w for w in fold(query).split() if w]
         if not words:
             return []
+        whole = ' '.join(fold(query).split())
         scored = []
         for entry in self.search_entries:
             title, hint, extra = entry['haystack']
@@ -198,20 +249,26 @@ class SearchMixin:
                         word, penalty = stem, 1
                 score -= penalty
                 in_title = f' {word}' in f' {title}'
-                if in_title:
+                if f' {word} ' in f' {extra} ':
+                    score += 7  # one of the players' own words for it: what they mean, in any language
+                elif in_title:
                     score += 6
                 elif word in title:
                     score += 4
-                elif f' {word}' in f' {extra}' or word in extra:
+                elif f' {word}' in f' {extra}':
                     score += 3
+                elif word in extra:  # inside a longer word ("scharfe" in "tiefenscharfe"): a little less
+                    score += 2
                 elif word in hint:
                     score += 1
                 else:
                     score = 0
                     break
-            if score and entry['kind'] == 'setting' and not shown(entry.get('widget'),
-                                                                  getattr(self, 'pages', {}).get(entry['page'])):
+            if score and entry['kind'] == 'setting' and not entry.get('reveal') and not shown(
+                    entry.get('widget'), getattr(self, 'pages', {}).get(entry['page'])):
                 score = 0
+            if score and whole == ' '.join(title.split()):
+                score += 3  # the whole title typed: that one, before longer titles with the same words
             if score:
                 bonus = {'setting': 0.5, 'topic': 0.6, 'page': 0.3, 'action': 0.6}[entry['kind']]  # symptoms: the fix first
                 expert = entry['page'] in L.EXPERT_PAGES
@@ -348,10 +405,8 @@ class SearchMixin:
         return 'break'
 
     def search_close(self):
-        if self.search_popup and self.root.focus_get() is not self.search_field:
-            self.search_popup.destroy()
-            self.search_popup = None
-        elif self.search_popup and not self.search_var.get().strip():
+        if self.search_popup and (self.root.focus_get() is not self.search_field or
+                                  not self.search_var.get().strip()):
             self.search_popup.destroy()
             self.search_popup = None
 
@@ -375,16 +430,13 @@ class SearchMixin:
         if entry['kind'] == 'action':
             getattr(self, entry['run'])()
             return
-        if entry['page'] in L.EXPERT_PAGES and self.app.get('ui_mode') != 'expert':
-            self.expert_var.set(True)  # the page and its place in the side bar, not a page out of nowhere
-            self.toggle_mode()
-            self.status.configure(text=_('The expert view is on now, to show this. The switch is at the bottom of '
-                                         'the side bar.'), fg=theme.GOLD_LIGHT)
-        self.show(entry['page'])
+        self.show(entry['page'])  # an expert page turns the expert view on (Launcher.show)
         if entry['kind'] == 'setting':
+            if entry.get('reveal') and not shown(entry['widget'], self.pages.get(entry['page'])):
+                entry['reveal']()
             self.root.update_idletasks()
-            self.scroll_to(entry['widget'])
-            self.root.after(60, lambda: self.flash(entry['mark']))
+            self.scroll_to(entry['mark'], above=self.px(110))  # some of what is above stays in view
+            self.root.after(60, lambda: self.flash(entry['mark'], entry['widget']))
 
     def scroll_to(self, widget, above=None):
         tk = self.tk
@@ -401,14 +453,71 @@ class SearchMixin:
         except tk.TclError:
             pass
 
-    def flash(self, widget):
-        """A gold bar beside a widget for a moment: here it is."""
+    def flash(self, mark, widget=None):
+        """Here it is: a gold frame around the setting's whole row (its title, its control, the hint
+        under it) with a bar at its left, the title in gold; after a moment it fades into the page."""
         tk, px = self.tk, self.px
+        for part in getattr(self, 'flash_parts', []):  # the one before, if it still shows
+            part.destroy()
+        if getattr(self, 'flash_undo', None):
+            self.flash_undo()
+        self.flash_parts, self.flash_undo = [], None
+        parent = mark.master
         try:
-            bar = tk.Frame(widget.master, bg=theme.GOLD, width=px(4))
-            bar.place(in_=widget, x=-px(12), y=0, relheight=1, width=px(4))
-            glow = tk.Frame(widget.master, bg=theme.GOLD)
-            glow.place(in_=widget, x=-px(4), rely=1.0, y=px(1), relwidth=1, height=px(2))
-        except tk.TclError:
+            items = [mark] + ([widget] if widget is not None and widget is not mark and widget.master is parent else [])
+            info = mark.grid_info()
+            if info:  # the hint under a row (row() and check() grid it in the next row)
+                below = parent.grid_slaves(row=int(info['row']) + 1)
+                items += [w for w in below if w.winfo_class() == 'TLabel' and str(w.cget('style')) == 'Muted.TLabel']
+            parent.update_idletasks()
+            top = min(w.winfo_y() for w in items) - px(7)
+            bottom = max(w.winfo_y() + w.winfo_height() for w in items) + px(7)
+            left = max(0, min(w.winfo_x() for w in items) - px(14))
+            # a row of a page reaches across the page; anything else as wide as itself
+            right = parent.winfo_width() - px(14) if info else max(w.winfo_x() + w.winfo_width() for w in items) + px(14)
+            try:
+                page = self.ttk.Style().lookup(str(parent.cget('style')) or parent.winfo_class(), 'background')
+            except tk.TclError:
+                page = ''
+            page = page or theme.BG
+        except (tk.TclError, ValueError):
             return
-        self.root.after(1600, lambda: (bar.destroy(), glow.destroy()))
+        width, height = right - left, bottom - top
+        lines = [(left, top, width, px(2)), (left, bottom - px(2), width, px(2)), (right - px(2), top, px(2), height),
+                 (left, top, px(4), height)]  # top, bottom, right; the bar at the left
+        for x, y, w, h in lines:
+            part = tk.Frame(parent, bg=theme.GOLD_LIGHT, width=w, height=h)
+            part.place(x=x, y=y, width=w, height=h, bordermode='outside')  # from the edge, as winfo_x counts
+            part.lift()
+            self.flash_parts.append(part)
+        # the title in gold: a style of its own for the moment (the theme's maps outrank a widget's colour)
+        titled = mark.winfo_class() in ('TLabel', 'TCheckbutton')
+        style, old = self.ttk.Style(), ''
+        if titled:
+            old = str(mark.cget('style'))
+            flashed = f'Flash.{old or mark.winfo_class()}'
+
+            def title(color):
+                style.configure(flashed, foreground=color)
+                style.map(flashed, foreground=[('!disabled', color)])
+            title(theme.GOLD_LIGHT)
+            mark.configure(style=flashed)
+            self.flash_undo = lambda: mark.winfo_exists() and mark.configure(style=old)
+        parts = list(self.flash_parts)
+
+        def fade(step, steps=14):
+            if not all(p.winfo_exists() for p in parts):
+                return
+            if step > steps:
+                for p in parts:
+                    p.destroy()
+                if titled and mark.winfo_exists():
+                    mark.configure(style=old)
+                return
+            color = theme.blend(theme.GOLD_LIGHT, page, step / steps)
+            for p in parts:
+                p.configure(bg=color)
+            if titled and mark.winfo_exists():
+                title(theme.blend(theme.GOLD_LIGHT, theme.TEXT, step / steps))
+            self.root.after(70, lambda: fade(step + 1))
+        self.root.after(1300, lambda: fade(1))

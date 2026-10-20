@@ -5,11 +5,13 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 import zipfile
 
 sys.path.insert(0, str(ROOT / 'scripts'))
+sys.path.insert(0, str(ROOT / 'launcher'))  # bbport_character
 spec = importlib.util.spec_from_file_location('bbport_saves', ROOT / 'launcher/bbport_saves.py')
 saves = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(saves)
@@ -105,6 +107,92 @@ class SaveTests(unittest.TestCase):
         (self.root / 'usb' / 'PS4' / 'SAVEDATA' / '1' / 'CUSA00207' / 'sdimg_SPRJ0005').mkdir(parents=True)
         found, encrypted = saves.find_in(self.root / 'usb')
         self.assertEqual((found, len(encrypted)), ([], 1))
+
+
+class BackupTests(unittest.TestCase):
+    """The save manager's backups: named for what they are, listed, renamed, made before a start,
+    put back, and taken from a file."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        self.user = self.root / 'user'
+        self.save = make_save(saves.target_dir(self.user), 'Nick', slots=(0, 3))
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def test_a_backup_says_what_it_is(self):
+        made = saves.backup(self.user, reason='import', detail='shadPS4')
+        self.assertRegex(made.name, r'^\d{4}-\d{2}-\d{2} \d{2}\.\d{2} - Before an import - shadPS4 - Nick, Nick\.zip$')
+        item = saves.backups(self.user)[0]
+        self.assertEqual((item.reason, item.detail, item.names, item.ok), ('import', 'shadPS4', ['Nick', 'Nick'], True))
+
+    def test_backups_from_before_still_show(self):
+        old = saves.backup_dir(self.user) / 'saves_2026-10-12_101500.zip'
+        old.parent.mkdir(parents=True)
+        with zipfile.ZipFile(old, 'w') as zipped:
+            for path in self.save.iterdir():
+                zipped.write(path, f'savedata/1/CUSA00207/SPRJ0005/{path.name}')
+        item = saves.Backup(old)
+        self.assertEqual((item.reason, item.created.isoformat(), item.names), ('old', '2026-10-12T10:15:00', ['Nick', 'Nick']))
+
+    def test_rename(self):
+        made = saves.backup(self.user)
+        files = saves.archive_files(made)
+        renamed = saves.rename_backup(made, 'Before Ludwig')
+        self.assertFalse(made.exists())
+        self.assertIn('Before Ludwig', renamed.name)
+        self.assertEqual(saves.Backup(renamed).label, 'Before Ludwig')
+        self.assertEqual(saves.archive_files(renamed), files)  # the same files, only the name is new
+
+    def test_automatic_only_after_playing_and_only_the_last_ones(self):
+        first = saves.auto_backup(self.user)
+        self.assertIsNotNone(first)
+        self.assertIsNone(saves.auto_backup(self.user))  # nothing played since
+        for number in range(4):
+            stamp = time.time() + 120 * (number + 1)
+            os.utime(self.save / 'userdata0000', (stamp, stamp))
+            with mock.patch.object(saves.datetime, 'datetime', wraps=saves.datetime.datetime) as clock:
+                clock.now.return_value = saves.datetime.datetime.fromtimestamp(stamp + 1)
+                saves.auto_backup(self.user, keep=3)
+        mine = saves.backup(self.user, reason='manual')
+        kinds = [b.reason for b in saves.backups(self.user)]
+        self.assertEqual(kinds.count('auto'), 3)
+        self.assertTrue(mine.exists())
+
+    def test_restore_takes_only_the_games_files(self):
+        archive = self.root / 'other.zip'
+        with zipfile.ZipFile(archive, 'w') as zipped:
+            zipped.writestr('../../evil.txt', b'no')
+            zipped.writestr('notes/readme.txt', b'no')
+            zipped.writestr('userdata0010', b'\x1a' + bytes(10))  # a zip of the save's files themselves
+            zipped.writestr('userdata0000', b'\x01' + bytes(4095))
+            zipped.writestr('SPRJ0005.sce_sys/param.bin', b'meta')
+        before = saves.restore(archive, self.user)
+        self.assertTrue(before.is_file())
+        self.assertEqual(sorted(p.name for p in self.save.iterdir()), ['userdata0000', 'userdata0010'])
+        self.assertEqual((self.save.with_name('SPRJ0005.sce_sys') / 'param.bin').read_bytes(), b'meta')
+        self.assertFalse((self.root / 'evil.txt').exists())
+        self.assertFalse(any(self.user.rglob('readme.txt')))
+
+    def test_a_file_without_a_whole_save_is_refused(self):
+        archive = self.root / 'half.zip'
+        with zipfile.ZipFile(archive, 'w') as zipped:
+            zipped.writestr('userdata0000', b'\x01')
+        with self.assertRaises(OSError):
+            saves.restore(archive, self.user)
+        with self.assertRaises(OSError):
+            saves.add_backup_file(archive, self.user)
+        self.assertEqual(saves.SaveSet('', self.save).names, ['Nick', 'Nick'])  # untouched
+
+    def test_a_backup_from_a_file_joins_the_list(self):
+        made = saves.backup(self.user)
+        copy = self.root / 'from a friend.zip'
+        copy.write_bytes(made.read_bytes())
+        added = saves.add_backup_file(copy, self.user)
+        item = saves.Backup(added)
+        self.assertEqual((item.reason, item.detail, item.names), ('file', 'from a friend', ['Nick', 'Nick']))
 
 
 if __name__ == '__main__':
