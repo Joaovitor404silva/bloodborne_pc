@@ -141,6 +141,13 @@ UI = {'de': {
         'Einstellungen für ein Ziel, Einstellungen im Vergleich, Stabilität.',
     # ---- Help ----
     'Set everything up again, step by step.': 'Alles noch einmal Schritt für Schritt einrichten.',
+    'Only with your own copy of the game': 'Nur mit deiner eigenen Kopie des Spiels',
+    'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from '
+    'the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing '
+    'them breaks rule 2 of the community Discord and can get you banned.':
+        'Erstelle den Dump von deiner eigenen Bloodborne-Kopie (Disc oder PlayStation Store) auf deiner eigenen PS4. '
+        'Spieldateien aus dem Internet sind Piraterie: Der Port enthält keine, und niemand hilft, welche zu finden. '
+        'Wer danach fragt oder sie teilt, verstößt gegen Regel 2 des Community-Discords und kann gebannt werden.',
     'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
         'Die Expertenansicht ist jetzt an, um das zu zeigen. Der Schalter ist unten in der Seitenleiste.',
     'Copy a summary': 'Zusammenfassung kopieren', 'Show the log': 'Protokoll zeigen', 'Repeat the setup': 'Einrichtung wiederholen',

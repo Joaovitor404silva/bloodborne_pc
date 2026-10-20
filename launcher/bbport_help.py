@@ -382,6 +382,7 @@ class HelpMixin:
         self.section(f, _('Still stuck?'))
         last = ttk.Frame(f, style='Card.TFrame', padding=(px(22), px(16)))
         last.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(4), 0))
+        self.piracy_notice(last, theme.CARD, wrap=700).pack(fill='x', pady=(0, px(12)))
         tk.Label(last, text=_('Ask in the help forum of the community Discord. Save a report and attach it: it has '
                               'the log, your settings and this PC\'s details (no passwords), so a helper sees the '
                               'cause at once.'), bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 10), justify='left',

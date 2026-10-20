@@ -993,6 +993,28 @@ class SetupMixin:
                  anchor='w', justify='left', wraplength=px(wrap)).pack(anchor='w')
         return line
 
+    def piracy_notice(self, parent, bg, wrap=640):
+        """The rule against pirated game files in a box that stands out: a blood red frame and bar,
+        the warning icon, a title. The caller places it."""
+        tk, px = self.tk, self.px
+        box = tk.Frame(parent, bg=theme.BLOOD)
+        inner = tk.Frame(box, bg=bg)
+        inner.pack(fill='both', expand=True, padx=1, pady=1)
+        tk.Frame(inner, bg=theme.BLOOD, width=px(4)).pack(side='left', fill='y')
+        tk.Label(inner, text=theme.ICON['warn'], bg=bg, fg=theme.BLOOD_LIGHT, font=(theme.ICONS, 14)).pack(
+            side='left', anchor='n', padx=(px(12), 0), pady=(px(10), 0))
+        words = tk.Frame(inner, bg=bg)
+        words.pack(side='left', fill='both', expand=True, padx=(px(10), px(14)), pady=px(10))
+        tk.Label(words, text=_('Only with your own copy of the game'), bg=bg, fg=theme.BLOOD_LIGHT, font=(theme.BODY_SEMI, 11),
+                 anchor='w').pack(anchor='w')
+        tk.Label(words, text=_('Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own '
+                               'PS4. Game files from the internet are piracy: none come with the port, and nobody helps '
+                               'to find them. Asking for them or sharing them breaks rule 2 of the community Discord and '
+                               'can get you banned.'),
+                 bg=bg, fg=theme.TEXT, font=(theme.BODY, 10), justify='left', anchor='w',
+                 wraplength=px(wrap)).pack(anchor='w', pady=(px(4), 0))
+        return box
+
     def link(self, parent, text, url, bg):
         label = self.tk.Label(parent, text=text + '  ↗', bg=bg, fg=theme.GOLD_LIGHT, cursor='hand2',
                               font=(theme.BODY_MEDIUM, 9))
@@ -1764,7 +1786,8 @@ class SetupGuide:
             else:
                 apply.pack_forget()
         self.app.var('ui_language', 'app').trace_add('write', watch)
-        origin = self.card(body, pady=(px(20), 0))
+        self.app.piracy_notice(body, theme.BG, wrap=660).pack(fill='x', pady=(px(18), 0))  # first, not below the fold
+        origin = self.card(body, pady=(px(14), 0))
         self.heading(origin, _('Where do you come from?'))
         for value, text in self.ORIGINS:
             self.ttk.Radiobutton(origin, text=_(text), variable=self.origin, value=value,
@@ -1776,8 +1799,7 @@ class SetupGuide:
         for state, text in (('ok', _('Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the '
                                      '1.09 update.')),
                             ('ok', _('Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least '
-                                     '4 GB of video memory.')),
-                            ('info', _('No game files are included or shared, and we do not help find them.'))):
+                                     '4 GB of video memory.'))):
             self.app.state_line(need, state, text, theme.CARD, wrap=660).pack(fill='x', pady=px(3))
 
     # -- II: check the game (and the PC) --

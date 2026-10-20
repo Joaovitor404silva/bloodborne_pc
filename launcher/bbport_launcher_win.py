@@ -1362,6 +1362,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                       'Only needed with a base-game dump; the Game of the Year edition (CUSA03173) has it.'))
         self.link_row(f, _('Is the game folder all right? Help checks it.'), 'help')
         self.link_row(f, _('Set everything up again, step by step.'), None, _('Repeat the setup'), self.open_setup)
+        self.piracy_notice(f, PANEL, wrap=720).grid(row=self.next_row(f), column=0, columnspan=2, sticky='we',
+                                                    pady=(14, 0))
         self.section(f, _('Language'))
         before = self.var('ui_language', 'app').get()
         language = ttk.Frame(f)

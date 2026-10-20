@@ -2,6 +2,7 @@
 values as its English text, keeps the status symbol the launcher reads, and the side bar, the
 goal and the guide's steps are translated in every language."""
 from paths import ROOT
+import re
 import string
 import sys
 import unittest
@@ -44,7 +45,8 @@ class TranslationTests(unittest.TestCase):
         inline = {title[0]: title[1] for _name, title in L.NAV_SIMPLE + L.NAV_EXPERT if len(title) > 1}
         main += [f'{short} (goal)' for short, _long in L.Launcher.GOAL_TEXTS.values()]  # their own keys
         main += [plain for _key, _lore, plain in bbport_setup.STEPS]
-        main += ['Expert view', 'Search…', 'Your goal', 'Made for your PC', 'Measure on this PC']
+        main += ['Expert view', 'Search…', 'Your goal', 'Made for your PC', 'Measure on this PC',
+                 'Only with your own copy of the game']  # the piracy notice must be readable everywhere
         for language in LANGUAGES:
             table = bbport_lang.table(language)
             for text in main:
@@ -58,3 +60,15 @@ class TranslationTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class PiracyNoticeTests(unittest.TestCase):
+    def test_every_language_names_rule_2_and_the_ban(self):
+        source = (ROOT / 'launcher' / 'bbport_setup.py').read_text(encoding='utf-8')
+        start = source.index("tk.Label(words, text=_('Make the dump")
+        text = ''.join(re.findall(r"'([^']*)'", source[start:source.index(')', source.index("can get you banned", start))]))
+        self.assertIn('rule 2', text)
+        for language in LANGUAGES:
+            with self.subTest(language=language):
+                self.assertTrue(re.search(r'2', bbport_lang.table(language).get(text, '')), language)
+

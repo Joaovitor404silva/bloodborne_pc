@@ -385,6 +385,8 @@ WORLD = {
             'Минимальные настройки (сколько ваш ПК может выдать в принципе)',
         'Made for your PC':
             'Настроено под ваш ПК',
+        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Делайте дамп со своей копии Bloodborne (диск или PlayStation Store) на своей PS4. Файлы игры из интернета — это пиратство: в порт они не входят, и никто не помогает их найти. Просить их или делиться ими — нарушение правила 2 Discord-сообщества, за это могут забанить.',
         'Measure on this PC':
             'Замерить на этом ПК',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -485,6 +487,8 @@ WORLD = {
             'Только чёрный экран',
         'Only the update folder was chosen':
             'Выбрана только папка обновления',
+        'Only with your own copy of the game':
+            'Только с вашей собственной копией игры',
         'Open Windows Security':
             'Открыть «Безопасность Windows»',
         'Open it, press Ctrl + A, then Ctrl + C.':
@@ -1598,6 +1602,8 @@ WORLD = {
             'أدنى الإعدادات (ما يستطيع حاسوبك بلوغه في الأساس)',
         'Made for your PC':
             'مضبوط لحاسوبك',
+        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'أنشئ التفريغ من نسختك الخاصة من Bloodborne (قرص أو PlayStation Store) على جهاز PS4 الخاص بك. ملفات اللعبة من الإنترنت قرصنة: لا يأتي أي منها مع المنفذ، ولا يساعد أحد في العثور عليها. طلبها أو مشاركتها يخالف القاعدة 2 في Discord المجتمع وقد يؤدي إلى حظرك.',
         'Measure on this PC':
             'القياس على هذا الحاسوب',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -1736,6 +1742,8 @@ WORLD = {
             'شاشة سوداء فقط',
         'Only the update folder was chosen':
             'تم اختيار مجلد التحديث فقط',
+        'Only with your own copy of the game':
+            'فقط مع نسختك الخاصة من اللعبة',
         'Open Windows Security':
             'فتح أمن Windows',
         'Open it, press Ctrl + A, then Ctrl + C.':
@@ -2927,6 +2935,8 @@ WORLD = {
             'Ajustes mínimos (lo que tu PC es capaz de alcanzar)',
         'Made for your PC':
             'Ajustado a tu PC',
+        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Haz el volcado de tu propia copia de Bloodborne (disco o PlayStation Store) en tu propia PS4. Los archivos del juego de internet son piratería: el port no incluye ninguno y nadie ayuda a conseguirlos. Pedirlos o compartirlos incumple la regla 2 del Discord de la comunidad y puede suponer un baneo.',
         'Measure on this PC':
             'Medir en este PC',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -3065,6 +3075,8 @@ WORLD = {
             'Solo una pantalla negra',
         'Only the update folder was chosen':
             'Solo se eligió la carpeta de la actualización',
+        'Only with your own copy of the game':
+            'Solo con tu propia copia del juego',
         'Open Windows Security':
             'Abrir Seguridad de Windows',
         'Open it, press Ctrl + A, then Ctrl + C.':
@@ -4254,6 +4266,8 @@ WORLD = {
             'Configurações mínimas (o limite do que o seu PC alcança)',
         'Made for your PC':
             'Ajustado para o seu PC',
+        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Faça o dump da sua própria cópia de Bloodborne (disco ou PlayStation Store) no seu próprio PS4. Arquivos do jogo baixados da internet são pirataria: nenhum vem com o port, e ninguém ajuda a encontrá-los. Pedir ou compartilhar esses arquivos viola a regra 2 do Discord da comunidade e pode resultar em banimento.',
         'Measure on this PC':
             'Medir neste PC',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -4392,6 +4406,8 @@ WORLD = {
             'Só uma tela preta',
         'Only the update folder was chosen':
             'Só a pasta da atualização foi escolhida',
+        'Only with your own copy of the game':
+            'Só com a sua própria cópia do jogo',
         'Open Windows Security':
             'Abrir Segurança do Windows',
         'Open it, press Ctrl + A, then Ctrl + C.':
@@ -5579,6 +5595,8 @@ WORLD = {
             'Réglages minimaux (ce que votre PC peut atteindre au maximum)',
         'Made for your PC':
             'Adapté à votre PC',
+        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Faites le dump de votre propre copie de Bloodborne (disque ou PlayStation Store) sur votre propre PS4. Les fichiers du jeu venant d’internet relèvent du piratage : aucun n’est fourni avec le portage, et personne n’aide à en trouver. Les demander ou les partager enfreint la règle 2 du Discord de la communauté et peut entraîner un bannissement.',
         'Measure on this PC':
             'Mesurer sur ce PC',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -5717,6 +5735,8 @@ WORLD = {
             'Seulement un écran noir',
         'Only the update folder was chosen':
             'Seul le dossier de la mise à jour a été choisi',
+        'Only with your own copy of the game':
+            'Uniquement avec votre propre copie du jeu',
         'Open Windows Security':
             'Ouvrir Sécurité Windows',
         'Open it, press Ctrl + A, then Ctrl + C.':
@@ -6908,6 +6928,8 @@ WORLD = {
             'Impostazioni minime (il massimo che il tuo PC può raggiungere)',
         'Made for your PC':
             'Su misura per il tuo PC',
+        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Crea il dump dalla tua copia di Bloodborne (disco o PlayStation Store) sulla tua PS4. I file del gioco presi da internet sono pirateria: il port non ne contiene nessuno e nessuno aiuta a trovarli. Chiederli o condividerli viola la regola 2 del Discord della community e può portare a un ban.',
         'Measure on this PC':
             'Misura su questo PC',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -7046,6 +7068,8 @@ WORLD = {
             'Solo uno schermo nero',
         'Only the update folder was chosen':
             'È stata scelta solo la cartella dell’aggiornamento',
+        'Only with your own copy of the game':
+            'Solo con la tua copia del gioco',
         'Open Windows Security':
             'Apri Sicurezza di Windows',
         'Open it, press Ctrl + A, then Ctrl + C.':
@@ -8237,6 +8261,8 @@ WORLD = {
             'Najniższe ustawienia (tyle, ile twój PC w ogóle osiąga)',
         'Made for your PC':
             'Dopasowane do twojego PC',
+        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Zrób zrzut z własnej kopii Bloodborne (płyta lub PlayStation Store) na własnej PS4. Pliki gry z internetu to piractwo: port ich nie zawiera i nikt nie pomaga ich znaleźć. Proszenie o nie lub ich udostępnianie łamie zasadę 2 Discorda społeczności i może skończyć się banem.',
         'Measure on this PC':
             'Zmierz na tym PC',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -8375,6 +8401,8 @@ WORLD = {
             'Tylko czarny ekran',
         'Only the update folder was chosen':
             'Wybrano tylko folder aktualizacji',
+        'Only with your own copy of the game':
+            'Tylko z własną kopią gry',
         'Open Windows Security':
             'Otwórz Zabezpieczenia Windows',
         'Open it, press Ctrl + A, then Ctrl + C.':
@@ -9566,6 +9594,8 @@ WORLD = {
             'En düşük ayarlar (bilgisayarınızın ulaşabileceği sınır)',
         'Made for your PC':
             'Bilgisayarınıza göre ayarlandı',
+        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Dökümü kendi Bloodborne kopyanızdan (disk veya PlayStation Store) kendi PS4’ünüzde alın. İnternetten alınan oyun dosyaları korsanlıktır: Bu port hiçbirini içermez ve kimse bulmanıza yardım etmez. Bunları istemek veya paylaşmak topluluk Discord’unun 2. kuralını ihlal eder ve yasaklanmanıza yol açabilir.',
         'Measure on this PC':
             'Bu bilgisayarda ölç',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -9704,6 +9734,8 @@ WORLD = {
             'Yalnızca siyah ekran',
         'Only the update folder was chosen':
             'Yalnızca güncelleme klasörü seçildi',
+        'Only with your own copy of the game':
+            'Yalnızca kendi oyun kopyanızla',
         'Open Windows Security':
             'Windows Güvenliği’ni aç',
         'Open it, press Ctrl + A, then Ctrl + C.':
@@ -10895,6 +10927,8 @@ WORLD = {
             '最低设置（你的电脑能达到的极限）',
         'Made for your PC':
             '为你的电脑定制',
+        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            '请在你自己的 PS4 上，从你自己的 Bloodborne（光盘或 PlayStation Store）制作转储。来自互联网的游戏文件属于盗版：移植版不包含任何游戏文件，也没有人会帮你寻找。索要或分享这些文件违反社区 Discord 第 2 条规则，并可能导致封禁。',
         'Measure on this PC':
             '在这台电脑上测量',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -11033,6 +11067,8 @@ WORLD = {
             '只有黑屏',
         'Only the update folder was chosen':
             '只选择了更新文件夹',
+        'Only with your own copy of the game':
+            '仅限使用你自己的游戏副本',
         'Open Windows Security':
             '打开 Windows 安全中心',
         'Open it, press Ctrl + A, then Ctrl + C.':
@@ -12224,6 +12260,8 @@ WORLD = {
             '最低設定（この PC で到達できる上限）',
         'Made for your PC':
             'この PC 向けに設定済み',
+        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'ダンプは、自分の PS4 で自分の Bloodborne（ディスクまたは PlayStation Store）から作成してください。インターネット上のゲームファイルは海賊版です：移植版には含まれず、入手の手伝いもしません。要求や共有はコミュニティ Discord のルール 2 に違反し、BAN される可能性があります。',
         'Measure on this PC':
             'この PC で測定',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -12362,6 +12400,8 @@ WORLD = {
             '黒い画面しか表示されない',
         'Only the update folder was chosen':
             'アップデートフォルダーだけが選択されている',
+        'Only with your own copy of the game':
+            '自分のゲームのコピーでのみ',
         'Open Windows Security':
             'Windows セキュリティを開く',
         'Open it, press Ctrl + A, then Ctrl + C.':
@@ -13553,6 +13593,8 @@ WORLD = {
             '최저 설정 (PC가 낼 수 있는 한계)',
         'Made for your PC':
             'PC에 맞춤',
+        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            '덤프는 본인의 PS4에서 본인 소유의 Bloodborne(디스크 또는 PlayStation Store)으로 만드세요. 인터넷에서 받은 게임 파일은 불법 복제입니다: 포트에는 포함되어 있지 않으며, 누구도 찾는 것을 돕지 않습니다. 요청하거나 공유하면 커뮤니티 Discord 규칙 2를 위반하며 차단될 수 있습니다.',
         'Measure on this PC':
             '이 PC에서 측정',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -13691,6 +13733,8 @@ WORLD = {
             '검은 화면만 보임',
         'Only the update folder was chosen':
             '업데이트 폴더만 선택됨',
+        'Only with your own copy of the game':
+            '본인 소유의 게임 사본으로만',
         'Open Windows Security':
             'Windows 보안 열기',
         'Open it, press Ctrl + A, then Ctrl + C.':
