@@ -1337,14 +1337,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                        'С GitHub FireBurn/Q2RTX (собраны из MIT-исходников AMD FidelityFX), около 30 МБ, '
                        'в папку fsr4_shaders порта.'), top=6)
 
-    def link_row(self, parent, text, page):
-        """A muted line with a link to another page."""
+    def link_row(self, parent, text, page, link=None, command=None):
+        """A muted line with a link to another page (or to `command`)."""
         row = self.ttk.Frame(parent)
         row.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(4, 0))
         self.ttk.Label(row, text=text, style='Muted.TLabel').pack(side='left')
-        link = self.tk.Label(row, text=_('Open') + '  ›', bg=PANEL, fg=GOLD, cursor='hand2', font=(theme.BODY_MEDIUM, 9))
-        link.pack(side='left', padx=(8, 0))
-        link.bind('<Button-1>', lambda _e: self.show(page))
+        label = self.tk.Label(row, text=(link or _('Open')) + '  ›', bg=PANEL, fg=GOLD, cursor='hand2',
+                              font=(theme.BODY_MEDIUM, 9))
+        label.pack(side='left', padx=(8, 0))
+        label.bind('<Button-1>', lambda _e: command() if command else self.show(page))
 
     def build_game(self):
         ttk = self.ttk
@@ -1360,6 +1361,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     _('Your dumped add-ons, one folder each named like SPEXPANSIONDLC03 (The Old Hunters). '
                       'Only needed with a base-game dump; the Game of the Year edition (CUSA03173) has it.'))
         self.link_row(f, _('Is the game folder all right? Help checks it.'), 'help')
+        self.link_row(f, _('Set everything up again, step by step.'), None, _('Repeat the setup'), self.open_setup)
         self.section(f, _('Language'))
         before = self.var('ui_language', 'app').get()
         language = ttk.Frame(f)
@@ -1380,8 +1382,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.check(f, 'skip_intro', 'ini', _(*dict((k, t) for k, t, _o in EXTRAS)['skip_intro']))
         shortcuts = ttk.Frame(f)
         shortcuts.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
-        ttk.Button(shortcuts, text=_('Desktop shortcut', 'Ярлык на рабочем столе'), command=self.shortcut).pack(side='left')
-        ttk.Button(shortcuts, text=_('Add to Steam'), command=self.add_to_steam).pack(side='left', padx=(6, 0))
+        button = ttk.Button(shortcuts, text=_('Desktop shortcut', 'Ярлык на рабочем столе'), command=self.shortcut)
+        button.pack(side='left')
+        self.index_entry(button, _('Desktop shortcut', 'Ярлык на рабочем столе'), key='button:shortcut')
+        button = ttk.Button(shortcuts, text=_('Add to Steam'), command=self.add_to_steam)
+        button.pack(side='left', padx=(6, 0))
+        self.index_entry(button, _('Add to Steam'), key='button:steam')
         self.check(f, 'mute_unfocused', 'ini', _('Mute when the game is in the background',
                                                  'Без звука, когда игра в фоне'))
 
@@ -1428,6 +1434,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                             value='huntersdream').pack(side='left', padx=(16, 0))
         elif pool.get() == 'huntersdream':
             pool.set('shadnet')
+        pools.setting_key = 'online_pool'  # the search's words (bbport_search.WORDS)
         self.row(f, _('Play with'), pools,
                  _("shadNet: a shadNet server and its account. SuperMedo Server uses an account from "
                    "supermedo.com."))
@@ -2138,15 +2145,20 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                                 'Проверять обновления при открытии лаунчера'))
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
-        ttk.Button(holder, text=_('Port folder', 'Папка порта'), command=lambda: self.open_path(DATA_DIR)).pack(side='left')
+        button = ttk.Button(holder, text=_('Port folder', 'Папка порта'), command=lambda: self.open_path(DATA_DIR))
+        button.pack(side='left')
+        self.index_entry(button, _('Port folder', 'Папка порта'), key='button:port_folder')
         ttk.Button(holder, text=_('Launcher language', 'Язык лаунчера') + '  ›', command=lambda: self.show('game')).pack(
             side='left', padx=6)
         ttk.Button(holder, text='bbport.ini', command=lambda: self.open_path(ini_path())).pack(side='left')
+        ttk.Button(holder, text=_('Repeat the setup'), command=self.open_setup).pack(side='left', padx=6)
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
-        ttk.Button(holder, text=_('Check for updates', 'Проверить обновления'),
-                   command=lambda: threading.Thread(target=self.check_update, args=(True,), daemon=True).start()
-                   ).pack(side='left')
+        self.updates_button = ttk.Button(
+            holder, text=_('Check for updates', 'Проверить обновления'),
+            command=lambda: threading.Thread(target=self.check_update, args=(True,), daemon=True).start())
+        self.updates_button.pack(side='left')
+        self.index_entry(self.updates_button, _('Check for updates', 'Проверить обновления'), key='button:updates')
         ttk.Button(holder, text=_('Other versions…', 'Другие версии…'), command=self.choose_version).pack(
             side='left', padx=(6, 0))
         ttk.Label(holder, text=f'v{VERSION}', style='Muted.TLabel').pack(side='left', padx=10)

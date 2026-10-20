@@ -63,26 +63,16 @@ class ReadingTests(unittest.TestCase):
         pan = bench.pan_route(24)
         self.assertEqual(bench.route_seconds(pan), 24.5)
         self.assertTrue(all(len(line.split()) == 8 for line in pan.splitlines()))
-        dodge = (ROOT / 'launcher/assets/tests/boss-dodge.txt').read_text()
-        self.assertGreater(bench.route_seconds(dodge), 110)
-        lines = [line.split() for line in dodge.splitlines()]
-        self.assertTrue(all(len(line) == 8 for line in lines))
-        self.assertEqual({line[4] for line in lines} | {line[5] for line in lines}, {'128'})  # the lock-on aims
 
     def test_builtin_scenarios(self):
         with tempfile.TemporaryDirectory() as folder:
             found = {s.id: s for s in bench.scenarios(folder)}
-        self.assertEqual(set(found), {'hunters-view', 'boss-fight'})
+        self.assertEqual(set(found), {'hunters-view'})  # only finished benchmarks ship
         view = found['hunters-view']
         self.assertEqual(view.save, 'own')
         self.assertEqual(view.steps[0]['do'], 'title')
         self.assertTrue(view.loop)
         self.assertEqual(view.route('pan:24'), bench.pan_route(24))
-        boss = found['boss-fight']
-        self.assertEqual(boss.save, 'ask')
-        self.assertIsNone(boss.save_folder(None))
-        self.assertTrue(boss.route('boss-dodge.txt'))
-        self.assertIs(boss.settings['cheat_stealth'], False)  # the boss sees the hunter and fights
         self.assertTrue(bench.FIXED_INI['cheat_stealth'] and bench.FIXED_INI['cheat_no_death'])
         self.assertFalse(list((ROOT / 'launcher/assets/tests').rglob('userdata*')))
         known = {'title', 'wait', 'press', 'hold', 'route', 'measure', 'capture'}
@@ -138,8 +128,8 @@ class ReadingTests(unittest.TestCase):
             slot = user / 'savedata' / '1' / 'CUSA03173' / 'SPRJ0005'
             slot.mkdir(parents=True)
             (slot / 'userdata0000').write_text('own')
-            with tempfile.TemporaryDirectory() as scenarios:
-                scenario = {s.id: s for s in bench.scenarios(scenarios)}['boss-fight']
+            (Path(folder) / 'ask.json').write_text(json.dumps({'id': 'ask', 'save': 'ask', 'steps': [{'do': 'title'}]}))
+            scenario = bench.Scenario(Path(folder) / 'ask.json')
             test = bench.Test(folder, [], {}, user, '', '', scenario, None, Path(folder) / 'out', print, save=str(cleric))
             test.work = Path(folder) / 'work'
             test.prepare(slot)

@@ -140,6 +140,9 @@ UI = {'de': {
         'Was dein PC kann, bewertet wie der Hardware-Check auf bbport.de, und Spieltests, die es messen: beste '
         'Einstellungen für ein Ziel, Einstellungen im Vergleich, Stabilität.',
     # ---- Help ----
+    'Set everything up again, step by step.': 'Alles noch einmal Schritt für Schritt einrichten.',
+    'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+        'Die Expertenansicht ist jetzt an, um das zu zeigen. Der Schalter ist unten in der Seitenleiste.',
     'Copy a summary': 'Zusammenfassung kopieren', 'Show the log': 'Protokoll zeigen', 'Repeat the setup': 'Einrichtung wiederholen',
     'Only a black screen': 'Nur ein schwarzes Bild',
     'The game starts but shows nothing, or the picture breaks after a driver update: its shader cache no longer fits '

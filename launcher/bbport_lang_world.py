@@ -617,6 +617,8 @@ WORLD = {
             'Поиск сохранений shadPS4, порта от Awaken и bbhost на этом ПК…',
         'Search…':
             'Поиск…',
+        'Set everything up again, step by step.':
+            'Настроить всё заново, шаг за шагом.',
         'Setting':
             'Настройка',
         'Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", Object motion vectors off, frame generation off, a 60 FPS cap.':
@@ -725,6 +727,8 @@ WORLD = {
             'Патчи сообщества (60 FPS и выше, параметры эффектов) есть только для 1.09; другие версии работают в 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "Подключение к The Hunter's Dream — это порт сетевого кода bbhost от Awaken; автор bbhost и The Hunter's Dream — droogie.",
+        'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+            'Режим эксперта включён, чтобы это показать. Переключатель — внизу боковой панели.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
             'Первый запуск длится дольше, а в первые минуты возможны подтормаживания, пока строится кэш шейдеров. Это нормально.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
@@ -1888,6 +1892,8 @@ WORLD = {
             'الحساسية (مباشر)',
         'Sensitivity (stick)':
             'الحساسية (العصا)',
+        'Set everything up again, step by step.':
+            'إعداد كل شيء من جديد، خطوة بخطوة.',
         'Setting':
             'الإعداد',
         'Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", Object motion vectors off, frame generation off, a 60 FPS cap.':
@@ -2014,6 +2020,8 @@ WORLD = {
             'رقع المجتمع (60 FPS وأكثر، وخيارات المؤثرات) متاحة للإصدار 1.09 فقط؛ وتعمل الإصدارات الأخرى بـ 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "الاتصال بـ The Hunter's Dream هو منفذ Awaken لشيفرة الشبكة الخاصة بـ bbhost؛ وbbhost وThe Hunter's Dream من تطوير droogie.",
+        'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+            'وضع الخبير مفعّل الآن لعرض هذا. المفتاح في أسفل الشريط الجانبي.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
             'يستغرق التشغيل الأول وقتًا أطول، وقد تتقطع الدقائق الأولى أثناء بناء كاش الشيدر. هذا طبيعي.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
@@ -3213,6 +3221,8 @@ WORLD = {
             'Sensibilidad (directo)',
         'Sensitivity (stick)':
             'Sensibilidad (stick)',
+        'Set everything up again, step by step.':
+            'Configurarlo todo de nuevo, paso a paso.',
         'Setting':
             'Ajuste',
         'Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", Object motion vectors off, frame generation off, a 60 FPS cap.':
@@ -3339,6 +3349,8 @@ WORLD = {
             'Los parches de la comunidad (60 FPS y más, las opciones de efectos) solo existen para la 1.09; las demás versiones van a 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "La conexión con The Hunter's Dream es el port de Awaken del código de red de bbhost; bbhost y The Hunter's Dream son obra de droogie.",
+        'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+            'La vista experta está activada para mostrar esto. El interruptor está abajo en la barra lateral.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
             'El primer inicio tarda más y los primeros minutos pueden dar tirones mientras se genera la caché de shaders. Es normal.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
@@ -4536,6 +4548,8 @@ WORLD = {
             'Sensibilidade (modo direto)',
         'Sensitivity (stick)':
             'Sensibilidade (analógico)',
+        'Set everything up again, step by step.':
+            'Configurar tudo de novo, passo a passo.',
         'Setting':
             'Configuração',
         'Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", Object motion vectors off, frame generation off, a 60 FPS cap.':
@@ -4660,6 +4674,8 @@ WORLD = {
             'Os patches da comunidade (60 FPS e mais, as opções de efeitos) existem só para a 1.09; outras versões rodam a 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "A conexão com o The Hunter's Dream é o port do Awaken do código de rede do bbhost; o bbhost e o The Hunter's Dream são de droogie.",
+        'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+            'O modo especialista foi ativado para mostrar isto. A chave fica na parte de baixo da barra lateral.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
             'O primeiro início demora mais, e os primeiros minutos podem engasgar enquanto o cache de shaders é montado. Isso é normal.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
@@ -5857,6 +5873,8 @@ WORLD = {
             'Sensibilité (direct)',
         'Sensitivity (stick)':
             'Sensibilité (stick)',
+        'Set everything up again, step by step.':
+            'Tout reconfigurer, étape par étape.',
         'Setting':
             'Réglage',
         'Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", Object motion vectors off, frame generation off, a 60 FPS cap.':
@@ -5983,6 +6001,8 @@ WORLD = {
             'Les patchs de la communauté (60 FPS et plus, les options d’effets) n’existent que pour la 1.09 ; les autres versions tournent à 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "La connexion à The Hunter's Dream est le portage par Awaken du code réseau de bbhost ; bbhost et The Hunter's Dream sont l’œuvre de droogie.",
+        'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+            'Le mode expert est activé pour afficher ceci. Le bouton se trouve en bas de la barre latérale.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
             'Le premier lancement prend plus de temps et les premières minutes peuvent saccader pendant la construction du cache des shaders. C’est normal.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
@@ -7182,6 +7202,8 @@ WORLD = {
             'Sensibilità (diretta)',
         'Sensitivity (stick)':
             'Sensibilità (stick)',
+        'Set everything up again, step by step.':
+            'Configura di nuovo tutto, passo dopo passo.',
         'Setting':
             'Impostazione',
         'Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", Object motion vectors off, frame generation off, a 60 FPS cap.':
@@ -7308,6 +7330,8 @@ WORLD = {
             'Le patch della community (60 FPS e oltre, le opzioni degli effetti) esistono solo per la 1.09; le altre versioni girano a 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "La connessione a The Hunter's Dream è il port del codice di rete di bbhost realizzato da Awaken; bbhost e The Hunter's Dream sono di droogie.",
+        'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+            'La modalità esperto ora è attiva, per mostrare questo. L’interruttore è in fondo alla barra laterale.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
             'Il primo avvio richiede più tempo e i primi minuti possono scattare mentre si crea la cache degli shader. È normale.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
@@ -8507,6 +8531,8 @@ WORLD = {
             'Czułość (sterowanie bezpośrednie)',
         'Sensitivity (stick)':
             'Czułość (emulacja gałki)',
+        'Set everything up again, step by step.':
+            'Skonfiguruj wszystko od nowa, krok po kroku.',
         'Setting':
             'Ustawienie',
         'Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", Object motion vectors off, frame generation off, a 60 FPS cap.':
@@ -8633,6 +8659,8 @@ WORLD = {
             'Łatki społeczności (60 FPS i więcej, opcje efektów) istnieją tylko dla 1.09; inne wersje działają w 30 FPS.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "Połączenie z The Hunter's Dream to wykonany przez Awakena port kodu sieciowego bbhost; bbhost i The Hunter's Dream są autorstwa droogie.",
+        'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+            'Widok eksperta jest teraz włączony, żeby to pokazać. Przełącznik jest na dole paska bocznego.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
             'Pierwsze uruchomienie trwa dłużej, a pierwsze minuty mogą się zacinać, gdy budowana jest pamięć podręczna shaderów. To normalne.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
@@ -9832,6 +9860,8 @@ WORLD = {
             'Hassasiyet (doğrudan)',
         'Sensitivity (stick)':
             'Hassasiyet (çubuk)',
+        'Set everything up again, step by step.':
+            'Her şeyi adım adım yeniden ayarlayın.',
         'Setting':
             'Ayar',
         'Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", Object motion vectors off, frame generation off, a 60 FPS cap.':
@@ -9958,6 +9988,8 @@ WORLD = {
             'Topluluk yamaları (60 FPS ve üzeri, efekt seçenekleri) yalnızca 1.09 için mevcut; diğer sürümler 30 FPS’te çalışır.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "The Hunter's Dream bağlantısı, bbhost’un ağ kodunun Awaken tarafından yapılmış portudur; bbhost ve The Hunter's Dream droogie’ye aittir.",
+        'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+            'Bunu göstermek için uzman görünümü açıldı. Anahtar kenar çubuğunun altında.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
             'İlk başlatma daha uzun sürer ve shader önbelleği oluşturulurken ilk dakikalarda takılma olabilir. Bu normaldir.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
@@ -11157,6 +11189,8 @@ WORLD = {
             '灵敏度（直接）',
         'Sensitivity (stick)':
             '灵敏度（摇杆）',
+        'Set everything up again, step by step.':
+            '逐步重新设置所有内容。',
         'Setting':
             '设置项',
         'Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", Object motion vectors off, frame generation off, a 60 FPS cap.':
@@ -11283,6 +11317,8 @@ WORLD = {
             '社区补丁（60 FPS 及以上、效果选项）仅适用于 1.09；其他版本以 30 FPS 运行。',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "与 The Hunter's Dream 的连接是 Awaken 对 bbhost 网络代码的移植；bbhost 和 The Hunter's Dream 的作者是 droogie。",
+        'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+            '为显示此项，已开启专家视图。开关位于侧边栏底部。',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
             '首次启动需要更长时间，构建着色器缓存期间，最初几分钟可能会卡顿。这是正常现象。',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
@@ -12482,6 +12518,8 @@ WORLD = {
             '感度（ダイレクト）',
         'Sensitivity (stick)':
             '感度（スティック）',
+        'Set everything up again, step by step.':
+            'すべてを一歩ずつ設定し直します。',
         'Setting':
             '設定',
         'Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", Object motion vectors off, frame generation off, a 60 FPS cap.':
@@ -12608,6 +12646,8 @@ WORLD = {
             'コミュニティパッチ（60 FPS 以上、エフェクトのオプション）は 1.09 専用です。他のバージョンは 30 FPS で動作します。',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "The Hunter's Dream への接続は、bbhost のネットワークコードを Awaken が移植したものです。bbhost と The Hunter's Dream は droogie によるものです。",
+        'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+            'これを表示するため、エキスパート表示をオンにしました。切り替えはサイドバーの下部にあります。',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
             '初回起動は時間がかかり、シェーダーキャッシュの作成中は最初の数分間カクつくことがあります。これは正常です。',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
@@ -13807,6 +13847,8 @@ WORLD = {
             '감도 (직접)',
         'Sensitivity (stick)':
             '감도 (스틱)',
+        'Set everything up again, step by step.':
+            '모든 것을 단계별로 다시 설정합니다.',
         'Setting':
             '설정',
         'Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", Object motion vectors off, frame generation off, a 60 FPS cap.':
@@ -13933,6 +13975,8 @@ WORLD = {
             '커뮤니티 패치 (60 FPS 등과 효과 옵션)는 1.09 전용입니다. 다른 버전은 30 FPS로 실행됩니다.',
         "The connection to The Hunter's Dream is Awaken's port of bbhost's network code; bbhost and The Hunter's Dream are by droogie.":
             "The Hunter's Dream 연결 기능은 Awaken이 bbhost의 네트워크 코드를 이식한 것입니다. bbhost와 The Hunter's Dream은 droogie가 만들었습니다.",
+        'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
+            '이 항목을 보여 주기 위해 전문가 보기를 켰습니다. 스위치는 사이드바 맨 아래에 있습니다.',
         'The first start takes longer and the first minutes can stutter while the shader cache is built. That is normal.':
             '첫 시작은 더 오래 걸리고, 셰이더 캐시를 만드는 동안 처음 몇 분은 끊길 수 있습니다. 정상입니다.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':

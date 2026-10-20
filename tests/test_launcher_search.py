@@ -84,6 +84,40 @@ class SearchTests(unittest.TestCase):
             if key.startswith('topic:'):
                 self.assertIn(key[6:], topics, key)
 
+    def test_plural_and_inflected_words(self):
+        self.assertEqual(search.near('details', 'model detail lod'), 'detail')
+        self.assertEqual(search.near('einstellungen', 'deine einstellung'), 'einstellung')
+        self.assertIsNone(search.near('ruckelt', 'control the enemy zuruck'))  # not inside another word
+        self.assertIsNone(search.near('fps', 'fp'))  # short words stay as they are
+        self.assertEqual(self.first('Bildraten'), 'fps_mode')
+
+    def test_the_exact_word_beats_a_near_form(self):
+        fake = Fake()
+        fake.search_entries.append({'kind': 'setting', 'page': 'advanced', 'title': 'Check for updates', 'hint': '',
+                                    'key': 'button:updates',
+                                    'haystack': ('check for updates', '', search.fold(search.WORDS['button:updates']))})
+        self.assertEqual(fake.search('updates')[0]['key'], 'button:updates')
+
+    def test_hidden_widgets_are_left_out(self):
+        class Widget:
+            def __init__(self, manager, master=None):
+                self.manager, self.master = manager, master
+
+            def winfo_manager(self):
+                return self.manager
+        page = Widget('pack')
+        self.assertTrue(search.shown(Widget('grid', Widget('pack', page)), page))
+        self.assertFalse(search.shown(Widget('grid', Widget('', page)), page))  # its frame is hidden
+        self.assertTrue(search.shown(None, page))
+
+    def test_players_find_buttons_and_the_setup(self):
+        for word in ('verknupfung', 'steam', 'bericht', 'updates'):
+            self.assertTrue(any(word in search.fold(words) for key, words in search.WORDS.items()
+                                if key.startswith('button:')), word)
+        self.assertIn('einrichtung', search.WORDS['action:setup'])
+        self.assertIn('tastenbelegung', search.WORDS['page:controls'])
+        self.assertIn('unsterblich', search.WORDS['cheat_no_death'])
+
 
 if __name__ == '__main__':
     unittest.main()

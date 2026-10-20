@@ -37,7 +37,7 @@ WORDS = {
     'preset': 'qualitat quality balanced performance native aa scharfer schoner',
     'sharpen': 'scharf scharfe unscharf blurry verwaschen rcas', 'sharpness': 'scharf scharfe unscharf blurry rcas',
     'object_motion': 'ghosting schlieren nachziehen bewegungsvektoren',
-    'model_lod': 'lod detail pop-in plopp modelle sichtweite',
+    'model_lod': 'lod detail modelldetail details pop-in plopp modelle sichtweite',
     'fov': 'sichtfeld fov field of view weitwinkel kamera',
     'show_fps': 'fps zahler counter anzeige overlay',
     'frame_gen': 'frame generation zwischenbilder dlss fsr fg',
@@ -57,17 +57,28 @@ WORDS = {
     'dlc_dir': 'dlc old hunters erweiterung',
     'user_dir': 'spielstande saves speicherstand ordner',
     'skip_intro': 'intro logos video uberspringen skip',
-    'mute_unfocused': 'ton stumm sound mute hintergrund',
+    'mute_unfocused': 'ton stumm sound mute hintergrund lautstarke volume audio',
+    'cheat_no_death': 'unsterblich unverwundbar nie sterben god mode godmode immortal invincible',
+    'button:shortcut': 'desktop verknupfung verknuepfung shortcut icon symbol',
+    'button:steam': 'steam bibliothek library non-steam deck',
+    'button:port_folder': 'ordner port folder installation explorer',
+    'button:updates': 'update updates aktualisieren neue version',
+    'button:report': 'bericht report support zip discord fehler',
+    'button:shader_cache': 'shader cache leeren loschen clear',
     'online': 'online koop coop multiplayer freunde glocke beschworen invasion',
+    'online_pool': 'server online shadnet supermedo hunters dream thd bbhost spielen mit play with',
     'mods_enabled': 'mods mod remaster texturen',
     'translucent_window': 'transparent durchsichtig transparenz glas acrylic opacity deckkraft see through '
                           'unreadable unlesbar',
     'ui_language': 'sprache language launcher',
     'draw_pipe': 'absturz crash instabil pipeline',
     'close_on_play': 'schliessen beenden',
-    'page:controls': 'tasten tastatur maus controller gamepad belegung keyboard mouse keys bindings xbox dualsense',
+    'page:controls': 'tasten tastatur maus controller gamepad belegung tastenbelegung steuerung keyboard mouse keys '
+                     'bindings keybindings keybinds xbox dualsense',
     'page:saves': 'spielstand spielstande save saves import shadps4 bbhost awaken backup sicherung charakter',
     'page:help': 'hilfe help problem fehler absturz crash',
+    'action:setup': 'einrichtung ersteinrichtung setup assistent guide wizard erster start first start neu '
+                    'wiederholen repeat again',
     'page:trophies': 'erfolge trophaen trophies achievements platin',
     'page:online': 'online koop coop multiplayer freunde hunters dream shadnet anmelden discord',
     'page:mods': 'mods mod remaster patches',
@@ -100,6 +111,28 @@ def fold(text):
     text = str(text).casefold().replace('ß', 'ss')
     return ''.join(c for c in unicodedata.normalize('NFKD', text) if not unicodedata.combining(c))
 
+
+
+def near(word, text):
+    """A word as the text has it at the start of one of its words, without a plural or inflected
+    ending ("details" -> "detail", "einstellungen" -> "einstellung"); None if there is none."""
+    for cut in (1, 2):
+        stem = word[:-cut]
+        if len(stem) >= 5 and f' {stem}' in f' {text}':
+            return stem
+    return None
+
+
+def shown(widget, page):
+    """Whether a widget is laid out on its page (not in a part that is hidden for another choice)."""
+    while widget is not None and widget is not page:
+        try:
+            if not widget.winfo_manager():
+                return False
+        except Exception:  # a widget that is gone
+            return False
+        widget = widget.master
+    return True
 
 class SearchMixin:
     """The search field, its index and the jump to a result."""
@@ -136,6 +169,8 @@ class SearchMixin:
             title, why, _steps = bbport_help.TOPICS[key]
             entries.append({'kind': 'topic', 'page': 'help', 'topic': key, 'title': _(title), 'hint': _(why),
                             'key': f'topic:{key}'})
+        entries.append({'kind': 'action', 'page': 'game', 'run': 'open_setup', 'title': _('Repeat the setup'),
+                        'hint': _('Set everything up again, step by step.'), 'key': 'action:setup'})
         for entry in entries:
             words = WORDS.get(entry.get('key') or '', '')
             entry['haystack'] = (fold(entry['title']), fold(entry['hint']), fold(words))
@@ -151,6 +186,12 @@ class SearchMixin:
             title, hint, extra = entry['haystack']
             score = 0
             for word in words:
+                penalty = 0
+                if word not in title and word not in extra and word not in hint:
+                    stem = near(word, title + ' ' + extra + ' ' + hint)
+                    if stem:  # a near form counts a little less than the word itself
+                        word, penalty = stem, 1
+                score -= penalty
                 in_title = f' {word}' in f' {title}'
                 if in_title:
                     score += 6
@@ -163,8 +204,11 @@ class SearchMixin:
                 else:
                     score = 0
                     break
+            if score and entry['kind'] == 'setting' and not shown(entry.get('widget'),
+                                                                  getattr(self, 'pages', {}).get(entry['page'])):
+                score = 0
             if score:
-                bonus = {'setting': 0.5, 'topic': 0.6, 'page': 0.3}[entry['kind']]  # symptoms: the fix first
+                bonus = {'setting': 0.5, 'topic': 0.6, 'page': 0.3, 'action': 0.6}[entry['kind']]  # symptoms: the fix first
                 expert = entry['page'] in L.EXPERT_PAGES
                 scored.append((score + bonus - (0.2 if expert and self.app.get('ui_mode') != 'expert' else 0), entry))
         scored.sort(key=lambda item: -item[0])
@@ -323,6 +367,14 @@ class SearchMixin:
         if entry['kind'] == 'topic':
             self.open_topic(entry['topic'])
             return
+        if entry['kind'] == 'action':
+            getattr(self, entry['run'])()
+            return
+        if entry['page'] in L.EXPERT_PAGES and self.app.get('ui_mode') != 'expert':
+            self.expert_var.set(True)  # the page and its place in the side bar, not a page out of nowhere
+            self.toggle_mode()
+            self.status.configure(text=_('The expert view is on now, to show this. The switch is at the bottom of '
+                                         'the side bar.'), fg=theme.GOLD_LIGHT)
         self.show(entry['page'])
         if entry['kind'] == 'setting':
             self.root.update_idletasks()

@@ -388,8 +388,9 @@ class HelpMixin:
                  wraplength=px(720)).pack(anchor='w')
         row = tk.Frame(last, bg=theme.CARD)
         row.pack(anchor='w', pady=(px(10), 0))
-        ttk.Button(row, text=_('Save a report'), style='Card.Accent.TButton', command=self.save_report).pack(
-            side='left')
+        button = ttk.Button(row, text=_('Save a report'), style='Card.Accent.TButton', command=self.save_report)
+        button.pack(side='left')
+        self.index_entry(button, _('Save a report'), key='button:report')
         ttk.Button(row, text=_('Copy a summary'), style='Card.TButton', command=self.copy_diagnostics).pack(
             side='left', padx=(px(8), 0))
         ttk.Button(row, text=_('Open the Discord'), style='Card.TButton',

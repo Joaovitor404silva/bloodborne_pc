@@ -434,11 +434,9 @@ class SetupMixin:
                                       command=self.start_benchmark)
         self.bench_start.pack(side='left')
         self.bench_cancel = ttk.Button(buttons, text=_('Cancel'), style='Card.TButton', command=self.cancel_benchmark)
-        ttk.Button(buttons, text=_('Add a test…'), style='Card.TButton', command=self.add_scenario).pack(
-            side='right')
         ttk.Button(buttons, text=_('Earlier tests'), style='Card.TButton',
                    command=lambda: os.startfile(self.tests_dir()) if self.tests_dir().is_dir() else None).pack(
-            side='right', padx=(0, px(8)))
+            side='right')
         self.bench_list = tk.Frame(body, bg=theme.CARD)
         self.bench_list.pack(fill='x', pady=(px(10), 0))
         self.bench_note = tk.Label(body, text='', bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
@@ -492,18 +490,6 @@ class SetupMixin:
                          font=(theme.BODY, 9), wraplength=px(400), justify='left').pack(side='left')
                 self.ttk.Button(row, text=_('Choose…'), style='Card.TButton',
                                 command=lambda: self.choose_test_save(scenario)).pack(side='left', padx=(px(10), 0))
-                if source and source.get('url'):
-                    self.ttk.Button(row, text=_('Download page'), style='Card.TButton',
-                                    command=lambda: webbrowser.open(source['url'])).pack(side='left', padx=(px(6), 0))
-            if scenario and scenario.missing_routes():
-                title(_('Route'), 5)
-                row = tk.Frame(form, bg=theme.CARD)
-                row.grid(row=5, column=1, sticky='w', pady=px(4))
-                tk.Label(row, text=_('Not recorded yet: someone runs it once in the game (about two minutes, and back), '
-                                     'then every test replays exactly that.'), bg=theme.CARD, fg=theme.AMBER,
-                         font=(theme.BODY, 9), wraplength=px(400), justify='left').pack(side='left')
-                self.ttk.Button(row, text=_('Record the route…'), style='Card.TButton',
-                                command=lambda: self.record_route(scenario)).pack(side='left', padx=(px(10), 0))
             if mode == 'performance':
                 title(_('Goal'), 1)
                 self.choice(form, 'bench_goal', 'app', self.GOALS, 40, style='Card.TCombobox').grid(
@@ -564,40 +550,6 @@ class SetupMixin:
             return
         self.app.setdefault('test_saves', {})[scenario.id] = str(found[0])
         self.test_form()
-
-    def add_scenario(self):
-        """A scenario folder (scenario.json, its route and save files) or a single .json, copied into
-        the launcher's tests folder."""
-        import shutil
-        import zipfile
-        path = self.filedialog.askopenfilename(title=_('A test scenario (scenario.json, a .json or a .zip)'),
-                                               filetypes=[(_('Test scenarios'), '*.json *.zip')])
-        if not path:
-            return
-        target = self.tests_dir() / 'scenarios'
-        target.mkdir(parents=True, exist_ok=True)
-        source = Path(path)
-        try:
-            if source.suffix.lower() == '.zip':
-                folder = target / source.stem
-                with zipfile.ZipFile(source) as z:
-                    names = [n for n in z.namelist() if not n.startswith('/') and '..' not in n]
-                    z.extractall(folder, names)
-                inner = next(folder.rglob('scenario.json'), None)
-                if inner and inner.parent != folder:
-                    for item in inner.parent.iterdir():
-                        shutil.move(str(item), str(folder / item.name))
-            elif source.name == 'scenario.json':
-                shutil.copytree(source.parent, target / source.parent.name, dirs_exist_ok=True)
-            else:
-                shutil.copy2(source, target / source.name)
-            bench.Scenario(next(target.rglob('scenario.json'), None) or target / source.name)
-        except (OSError, ValueError, zipfile.BadZipFile) as error:
-            self.messagebox.showerror('Bloodborne', _('This is not a test scenario: {}').format(error))
-            return
-        self.test_scenario_list = self.test_scenarios()
-        self.messagebox.showinfo('Bloodborne', _('Added. Choose it under Scenario (the list is updated when the '
-                                                 'launcher starts next).'))
 
     def describe_change(self, start, settings):
         """'Quality preset: Native AA, …' for what a run changed (or 'the settings for your PC')."""
@@ -703,43 +655,6 @@ class SetupMixin:
         self.status.configure(text=_('Game test running: the game opens and closes by itself.'), fg=theme.GOLD_LIGHT)
         test.start(save)
 
-    def record_route(self, scenario):
-        """Records a scenario's missing route: the player runs it once in the game (F9 starts and stops)."""
-        if self.process or bench.game_pids():
-            self.messagebox.showinfo('Bloodborne', _('Close the game first.'))
-            return
-        if self.test_running():
-            self.messagebox.showinfo('Bloodborne', _('A game test is running already.'))
-            return
-        save = self.save_target()
-        chosen_save = (self.app.get('test_saves') or {}).get(scenario.id)
-        if not L.game_info(self.var('game_dir', 'app').get()) or not saves.is_save_folder(save) or (
-                scenario.save == 'ask' and not chosen_save):
-            self.messagebox.showinfo('Bloodborne', _('Choose the save this scenario starts from first.'))
-            return
-        missing = scenario.missing_routes()
-        if not missing or not self.messagebox.askokcancel('Bloodborne', _(
-                'The game starts from this test\'s save; the hunter cannot die and enemies leave him alone.\n\n'
-                '1. Load the save (Continue) and wait until you can move.\n'
-                '2. Press F9 and run the route: about two minutes, and back to where you started (so the test can '
-                'repeat it). Move the camera calmly, the way a player would.\n'
-                '3. Press F9 again, then quit the game.\n\n'
-                'Every test of this scenario then replays exactly that.')):
-            return
-        v = self.bench_views['system']
-        self.bench_start, self.bench_cancel, self.bench_list, self.bench_note, self.bench_apply = (
-            v['start'], v['cancel'], v['list'], v['note'], v['apply'])
-        test = bench.Test(L.PORT_DIR, L.run_command(), L.game_environment({**self.app, 'online': False}),
-                          self.save_user_dir(), self.var('game_dir', 'app').get(),
-                          L.ini_path().read_text(encoding='utf-8') if L.ini_path().is_file() else '',
-                          scenario, None, self.tests_dir() / 'recordings',
-                          lambda kind, data: self.ui_calls.put(lambda: self.benchmark_event(kind, data)),
-                          kind='record', save=chosen_save)
-        self.bench, self.bench_folder = test, None
-        self.bench_start.pack_forget()
-        self.play_button.configure(state='disabled')
-        test.record(save, self.tests_dir() / 'routes' / scenario.id / missing[0])
-
     def cancel_benchmark(self):
         if self.bench:
             self.bench.cancelled = True
@@ -763,17 +678,6 @@ class SetupMixin:
             value.pack(side='right')
             self.bench_rows.append((name, text, value))
             self.bench_note.configure(text=_('Run {}: the game is starting.').format(index))
-        elif kind == 'recording':
-            self.bench_note.configure(text=_('The game is open: load the save, press F9, run the route and back, press '
-                                             'F9 again, quit the game.'), fg=theme.GOLD_LIGHT)
-        elif kind == 'recorded':
-            test.finished = True
-            self.bench_start.pack(side='left')
-            self.refresh_status()
-            self.bench_note.configure(text=_('Recorded: every test of this scenario now replays your route.') if data
-                                      else _('Nothing was recorded (press F9 to start and F9 to stop).'),
-                                      fg=theme.GOLD_LIGHT if data else theme.BLOOD_LIGHT)
-            self.test_form()
         elif kind == 'loaded' and self.bench_rows:
             self.bench_rows[-1][2].configure(text=_('measuring…'))
         elif kind == 'progress' and self.bench_rows:
