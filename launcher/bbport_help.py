@@ -212,7 +212,7 @@ def eboot_state(folder):
         return 'missing', 0
     try:
         from prepare import parse_self, span
-        from patches import PATCH_FINGERPRINTS, patch_fingerprint
+        from patches import PATCH_GROUPS, eboot_bytes, matching_groups_of
         elf, _header, ph, _segments, _missing = parse_self(data)
     except ValueError as error:
         if 'expected PS4 SELF' in str(error):  # another format (a converted ELF, another file)
@@ -227,7 +227,8 @@ def eboot_state(folder):
             image[p['vaddr']:p['vaddr'] + p['filesz']] = span(elf, p['offset'], p['filesz'])
         if hashlib.sha256(image).hexdigest() == LANCE_60FPS_IMAGE:
             return 'lance', len(data)
-        clean = patch_fingerprint(elf) == PATCH_FINGERPRINTS['01.09']
+        # Every patch group's original bytes (patches.py fingerprints each group on its own).
+        clean = matching_groups_of(lambda start, end: eboot_bytes(elf, start, end)) == set(PATCH_GROUPS)
     except (ValueError, KeyError, IndexError, OSError):
         return 'truncated', len(data)
     return ('clean' if clean else 'modified'), len(data)
@@ -327,7 +328,8 @@ def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):
                                       'sce_sys and dvdroot_ps4 directly inside (Game & language).')))
     else:
         stat = (game / 'eboot.bin').stat()
-        key = f'{(game / "eboot.bin").resolve()}|{stat.st_size}|{int(stat.st_mtime)}'
+        # '2|': checked per patch group; an older launcher's answer is not reused.
+        key = f'2|{(game / "eboot.bin").resolve()}|{stat.st_size}|{int(stat.st_mtime)}'
         state = cached.get('state') if cached and cached.get('key') == key else eboot_state(game)[0]
         eboot = {'key': key, 'state': state}
         size = number(stat.st_size)
