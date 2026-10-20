@@ -2612,7 +2612,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             shown += len(items)
             head = tk.Frame(body, bg=PANEL)
             head.pack(fill='x', pady=(16, 8))
-            tk.Label(head, text=group, bg=PANEL, fg=GOLD, font=(theme.HEAD, 13)).pack(side='left')
+            tk.Label(head, text=_(group), bg=PANEL, fg=GOLD, font=(theme.HEAD, 13)).pack(side='left')
             tk.Label(head, text='{} / {}'.format(sum(1 for t in members if t[0] in unlocked), len(members)),
                      bg=PANEL, fg=MUTED, font=(theme.BODY, 9)).pack(side='left', padx=10, pady=(3, 0))
             for trophy in items:
@@ -2635,13 +2635,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         side.pack(side='right', padx=(12, 18))
         tk.Label(side, text=_(*GRADE_NAMES[grade]), bg=CARD, fg=TROPHY_COLORS[grade] if earned else MUTED,
                  font=(theme.BODY, 9, 'bold')).pack(anchor='e')
-        tk.Label(side, text=time.strftime('%d %b %Y', time.localtime(when)) if earned else _('Locked', 'Не получен'),
+        date_format = '%Y年%m月%d日' if LANG == 'zh' else '%d %b %Y'
+        tk.Label(side, text=time.strftime(date_format, time.localtime(when)) if earned else _('Locked', 'Не получен'),
                  bg=CARD, fg=MUTED, font=(theme.BODY, 9)).pack(anchor='e', pady=(2, 0))
         middle = tk.Frame(card, bg=CARD)
         middle.pack(side='left', fill='x', expand=True, pady=10)
-        tk.Label(middle, text=name, bg=CARD, fg=TEXT if earned else MUTED,
+        tk.Label(middle, text=_(name), bg=CARD, fg=TEXT if earned else MUTED,
                  font=(theme.BODY, 11, 'bold' if earned else 'normal')).pack(anchor='w')
-        tk.Label(middle, text=text, bg=CARD, fg=MUTED, font=(theme.BODY, 9), justify='left',
+        tk.Label(middle, text=_(text), bg=CARD, fg=MUTED, font=(theme.BODY, 9), justify='left',
                  wraplength=self.px(520)).pack(anchor='w', pady=(1, 0))
 
     def set_trophy_filter(self, name):
@@ -2685,7 +2686,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         caption = tk.Label(words, text=_("You've earned a trophy.", 'Вы получили трофей.'), bg=CARD, fg=MUTED,
                            font=(theme.BODY, 9))
         caption.pack(anchor='w')
-        title = tk.Label(words, text=f'{name}', bg=CARD, fg=TEXT, font=(theme.BODY, 11, 'bold'))
+        title = tk.Label(words, text=_(name), bg=CARD, fg=TEXT, font=(theme.BODY, 11, 'bold'))
         title.pack(anchor='w')
         for widget in (box, icon, words, caption, title):
             widget.bind('<Button-1>', lambda _e: self.show('trophies'))
