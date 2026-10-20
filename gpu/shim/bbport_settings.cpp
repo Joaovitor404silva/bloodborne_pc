@@ -52,6 +52,10 @@ void Set(Values& v, const std::string& key, const std::string& value) {
         v.reactive = i != 0;
     } else if (key == "object_motion") {
         v.object_motion = i != 0;
+    } else if (key == "fsr411_backend") {
+        v.fsr411_backend = value == "dx12" ? Fsr411Dx12 : Fsr411Vulkan;
+    } else if (key == "object_motion_cache") {
+        v.object_motion_cache = value == "1";
     } else if (key == "reactive_scale") {
         v.reactive_scale = Clamp(f, 0.0f, 16.0f);
     } else if (key == "reactive_threshold") {
@@ -106,6 +110,8 @@ Values& Get() {
 
 void Load() {
     auto& v = Get();
+    v.fsr411_backend = Fsr411Vulkan;
+    v.object_motion_cache = false;
     for (int e = 0; e < EffectCount; ++e) {
         v.effects[e] = Effects[e].default_on;
     }
@@ -143,9 +149,25 @@ void Load() {
             Set(v, key, value);
         }
     }
+    // Direct engine launches retain the explicit A/B overrides. Launcher starts refresh
+    // their derived environment from this file in run.py, including after an overlay restart.
+    const char* shared = std::getenv("BB_SHARED_GRAPHICS_CONFIG");
+    if (!shared || std::strcmp(shared, "1") != 0) {
+        if (const char* native = std::getenv("BB_FSR411_NATIVE")) {
+            v.fsr411_backend = native[0] == '1' ? Fsr411Dx12 : Fsr411Vulkan;
+        }
+        if (const char* backend = std::getenv("BB_FSR411_BACKEND")) {
+            Set(v, "fsr411_backend", backend);
+        }
+        if (const char* cache = std::getenv("BB_OBJECT_MOTION_CACHE")) {
+            Set(v, "object_motion_cache", cache);
+        }
+    }
     v.startup_preset = v.preset;
     v.startup_upscaler = v.upscaler;
     v.startup_object_motion = v.object_motion;
+    v.startup_fsr411_backend = v.fsr411_backend;
+    v.startup_object_motion_cache = v.object_motion_cache;
     for (int e = 0; e < EffectCount; ++e) {
         v.startup_effects[e] = v.effects[e];
     }
@@ -159,7 +181,7 @@ void Load() {
 void ConfigureUpscalerSupport(bool fsr4, bool fsr411) {
     auto& v = Get();
     v.fsr4_supported = fsr4;
-    v.fsr411_supported = fsr4 && fsr411;
+    v.fsr411_supported = fsr411;
     const int requested = v.upscaler;
     if ((requested == UpscalerFsr4 && !v.fsr4_supported) ||
         (requested == UpscalerFsr411 && !v.fsr411_supported)) {
@@ -206,6 +228,16 @@ bool ResolutionNeedsRestart() {
          (v.upscaler == UpscalerTaa) != (v.startup_upscaler == UpscalerTaa));
 }
 
+bool FsrSettingsNeedRestart() {
+    const auto& v = Get();
+    const bool fsr_now = v.upscaler == UpscalerFsr3 || IsFsr4(v.upscaler);
+    const bool fsr_start = v.startup_upscaler == UpscalerFsr3 || IsFsr4(v.startup_upscaler);
+    return v.fsr411_backend != v.startup_fsr411_backend ||
+        v.object_motion_cache != v.startup_object_motion_cache ||
+        (v.object_motion_cache &&
+         (fsr_now && v.object_motion) != (fsr_start && v.startup_object_motion));
+}
+
 void Save() {
     const auto& v = Get();
     FILE* file = std::fopen(Path(), "w");
@@ -224,6 +256,9 @@ void Save() {
                  v.reactive_scale.load(), v.reactive_threshold.load(), v.reactive_max.load(),
                  v.debug_view.load(), int(v.show_fps.load()),
                  int(v.fsr4_auto_exposure.load()), int(v.fsr4_invert_jitter.load()));
+    std::fprintf(file, "fsr411_backend=%s\nobject_motion_cache=%d\n",
+                 v.fsr411_backend == Fsr411Dx12 ? "dx12" : "vk",
+                 int(v.object_motion_cache.load()));
     // Read by patches.py at start.
     for (int e = 0; e < EffectCount; ++e) {
         std::fprintf(file, "%s=%d\n", Effects[e].key, int(v.effects[e].load()));
@@ -258,7 +293,7 @@ const char* PresetName(int preset) {
 }
 
 const char* FrameGenName(int frame_gen) {
-    static constexpr const char* names[FrameGenCount] = {"off", "fsr3", "dlss"};
+    static constexpr const char* names[FrameGenCount] = {"off", "fsr3", "dlss", "fsr401"};
     return names[std::clamp(frame_gen, 0, FrameGenCount - 1)];
 }
 

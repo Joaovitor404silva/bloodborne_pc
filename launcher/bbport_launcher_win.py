@@ -31,6 +31,7 @@ import zipfile
 FROZEN = getattr(sys, 'frozen', False)
 PORT_DIR = Path(sys.executable).resolve().parent if FROZEN else Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PORT_DIR / 'scripts'))
+import fetch_fsr4vk
 DATA_DIR = Path(os.environ.get('BB_DATA_DIR', PORT_DIR))
 # Co-op test build: its own settings, and no updates (a public release would replace it).
 COOP_TEST = False
@@ -51,7 +52,7 @@ RELEASES_LIST_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releas
 OLDEST_INSTALLABLE = '1.8.2'
 UPDATE_DIR = Path(tempfile.gettempdir()) / 'bbport-update'
 # Never copied over an installation by an update (the package does not hold them either).
-USER_FILES = ('user', 'out', 'mods', 'bbport.ini', 'input.ini', 'mods.json', 'patches.json', 'last_run.log')
+USER_FILES = ('user', 'out', 'mods', 'fsr4vk', 'bbport.ini', 'input.ini', 'mods.json', 'patches.json', 'last_run.log')
 
 
 # ---------------------------------------------------------------------------------------------
@@ -129,6 +130,7 @@ def run_command():
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bbport_lang  # noqa: E402
+import bbport_fg401
 import bbport_trophies as trophies  # noqa: E402
 import bbport_benchmark as benchmark  # noqa: E402
 from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SLOTS, keysym_to_name,
@@ -205,10 +207,11 @@ TWEAKS = [
     ('rebirth', ("Rebirth at the Doll: back to your origin's attributes for 5 Insight, levels regained free",
                  'Перерождение у Куклы: характеристики происхождения за 5 озарений, уровни возвращаются бесплатно'), True),
 ]
-INI_FLAGS = {'sharpen', 'object_motion', 'show_fps', 'mute_unfocused', 'frame_gen_fit_display',
+INI_FLAGS = {'sharpen', 'object_motion', 'object_motion_cache', 'show_fps', 'mute_unfocused', 'frame_gen_fit_display',
              *(k for k, _t, _o in EFFECTS + EXTRAS + CHEATS + TWEAKS)}
 INI_DEFAULTS = {'upscaler': 'fsr4', 'preset': '1', 'sharpen': '1', 'sharpness': '0.50',
                 'object_motion': '1', 'show_fps': '1', 'output_res': '1920x1080', 'model_lod': '0',
+                'fsr411_backend': 'vk', 'object_motion_cache': '0',
                 'live_resolution': 'auto', 'hud_position': '100', 'fov': '43', 'mute_unfocused': '0',
                 'button_prompts': 'auto',
                 'frame_gen': 'off', 'frame_gen_multiplier': '2', 'frame_gen_fit_display': '0',
@@ -228,13 +231,14 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
 
 UPSCALERS = [('dlss', ('DLSS (NVIDIA GeForce RTX)',)),
              ('fsr4', ('FSR 4 (best quality)', 'FSR 4 (лучшее качество)')),
-             ('fsr411', ('FSR 4.1.1 (needs fsr4_411 assets)', 'FSR 4.1.1 (нужны ассеты fsr4_411)')),
+             ('fsr411', ('FSR 4.1.1 (experimental)', 'FSR 4.1.1 (экспериментально)')),
              ('fsr3', ('FSR 3.1 (every GPU)', 'FSR 3.1 (любая видеокарта)')),
              ('taa', ('TAA (native resolution anti-aliasing)', 'TAA (нативное сглаживание)')),
              ('off', ('Off', 'Выключен'))]
 # Frames generated between two of the game's (vk_frame_generation.cpp).
 FRAME_GENERATION = [('off', ('Off', 'Выключена')),
                     ('fsr3', ('AMD FSR 3.1 Frame Generation (any GPU)', 'AMD FSR 3.1 (любая видеокарта)')),
+                    ('fsr401', ('AMD ML-FG 4.0.1 (RX 9000, 2× SDR, experimental)',)),
                     ('dlss', ('NVIDIA DLSS Frame Generation (GeForce RTX 40/50)',
                               'NVIDIA DLSS (GeForce RTX 40/50)'))]
 FRAME_GEN_MULTIPLIERS = [('2', ('2× (one generated frame)', '2× (один кадр)')),
@@ -242,6 +246,21 @@ FRAME_GEN_MULTIPLIERS = [('2', ('2× (one generated frame)', '2× (один ка
                          ('4', ('4× (DLSS on GeForce RTX 50)', '4× (DLSS на GeForce RTX 50)'))]
 PRESETS = [('0', ('Native AA (×1.0)',)), ('1', ('Quality (×1.5)',)), ('2', ('Balanced (×1.7)',)),
            ('3', ('Performance (×2)',)), ('4', ('Ultra Performance (×3)',))]
+FSR411_BACKENDS = [('vk', ('Vulkan (fsr4vk)',)), ('dx12', ('AMD DX12',))]
+SHARED_GRAPHICS_KEYS = ('fsr411_backend', 'object_motion_cache')
+
+
+def fsr411_backend(settings):
+    # The persisted value is independent of the translated display label.
+    return 'dx12' if settings.get('fsr411_backend') == 'dx12' else 'vk'
+
+
+def native_fsr411_present():
+    # Packaged beside bin/bb-probe.exe; a source build copies it to out/ (docs/FSR411_WINDOWS.md).
+    return any(dll.is_file() and dll.stat().st_size > 0
+               for dll in (PORT_DIR / folder / 'amd_fidelityfx_upscaler_dx12.dll' for folder in ('bin', 'out')))
+
+
 OUTPUTS = [('1280x720', ('1280 × 720 (Steam Deck)',)), ('1920x1080', ('1920 × 1080',)),
            ('2560x1440', ('2560 × 1440',)), ('3840x2160', ('3840 × 2160 (4K)',)),
            ('2560x1080', ('2560 × 1080 (21:9)',)), ('3440x1440', ('3440 × 1440 (21:9)',)),
@@ -326,7 +345,7 @@ def ini_path():
     return Path(os.environ.get('BB_CONFIG', DATA_DIR / 'bbport.ini'))
 
 
-def load_ini():
+def load_ini(legacy_settings=None):
     values, lines = dict(INI_DEFAULTS), []
     try:
         lines = ini_path().read_text(encoding='utf-8').splitlines()
@@ -336,6 +355,21 @@ def load_ini():
         if '=' in line and not line.lstrip().startswith('#'):
             key, value = line.split('=', 1)
             values[key.strip()] = value.strip()
+    # Move existing launcher preferences once. Explicit INI values always win,
+    # including vk/0; a later overlay edit must never be replaced by the old JSON.
+    present = {line.split('=', 1)[0].strip() for line in lines
+               if '=' in line and not line.lstrip().startswith('#')}
+    migrated = {}
+    for key in SHARED_GRAPHICS_KEYS:
+        if key not in present and legacy_settings is not None and key in legacy_settings:
+            old = legacy_settings[key]
+            migrated[key] = fsr411_backend(legacy_settings) if key == 'fsr411_backend' else \
+                '1' if old is True or old == '1' else '0'
+    if migrated:
+        save_ini(migrated, lines)
+        return load_ini()
+    values['fsr411_backend'] = fsr411_backend(values)
+    values['object_motion_cache'] = '1' if values.get('object_motion_cache') == '1' else '0'
     return values, lines
 
 
@@ -493,8 +527,14 @@ def server_check_hunters_dream():
     return '\n'.join(lines)
 
 
-def game_environment(s):
-    env = dict(os.environ)
+def motion_cache_available(graphics):
+    return graphics.get('upscaler', INI_DEFAULTS['upscaler']) in ('fsr3', 'fsr4', 'fsr411') and \
+        graphics.get('object_motion', INI_DEFAULTS['object_motion']) in ('1', True)
+
+
+def game_environment(s, graphics=None):
+    env = {k:v for k,v in os.environ.items() if not k.startswith(('BB_FG_', 'BB_FG401_'))}
+    graphics = graphics if graphics is not None else load_ini(s)[0]
     env['BB_GAME_DIR'] = s['game_dir']
     if s['user_dir']:
         env['BB_USER_DIR'] = s['user_dir']
@@ -530,6 +570,14 @@ def game_environment(s):
         if '=' in item:
             key, value = item.split('=', 1)
             env[key] = value
+    # run.py refreshes these derived values from the shared file on every start,
+    # including an in-game restart. The saved preference remains independent of
+    # whether the current upscaler/object-motion selection can use the cache.
+    env['BB_SHARED_GRAPHICS_CONFIG'] = '1'
+    env['BB_FSR411_BACKEND'] = fsr411_backend(graphics)
+    env['BB_FSR411_NATIVE'] = '1' if fsr411_backend(graphics) == 'dx12' else '0'
+    cache = graphics.get('object_motion_cache', '0') == '1' and motion_cache_available(graphics)
+    env['BB_OBJECT_MOTION_CACHE'] = '1' if cache else '0'
     if s.get('online'):
         server = str(s['online_server']).strip() or APP_DEFAULTS['online_server']
         env['BB_ONLINE'] = '1'
@@ -580,7 +628,7 @@ class Launcher:
         self.tk, self.ttk, self.filedialog, self.messagebox = tk, ttk, filedialog, messagebox
         self.root = root
         self.app = {**APP_DEFAULTS, **load_json(CONFIG_FILE, {})}
-        self.ini, self.ini_lines = load_ini()
+        self.ini, self.ini_lines = load_ini(self.app)
         self.remap_ini_path = input_ini_path(ini_path())
         self.remap_bindings, self.remap_lines, self.remap_toggle_key, self.remap_reload_key, \
             self.mouse_settings = load_input_ini(self.remap_ini_path)
@@ -593,10 +641,13 @@ class Launcher:
         self.controller_bindings = load_controller_bindings(self.remap_lines)
         self.controller_edits = {}
         self.pads = None  # bbport_gamepad.Pads, opened the first time a controller slot listens
+        self.fg401_support = None
+        self.fg401_refreshers = []
         self.vars = {}
         self.process = self.job = None
         self.hidden = False  # closed while the game runs: it exits with the game
         self.downloading = False
+        self.fsr411_downloading = False
         self.output = queue.Queue()
         self.gpu_text = _('• Checking the graphics card…', '• Проверка видеокарты…')
         self.banner_source = self.banner_image = None
@@ -747,8 +798,98 @@ class Launcher:
         var.trace_add('write', show)
         return box
 
+    def fg401_choice(self, parent, width=52):
+        var = self.var('frame_gen', 'ini')
+        box = self.ttk.Combobox(parent, state='readonly', width=width)
+        values = []
+        def refresh(*_args):
+            ready = bool(self.fg401_support and self.fg401_support.get('supported'))
+            options = [(v,t) for v,t in FRAME_GENERATION if v!='fsr401' or ready]
+            values[:] = [v for v,t in options]
+            box.configure(values=[_(*t) for v,t in options])
+            if var.get()=='fsr401' and not ready:
+                if self.fg401_support is None:
+                    box.set(_('ML-FG 4.0.1: checking support…'))
+                    return
+                var.set('fsr3')
+            box.current(values.index(var.get()) if var.get() in values else values.index('off'))
+        box.bind('<<ComboboxSelected>>', lambda _e: var.set(values[box.current()]))
+        var.trace_add('write', refresh)
+        self.fg401_refreshers.append(refresh)
+        refresh()
+        return box
+
+    def refresh_fg401(self):
+        for refresh in self.fg401_refreshers:
+            refresh()
+        if hasattr(self, 'fg401_status'):
+            key = ('ML-FG 4.0.1: checking support…' if self.fg401_support is None else
+                   '' if self.fg401_support.get('supported') else
+                   'ML-FG 4.0.1 requires an RX 9000, Windows 11 and a supported AMD driver/runtime. FSR 3.1 remains available.')
+            self.fg401_status.configure(text=_(key))
+            if key:
+                self.fg401_status.grid()
+            else:
+                self.fg401_status.grid_remove()
+
+    def fsr411_choice(self, parent, width=38):
+        backend = self.var('fsr411_backend', 'ini')
+        upscaler = self.var('upscaler', 'ini')
+        values = [value for value, _text in FSR411_BACKENDS]
+        box = self.ttk.Combobox(parent, values=[_(*text) for _value, text in FSR411_BACKENDS],
+                               state='readonly', width=width)
+        if backend.get() not in values:
+            backend.set(values[0])
+
+        def refresh(*_args):
+            if upscaler.get() == 'fsr411':
+                box.configure(state='readonly')
+                box.current(values.index(backend.get()) if backend.get() in values else 0)
+            else:
+                # Placeholder is display-only: retain the last method for FSR 4.1.1.
+                box.set('—')
+                box.configure(state='disabled')
+
+        def choose(_event):
+            index = box.current()
+            if upscaler.get() == 'fsr411' and 0 <= index < len(values):
+                backend.set(values[index])
+        box.bind('<<ComboboxSelected>>', choose)
+        backend.trace_add('write', refresh)
+        upscaler.trace_add('write', refresh)
+        refresh()
+        return box
+
     def next_row(self, parent):
         return parent.grid_size()[1]
+
+    def motion_cache_check(self, parent):
+        upscaler = self.var('upscaler', 'ini')
+        object_motion = self.var('object_motion', 'ini')
+        button = self.ttk.Checkbutton(parent, text=_('Motion-vector cache (experimental)'),
+                                     variable=self.var('object_motion_cache', 'ini'))
+        row = self.next_row(parent)
+        button.grid(row=row, column=0, columnspan=2, sticky='w', pady=(8, 0))
+        self.ttk.Label(parent, text=_(
+            'May improve FSR performance; uses extra VRAM. Requires object motion vectors. '
+            'Applies at next game start.'), style='Muted.TLabel', wraplength=self.px(640),
+            justify='left').grid(row=row + 1, column=0, columnspan=2, sticky='w', padx=(26, 0))
+
+        def refresh(*_args):
+            available = motion_cache_available({'upscaler': upscaler.get(),
+                                                'object_motion': object_motion.get()})
+            button.state(['!disabled' if available else 'disabled'])
+
+        traces = [(var, var.trace_add('write', refresh)) for var in (upscaler, object_motion)]
+
+        def cleanup(event):
+            if event.widget == button:
+                for var, trace in traces:
+                    var.trace_remove('write', trace)
+
+        button.bind('<Destroy>', cleanup)
+        refresh()
+        return button
 
     def row(self, parent, title, widget, hint=None):
         ttk = self.ttk
@@ -897,6 +1038,7 @@ class Launcher:
             self.refresh_lists()
         elif name == 'graphics':
             self.refresh_fsr4()
+            self.refresh_fsr411()
         elif name == 'play':
             self.refresh_status()
         elif name == 'trophies':
@@ -926,6 +1068,7 @@ class Launcher:
             row=0, column=0, columnspan=2, sticky='w', pady=(0, 2))
         self.row(quick, _('Frame rate', 'Частота кадров'), self.choice(quick, 'fps_mode', 'app', FPS_MODES, 26))
         self.row(quick, _('Upscaler', 'Апскейлер'), self.choice(quick, 'upscaler', 'ini', UPSCALERS, 26))
+        self.row(quick, 'FSR 4.1.1', self.fsr411_choice(quick, 26))
         self.row(quick, _('Preset', 'Пресет'), self.choice(quick, 'preset', 'ini', PRESETS, 26))
         self.row(quick, _('Output', 'Разрешение'), self.choice(quick, 'output_res', 'ini', OUTPUTS, 26))
         ttk.Checkbutton(quick, text=_('Fullscreen', 'Полный экран'), variable=self.var('fullscreen', 'app')).grid(
@@ -997,6 +1140,8 @@ class Launcher:
         self.row(f, _('Quality preset', 'Пресет'), self.choice(f, 'preset', 'ini', PRESETS),
                  _('Render scale per axis: Quality renders at 1/1.5 of the output size.',
                    'Масштаб рендера по каждой оси: Quality рисует в 1/1.5 размера вывода.'))
+        self.row(f, _('FSR 4.1.1 backend'), self.fsr411_choice(f),
+                 _("AMD DX12 uses AMD's FSR library. Vulkan uses fsr4vk. Switching applies the next time the game starts."))
         self.row(f, _('Output resolution', 'Разрешение вывода'), self.choice(f, 'output_res', 'ini', OUTPUTS),
                  _('What the upscaler produces; the HUD is drawn at this size too.',
                    'Что выдаёт апскейлер; интерфейс рисуется в этом же размере.'))
@@ -1023,9 +1168,10 @@ class Launcher:
         self.check(f, 'object_motion', 'ini', _('Object motion vectors', 'Векторы движения объектов'),
                    _('Less ghosting on characters, cloth and weapons; costs about 10% FPS.',
                      'Меньше гостинга на персонажах и одежде; стоит около 10% FPS.'))
+        self.motion_cache_check(f)
         self.section(f, _('Frame generation', 'Генерация кадров'))
         self.row(f, _('Frame generation', 'Генерация кадров'),
-                 self.choice(f, 'frame_gen', 'ini', FRAME_GENERATION),
+                 self.fg401_choice(f),
                  _('Frames made between two of the game\'s: 60 FPS on screen becomes 120. Needs a display with '
                    'that refresh rate (120 Hz or more at 60 FPS); it pauses when the display cannot show the extra '
                    'frames. Adds a little input latency. Menus and movies are not generated. DLSS needs a GeForce '
@@ -1034,6 +1180,9 @@ class Launcher:
                    'частотой (120 Гц и выше при 60 FPS); иначе генерация приостанавливается. Немного добавляет '
                    'задержку ввода. Меню и ролики не генерируются. DLSS нужна GeForce RTX 40 или новее, иначе '
                    'используется FSR 3.1.'))
+        self.fg401_status = self.ttk.Label(f, wraplength=self.px(640), justify='left')
+        self.fg401_status.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        self.refresh_fg401()
         self.row(f, _('Multiplier', 'Множитель'),
                  self.choice(f, 'frame_gen_multiplier', 'ini', FRAME_GEN_MULTIPLIERS),
                  _('FSR 3.1 makes one frame (2×); DLSS on a GeForce RTX 50 up to three (4×).',
@@ -1057,6 +1206,21 @@ class Launcher:
                        'about 30 MB, into the fsr4_shaders folder of the port.',
                        'С GitHub FireBurn/Q2RTX (собраны из MIT-исходников AMD FidelityFX), около 30 МБ, '
                        'в папку fsr4_shaders порта.'), top=6)
+        self.section(f, _('FSR 4.1.1 (experimental)', 'FSR 4.1.1 (экспериментально)'))
+        self.fsr411_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left')
+        self.fsr411_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        self.fsr411_native_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left')
+        self.fsr411_native_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        holder = ttk.Frame(f)
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(8, 0))
+        self.fsr411_button = ttk.Button(holder, text=_('Download fsr4vk'),
+                                        command=self.download_fsr411)
+        self.fsr411_button.pack(side='left')
+        self.fsr411_progress = ttk.Progressbar(holder, length=280, maximum=100)
+        self.fsr411_progress.pack(side='left', padx=12)
+        self.note(f, _('Download fsr4vk here. AMD DX12 is included.'), top=6)
+        self.refresh_fsr411()
+        self.vars['fsr411_backend'].trace_add('write', lambda *_a: (self.refresh_fsr411(), self.refresh_status()))
         self.section(f, _('Detail', 'Детализация'))
         self.row(f, _('Model detail (LOD)', 'Детализация моделей'), self.choice(f, 'model_lod', 'ini', LODS),
                  _('A game patch (game version 1.09).', 'Патч игры (версия 1.09).'))
@@ -2164,6 +2328,12 @@ class Launcher:
         fsr4 = (_('✓ FSR 4 assets installed', '✓ Ассеты FSR 4 установлены') if not missing else
                 _('• FSR 4 assets missing (Graphics); FSR 3.1 is used meanwhile',
                   '• Нет ассетов FSR 4 («Графика»); пока используется FSR 3.1'))
+        if self.var('upscaler', 'ini').get() == 'fsr411':
+            available = (native_fsr411_present() if self.var('fsr411_backend', 'ini').get() == 'dx12'
+                         else getattr(self, 'fsr411_verified', False))
+            fsr4 = (_('✓ FSR 4.1.1 files installed', '✓ Файлы FSR 4.1.1 установлены')
+                    if available else
+                    _('• FSR 4.1.1 files missing (Graphics)', '• Нет файлов FSR 4.1.1 («Графика»)'))
         for key, text in (('game', game), ('saves', save), ('gpu', self.gpu_text), ('fsr4', fsr4)):
             self.checks[key].configure(text=text, foreground=MUTED if text.startswith('•') else
                                        '#d9a441' if text.startswith('⚠') else '#d36b5c' if text.startswith('✗') else TEXT)
@@ -2174,7 +2344,7 @@ class Launcher:
             else:
                 label.grid_remove()
         if not self.process:
-            self.play_button.configure(state='normal' if info else 'disabled')
+            self.play_button.configure(state='normal' if info and not self.fsr411_downloading else 'disabled')
             self.status.configure(text=self.summary() if info else _('Choose the game folder first.',
                                                                      'Сначала выберите папку игры.'), fg=MUTED)
 
@@ -2184,6 +2354,8 @@ class Launcher:
         if info and info[1] != PATCH_VERSION:
             fps = ('30 FPS',)
         upscaler = dict(UPSCALERS).get(self.var('upscaler', 'ini').get(), ('?',))[0].split(' (')[0]
+        if self.var('upscaler', 'ini').get() == 'fsr411':
+            upscaler += ' · ' + ('DX12' if self.var('fsr411_backend', 'ini').get() == 'dx12' else 'fsr4vk')
         output = self.var('output_res', 'ini').get().replace('x', ' × ')
         online = _('Online') if self.var('online', 'app').get() else _('Offline')
         if self.var('online', 'app').get() and self.var('online_pool', 'app').get() == 'huntersdream':
@@ -2197,6 +2369,10 @@ class Launcher:
         if not exe.is_file():
             exe = PORT_DIR / 'out' / 'bb-gpu-capabilities.exe'
         env = dict(os.environ)
+        for item in str(self.app.get('extra_env', '')).split():
+            if '=' in item:
+                key, value = item.split('=', 1)
+                env[key] = value
         if not (exe.parent / 'SDL3.dll').is_file():
             clang64 = Path(os.environ.get('MSYS2_ROOT', r'C:\msys64')) / 'clang64' / 'bin'
             env['PATH'] = f'{clang64}{os.pathsep}{env.get("PATH", "")}'
@@ -2213,7 +2389,9 @@ class Launcher:
         except (OSError, subprocess.TimeoutExpired):
             pass
         self.gpu_text = text
+        self.fg401_support = bbport_fg401.query(PORT_DIR, env)
         self.ui_calls.put(self.refresh_status)
+        self.ui_calls.put(self.refresh_fg401)
 
     def refresh_fsr4(self):
         total, missing = len(fsr4_files()), len(fsr4_missing())
@@ -2223,6 +2401,46 @@ class Launcher:
             if not missing else _('{} of {} files missing in {}.', 'Нет {} из {} файлов в {}.').format(
                 missing, total, PORT_DIR / 'fsr4_shaders'))
         self.fsr4_button.configure(state='normal' if missing and not self.downloading else 'disabled')
+
+    def refresh_fsr411(self):
+        folder = fetch_fsr4vk.default_dir(DATA_DIR)
+        installed = fetch_fsr4vk.files_ok(folder)
+        self.fsr411_verified = installed
+        self.fsr411_label.configure(text=(_('Vulkan (fsr4vk): installed.') if installed else
+                                         _('Vulkan (fsr4vk): files missing or need updating.')))
+        self.fsr411_native_label.configure(text=(_('AMD DX12: installed.') if native_fsr411_present() else
+                                                _('AMD DX12: files missing.')))
+        self.fsr411_button.configure(state='normal' if not installed and not self.fsr411_downloading and not self.process else 'disabled')
+        if installed:
+            self.fsr411_progress.configure(value=100)
+
+    def download_fsr411(self):
+        if self.process or self.fsr411_downloading:
+            return
+        self.fsr411_downloading = True
+        self.play_button.configure(state='disabled')
+        self.refresh_fsr411()
+        folder = fetch_fsr4vk.default_dir(DATA_DIR)
+
+        def progress(done, total):
+            percent = min(100, done * 100 // max(total, 1))
+            self.ui_calls.put(lambda p=percent: self.fsr411_progress.configure(value=p))
+
+        def work():
+            error = None
+            try:
+                fetch_fsr4vk.fetch(folder, progress)
+            except (OSError, fetch_fsr4vk.FetchError) as failure:
+                error = str(failure)
+
+            def done():
+                self.fsr411_downloading = False
+                self.refresh_fsr411()
+                self.refresh_status()
+                if error:
+                    self.messagebox.showerror('FSR 4.1.1', _('Download failed: {}', 'Не удалось скачать: {}').format(error))
+            self.ui_calls.put(done)
+        threading.Thread(target=work, daemon=True).start()
 
     def download_fsr4(self):
         self.downloading = True
@@ -2308,8 +2526,24 @@ class Launcher:
             self.mod_order[index], self.mod_order[other] = self.mod_order[other], self.mod_order[index]
             self.refresh_lists()
 
+    def sync_shared_graphics(self):
+        """Merge overlay edits while preserving an explicit, unsaved launcher edit."""
+        disk, lines = load_ini()
+        for key in SHARED_GRAPHICS_KEYS:
+            var = self.vars.get(key)
+            value = var.get() if var is not None else self.ini[key]
+            shown = ('1' if value else '0') if key in INI_FLAGS and var is not None else str(value)
+            if shown == self.ini[key]:
+                self.ini[key] = disk[key]
+                new = disk[key] == '1' if key in INI_FLAGS else disk[key]
+                # Only on a change: each set fires the traces, which re-hash the fsr4vk DLL.
+                if var is not None and var.get() != new:
+                    var.set(new)
+        self.ini_lines = lines
+
     def collect(self):
         """Writes settings.json, bbport.ini, mods.json and patches.json."""
+        self.sync_shared_graphics()
         for key, var in self.vars.items():
             try:
                 value = var.get()
@@ -2320,6 +2554,8 @@ class Launcher:
                     f'{float(value):.2f}' if key == 'sharpness' else str(value)
             else:
                 self.app[key] = value
+        for key in SHARED_GRAPHICS_KEYS:
+            self.app.pop(key, None)
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         CONFIG_FILE.write_text(json.dumps(self.app, indent=2, ensure_ascii=False), encoding='utf-8')
         save_ini({key: self.ini[key] for key in INI_DEFAULTS}, self.ini_lines)
@@ -2357,7 +2593,7 @@ class Launcher:
 
     # ---- game process ------------------------------------------------------------------------
     def play(self):
-        if self.process:
+        if self.process or self.fsr411_downloading:
             return
         online, npid = self.var('online', 'app'), self.var('online_npid', 'app')
         if not online.get() and npid.get().strip():
@@ -2395,7 +2631,7 @@ class Launcher:
             return
         self.set_log('')
         try:
-            self.process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(self.app),
+            self.process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(self.app, self.ini),
                                             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT, creationflags=NO_WINDOW)
         except OSError as error:
@@ -2406,6 +2642,7 @@ class Launcher:
         threading.Thread(target=self.read_output, args=(self.process,), daemon=True).start()
         self.play_button.configure(state='disabled')
         self.stop_button.configure(state='normal')
+        self.refresh_fsr411()
         self.status.configure(text=_('Preparing the game; it opens in its own window…',
                                      'Подготовка игры; она откроется в своём окне…'), fg=GOLD)
         if self.app.get('close_on_play'):
@@ -2447,6 +2684,16 @@ class Launcher:
         self.output.put((process.wait(),))
 
     def drain_output(self):
+        if self.process:
+            try:
+                stamp = ini_path().stat().st_mtime_ns
+                # Wait for a stable write before merging an overlay save into the UI.
+                if stamp == getattr(self, '_shared_ini_seen', None) and stamp != getattr(self, '_shared_ini_synced', None):
+                    self.sync_shared_graphics()
+                    self._shared_ini_synced = stamp
+                self._shared_ini_seen = stamp
+            except OSError:
+                pass
         while not self.ui_calls.empty():
             self.ui_calls.get_nowait()()
         try:
@@ -2455,6 +2702,8 @@ class Launcher:
                 if isinstance(item, tuple):
                     self.append(_('\n— the game exited (code {}) —\n', '\n— игра завершилась (код {}) —\n').format(item[0]))
                     self.process = None
+                    self.sync_shared_graphics()
+                    self.refresh_fsr411()
                     if self.job:
                         self.job.close()
                     self.stop_button.configure(state='disabled')

@@ -27,6 +27,8 @@ https://nativeretro.com/
   installs it. Your saves, settings and mods are kept.
 - **NVIDIA DLSS** on GeForce RTX cards (RTX 20 series and newer).
 - **AMD FSR 3.1 and FSR 4** upscaling, plus native-resolution TAA.
+- **Windows AMD ML-FG 4.0.1** on supported RX 9000 GPUs, alongside FSR 3.1 frame
+  generation. [Requirements, implementation and measurements](docs/ML_FRAME_GENERATION_WINDOWS.md).
 - **Unlocked frame rate** with a frame cap (up to 120 by default), or 30/60/90 FPS.
 - **Output resolutions** from 720p to 4K, presets from Native AA to Ultra Performance.
 - **Cheats page:** never die, stealth, silent footsteps, Rally that never fades, enemy control,

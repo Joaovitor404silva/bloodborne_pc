@@ -63,6 +63,7 @@ public:
     [[nodiscard]] float Near() const noexcept;
     /// The far plane of the current camera, or `fallback` for an infinite or unknown one.
     [[nodiscard]] float FarPlane(float fallback) const noexcept;
+    bool WorldCamera(std::array<float,12>& inverse_view) const noexcept;
     /// Frame generation (DLSS): row-vector matrices of D3D clip space (y up, depth 0 near):
     /// the projection, current clip to previous clip, and back. False before two cameras.
     bool ClipTransforms(std::array<float, 16>& view_to_clip,
