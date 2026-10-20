@@ -1921,16 +1921,17 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def build_game(self):
         """Expert: the game folder and the DLC folder (set once, usually by the setup guide)."""
         f = self.scrolled_page('game', _('Game files'),
-                               _('Your game dump and its add-ons. Set once, usually by the setup guide.'))
+                               _('Your game files and their add-ons. Set once, usually by the setup guide.'))
         self.section(f, _('Game', 'Игра'), top=4)
         self.folder(f, 'game_dir', _('Game folder', 'Папка игры'),
                     _('Choose the folder with eboot.bin', 'Выберите папку с eboot.bin'),
-                    _('Your own dump of CUSA03173 (eboot.bin, sce_module, sce_sys, dvdroot_ps4); version 1.09 '
-                      'for the community patches.', 'Ваш дамп CUSA03173 (eboot.bin, sce_module, sce_sys, '
-                      'dvdroot_ps4); версия 1.09 для патчей сообщества.'), on_change=self.game_changed)
+                    _('Your own game files of CUSA03173 (eboot.bin, sce_module, sce_sys, dvdroot_ps4); '
+                      'version 1.09 for the community patches.',
+                      'Ваши собственные файлы игры CUSA03173 (eboot.bin, sce_module, sce_sys, dvdroot_ps4); '
+                      'версия 1.09 для патчей сообщества.'), on_change=self.game_changed)
         self.folder(f, 'dlc_dir', _('DLC folder'), _('Choose the DLC folder'),
-                    _('Your dumped add-ons, one folder each named like SPEXPANSIONDLC03 (The Old Hunters). '
-                      'Only needed with a base-game dump; the Game of the Year edition (CUSA03173) has it.'))
+                    _('Your add-ons, one folder each named like SPEXPANSIONDLC03 (The Old Hunters). Only '
+                      'needed with the base game alone; the Game of the Year edition (CUSA03173) has it.'))
         dlc = self.tk.Label(f, text='', bg=PANEL, font=(theme.BODY, 9), justify='left', anchor='w')
         dlc.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 2))
 
@@ -2997,9 +2998,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         """A banner shown while the selected game is not version 1.09 (refresh_status)."""
         label = self.ttk.Label(parent, style='Warning.TLabel', wraplength=self.px(640), justify='left', text=_(
             'Your game is version {}: these options are patches for 1.09 and are not applied; the game runs '
-            'at 30 FPS. Update the dump to 1.09 to use them.',
-            'Ваша игра версии {}: эти настройки — патчи для 1.09 и не применяются; игра работает в 30 FPS. '
-            'Обновите дамп до 1.09, чтобы их использовать.'))
+            'at 30 FPS. Update the game to 1.09 to use them.',
+            'Ваша игра версии {}: эти параметры — патчи для 1.09 и не применяются; игра работает в 30 FPS. '
+            'Обновите игру до 1.09, чтобы их использовать.'))
         label.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='we', pady=(6, 4))
         label.template = label.cget('text')
         self.warnings = getattr(self, 'warnings', []) + [label]
@@ -3528,11 +3529,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             if not warned and 'eboot.bin is not the 01.09 build' in text:
                 warned = True
                 self.ui_calls.put(lambda: self.messagebox.showwarning('Bloodborne', _(
-                    "Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port "
-                    "cannot patch it: the game runs at 30 FPS in 16:9 (ultrawide and the output resolution "
-                    "do not apply), the Game & effects options do nothing, and some scenes (like the "
-                    "cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified "
-                    "1.09 update.")))
+                    'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port '
+                    'cannot patch it: the game runs at 30 FPS in 16:9 (ultrawide and the output resolution '
+                    'do not apply), the Game & effects options do nothing, and some scenes (like the '
+                    'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified '
+                    '1.09 update.')))
             elif not warned and 'eboot.bin is modified, not the clean 01.09 build' in text:
                 # Some patch groups still apply (run.py): the line says which are off.
                 warned = True

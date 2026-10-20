@@ -1398,10 +1398,9 @@ class SetupMixin:
         words.pack(side='left', fill='both', expand=True, padx=(px(10), px(14)), pady=px(10))
         tk.Label(words, text=_('Only with your own copy of the game'), bg=bg, fg=theme.BLOOD_LIGHT, font=(theme.BODY_SEMI, 11),
                  anchor='w').pack(anchor='w')
-        tk.Label(words, text=_('Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own '
-                               'PS4. Game files from the internet are piracy: none come with the port, and nobody helps '
-                               'to find them. Asking for them or sharing them breaks rule 2 of the community Discord and '
-                               'can get you banned.'),
+        tk.Label(words, text=_("The port does not come with the game, and we can't give out game files or "
+                               'help anyone find them. Asking for them or sharing them breaks rule 2 of the '
+                               'community Discord and can get you banned.'),
                  bg=bg, fg=theme.TEXT, font=(theme.BODY, 10), justify='left', anchor='w',
                  wraplength=px(wrap)).pack(anchor='w', pady=(px(4), 0))
         return box
@@ -1910,7 +1909,7 @@ def game_checks(folder):
     """([(state, text)], playable) for a game folder, each problem with how to fix it."""
     folder = Path(folder) if folder else None
     if not folder or not folder.is_dir():
-        return [('bad', _('No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly '
+        return [('bad', _('No folder chosen yet. Choose your game folder: the one with eboot.bin directly '
                           'inside.'))], False
     if not (folder / 'eboot.bin').is_file():
         return [('bad', _('There is no eboot.bin in this folder. Choose the folder that has eboot.bin directly '
@@ -2255,8 +2254,8 @@ class SetupGuide:
                       bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9)).pack(anchor='w', pady=(px(6), 0))
         need = self.card(body, pady=(px(14), 0))
         self.heading(need, _('What you need'))
-        for state, text in (('ok', _('Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the '
-                                     '1.09 update.')),
+        for state, text in (('ok', _('Your own Bloodborne game files (CUSA03173, Game of the Year Edition) '
+                                     'with the 1.09 update.')),
                             ('ok', _('Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least '
                                      '4 GB of video memory.'))):
             self.app.state_line(need, state, text, theme.CARD, wrap=660).pack(fill='x', pady=px(3))
@@ -2274,7 +2273,7 @@ class SetupGuide:
             if found:
                 var.set(found)
                 found_note = _('Found automatically: {}').format(found)
-        self.text(body, _('The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 '
+        self.text(body, _('Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 '
                           'directly inside.'), size=10, wrap=720)
         row = tk.Frame(body, bg=theme.BG)
         row.pack(fill='x', pady=(px(12), 0))
@@ -2407,8 +2406,7 @@ class SetupGuide:
         app.rating_views.append(draw_pc)
         self.heading(prepare, _('How to prepare the game folder (once)'))
         for number, text in enumerate((
-                _('Unpack the base game and the 1.09 update into two new, empty folders, for example with '
-                  'ShadPs4Plus PKG Extractor.'),
+                _('Put the base game and the 1.09 update into two new, empty folders.'),
                 _('Copy everything from the update folder into the base game folder and choose "Replace the files '
                   'in the destination".'),
                 _('Check the result: eboot.bin (about 89 MB), sce_module, sce_sys and dvdroot_ps4 (about 29 GB) '

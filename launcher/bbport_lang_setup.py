@@ -84,8 +84,8 @@ SETUP = {'de': {
         '4 GB Grafikspeicher mit Vulkan 1.3 (GTX 1050 Ti, GTX 1650, RX 570, RX 6500 XT)',
     '8 GB of video memory or more (RTX 3060 Ti, RTX 4060, RX 6700 XT, RX 7600)':
         '8 GB Grafikspeicher oder mehr (RTX 3060 Ti, RTX 4060, RX 6700 XT, RX 7600)',
-    'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-        'Etwa 35 GB für deinen Spiel-Dump plus 1 GB für den Port; eine SSD wird empfohlen',
+    'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+        'Etwa 35 GB für deine Spieldateien plus 1 GB für den Port; eine SSD wird empfohlen',
     'SSD': 'SSD',
     'Minimum (720p–1080p, about 30 FPS)': 'Minimum (720p–1080p, etwa 30 FPS)',
     'Recommended (1440p, 60–120 FPS)': 'Empfohlen (1440p, 60–120 FPS)',
@@ -150,12 +150,12 @@ SETUP = {'de': {
         'Hardware, in etwa zwei Minuten. Nichts wird versteckt: Jede Seite des Launchers bleibt, um alles von Hand '
         'einzustellen.',
     'What you need': 'Was du brauchst',
-    'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-        'Deinen eigenen Dump von Bloodborne (CUSA03173, Game of the Year Edition) mit Update 1.09.',
+    'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+        'Deine eigenen Bloodborne-Spieldateien (CUSA03173, Game of the Year Edition) mit Update 1.09.',
     'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
         'Windows 10 oder 11 (64 Bit) und eine Grafikkarte mit Vulkan 1.3 und mindestens 4 GB Grafikspeicher.',
-    'About 35 GB for the dump and 1 GB for the port, best on an SSD.':
-        'Etwa 35 GB für den Dump und 1 GB für den Port, am besten auf einer SSD.',
+    'About 35 GB for the game files and 1 GB for the port, best on an SSD.':
+        'Etwa 35 GB für die Spieldateien und 1 GB für den Port, am besten auf einer SSD.',
     'No game files are included or shared, and we do not help find them.':
         'Es werden keine Spieldateien mitgeliefert oder geteilt, und wir helfen nicht, welche zu finden.',
     'Apply (restarts the launcher)': 'Übernehmen (startet den Launcher neu)',
@@ -166,15 +166,15 @@ SETUP = {'de': {
         'Dieser PC erfüllt die Anforderungen nicht. Du kannst trotzdem weitermachen, aber das Spiel läuft '
         'wahrscheinlich nicht.',
     'Your game folder': 'Dein Spielordner',
-    'Your own dump of Bloodborne with the 1.09 update. Nothing leaves your PC.':
-        'Dein eigener Dump von Bloodborne mit Update 1.09. Nichts verlässt deinen PC.',
-    'Choose the folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-        'Wähle den Ordner deines Dumps: den, in dem eboot.bin, sce_module, sce_sys und dvdroot_ps4 direkt liegen.',
+    'Your own Bloodborne game files with the 1.09 update. Nothing leaves your PC.':
+        'Deine eigenen Bloodborne-Spieldateien mit Update 1.09. Nichts verlässt deinen PC.',
+    'Choose your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+        'Wähle deinen Spielordner: den, in dem eboot.bin, sce_module, sce_sys und dvdroot_ps4 direkt liegen.',
     'Found automatically: {}': 'Automatisch gefunden: {}',
     'Used the subfolder {} (it has eboot.bin).': 'Unterordner {} verwendet (dort liegt eboot.bin).',
     'Check': 'Prüfung',
-    'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-        'Noch kein Ordner gewählt. Wähle den Ordner deines Dumps: den, in dem eboot.bin direkt liegt.',
+    'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+        'Noch kein Ordner gewählt. Wähle deinen Spielordner: den, in dem eboot.bin direkt liegt.',
     'There is no eboot.bin in this folder. Choose the folder that has eboot.bin directly inside, not the one '
     'above it.':
         'In diesem Ordner liegt kein eboot.bin. Wähle den Ordner, in dem eboot.bin direkt liegt, nicht den darüber.',
@@ -197,10 +197,8 @@ SETUP = {'de': {
         'Der Port liegt in {}: Synchronisierte Ordner wie OneDrive und der Programme-Ordner machen Probleme. '
         'Verschiebe ihn in einen einfachen Ordner wie C:\\Games\\BBPort.',
     'How to prepare the game folder (once)': 'So bereitest du den Spielordner vor (einmalig)',
-    'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG '
-    'Extractor.':
-        'Entpacke das Basisspiel und das Update 1.09 in zwei neue, leere Ordner, zum Beispiel mit ShadPs4Plus PKG '
-        'Extractor.',
+    'Put the base game and the 1.09 update into two new, empty folders.':
+        'Lege das Grundspiel und das Update 1.09 in zwei neue, leere Ordner.',
     'Copy everything from the update folder into the base game folder and choose "Replace the files in the '
     'destination".':
         'Kopiere alles aus dem Update-Ordner in den Ordner des Basisspiels und wähle „Dateien im Ziel ersetzen“.',

@@ -65,8 +65,10 @@ if __name__ == '__main__':
 class PiracyNoticeTests(unittest.TestCase):
     def test_every_language_names_rule_2_and_the_ban(self):
         source = (ROOT / 'launcher' / 'bbport_setup.py').read_text(encoding='utf-8')
-        start = source.index("tk.Label(words, text=_('Make the dump")
-        text = ''.join(re.findall(r"'([^']*)'", source[start:source.index(')', source.index("can get you banned", start))]))
+        start = source.index('tk.Label(words, text=_("The port does not come with the game')
+        end = source.index(')', source.index('can get you banned', start))
+        text = ''.join(a or b for a, b in re.findall(r"'([^']*)'|\"([^\"]*)\"", source[start:end]))
+        self.assertIn("can't give out game files", text)
         self.assertIn('rule 2', text)
         for language in LANGUAGES:
             with self.subTest(language=language):

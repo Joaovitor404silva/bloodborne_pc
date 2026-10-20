@@ -38,13 +38,13 @@ UI = {'de': {
     'there if you have no account).':
         'Für den SuperMedo Server gib auf der Seite „Online spielen“ deinen supermedo.com-Benutzernamen und dein Passwort '
         'ein (dort kannst du dich auch registrieren).',
-    "Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs "
-    "at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\n"
-    "Replace eboot.bin with the one from an unmodified 1.09 update.":
-        'Deine eboot.bin ist nicht die saubere 1.09 (verändert oder aus einem anderen Dump). Der Port kann sie nicht '
-        'patchen: Das Spiel läuft mit 30 FPS, die Effekt-Optionen wirken nicht, und manche Szenen (etwa die '
-        'Zwischensequenz nach Rom) können einfrieren.\n\nErsetze die eboot.bin durch die aus einem unveränderten '
-        '1.09-Update (Hilfe zeigt wie).',
+    'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch it: '
+    'the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene '
+    'after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+        'Deine eboot.bin ist nicht die saubere 1.09 (verändert oder aus einer anderen Ausgabe). Der Port '
+        'kann sie nicht patchen: Das Spiel läuft mit 30 FPS, die Effekt-Optionen wirken nicht, und manche '
+        'Szenen (etwa die Zwischensequenz nach Rom) können einfrieren.\n\nErsetze die eboot.bin durch die '
+        'aus einem unveränderten 1.09-Update (Hilfe zeigt wie).',
     # ---- Picture & performance ----
     'The launcher sets the technical settings for your PC. You choose how it should feel; the in-game menu (Insert or '
     'L3+R3) changes the same values.':
@@ -88,7 +88,8 @@ UI = {'de': {
     'Your characters: bring them from another version, back them up, put a backup back.':
         'Deine Charaktere: aus einer anderen Version mitbringen, sichern, eine Sicherung zurückspielen.',
     # ---- Game & language ----
-    'Your game dump, its languages and how it starts.': 'Dein Spiel-Dump, seine Sprachen und wie es startet.',
+    'Your game files, their languages and how the game starts.': 'Deine Spieldateien, ihre Sprachen und wie das Spiel '
+                                                        'startet.',
     'Is the game folder all right? Help checks it.': 'Ist der Spielordner in Ordnung? Die Hilfe prüft ihn.',
     'Language': 'Sprache', 'Text language': 'Textsprache', 'Voice language': 'Sprachausgabe',
     'As in the game uses the original voice setting; other choices use available tracks.':
@@ -142,12 +143,11 @@ UI = {'de': {
     'Set everything up again, step by step.': 'Alles noch einmal Schritt für Schritt einrichten.',
     'Only with your own copy of the game': 'Nur mit deiner eigenen Kopie des Spiels',
     "Windows' title bar instead of the launcher's own": 'Windows-Titelleiste statt der eigenen des Launchers',
-    'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from '
-    'the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing '
-    'them breaks rule 2 of the community Discord and can get you banned.':
-        'Erstelle den Dump von deiner eigenen Bloodborne-Kopie (Disc oder PlayStation Store) auf deiner eigenen PS4. '
-        'Spieldateien aus dem Internet sind Piraterie: Der Port enthält keine, und niemand hilft, welche zu finden. '
-        'Wer danach fragt oder sie teilt, verstößt gegen Regel 2 des Community-Discords und kann gebannt werden.',
+    "The port does not come with the game, and we can't give out game files or help anyone find them. Asking "
+    'for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+        'Das Spiel ist nicht im Port enthalten, und wir können keine Spieldateien weitergeben oder helfen, '
+        'sie zu finden. Wer danach fragt oder sie teilt, verstößt gegen Regel 2 des Community-Discords und '
+        'kann gebannt werden.',
     'The expert view is on now, to show this. The switch is at the bottom of the side bar.':
         'Die Expertenansicht ist jetzt an, um das zu zeigen. Der Schalter ist unten in der Seitenleiste.',
     'Copy a summary': 'Zusammenfassung kopieren', 'Show the log': 'Protokoll zeigen', 'Repeat the setup': 'Einrichtung wiederholen',
@@ -326,8 +326,8 @@ UI = {'de': {
     'Checked before the first start, so that it does not fail on something you can fix now. Nothing leaves your PC.':
         'Vor dem ersten Start geprüft, damit er nicht an etwas scheitert, das du jetzt beheben kannst. Nichts verlässt '
         'deinen PC.',
-    'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-        'Der Ordner deines Dumps: der, in dem eboot.bin, sce_module, sce_sys und dvdroot_ps4 direkt liegen.',
+    'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+        'Dein Spielordner: der, in dem eboot.bin, sce_module, sce_sys und dvdroot_ps4 direkt liegen.',
     'Your game': 'Dein Spiel',
     'Next is possible once the game files are right: without that the game would not start or would crash.':
         'Weiter geht es, sobald die Spieldateien stimmen: Sonst würde das Spiel nicht starten oder abstürzen.',
@@ -425,8 +425,8 @@ UI = {'de': {
         'Spieldateien',
     'Language & sound':
         'Sprache & Ton',
-    'Your game dump and its add-ons. Set once, usually by the setup guide.':
-        'Dein Spiel-Dump und seine Erweiterungen. Einmal eingestellt, meist bei der Einrichtung.',
+    'Your game files and their add-ons. Set once, usually by the setup guide.':
+        'Deine Spieldateien und ihre Erweiterungen. Einmal eingestellt, meist bei der Einrichtung.',
     "The game's text and voices, the launcher's language, how the game starts and sounds.":
         'Texte und Stimmen des Spiels, die Sprache des Launchers, wie das Spiel startet und klingt.',
     'As the game opens it': 'Wie das Spiel es öffnet',

@@ -699,7 +699,7 @@ REQUIREMENTS = [
     ('RAM', '16 GB', '32 GB'),
     ('GPU', '4 GB of video memory with Vulkan 1.3 (GTX 1050 Ti, GTX 1650, RX 570, RX 6500 XT)',
      '8 GB of video memory or more (RTX 3060 Ti, RTX 4060, RX 6700 XT, RX 7600)'),
-    ('Storage', 'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended', 'SSD'),
+    ('Storage', 'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended', 'SSD'),
 ]
 REQUIREMENT_HEADS = ('Minimum (720p–1080p, about 30 FPS)', 'Recommended (1440p, 60–120 FPS)')
 FOUR_K = 'For 4K or frame generation: 12–16 GB of video memory (RTX 4070, RTX 5070, RX 7800 XT, RX 9070).'

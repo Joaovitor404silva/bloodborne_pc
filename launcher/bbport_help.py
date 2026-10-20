@@ -56,8 +56,8 @@ TOPICS = {
         'brings its own 60 FPS and patches only the clean file: with a changed one the game runs at 30 FPS, the '
         'effect options do nothing, and some patches (Lance McDonald\'s 60 FPS) crash the gestures menu '
         'or the cutscene after Rom.',
-        ['Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, '
-         'empty folder. Don\'t use a loose eboot.bin someone shared.',
+        ["Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose "
+         'eboot.bin someone shared.',
          'Copy eboot.bin from it into your game folder (Game & language > Game folder) and replace the old one. '
          'Make sure it is that folder, not another copy of the game.',
          'Right-click eboot.bin > Properties: the clean file is exactly 93,825,704 bytes.',
@@ -65,21 +65,19 @@ TOPICS = {
     'eboot_truncated': (
         'eboot.bin is cut off',
         'It broke while unpacking (the log says "prepare failed: out of bounds").',
-        ['Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders '
-         '(ShadPs4Plus PKG Extractor 1.1).',
+        ['Put the base game and the 1.09 update into two new, empty folders again.',
          'Check the size: eboot.bin of the update is exactly 93,825,704 bytes (89.4 MB).',
          'Copy everything from the update folder into the base game folder and replace the files.']),
     'eboot_unreadable': (
         'eboot.bin cannot be read',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, '
-        'or it is not from Bloodborne.',
-        ['Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin '
-         'from it (exactly 93,825,704 bytes).']),
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.',
+        ['Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).']),
     'version': (
         'The game is not version 1.09',
         'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at '
         '30 FPS.',
-        ['Unpack the 1.09 update PKG into a new, empty folder.',
+        ['Put the 1.09 update into a new, empty folder again.',
          'Open it, press Ctrl + A, then Ctrl + C.',
          'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in '
          'the destination.']),
@@ -91,8 +89,8 @@ TOPICS = {
     'empty_files': (
         'Files of the game are empty',
         'Unpacking broke: some files have 0 bytes.',
-        ['Unpack the base game and the 1.09 update again into new, empty folders '
-         '(ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.']),
+        ['Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+         'base game again.']),
     'page_file': (
         'Windows has too little memory for the start',
         'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the '

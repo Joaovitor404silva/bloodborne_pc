@@ -87,8 +87,8 @@ WORLD = {
             'Драйвер AMD 26.8.1: если игра вылетает или показывает искажённую графику, очистите кэш шейдеров («Помощь») или попробуйте другой драйвер.',
         'About 30 FPS':
             'Около 30 FPS',
-        'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-            'Около 35 ГБ для дампа игры и 1 ГБ для порта; рекомендуется SSD',
+        'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+            'Около 35 ГБ для файлов игры и 1 ГБ для порта; рекомендуется SSD',
         'Above minimum':
             'Выше минимума',
         'Add a backup file…':
@@ -451,8 +451,10 @@ WORLD = {
             'Всё ли в порядке с папкой игры? Это проверяется на странице «Помощь».',
         'It broke while unpacking (the log says "prepare failed: out of bounds").':
             'Файл повредился при распаковке (в журнале: «prepare failed: out of bounds»).',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not from Bloodborne.':
-            'Это не тот файл, что лежит в PKG обновления (файл PS4 SELF): его преобразовала другая программа, или он не из Bloodborne.',
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.':
+            'Это не исходный файл (файл PS4 SELF): его преобразовала другая программа, или он не от '
+            'Bloodborne.',
         'It may start, but expect low frame rates and problems.':
             'Порт может запуститься, но ожидайте низкую частоту кадров и проблемы.',
         'Its level, weapons and bosses cannot be read from this save.':
@@ -475,8 +477,10 @@ WORLD = {
             'Настроено под ваш ПК',
         'Main monitor':
             'Основной монитор',
-        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
-            'Делайте дамп со своей копии Bloodborne (диск или PlayStation Store) на своей PS4. Файлы игры из интернета — это пиратство: в порт они не входят, и никто не помогает их найти. Просить их или делиться ими — нарушение правила 2 Discord-сообщества, за это могут забанить.',
+        "The port does not come with the game, and we can't give out game files or help anyone find them. "
+        'Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Игра не входит в порт, и мы не можем раздавать файлы игры или помогать их найти. Просьбы о них '
+            'или их распространение нарушают правило 2 Discord-сообщества и могут привести к бану.',
         'Measure on this PC':
             'Замерить на этом ПК',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -531,8 +535,8 @@ WORLD = {
             'Ни вылетов, ни зависаний за {:.0f} мин (в среднем {:.0f} FPS).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
             'В папке игры нет eboot.bin: выберите папку, в которой прямо лежат eboot.bin, sce_sys и dvdroot_ps4 («Игра и язык»).',
-        'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-            'Папка ещё не выбрана. Выберите папку вашего дампа — ту, в которой прямо лежит eboot.bin.',
+        'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+            'Папка ещё не выбрана. Выберите папку игры: ту, в которой прямо лежит eboot.bin.',
         'No game files are included or shared, and we do not help find them.':
             'Файлы игры не входят в комплект и не распространяются, и мы не помогаем их найти.',
         'No run finished; the report has the logs.':
@@ -917,8 +921,8 @@ WORLD = {
             'Первый запуск длится дольше, а в первые минуты возможны подтормаживания, пока строится кэш шейдеров. Это нормально.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
             'В папке есть eboot.bin, но не вся игра (в журнале: gxshader.shaderbnd.dcx not found).',
-        'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-            'Папка вашего дампа — та, в которой прямо лежат eboot.bin, sce_module, sce_sys и dvdroot_ps4.',
+        'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+            'Папка игры: та, в которой прямо лежат eboot.bin, sce_module, sce_sys и dvdroot_ps4.',
         'The game ended with an error (code {}). Its log names the cause:':
             'Игра завершилась с ошибкой (код {}). Причина указана в её журнале:',
         'The game folder is complete ({} files, {} GB).':
@@ -1037,18 +1041,22 @@ WORLD = {
             'Неизвестный процессор',
         'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.':
             'Без ограничения, но не выше частоты монитора (максимум 120): ваш ПК, по оценке, выдаст больше 60 FPS.',
-        'Unpack the 1.09 update PKG into a new, empty folder.':
-            'Распакуйте PKG обновления 1.09 в новую пустую папку.',
-        'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it (exactly 93,825,704 bytes).':
-            'Распакуйте PKG обновления 1.09 из вашего собственного дампа с помощью ShadPs4Plus PKG Extractor 1.1 и возьмите оттуда eboot.bin (ровно 93\xa0825\xa0704 байт).',
-        "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty folder. Don't use a loose eboot.bin someone shared.":
-            'Сами распакуйте PKG обновления 1.09 из вашего собственного дампа с помощью ShadPs4Plus PKG Extractor 1.1 в новую пустую папку. Не используйте отдельный eboot.bin, которым кто-то поделился.',
-        'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor 1.1).':
-            'Заново распакуйте PKG базовой игры и PKG обновления 1.09 в две новые пустые папки (ShadPs4Plus PKG Extractor 1.1).',
-        'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.':
-            'Заново распакуйте базовую игру и обновление 1.09 в новые пустые папки (ShadPs4Plus PKG Extractor 1.1), затем снова скопируйте обновление в базовую игру.',
-        'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG Extractor.':
-            'Распакуйте базовую игру и обновление 1.09 в две новые пустые папки, например с помощью ShadPs4Plus PKG Extractor.',
+        'Put the 1.09 update into a new, empty folder again.':
+            'Снова поместите обновление 1.09 в новую пустую папку.',
+        'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+            'Используйте eboot.bin из неизменённого обновления 1.09 (ровно 93 825 704 байта).',
+        "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+        'someone shared.':
+            'Используйте eboot.bin из неизменённого обновления 1.09 в новой пустой папке. Не берите '
+            'отдельный eboot.bin, которым кто-то поделился.',
+        'Put the base game and the 1.09 update into two new, empty folders again.':
+            'Снова поместите основную игру и обновление 1.09 в две новые пустые папки.',
+        'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+        'base game again.':
+            'Снова поместите основную игру и обновление 1.09 в новые пустые папки, затем снова скопируйте '
+            'обновление в основную игру.',
+        'Put the base game and the 1.09 update into two new, empty folders.':
+            'Поместите основную игру и обновление 1.09 в две новые пустые папки.',
         'Unpacking broke: some files have 0 bytes.':
             'Распаковка прошла с ошибкой: у некоторых файлов размер 0 байт.',
         'Update the driver: NVIDIA App, AMD Software (Adrenalin) or Intel Driver & Support Assistant.':
@@ -1133,18 +1141,23 @@ WORLD = {
             'Текущие сохранения сначала копируются: попытка с более старой копией ничего не стоит.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Ваш монитор: {} × {}. Рекомендуется для вашего ПК: {}.',
-        'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
-            'Ваш eboot.bin — не чистый файл 1.09 (изменён или из другого дампа). Порт не может его пропатчить: игра работает в 30 FPS, параметры эффектов ничего не делают, а некоторые сцены (например, ролик после битвы с Ром) могут зависать.\n\nЗамените eboot.bin файлом из неизменённого обновления 1.09.',
+        'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch '
+        'it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the '
+        'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+            'Ваш eboot.bin — не чистый файл 1.09 (изменён или из другого выпуска). Порт не может его '
+            'пропатчить: игра работает в 30 FPS, параметры эффектов ничего не делают, а некоторые сцены '
+            '(например, ролик после битвы с Ром) могут зависать.\n\nЗамените eboot.bin файлом из '
+            'неизменённого обновления 1.09.',
         'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
             'Ваше издание (Game of the Year, CUSA03173) уже содержит The Old Hunters.',
         'Your game':
             'Ваша игра',
         'Your game and your PC':
             'Ваша игра и ваш ПК',
-        'Your game dump and its add-ons. Set once, usually by the setup guide.':
-            'Ваш дамп игры и его дополнения. Настраивается один раз, обычно при первой настройке.',
-        'Your game dump, its languages and how it starts.':
-            'Ваш дамп игры, его языки и параметры запуска.',
+        'Your game files and their add-ons. Set once, usually by the setup guide.':
+            'Файлы игры и дополнения к ней. Задаются один раз, обычно мастером настройки.',
+        'Your game files, their languages and how the game starts.':
+            'Файлы игры, их языки и то, как запускается игра.',
         'Your goal':
             'Ваша цель',
         'Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest model:':
@@ -1157,8 +1170,8 @@ WORLD = {
             'Предел задаёт ваша видеокарта.',
         'Your memory sets the limit.':
             'Предел задаёт ваша оперативная память.',
-        'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-            'Ваш собственный дамп Bloodborne (CUSA03173, Game of the Year Edition) с обновлением 1.09.',
+        'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+            'Ваши собственные файлы Bloodborne (CUSA03173, Game of the Year Edition) с обновлением 1.09.',
         'Your previous saves: {}':
             'Ваши прежние сохранения: {}',
         'Your processor sets the limit.':
@@ -1420,8 +1433,8 @@ WORLD = {
             'تعريف AMD 26.8.1: إذا تعطّلت اللعبة أو ظهرت رسومات مشوّهة، فامسح كاش الشيدر (المساعدة) أو جرّب تعريفًا آخر.',
         'About 30 FPS':
             'نحو 30 FPS',
-        'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-            'نحو 35 GB لنسخة اللعبة و1 GB للمنفذ؛ يُنصح بقرص SSD',
+        'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+            'نحو 35 غيغابايت لملفات اللعبة و1 غيغابايت للمنفذ؛ يُنصح بقرص SSD',
         'Above minimum':
             'فوق الحد الأدنى',
         'Achievements':
@@ -1890,8 +1903,9 @@ WORLD = {
             'هل مجلد اللعبة سليم؟ «المساعدة» تفحصه.',
         'It broke while unpacking (the log says "prepare failed: out of bounds").':
             'تلف أثناء فك الضغط (يذكر السجل «prepare failed: out of bounds»).',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not from Bloodborne.':
-            'ليس هذا الملف كما يحتويه PKG التحديث (ملف PS4 SELF): إما أن أداة أخرى حوّلته، أو أنه ليس من Bloodborne.',
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.':
+            'ليس الملف الأصلي (ملف PS4 SELF): حوّلته أداة أخرى، أو أنه ليس من Bloodborne.',
         'It may start, but expect low frame rates and problems.':
             'قد يبدأ التشغيل، لكن توقّع معدلات إطارات منخفضة ومشكلات.',
         'Items and menus':
@@ -1934,8 +1948,10 @@ WORLD = {
             'مضبوط لحاسوبك',
         'Main monitor':
             'الشاشة الرئيسية',
-        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
-            'أنشئ التفريغ من نسختك الخاصة من Bloodborne (قرص أو PlayStation Store) على جهاز PS4 الخاص بك. ملفات اللعبة من الإنترنت قرصنة: لا يأتي أي منها مع المنفذ، ولا يساعد أحد في العثور عليها. طلبها أو مشاركتها يخالف القاعدة 2 في Discord المجتمع وقد يؤدي إلى حظرك.',
+        "The port does not come with the game, and we can't give out game files or help anyone find them. "
+        'Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'لا يأتي المنفذ مع اللعبة، ولا يمكننا توزيع ملفات اللعبة أو المساعدة في العثور عليها. طلبها أو '
+            'مشاركتها يخالف القاعدة 2 في ديسكورد المجتمع وقد يؤدي إلى حظرك.',
         'Measure on this PC':
             'القياس على هذا الحاسوب',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -2018,8 +2034,8 @@ WORLD = {
             'لا تعطّل ولا تجمّد خلال {:.0f} دقيقة ({:.0f} FPS في المتوسط).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
             'لا يوجد eboot.bin في مجلد اللعبة: اختر المجلد الذي يحتوي eboot.bin وsce_sys وdvdroot_ps4 مباشرةً (اللعبة واللغة).',
-        'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-            'لم يتم اختيار مجلد بعد. اختر مجلد نسخة اللعبة: المجلد الذي يحتوي eboot.bin مباشرةً.',
+        'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+            'لم يُختر مجلد بعد. اختر مجلد اللعبة: المجلد الذي يحتوي eboot.bin مباشرة.',
         'No game files are included or shared, and we do not help find them.':
             'لا تُرفق أي ملفات للعبة ولا تُشارك، ولا نساعد في العثور عليها.',
         'No limit  ⚠':
@@ -2456,8 +2472,8 @@ WORLD = {
             'يستغرق التشغيل الأول وقتًا أطول، وقد تتقطع الدقائق الأولى أثناء بناء كاش الشيدر. هذا طبيعي.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
             'يحتوي المجلد على eboot.bin لكن ليس على اللعبة كاملة (يذكر السجل gxshader.shaderbnd.dcx not found).',
-        'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-            'مجلد نسخة اللعبة: المجلد الذي يحتوي eboot.bin وsce_module وsce_sys وdvdroot_ps4 مباشرةً.',
+        'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+            'مجلد اللعبة: المجلد الذي يحتوي eboot.bin وsce_module وsce_sys وdvdroot_ps4 مباشرة.',
         'The game ended with an error (code {}). Its log names the cause:':
             'انتهت اللعبة بخطأ (الرمز {}). يذكر سجلها السبب:',
         'The game folder is complete ({} files, {} GB).':
@@ -2584,18 +2600,22 @@ WORLD = {
             'معالج غير معروف',
         'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.':
             'بدون حد، مقيّد بتردد الشاشة (بحد أقصى 120): يُتوقع أن يتجاوز حاسوبك 60 FPS.',
-        'Unpack the 1.09 update PKG into a new, empty folder.':
-            'فك ضغط PKG التحديث 1.09 في مجلد جديد فارغ.',
-        'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it (exactly 93,825,704 bytes).':
-            'فك ضغط PKG التحديث 1.09 من نسختك الخاصة باستخدام ShadPs4Plus PKG Extractor 1.1، واستخدم eboot.bin الناتج عنه (93,825,704 بايت بالضبط).',
-        "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty folder. Don't use a loose eboot.bin someone shared.":
-            'فك ضغط PKG التحديث 1.09 من نسختك الخاصة بنفسك، باستخدام ShadPs4Plus PKG Extractor 1.1، في مجلد جديد فارغ. لا تستخدم ملف eboot.bin منفردًا شاركه أحدهم.',
-        'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor 1.1).':
-            'فك ضغط PKG اللعبة الأساسية وPKG التحديث 1.09 مجددًا في مجلدين جديدين فارغين (ShadPs4Plus PKG Extractor 1.1).',
-        'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.':
-            'فك ضغط اللعبة الأساسية والتحديث 1.09 مجددًا في مجلدات جديدة فارغة (ShadPs4Plus PKG Extractor 1.1)، ثم انسخ التحديث إلى اللعبة الأساسية مرة أخرى.',
-        'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG Extractor.':
-            'فك ضغط اللعبة الأساسية والتحديث 1.09 في مجلدين جديدين فارغين، باستخدام ShadPs4Plus PKG Extractor مثلًا.',
+        'Put the 1.09 update into a new, empty folder again.':
+            'ضع تحديث 1.09 مجددًا في مجلد جديد فارغ.',
+        'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+            'استخدم eboot.bin من تحديث 1.09 غير معدّل (93,825,704 بايت بالضبط).',
+        "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+        'someone shared.':
+            'استخدم eboot.bin من تحديث 1.09 غير معدّل في مجلد جديد فارغ. لا تستخدم ملف eboot.bin منفردًا '
+            'شاركه أحدهم.',
+        'Put the base game and the 1.09 update into two new, empty folders again.':
+            'ضع اللعبة الأساسية وتحديث 1.09 مجددًا في مجلدين جديدين فارغين.',
+        'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+        'base game again.':
+            'ضع اللعبة الأساسية وتحديث 1.09 مجددًا في مجلدات جديدة فارغة، ثم انسخ التحديث إلى اللعبة '
+            'الأساسية من جديد.',
+        'Put the base game and the 1.09 update into two new, empty folders.':
+            'ضع اللعبة الأساسية وتحديث 1.09 في مجلدين جديدين فارغين.',
         'Unpacking broke: some files have 0 bytes.':
             'فشل فك الضغط: بعض الملفات حجمها 0 بايت.',
         'Unsupported key':
@@ -2702,7 +2722,9 @@ WORLD = {
             'تُنسخ ملفات حفظك الحالية أولًا: تجربة نسخة أقدم لا تُفقدك شيئًا.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'شاشتك: {} × {}. الموصى به لحاسوبك: {}.',
-        'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+        'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch '
+        'it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the '
+        'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             'ملف eboot.bin لديك ليس ملف 1.09 السليم (معدّل، أو من نسخة أخرى). لا يستطيع المنفذ ترقيعه: تعمل اللعبة بـ 30 FPS، ولا تعمل خيارات «اللعبة والمؤثرات»، وقد تتجمد بعض المشاهد (مثل المشهد السينمائي بعد روم).\n\nاستبدل eboot.bin بالملف الموجود في تحديث 1.09 غير معدّل.',
         'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
             'إصدارك (Game of the Year، CUSA03173) يتضمن The Old Hunters بالفعل.',
@@ -2710,10 +2732,10 @@ WORLD = {
             'لعبتك',
         'Your game and your PC':
             'لعبتك وحاسوبك',
-        'Your game dump and its add-ons. Set once, usually by the setup guide.':
-            'نسخة لعبتك وإضافاتها. تُضبط مرة واحدة، عادةً أثناء الإعداد.',
-        'Your game dump, its languages and how it starts.':
-            'نسخة لعبتك ولغاتها وطريقة تشغيلها.',
+        'Your game files and their add-ons. Set once, usually by the setup guide.':
+            'ملفات لعبتك وإضافاتها. تُضبط مرة واحدة، عادةً عبر دليل الإعداد.',
+        'Your game files, their languages and how the game starts.':
+            'ملفات لعبتك ولغاتها وطريقة بدء اللعبة.',
         'Your goal':
             'هدفك',
         'Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest model:':
@@ -2726,8 +2748,8 @@ WORLD = {
             'بطاقة الرسومات هي العامل المحدِّد.',
         'Your memory sets the limit.':
             'الذاكرة هي العامل المحدِّد.',
-        'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-            'نسختك الخاصة من Bloodborne (CUSA03173، Game of the Year Edition) مع التحديث 1.09.',
+        'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+            'ملفات Bloodborne الخاصة بك (CUSA03173، إصدار Game of the Year) مع تحديث 1.09.',
         'Your previous saves: {}':
             'ملفات حفظك السابقة: {}',
         'Your processor sets the limit.':
@@ -2995,8 +3017,8 @@ WORLD = {
             'Controlador AMD 26.8.1: si el juego se cierra o muestra gráficos corruptos, borra la caché de shaders (Ayuda) o prueba otro controlador.',
         'About 30 FPS':
             'Unos 30 FPS',
-        'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-            'Unos 35 GB para tu volcado del juego más 1 GB para el port; se recomienda un SSD',
+        'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+            'Unos 35 GB para los archivos del juego y 1 GB para el port; se recomienda un SSD',
         'Above minimum':
             'Por encima del mínimo',
         'Achievements':
@@ -3465,8 +3487,10 @@ WORLD = {
             '¿Está bien la carpeta del juego? Ayuda la comprueba.',
         'It broke while unpacking (the log says "prepare failed: out of bounds").':
             'Se dañó al extraerlo (el registro dice «prepare failed: out of bounds»).',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not from Bloodborne.':
-            'No es el archivo tal como viene en el PKG de la actualización (un archivo SELF de PS4): otra herramienta lo ha convertido o no es de Bloodborne.',
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.':
+            'No es el archivo original (un archivo SELF de PS4): otra herramienta lo ha convertido o no es '
+            'de Bloodborne.',
         'It may start, but expect low frame rates and problems.':
             'Puede que se inicie, pero espera FPS bajos y problemas.',
         'Items and menus':
@@ -3509,8 +3533,11 @@ WORLD = {
             'Ajustado a tu PC',
         'Main monitor':
             'Monitor principal',
-        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
-            'Haz el volcado de tu propia copia de Bloodborne (disco o PlayStation Store) en tu propia PS4. Los archivos del juego de internet son piratería: el port no incluye ninguno y nadie ayuda a conseguirlos. Pedirlos o compartirlos incumple la regla 2 del Discord de la comunidad y puede suponer un baneo.',
+        "The port does not come with the game, and we can't give out game files or help anyone find them. "
+        'Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'El port no incluye el juego, y no podemos dar archivos del juego ni ayudar a encontrarlos. '
+            'Pedirlos o compartirlos incumple la regla 2 del Discord de la comunidad y puede costarte un '
+            'baneo.',
         'Measure on this PC':
             'Medir en este PC',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -3593,8 +3620,9 @@ WORLD = {
             'Ningún cierre ni congelación en {:.0f} minutos ({:.0f} FPS de media).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
             'No hay eboot.bin en la carpeta del juego: elige la carpeta que tiene eboot.bin, sce_sys y dvdroot_ps4 directamente dentro (Juego e idioma).',
-        'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-            'Aún no se ha elegido ninguna carpeta. Elige la carpeta de tu volcado: la que tiene eboot.bin directamente dentro.',
+        'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+            'Aún no has elegido ninguna carpeta. Elige la carpeta del juego: la que tiene eboot.bin '
+            'directamente dentro.',
         'No game files are included or shared, and we do not help find them.':
             'No se incluyen ni se comparten archivos del juego, y no ayudamos a conseguirlos.',
         'No limit  ⚠':
@@ -4031,8 +4059,9 @@ WORLD = {
             'El primer inicio tarda más y los primeros minutos pueden dar tirones mientras se genera la caché de shaders. Es normal.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
             'La carpeta tiene eboot.bin pero no el juego completo (el registro dice gxshader.shaderbnd.dcx not found).',
-        'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-            'La carpeta de tu volcado: la que tiene eboot.bin, sce_module, sce_sys y dvdroot_ps4 directamente dentro.',
+        'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+            'La carpeta del juego: la que tiene eboot.bin, sce_module, sce_sys y dvdroot_ps4 directamente '
+            'dentro.',
         'The game ended with an error (code {}). Its log names the cause:':
             'El juego terminó con un error (código {}). Su registro indica la causa:',
         'The game folder is complete ({} files, {} GB).':
@@ -4159,18 +4188,22 @@ WORLD = {
             'Procesador desconocido',
         'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.':
             'Sin límite, con tope en la frecuencia de la pantalla (como máximo 120): se espera que tu PC supere los 60 FPS.',
-        'Unpack the 1.09 update PKG into a new, empty folder.':
-            'Extrae el PKG de la actualización 1.09 en una carpeta nueva y vacía.',
-        'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it (exactly 93,825,704 bytes).':
-            'Extrae el PKG de la actualización 1.09 de tu propio volcado con ShadPs4Plus PKG Extractor 1.1 y usa el eboot.bin que contiene (exactamente 93.825.704 bytes).',
-        "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty folder. Don't use a loose eboot.bin someone shared.":
-            'Extrae tú mismo el PKG de la actualización 1.09 de tu propio volcado con ShadPs4Plus PKG Extractor 1.1 en una carpeta nueva y vacía. No uses un eboot.bin suelto que haya compartido alguien.',
-        'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor 1.1).':
-            'Vuelve a extraer el PKG del juego base y el PKG de la actualización 1.09 en dos carpetas nuevas y vacías (ShadPs4Plus PKG Extractor 1.1).',
-        'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.':
-            'Vuelve a extraer el juego base y la actualización 1.09 en carpetas nuevas y vacías (ShadPs4Plus PKG Extractor 1.1) y luego copia de nuevo la actualización en el juego base.',
-        'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG Extractor.':
-            'Extrae el juego base y la actualización 1.09 en dos carpetas nuevas y vacías, por ejemplo con ShadPs4Plus PKG Extractor.',
+        'Put the 1.09 update into a new, empty folder again.':
+            'Vuelve a poner la actualización 1.09 en una carpeta nueva y vacía.',
+        'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+            'Usa el eboot.bin de una actualización 1.09 sin modificar (exactamente 93.825.704 bytes).',
+        "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+        'someone shared.':
+            'Usa el eboot.bin de una actualización 1.09 sin modificar, en una carpeta nueva y vacía. No uses '
+            'un eboot.bin suelto que alguien haya compartido.',
+        'Put the base game and the 1.09 update into two new, empty folders again.':
+            'Vuelve a poner el juego base y la actualización 1.09 en dos carpetas nuevas y vacías.',
+        'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+        'base game again.':
+            'Vuelve a poner el juego base y la actualización 1.09 en carpetas nuevas y vacías y copia de '
+            'nuevo la actualización sobre el juego base.',
+        'Put the base game and the 1.09 update into two new, empty folders.':
+            'Pon el juego base y la actualización 1.09 en dos carpetas nuevas y vacías.',
         'Unpacking broke: some files have 0 bytes.':
             'La extracción falló: algunos archivos tienen 0 bytes.',
         'Unsupported key':
@@ -4277,18 +4310,24 @@ WORLD = {
             'Tus partidas actuales se copian antes: probar una copia más antigua no hace perder nada.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Tu pantalla: {} × {}. Recomendado para tu PC: {}.',
-        'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
-            'Tu eboot.bin no es el limpio de la 1.09 (modificado o de otro volcado). El port no puede parchearlo: el juego va a 30 FPS, las opciones de Juego y efectos no hacen nada y algunas escenas (como la cinemática tras Rom) pueden congelarse.\n\nReemplaza eboot.bin por el de una actualización 1.09 sin modificar.',
+        'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch '
+        'it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the '
+        'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+            'Tu eboot.bin no es el limpio de la 1.09 (modificado o de otra versión). El port no puede '
+            'parchearlo: el juego va a 30 FPS, las opciones de Juego y efectos no hacen nada y algunas '
+            'escenas (como la cinemática tras Rom) pueden congelarse.\n\nReemplaza eboot.bin por el de una '
+            'actualización 1.09 sin modificar.',
         'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
             'Tu edición (Game of the Year, CUSA03173) ya incluye The Old Hunters.',
         'Your game':
             'Tu juego',
         'Your game and your PC':
             'Tu juego y tu PC',
-        'Your game dump and its add-ons. Set once, usually by the setup guide.':
-            'Tu volcado del juego y sus add-ons. Se configura una vez, normalmente en la configuración inicial.',
-        'Your game dump, its languages and how it starts.':
-            'Tu volcado del juego, sus idiomas y cómo se inicia.',
+        'Your game files and their add-ons. Set once, usually by the setup guide.':
+            'Los archivos del juego y sus complementos. Se configuran una vez, normalmente con la guía de '
+            'configuración.',
+        'Your game files, their languages and how the game starts.':
+            'Los archivos del juego, sus idiomas y cómo se inicia el juego.',
         'Your goal':
             'Tu objetivo',
         'Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest model:':
@@ -4301,8 +4340,9 @@ WORLD = {
             'El límite lo pone tu tarjeta gráfica.',
         'Your memory sets the limit.':
             'El límite lo pone tu memoria.',
-        'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-            'Tu propio volcado de Bloodborne (CUSA03173, Game of the Year Edition) con la actualización 1.09.',
+        'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+            'Tus propios archivos de Bloodborne (CUSA03173, Game of the Year Edition) con la actualización '
+            '1.09.',
         'Your previous saves: {}':
             'Tus partidas anteriores: {}',
         'Your processor sets the limit.':
@@ -4570,8 +4610,8 @@ WORLD = {
             'Driver AMD 26.8.1: se o jogo travar ou mostrar gráficos corrompidos, limpe o cache de shaders (Ajuda) ou tente outro driver.',
         'About 30 FPS':
             'Cerca de 30 FPS',
-        'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-            'Cerca de 35 GB para o seu dump do jogo mais 1 GB para o port; recomenda-se um SSD',
+        'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+            'Cerca de 35 GB para os arquivos do jogo e 1 GB para o port; recomenda-se um SSD',
         'Above minimum':
             'Acima do mínimo',
         'Achievements':
@@ -5038,8 +5078,10 @@ WORLD = {
             'A pasta do jogo está certa? A Ajuda verifica.',
         'It broke while unpacking (the log says "prepare failed: out of bounds").':
             'Ele se corrompeu durante a extração (o registro diz "prepare failed: out of bounds").',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not from Bloodborne.':
-            'Não é o arquivo como vem no PKG da atualização (um arquivo SELF de PS4): outra ferramenta o converteu, ou ele não é do Bloodborne.',
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.':
+            'Não é o arquivo original (um arquivo SELF de PS4): outra ferramenta o converteu, ou ele não é '
+            'do Bloodborne.',
         'It may start, but expect low frame rates and problems.':
             'O jogo pode até iniciar, mas espere taxas de quadros baixas e problemas.',
         'Items and menus':
@@ -5082,8 +5124,11 @@ WORLD = {
             'Ajustado para o seu PC',
         'Main monitor':
             'Monitor principal',
-        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
-            'Faça o dump da sua própria cópia de Bloodborne (disco ou PlayStation Store) no seu próprio PS4. Arquivos do jogo baixados da internet são pirataria: nenhum vem com o port, e ninguém ajuda a encontrá-los. Pedir ou compartilhar esses arquivos viola a regra 2 do Discord da comunidade e pode resultar em banimento.',
+        "The port does not come with the game, and we can't give out game files or help anyone find them. "
+        'Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'O port não vem com o jogo, e não podemos distribuir arquivos do jogo nem ajudar a encontrá-los. '
+            'Pedi-los ou compartilhá-los viola a regra 2 do Discord da comunidade e pode resultar em '
+            'banimento.',
         'Measure on this PC':
             'Medir neste PC',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -5166,8 +5211,8 @@ WORLD = {
             'Nenhum travamento nem congelamento em {:.0f} minutos ({:.0f} FPS em média).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
             'Não há eboot.bin na pasta do jogo: escolha a pasta que tem eboot.bin, sce_sys e dvdroot_ps4 diretamente dentro (Jogo e idioma).',
-        'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-            'Nenhuma pasta escolhida ainda. Escolha a pasta do seu dump: a que tem o eboot.bin diretamente dentro.',
+        'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+            'Nenhuma pasta escolhida ainda. Escolha a pasta do jogo: a que tem eboot.bin diretamente dentro.',
         'No game files are included or shared, and we do not help find them.':
             'Nenhum arquivo do jogo é incluído ou compartilhado, e não ajudamos a encontrá-los.',
         'No limit  ⚠':
@@ -5602,8 +5647,8 @@ WORLD = {
             'O primeiro início demora mais, e os primeiros minutos podem engasgar enquanto o cache de shaders é montado. Isso é normal.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
             'A pasta tem eboot.bin, mas não o jogo inteiro (o registro diz gxshader.shaderbnd.dcx not found).',
-        'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-            'A pasta do seu dump: a que tem eboot.bin, sce_module, sce_sys e dvdroot_ps4 diretamente dentro.',
+        'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+            'A pasta do jogo: a que tem eboot.bin, sce_module, sce_sys e dvdroot_ps4 diretamente dentro.',
         'The game ended with an error (code {}). Its log names the cause:':
             'O jogo terminou com um erro (código {}). O registro dele indica a causa:',
         'The game folder is complete ({} files, {} GB).':
@@ -5730,18 +5775,22 @@ WORLD = {
             'Processador desconhecido',
         'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.':
             'Sem limite, até a taxa da tela (no máximo 120): o seu PC deve passar de 60 FPS.',
-        'Unpack the 1.09 update PKG into a new, empty folder.':
-            'Extraia o PKG da atualização 1.09 em uma pasta nova e vazia.',
-        'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it (exactly 93,825,704 bytes).':
-            'Extraia o PKG da atualização 1.09 do seu próprio dump com o ShadPs4Plus PKG Extractor 1.1 e use o eboot.bin dele (exatamente 93.825.704 bytes).',
-        "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty folder. Don't use a loose eboot.bin someone shared.":
-            'Extraia você mesmo o PKG da atualização 1.09 do seu próprio dump, com o ShadPs4Plus PKG Extractor 1.1, em uma pasta nova e vazia. Não use um eboot.bin avulso que alguém compartilhou.',
-        'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor 1.1).':
-            'Extraia de novo o PKG do jogo base e o PKG da atualização 1.09 em duas pastas novas e vazias (ShadPs4Plus PKG Extractor 1.1).',
-        'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.':
-            'Extraia de novo o jogo base e a atualização 1.09 em pastas novas e vazias (ShadPs4Plus PKG Extractor 1.1) e depois copie a atualização para o jogo base outra vez.',
-        'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG Extractor.':
-            'Extraia o jogo base e a atualização 1.09 em duas pastas novas e vazias, por exemplo com o ShadPs4Plus PKG Extractor.',
+        'Put the 1.09 update into a new, empty folder again.':
+            'Coloque a atualização 1.09 de novo em uma pasta nova e vazia.',
+        'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+            'Use o eboot.bin de uma atualização 1.09 sem modificações (exatamente 93.825.704 bytes).',
+        "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+        'someone shared.':
+            'Use o eboot.bin de uma atualização 1.09 sem modificações, em uma pasta nova e vazia. Não use um '
+            'eboot.bin avulso que alguém compartilhou.',
+        'Put the base game and the 1.09 update into two new, empty folders again.':
+            'Coloque o jogo base e a atualização 1.09 de novo em duas pastas novas e vazias.',
+        'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+        'base game again.':
+            'Coloque o jogo base e a atualização 1.09 de novo em pastas novas e vazias e copie a atualização '
+            'para o jogo base outra vez.',
+        'Put the base game and the 1.09 update into two new, empty folders.':
+            'Coloque o jogo base e a atualização 1.09 em duas pastas novas e vazias.',
         'Unpacking broke: some files have 0 bytes.':
             'A extração falhou: alguns arquivos têm 0 bytes.',
         'Unsupported key':
@@ -5846,18 +5895,24 @@ WORLD = {
             'Seus saves atuais recebem backup antes: testar um backup mais antigo não perde nada.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Sua tela: {} × {}. Recomendado para o seu PC: {}.',
-        'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
-            'Seu eboot.bin não é o 1.09 limpo (modificado ou de outro dump). O port não consegue aplicar patches nele: o jogo roda a 30 FPS, as opções de efeitos não fazem nada e algumas cenas (como a cutscene depois de Rom) podem congelar.\n\nSubstitua o eboot.bin pelo de uma atualização 1.09 não modificada (a Ajuda mostra como).',
+        'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch '
+        'it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the '
+        'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+            'Seu eboot.bin não é o 1.09 limpo (modificado ou de outra versão). O port não consegue aplicar '
+            'patches nele: o jogo roda a 30 FPS, as opções de efeitos não fazem nada e algumas cenas (como a '
+            'cutscene depois de Rom) podem congelar.\n\nSubstitua o eboot.bin pelo de uma atualização 1.09 '
+            'não modificada (a Ajuda mostra como).',
         'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
             'Sua edição (Game of the Year, CUSA03173) já inclui The Old Hunters.',
         'Your game':
             'Seu jogo',
         'Your game and your PC':
             'Seu jogo e seu PC',
-        'Your game dump and its add-ons. Set once, usually by the setup guide.':
-            'Seu dump do jogo e os add-ons dele. Configurado uma vez, normalmente na configuração inicial.',
-        'Your game dump, its languages and how it starts.':
-            'Seu dump do jogo, os idiomas dele e como ele inicia.',
+        'Your game files and their add-ons. Set once, usually by the setup guide.':
+            'Os arquivos do jogo e seus complementos. Configurados uma vez, normalmente pelo guia de '
+            'configuração.',
+        'Your game files, their languages and how the game starts.':
+            'Os arquivos do jogo, seus idiomas e como o jogo inicia.',
         'Your goal':
             'Seu objetivo',
         'Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest model:':
@@ -5870,8 +5925,9 @@ WORLD = {
             'Sua placa de vídeo é o limite.',
         'Your memory sets the limit.':
             'Sua memória é o limite.',
-        'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-            'Seu próprio dump do Bloodborne (CUSA03173, Game of the Year Edition) com a atualização 1.09.',
+        'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+            'Seus próprios arquivos do Bloodborne (CUSA03173, Game of the Year Edition) com a atualização '
+            '1.09.',
         'Your previous saves: {}':
             'Seus saves anteriores: {}',
         'Your processor sets the limit.':
@@ -6139,8 +6195,8 @@ WORLD = {
             'Pilote AMD 26.8.1 : si le jeu plante ou affiche des graphismes corrompus, videz le cache des shaders (Aide) ou essayez un autre pilote.',
         'About 30 FPS':
             'Environ 30 FPS',
-        'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-            'Environ 35 Go pour votre dump du jeu plus 1 Go pour le portage ; un SSD est recommandé',
+        'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+            'Environ 35 Go pour les fichiers du jeu et 1 Go pour le port ; un SSD est recommandé',
         'Above minimum':
             'Au-dessus du minimum',
         'Achievements':
@@ -6609,8 +6665,10 @@ WORLD = {
             'Le dossier du jeu est-il correct ? L’Aide le vérifie.',
         'It broke while unpacking (the log says "prepare failed: out of bounds").':
             'Le fichier a été endommagé lors de l’extraction (le journal indique « prepare failed: out of bounds »).',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not from Bloodborne.':
-            'Ce n’est pas le fichier tel que le PKG de mise à jour le contient (un fichier SELF PS4) : un autre outil l’a converti, ou il ne provient pas de Bloodborne.',
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.':
+            'Ce n’est pas le fichier d’origine (un fichier SELF PS4) : un autre outil l’a converti, ou il ne '
+            'vient pas de Bloodborne.',
         'It may start, but expect low frame rates and problems.':
             'Le jeu peut démarrer, mais attendez-vous à des fréquences d’images basses et à des problèmes.',
         'Items and menus':
@@ -6653,8 +6711,11 @@ WORLD = {
             'Adapté à votre PC',
         'Main monitor':
             'Moniteur principal',
-        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
-            'Faites le dump de votre propre copie de Bloodborne (disque ou PlayStation Store) sur votre propre PS4. Les fichiers du jeu venant d’internet relèvent du piratage : aucun n’est fourni avec le portage, et personne n’aide à en trouver. Les demander ou les partager enfreint la règle 2 du Discord de la communauté et peut entraîner un bannissement.',
+        "The port does not come with the game, and we can't give out game files or help anyone find them. "
+        'Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Le port ne contient pas le jeu, et nous ne pouvons ni fournir les fichiers du jeu ni aider à '
+            'les trouver. Les demander ou les partager enfreint la règle 2 du Discord de la communauté et '
+            'peut entraîner un bannissement.',
         'Measure on this PC':
             'Mesurer sur ce PC',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -6737,8 +6798,9 @@ WORLD = {
             'Aucun plantage ni blocage en {:.0f} minutes ({:.0f} FPS en moyenne).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
             'Pas de eboot.bin dans le dossier du jeu : choisissez le dossier qui contient directement eboot.bin, sce_sys et dvdroot_ps4 (Jeu et langue).',
-        'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-            'Aucun dossier choisi pour l’instant. Choisissez le dossier de votre dump : celui qui contient directement eboot.bin.',
+        'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+            'Aucun dossier choisi pour l’instant. Choisissez le dossier du jeu : celui qui contient '
+            'directement eboot.bin.',
         'No game files are included or shared, and we do not help find them.':
             'Aucun fichier du jeu n’est inclus ni partagé, et nous n’aidons pas à en trouver.',
         'No limit  ⚠':
@@ -7175,8 +7237,9 @@ WORLD = {
             'Le premier lancement prend plus de temps et les premières minutes peuvent saccader pendant la construction du cache des shaders. C’est normal.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
             'Le dossier contient eboot.bin mais pas le jeu entier (le journal indique gxshader.shaderbnd.dcx not found).',
-        'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-            'Le dossier de votre dump : celui qui contient directement eboot.bin, sce_module, sce_sys et dvdroot_ps4.',
+        'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+            'Le dossier du jeu : celui qui contient directement eboot.bin, sce_module, sce_sys et '
+            'dvdroot_ps4.',
         'The game ended with an error (code {}). Its log names the cause:':
             'Le jeu s’est terminé avec une erreur (code {}). Son journal en indique la cause :',
         'The game folder is complete ({} files, {} GB).':
@@ -7303,18 +7366,22 @@ WORLD = {
             'Processeur inconnu',
         'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.':
             'Illimité, plafonné à la fréquence de l’écran (120 au maximum) : votre PC devrait dépasser 60 FPS.',
-        'Unpack the 1.09 update PKG into a new, empty folder.':
-            'Extrayez le PKG de la mise à jour 1.09 dans un nouveau dossier vide.',
-        'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it (exactly 93,825,704 bytes).':
-            'Extrayez le PKG de la mise à jour 1.09 de votre propre dump avec ShadPs4Plus PKG Extractor 1.1 et utilisez l’eboot.bin qu’il contient (exactement 93 825 704 octets).',
-        "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty folder. Don't use a loose eboot.bin someone shared.":
-            'Extrayez vous-même le PKG de la mise à jour 1.09 de votre propre dump, avec ShadPs4Plus PKG Extractor 1.1, dans un nouveau dossier vide. N’utilisez pas un eboot.bin isolé partagé par quelqu’un.',
-        'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor 1.1).':
-            'Extrayez à nouveau le PKG du jeu de base et le PKG de la mise à jour 1.09 dans deux nouveaux dossiers vides (ShadPs4Plus PKG Extractor 1.1).',
-        'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.':
-            'Extrayez à nouveau le jeu de base et la mise à jour 1.09 dans de nouveaux dossiers vides (ShadPs4Plus PKG Extractor 1.1), puis copiez de nouveau la mise à jour dans le jeu de base.',
-        'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG Extractor.':
-            'Extrayez le jeu de base et la mise à jour 1.09 dans deux nouveaux dossiers vides, par exemple avec ShadPs4Plus PKG Extractor.',
+        'Put the 1.09 update into a new, empty folder again.':
+            'Remettez la mise à jour 1.09 dans un nouveau dossier vide.',
+        'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+            'Utilisez l’eboot.bin d’une mise à jour 1.09 non modifiée (exactement 93 825 704 octets).',
+        "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+        'someone shared.':
+            'Utilisez l’eboot.bin d’une mise à jour 1.09 non modifiée, dans un nouveau dossier vide. '
+            'N’utilisez pas un eboot.bin isolé partagé par quelqu’un.',
+        'Put the base game and the 1.09 update into two new, empty folders again.':
+            'Remettez le jeu de base et la mise à jour 1.09 dans deux nouveaux dossiers vides.',
+        'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+        'base game again.':
+            'Remettez le jeu de base et la mise à jour 1.09 dans de nouveaux dossiers vides, puis recopiez '
+            'la mise à jour dans le jeu de base.',
+        'Put the base game and the 1.09 update into two new, empty folders.':
+            'Placez le jeu de base et la mise à jour 1.09 dans deux nouveaux dossiers vides.',
         'Unpacking broke: some files have 0 bytes.':
             'L’extraction a échoué : certains fichiers font 0 octet.',
         'Unsupported key':
@@ -7421,18 +7488,24 @@ WORLD = {
             'Vos sauvegardes actuelles sont copiées avant : essayer une copie plus ancienne ne fait rien perdre.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Votre écran : {} × {}. Recommandé pour votre PC : {}.',
-        'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
-            'Votre eboot.bin n’est pas celui d’origine de la 1.09 (modifié, ou issu d’un autre dump). Le portage ne peut pas le patcher : le jeu tourne à 30 FPS, les options d’effets n’ont aucun effet, et certaines scènes (comme la cinématique après Rom) peuvent se figer.\n\nRemplacez eboot.bin par celui d’une mise à jour 1.09 non modifiée.',
+        'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch '
+        'it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the '
+        'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+            'Votre eboot.bin n’est pas celui d’origine de la 1.09 (modifié, ou issu d’une autre version). Le '
+            'portage ne peut pas le patcher : le jeu tourne à 30 FPS, les options d’effets n’ont aucun '
+            'effet, et certaines scènes (comme la cinématique après Rom) peuvent se figer.\n\nRemplacez '
+            'eboot.bin par celui d’une mise à jour 1.09 non modifiée.',
         'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
             'Votre édition (Game of the Year, CUSA03173) inclut déjà The Old Hunters.',
         'Your game':
             'Votre jeu',
         'Your game and your PC':
             'Votre jeu et votre PC',
-        'Your game dump and its add-ons. Set once, usually by the setup guide.':
-            'Votre dump du jeu et ses extensions. Réglé une fois, en général lors de la configuration.',
-        'Your game dump, its languages and how it starts.':
-            'Votre dump du jeu, ses langues et son lancement.',
+        'Your game files and their add-ons. Set once, usually by the setup guide.':
+            'Les fichiers du jeu et leurs extensions. Réglés une fois, en général par le guide de '
+            'configuration.',
+        'Your game files, their languages and how the game starts.':
+            'Les fichiers du jeu, leurs langues et le démarrage du jeu.',
         'Your goal':
             'Votre objectif',
         'Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest model:':
@@ -7445,8 +7518,9 @@ WORLD = {
             'Votre carte graphique fixe la limite.',
         'Your memory sets the limit.':
             'Votre mémoire fixe la limite.',
-        'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-            'Votre propre dump de Bloodborne (CUSA03173, Game of the Year Edition) avec la mise à jour 1.09.',
+        'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+            'Vos propres fichiers de Bloodborne (CUSA03173, Game of the Year Edition) avec la mise à jour '
+            '1.09.',
         'Your previous saves: {}':
             'Vos sauvegardes précédentes : {}',
         'Your processor sets the limit.':
@@ -7714,8 +7788,8 @@ WORLD = {
             'Driver AMD 26.8.1: se il gioco va in crash o mostra grafica corrotta, svuota la cache degli shader (Aiuto) o prova un altro driver.',
         'About 30 FPS':
             'Circa 30 FPS',
-        'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-            'Circa 35 GB per il dump del gioco più 1 GB per il port; è consigliato un SSD',
+        'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+            'Circa 35 GB per i file del gioco e 1 GB per il port; si consiglia un SSD',
         'Above minimum':
             'Sopra il minimo',
         'Achievements':
@@ -8184,8 +8258,10 @@ WORLD = {
             'La cartella del gioco è a posto? La pagina Aiuto la verifica.',
         'It broke while unpacking (the log says "prepare failed: out of bounds").':
             'Si è danneggiato durante l’estrazione (il registro riporta "prepare failed: out of bounds").',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not from Bloodborne.':
-            'Non è il file così come si trova nel PKG dell’aggiornamento (un file SELF della PS4): un altro strumento l’ha convertito, oppure non proviene da Bloodborne.',
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.':
+            'Non è il file originale (un file SELF PS4): un altro strumento lo ha convertito, oppure non è '
+            'di Bloodborne.',
         'It may start, but expect low frame rates and problems.':
             'Potrebbe avviarsi, ma aspettati frequenze fotogrammi basse e problemi.',
         'Items and menus':
@@ -8228,8 +8304,11 @@ WORLD = {
             'Su misura per il tuo PC',
         'Main monitor':
             'Monitor principale',
-        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
-            'Crea il dump dalla tua copia di Bloodborne (disco o PlayStation Store) sulla tua PS4. I file del gioco presi da internet sono pirateria: il port non ne contiene nessuno e nessuno aiuta a trovarli. Chiederli o condividerli viola la regola 2 del Discord della community e può portare a un ban.',
+        "The port does not come with the game, and we can't give out game files or help anyone find them. "
+        'Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Il port non include il gioco, e non possiamo distribuire i file del gioco né aiutare a '
+            'trovarli. Chiederli o condividerli viola la regola 2 del Discord della community e può portare '
+            'a un ban.',
         'Measure on this PC':
             'Misura su questo PC',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -8312,8 +8391,9 @@ WORLD = {
             'Nessun crash né blocco in {:.0f} minuti ({:.0f} FPS in media).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
             'Nessun eboot.bin nella cartella del gioco: scegli la cartella che contiene direttamente eboot.bin, sce_sys e dvdroot_ps4 (Gioco e lingua).',
-        'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-            'Nessuna cartella scelta. Scegli la cartella del tuo dump: quella che contiene direttamente eboot.bin.',
+        'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+            'Nessuna cartella ancora scelta. Scegli la cartella del gioco: quella che contiene direttamente '
+            'eboot.bin.',
         'No game files are included or shared, and we do not help find them.':
             'Nessun file del gioco è incluso o condiviso, e non aiutiamo a trovarli.',
         'No limit  ⚠':
@@ -8750,8 +8830,9 @@ WORLD = {
             'Il primo avvio richiede più tempo e i primi minuti possono scattare mentre si crea la cache degli shader. È normale.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
             'La cartella ha eboot.bin ma non il gioco completo (il registro riporta gxshader.shaderbnd.dcx not found).',
-        'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-            'La cartella del tuo dump: quella che contiene direttamente eboot.bin, sce_module, sce_sys e dvdroot_ps4.',
+        'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+            'La cartella del gioco: quella che contiene direttamente eboot.bin, sce_module, sce_sys e '
+            'dvdroot_ps4.',
         'The game ended with an error (code {}). Its log names the cause:':
             'Il gioco si è chiuso con un errore (codice {}). Il suo registro indica la causa:',
         'The game folder is complete ({} files, {} GB).':
@@ -8878,18 +8959,22 @@ WORLD = {
             'Processore sconosciuto',
         'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.':
             'Senza limite, con tetto alla frequenza dello schermo (al massimo 120): il tuo PC dovrebbe superare i 60 FPS.',
-        'Unpack the 1.09 update PKG into a new, empty folder.':
-            'Estrai il PKG dell’aggiornamento 1.09 in una cartella nuova e vuota.',
-        'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it (exactly 93,825,704 bytes).':
-            'Estrai il PKG dell’aggiornamento 1.09 del tuo dump con ShadPs4Plus PKG Extractor 1.1 e usa l’eboot.bin che contiene (esattamente 93.825.704 byte).',
-        "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty folder. Don't use a loose eboot.bin someone shared.":
-            'Estrai tu stesso il PKG dell’aggiornamento 1.09 del tuo dump, con ShadPs4Plus PKG Extractor 1.1, in una cartella nuova e vuota. Non usare un eboot.bin singolo condiviso da qualcuno.',
-        'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor 1.1).':
-            'Estrai di nuovo il PKG del gioco base e il PKG dell’aggiornamento 1.09 in due cartelle nuove e vuote (ShadPs4Plus PKG Extractor 1.1).',
-        'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.':
-            'Estrai di nuovo il gioco base e l’aggiornamento 1.09 in cartelle nuove e vuote (ShadPs4Plus PKG Extractor 1.1), poi copia di nuovo l’aggiornamento nel gioco base.',
-        'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG Extractor.':
-            'Estrai il gioco base e l’aggiornamento 1.09 in due cartelle nuove e vuote, per esempio con ShadPs4Plus PKG Extractor.',
+        'Put the 1.09 update into a new, empty folder again.':
+            'Rimetti l’aggiornamento 1.09 in una cartella nuova e vuota.',
+        'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+            'Usa l’eboot.bin di un aggiornamento 1.09 non modificato (esattamente 93.825.704 byte).',
+        "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+        'someone shared.':
+            'Usa l’eboot.bin di un aggiornamento 1.09 non modificato, in una cartella nuova e vuota. Non '
+            'usare un eboot.bin sciolto condiviso da qualcuno.',
+        'Put the base game and the 1.09 update into two new, empty folders again.':
+            'Rimetti il gioco base e l’aggiornamento 1.09 in due cartelle nuove e vuote.',
+        'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+        'base game again.':
+            'Rimetti il gioco base e l’aggiornamento 1.09 in cartelle nuove e vuote, poi copia di nuovo '
+            'l’aggiornamento nel gioco base.',
+        'Put the base game and the 1.09 update into two new, empty folders.':
+            'Metti il gioco base e l’aggiornamento 1.09 in due cartelle nuove e vuote.',
         'Unpacking broke: some files have 0 bytes.':
             'L’estrazione non è riuscita: alcuni file hanno 0 byte.',
         'Unsupported key':
@@ -8996,18 +9081,24 @@ WORLD = {
             'I salvataggi attuali vengono salvati prima: provare un backup più vecchio non fa perdere nulla.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Il tuo schermo: {} × {}. Consigliata per il tuo PC: {}.',
-        'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
-            'Il tuo eboot.bin non è quello pulito della 1.09 (modificato, o da un altro dump). Il port non può applicarvi le patch: il gioco gira a 30 FPS, le opzioni degli effetti non fanno nulla e alcune scene (come il filmato dopo Rom) possono bloccarsi.\n\nSostituisci eboot.bin con quello di un aggiornamento 1.09 non modificato.',
+        'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch '
+        'it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the '
+        'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+            'Il tuo eboot.bin non è quello pulito della 1.09 (modificato, o da un’altra versione). Il port '
+            'non può applicarvi le patch: il gioco gira a 30 FPS, le opzioni degli effetti non fanno nulla e '
+            'alcune scene (come il filmato dopo Rom) possono bloccarsi.\n\nSostituisci eboot.bin con quello '
+            'di un aggiornamento 1.09 non modificato.',
         'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
             'La tua edizione (Game of the Year, CUSA03173) include già The Old Hunters.',
         'Your game':
             'Il tuo gioco',
         'Your game and your PC':
             'Il tuo gioco e il tuo PC',
-        'Your game dump and its add-ons. Set once, usually by the setup guide.':
-            'Il tuo dump del gioco e i suoi contenuti aggiuntivi. Si imposta una volta, di solito durante la configurazione.',
-        'Your game dump, its languages and how it starts.':
-            'Il tuo dump del gioco, le sue lingue e come si avvia.',
+        'Your game files and their add-ons. Set once, usually by the setup guide.':
+            'I file del gioco e i loro contenuti aggiuntivi. Si impostano una volta, di solito con la guida '
+            'iniziale.',
+        'Your game files, their languages and how the game starts.':
+            'I file del gioco, le loro lingue e come si avvia il gioco.',
         'Your goal':
             'Il tuo obiettivo',
         'Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest model:':
@@ -9020,8 +9111,8 @@ WORLD = {
             'Il limite è la tua scheda video.',
         'Your memory sets the limit.':
             'Il limite è la tua memoria.',
-        'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-            'Il tuo dump di Bloodborne (CUSA03173, Game of the Year Edition) con l’aggiornamento 1.09.',
+        'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+            'I tuoi file di Bloodborne (CUSA03173, Game of the Year Edition) con l’aggiornamento 1.09.',
         'Your previous saves: {}':
             'I tuoi salvataggi precedenti: {}',
         'Your processor sets the limit.':
@@ -9289,8 +9380,8 @@ WORLD = {
             'Sterownik AMD 26.8.1: jeśli gra ulega awarii lub wyświetla uszkodzoną grafikę, wyczyść pamięć shaderów (Pomoc) albo spróbuj innego sterownika.',
         'About 30 FPS':
             'Około 30 FPS',
-        'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-            'Około 35 GB na zrzut gry plus 1 GB na port; zalecany dysk SSD',
+        'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+            'Około 35 GB na pliki gry i 1 GB na port; zalecany dysk SSD',
         'Above minimum':
             'Powyżej minimum',
         'Achievements':
@@ -9759,8 +9850,10 @@ WORLD = {
             'Czy folder gry jest w porządku? Sprawdzi to strona „Pomoc”.',
         'It broke while unpacking (the log says "prepare failed: out of bounds").':
             'Plik uszkodził się podczas rozpakowywania (w dzienniku jest „prepare failed: out of bounds”).',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not from Bloodborne.':
-            'To nie jest plik w takiej postaci, w jakiej zawiera go PKG aktualizacji (plik PS4 SELF): inne narzędzie go przekonwertowało albo nie pochodzi z Bloodborne.',
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.':
+            'To nie jest oryginalny plik (plik PS4 SELF): inne narzędzie go przekonwertowało albo nie '
+            'pochodzi z Bloodborne.',
         'It may start, but expect low frame rates and problems.':
             'Może się uruchomić, ale spodziewaj się niskiej liczby klatek i problemów.',
         'Items and menus':
@@ -9803,8 +9896,10 @@ WORLD = {
             'Dopasowane do twojego PC',
         'Main monitor':
             'Monitor główny',
-        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
-            'Zrób zrzut z własnej kopii Bloodborne (płyta lub PlayStation Store) na własnej PS4. Pliki gry z internetu to piractwo: port ich nie zawiera i nikt nie pomaga ich znaleźć. Proszenie o nie lub ich udostępnianie łamie zasadę 2 Discorda społeczności i może skończyć się banem.',
+        "The port does not come with the game, and we can't give out game files or help anyone find them. "
+        'Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Port nie zawiera gry, a my nie możemy udostępniać plików gry ani pomagać ich szukać. Proszenie '
+            'o nie lub ich udostępnianie łamie zasadę 2 Discorda społeczności i może skończyć się banem.',
         'Measure on this PC':
             'Zmierz na tym PC',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -9887,8 +9982,8 @@ WORLD = {
             'Bez awarii i zawieszeń przez {:.0f} min (średnio {:.0f} FPS).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
             'Brak eboot.bin w folderze gry: wybierz folder, w którym bezpośrednio znajdują się eboot.bin, sce_sys i dvdroot_ps4 (Gra i język).',
-        'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-            'Nie wybrano jeszcze folderu. Wybierz folder swojego zrzutu: ten, w którym bezpośrednio znajduje się eboot.bin.',
+        'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+            'Nie wybrano jeszcze folderu. Wybierz folder gry: ten, w którym bezpośrednio leży eboot.bin.',
         'No game files are included or shared, and we do not help find them.':
             'Żadne pliki gry nie są dołączone ani udostępniane i nie pomagamy ich szukać.',
         'No limit  ⚠':
@@ -10325,8 +10420,8 @@ WORLD = {
             'Pierwsze uruchomienie trwa dłużej, a pierwsze minuty mogą się zacinać, gdy budowana jest pamięć podręczna shaderów. To normalne.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
             'Folder ma eboot.bin, ale nie całą grę (w dzienniku jest gxshader.shaderbnd.dcx not found).',
-        'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-            'Folder twojego zrzutu: ten, w którym bezpośrednio znajdują się eboot.bin, sce_module, sce_sys i dvdroot_ps4.',
+        'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+            'Folder gry: ten, w którym bezpośrednio leżą eboot.bin, sce_module, sce_sys i dvdroot_ps4.',
         'The game ended with an error (code {}). Its log names the cause:':
             'Gra zakończyła się błędem (kod {}). Jej dziennik podaje przyczynę:',
         'The game folder is complete ({} files, {} GB).':
@@ -10453,18 +10548,22 @@ WORLD = {
             'Nieznany procesor',
         'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.':
             'Bez limitu, z ograniczeniem do odświeżania ekranu (maks. 120): twój PC powinien osiągać ponad 60 FPS.',
-        'Unpack the 1.09 update PKG into a new, empty folder.':
-            'Rozpakuj PKG aktualizacji 1.09 do nowego, pustego folderu.',
-        'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it (exactly 93,825,704 bytes).':
-            'Rozpakuj PKG aktualizacji 1.09 z własnego zrzutu za pomocą ShadPs4Plus PKG Extractor 1.1 i użyj eboot.bin z niego (dokładnie 93\xa0825\xa0704 bajty).',
-        "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty folder. Don't use a loose eboot.bin someone shared.":
-            'Rozpakuj samodzielnie PKG aktualizacji 1.09 z własnego zrzutu za pomocą ShadPs4Plus PKG Extractor 1.1 do nowego, pustego folderu. Nie używaj pojedynczego eboot.bin udostępnionego przez kogoś.',
-        'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor 1.1).':
-            'Rozpakuj ponownie PKG gry podstawowej i PKG aktualizacji 1.09 do dwóch nowych, pustych folderów (ShadPs4Plus PKG Extractor 1.1).',
-        'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.':
-            'Rozpakuj ponownie grę podstawową i aktualizację 1.09 do nowych, pustych folderów (ShadPs4Plus PKG Extractor 1.1), a potem znowu skopiuj aktualizację do gry podstawowej.',
-        'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG Extractor.':
-            'Rozpakuj grę podstawową i aktualizację 1.09 do dwóch nowych, pustych folderów, na przykład za pomocą ShadPs4Plus PKG Extractor.',
+        'Put the 1.09 update into a new, empty folder again.':
+            'Ponownie umieść aktualizację 1.09 w nowym, pustym folderze.',
+        'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+            'Użyj eboot.bin z niezmodyfikowanej aktualizacji 1.09 (dokładnie 93 825 704 bajty).',
+        "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+        'someone shared.':
+            'Użyj eboot.bin z niezmodyfikowanej aktualizacji 1.09, w nowym, pustym folderze. Nie używaj '
+            'pojedynczego eboot.bin, który ktoś udostępnił.',
+        'Put the base game and the 1.09 update into two new, empty folders again.':
+            'Ponownie umieść grę podstawową i aktualizację 1.09 w dwóch nowych, pustych folderach.',
+        'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+        'base game again.':
+            'Ponownie umieść grę podstawową i aktualizację 1.09 w nowych, pustych folderach, a potem znów '
+            'skopiuj aktualizację do gry podstawowej.',
+        'Put the base game and the 1.09 update into two new, empty folders.':
+            'Umieść grę podstawową i aktualizację 1.09 w dwóch nowych, pustych folderach.',
         'Unpacking broke: some files have 0 bytes.':
             'Rozpakowywanie się nie powiodło: niektóre pliki mają 0 bajtów.',
         'Unsupported key':
@@ -10571,18 +10670,23 @@ WORLD = {
             'Obecne zapisy są najpierw kopiowane: wypróbowanie starszej kopii niczego nie odbiera.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Twój ekran: {} × {}. Zalecane dla twojego PC: {}.',
-        'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
-            'Twój eboot.bin nie jest czystym plikiem 1.09 (zmodyfikowany lub z innego zrzutu). Port nie może go załatać: gra działa w 30 FPS, opcje efektów nic nie robią, a niektóre sceny (np. przerywnik po Rom) mogą się zawiesić.\n\nZastąp eboot.bin plikiem z niezmodyfikowanej aktualizacji 1.09.',
+        'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch '
+        'it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the '
+        'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+            'Twój eboot.bin nie jest czystym plikiem 1.09 (zmodyfikowany lub z innego wydania). Port nie '
+            'może go załatać: gra działa w 30 FPS, opcje efektów nic nie robią, a niektóre sceny (np. '
+            'przerywnik po Rom) mogą się zawiesić.\n\nZastąp eboot.bin plikiem z niezmodyfikowanej '
+            'aktualizacji 1.09.',
         'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
             'Twoja edycja (Game of the Year, CUSA03173) już zawiera The Old Hunters.',
         'Your game':
             'Twoja gra',
         'Your game and your PC':
             'Twoja gra i twój PC',
-        'Your game dump and its add-ons. Set once, usually by the setup guide.':
-            'Twój zrzut gry i jego dodatki. Ustawiane raz, zwykle podczas konfiguracji.',
-        'Your game dump, its languages and how it starts.':
-            'Twój zrzut gry, jego języki i sposób uruchamiania.',
+        'Your game files and their add-ons. Set once, usually by the setup guide.':
+            'Pliki gry i ich dodatki. Ustawiane raz, zwykle przez przewodnik konfiguracji.',
+        'Your game files, their languages and how the game starts.':
+            'Pliki gry, ich języki i sposób uruchamiania gry.',
         'Your goal':
             'Twój cel',
         'Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest model:':
@@ -10595,8 +10699,8 @@ WORLD = {
             'Limit wyznacza twoja karta graficzna.',
         'Your memory sets the limit.':
             'Limit wyznacza twoja pamięć.',
-        'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-            'Twój własny zrzut Bloodborne (CUSA03173, Game of the Year Edition) z aktualizacją 1.09.',
+        'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+            'Twoje własne pliki Bloodborne (CUSA03173, Game of the Year Edition) z aktualizacją 1.09.',
         'Your previous saves: {}':
             'Twoje poprzednie zapisy: {}',
         'Your processor sets the limit.':
@@ -10864,8 +10968,8 @@ WORLD = {
             'AMD sürücüsü 26.8.1: oyun çöküyor veya bozuk grafik gösteriyorsa shader önbelleğini temizleyin (Yardım) ya da başka bir sürücü deneyin.',
         'About 30 FPS':
             'Yaklaşık 30 FPS',
-        'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-            'Oyun dökümünüz için yaklaşık 35 GB, port için 1 GB; SSD önerilir',
+        'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+            'Oyun dosyaları için yaklaşık 35 GB, port için 1 GB; SSD önerilir',
         'Above minimum':
             'Minimum üstü',
         'Achievements':
@@ -11334,8 +11438,10 @@ WORLD = {
             'Oyun klasörü sorunsuz mu? Yardım sayfası kontrol eder.',
         'It broke while unpacking (the log says "prepare failed: out of bounds").':
             'Çıkarma sırasında bozuldu (günlükte "prepare failed: out of bounds" yazar).',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not from Bloodborne.':
-            'Bu, güncelleme PKG’sindeki haliyle dosya değil (bir PS4 SELF dosyası): başka bir araç onu dönüştürmüş ya da Bloodborne’a ait değil.',
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.':
+            'Orijinal dosya değil (bir PS4 SELF dosyası): başka bir araç dönüştürmüş ya da Bloodborne’a ait '
+            'değil.',
         'It may start, but expect low frame rates and problems.':
             'Başlayabilir ama düşük kare hızları ve sorunlar beklenebilir.',
         'Items and menus':
@@ -11378,8 +11484,11 @@ WORLD = {
             'Bilgisayarınıza göre ayarlandı',
         'Main monitor':
             'Ana monitör',
-        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
-            'Dökümü kendi Bloodborne kopyanızdan (disk veya PlayStation Store) kendi PS4’ünüzde alın. İnternetten alınan oyun dosyaları korsanlıktır: Bu port hiçbirini içermez ve kimse bulmanıza yardım etmez. Bunları istemek veya paylaşmak topluluk Discord’unun 2. kuralını ihlal eder ve yasaklanmanıza yol açabilir.',
+        "The port does not come with the game, and we can't give out game files or help anyone find them. "
+        'Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'Port oyunla birlikte gelmez; oyun dosyalarını veremeyiz ve bulmaya da yardım edemeyiz. Bunları '
+            'istemek veya paylaşmak topluluk Discord’unun 2. kuralını ihlal eder ve yasaklanmanıza yol '
+            'açabilir.',
         'Measure on this PC':
             'Bu bilgisayarda ölç',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -11462,8 +11571,8 @@ WORLD = {
             '{:.0f} dakika boyunca çökme veya donma yok (ortalama {:.0f} FPS).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
             'Oyun klasöründe eboot.bin yok: eboot.bin, sce_sys ve dvdroot_ps4’ün doğrudan içinde bulunduğu klasörü seçin (Oyun ve dil).',
-        'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-            'Henüz klasör seçilmedi. Dökümünüzün klasörünü seçin: eboot.bin’in doğrudan içinde bulunduğu klasör.',
+        'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+            'Henüz klasör seçilmedi. Oyun klasörünü seçin: içinde doğrudan eboot.bin bulunan klasörü.',
         'No game files are included or shared, and we do not help find them.':
             'Hiçbir oyun dosyası dahil edilmez veya paylaşılmaz; bunları bulmaya da yardım etmiyoruz.',
         'No limit  ⚠':
@@ -11900,8 +12009,8 @@ WORLD = {
             'İlk başlatma daha uzun sürer ve shader önbelleği oluşturulurken ilk dakikalarda takılma olabilir. Bu normaldir.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
             'Klasörde eboot.bin var ama oyunun tamamı yok (günlükte gxshader.shaderbnd.dcx not found yazar).',
-        'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-            'Dökümünüzün klasörü: eboot.bin, sce_module, sce_sys ve dvdroot_ps4’ün doğrudan içinde bulunduğu klasör.',
+        'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+            'Oyun klasörü: içinde doğrudan eboot.bin, sce_module, sce_sys ve dvdroot_ps4 bulunan klasör.',
         'The game ended with an error (code {}). Its log names the cause:':
             'Oyun bir hatayla kapandı (kod {}). Oyunun günlüğü nedeni belirtiyor:',
         'The game folder is complete ({} files, {} GB).':
@@ -12028,18 +12137,23 @@ WORLD = {
             'Bilinmeyen işlemci',
         'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.':
             'Sınırsız, ekran yenileme hızıyla sınırlı (en fazla 120): bilgisayarınızın 60 FPS’in üzerine çıkması bekleniyor.',
-        'Unpack the 1.09 update PKG into a new, empty folder.':
-            '1.09 güncelleme PKG’sini yeni, boş bir klasöre çıkarın.',
-        'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it (exactly 93,825,704 bytes).':
-            'Kendi dökümünüzün 1.09 güncelleme PKG’sini ShadPs4Plus PKG Extractor 1.1 ile çıkarın ve içinden çıkan eboot.bin’i kullanın (tam olarak 93.825.704 bayt).',
-        "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty folder. Don't use a loose eboot.bin someone shared.":
-            'Kendi dökümünüzün 1.09 güncelleme PKG’sini ShadPs4Plus PKG Extractor 1.1 ile yeni, boş bir klasöre kendiniz çıkarın. Başkasının paylaştığı tek başına bir eboot.bin kullanmayın.',
-        'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor 1.1).':
-            'Ana oyun PKG’sini ve 1.09 güncelleme PKG’sini yeniden iki yeni, boş klasöre çıkarın (ShadPs4Plus PKG Extractor 1.1).',
-        'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.':
-            'Ana oyunu ve 1.09 güncellemesini yeniden yeni, boş klasörlere çıkarın (ShadPs4Plus PKG Extractor 1.1), ardından güncellemeyi yeniden ana oyunun içine kopyalayın.',
-        'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG Extractor.':
-            'Ana oyunu ve 1.09 güncellemesini iki yeni, boş klasöre çıkarın, örneğin ShadPs4Plus PKG Extractor ile.',
+        'Put the 1.09 update into a new, empty folder again.':
+            '1.09 güncellemesini yeniden yeni, boş bir klasöre koyun.',
+        'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+            'Değiştirilmemiş bir 1.09 güncellemesinin eboot.bin dosyasını kullanın (tam olarak 93.825.704 '
+            'bayt).',
+        "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+        'someone shared.':
+            'Değiştirilmemiş bir 1.09 güncellemesinin eboot.bin dosyasını yeni, boş bir klasörde kullanın. '
+            'Birinin paylaştığı tek başına bir eboot.bin kullanmayın.',
+        'Put the base game and the 1.09 update into two new, empty folders again.':
+            'Ana oyunu ve 1.09 güncellemesini yeniden iki yeni, boş klasöre koyun.',
+        'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+        'base game again.':
+            'Ana oyunu ve 1.09 güncellemesini yeniden yeni, boş klasörlere koyun, sonra güncellemeyi tekrar '
+            'ana oyunun içine kopyalayın.',
+        'Put the base game and the 1.09 update into two new, empty folders.':
+            'Ana oyunu ve 1.09 güncellemesini iki yeni, boş klasöre koyun.',
         'Unpacking broke: some files have 0 bytes.':
             'Çıkarma bozuk: bazı dosyalar 0 bayt.',
         'Unsupported key':
@@ -12146,18 +12260,23 @@ WORLD = {
             'Mevcut kayıtların önce yedeklenir: daha eski bir yedeği denemek hiçbir şey kaybettirmez.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'Ekranınız: {} × {}. Bilgisayarınız için önerilen: {}.',
-        'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
-            'eboot.bin dosyanız temiz 1.09 dosyası değil (değiştirilmiş veya başka bir dökümden). Port ona yama uygulayamaz: oyun 30 FPS’te çalışır, efekt seçenekleri hiçbir şey yapmaz ve bazı sahneler (örneğin Rom’dan sonraki ara sahne) donabilir.\n\neboot.bin’i değiştirilmemiş bir 1.09 güncellemesindeki dosyayla değiştirin.',
+        'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch '
+        'it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the '
+        'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+            'eboot.bin dosyanız temiz 1.09 dosyası değil (değiştirilmiş veya başka bir sürümden). Port ona '
+            'yama uygulayamaz: oyun 30 FPS’te çalışır, efekt seçenekleri hiçbir şey yapmaz ve bazı sahneler '
+            '(örneğin Rom’dan sonraki ara sahne) donabilir.\n\neboot.bin’i değiştirilmemiş bir 1.09 '
+            'güncellemesindeki dosyayla değiştirin.',
         'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
             "Sürümün (Game of the Year, CUSA03173) The Old Hunters'ı zaten içeriyor.",
         'Your game':
             'Oyununuz',
         'Your game and your PC':
             'Oyununuz ve bilgisayarınız',
-        'Your game dump and its add-ons. Set once, usually by the setup guide.':
-            'Oyun dökümün ve eklentileri. Bir kez ayarlanır, genellikle kurulum sırasında.',
-        'Your game dump, its languages and how it starts.':
-            'Oyun dökümünüz, dilleri ve nasıl başladığı.',
+        'Your game files and their add-ons. Set once, usually by the setup guide.':
+            'Oyun dosyalarınız ve eklentileri. Bir kez ayarlanır, genellikle kurulum rehberiyle.',
+        'Your game files, their languages and how the game starts.':
+            'Oyun dosyalarınız, dilleri ve oyunun nasıl başladığı.',
         'Your goal':
             'Hedefiniz',
         'Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest model:':
@@ -12170,8 +12289,8 @@ WORLD = {
             'Sınırı ekran kartınız belirliyor.',
         'Your memory sets the limit.':
             'Sınırı belleğiniz belirliyor.',
-        'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-            'Bloodborne’un 1.09 güncellemesini içeren kendi dökümünüz (CUSA03173, Game of the Year Edition).',
+        'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+            'Kendi Bloodborne oyun dosyalarınız (CUSA03173, Game of the Year Edition) ve 1.09 güncellemesi.',
         'Your previous saves: {}':
             'Önceki kayıtlarınız: {}',
         'Your processor sets the limit.':
@@ -12439,8 +12558,8 @@ WORLD = {
             'AMD 驱动 26.8.1：如果游戏崩溃或画面错乱，请清除着色器缓存（帮助），或换用其他版本的驱动。',
         'About 30 FPS':
             '约 30 FPS',
-        'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-            '游戏转储约需 35 GB，移植版另需 1 GB；推荐使用 SSD',
+        'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+            '游戏文件约 35 GB，移植版 1 GB；建议使用 SSD',
         'Above minimum':
             '高于最低',
         'Achievements':
@@ -12909,8 +13028,9 @@ WORLD = {
             '游戏文件夹是否正常？“帮助”页面会进行检查。',
         'It broke while unpacking (the log says "prepare failed: out of bounds").':
             '它在解包时损坏了（日志显示“prepare failed: out of bounds”）。',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not from Bloodborne.':
-            '它不是更新 PKG 中的原始文件（PS4 SELF 文件）：可能被其他工具转换过，或者并非来自 Bloodborne。',
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.':
+            '这不是原始文件（PS4 SELF 文件）：它已被其他工具转换过，或者并非来自 Bloodborne。',
         'It may start, but expect low frame rates and problems.':
             '也许能启动，但帧率会很低，并可能出现问题。',
         'Items and menus':
@@ -12953,8 +13073,9 @@ WORLD = {
             '为你的电脑定制',
         'Main monitor':
             '主显示器',
-        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
-            '请在你自己的 PS4 上，从你自己的 Bloodborne（光盘或 PlayStation Store）制作转储。来自互联网的游戏文件属于盗版：移植版不包含任何游戏文件，也没有人会帮你寻找。索要或分享这些文件违反社区 Discord 第 2 条规则，并可能导致封禁。',
+        "The port does not come with the game, and we can't give out game files or help anyone find them. "
+        'Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            '移植版不包含游戏，我们不能提供游戏文件，也不能帮任何人寻找。索要或分享游戏文件违反社区 Discord 第 2 条规则，可能会被封禁。',
         'Measure on this PC':
             '在这台电脑上测量',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -13037,8 +13158,8 @@ WORLD = {
             '{:.0f} 分钟内没有崩溃，也没有卡死（平均 {:.0f} FPS）。',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
             '游戏文件夹中没有 eboot.bin：请选择直接包含 eboot.bin、sce_sys 和 dvdroot_ps4 的文件夹（游戏与语言）。',
-        'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-            '尚未选择文件夹。请选择你的转储文件夹：直接包含 eboot.bin 的那个。',
+        'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+            '尚未选择文件夹。请选择游戏文件夹：直接包含 eboot.bin 的那个。',
         'No game files are included or shared, and we do not help find them.':
             '本移植版不包含也不分享任何游戏文件，我们也不帮助寻找。',
         'No limit  ⚠':
@@ -13475,8 +13596,8 @@ WORLD = {
             '首次启动需要更长时间，构建着色器缓存期间，最初几分钟可能会卡顿。这是正常现象。',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
             '该文件夹有 eboot.bin，但游戏不完整（日志显示 gxshader.shaderbnd.dcx not found）。',
-        'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-            '你的转储文件夹：直接包含 eboot.bin、sce_module、sce_sys 和 dvdroot_ps4 的那个。',
+        'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+            '游戏文件夹：直接包含 eboot.bin、sce_module、sce_sys 和 dvdroot_ps4 的那个。',
         'The game ended with an error (code {}). Its log names the cause:':
             '游戏因错误而结束（代码 {}）。日志中给出了原因：',
         'The game folder is complete ({} files, {} GB).':
@@ -13603,18 +13724,20 @@ WORLD = {
             '未知处理器',
         'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.':
             '不限帧，上限为显示器刷新率（最高 120）：预计你的电脑可超过 60 FPS。',
-        'Unpack the 1.09 update PKG into a new, empty folder.':
-            '将 1.09 更新 PKG 解包到一个新的空文件夹。',
-        'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it (exactly 93,825,704 bytes).':
-            '用 ShadPs4Plus PKG Extractor 1.1 解包你自己转储的 1.09 更新 PKG，并使用其中的 eboot.bin（正好 93,825,704 字节）。',
-        "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty folder. Don't use a loose eboot.bin someone shared.":
-            '请亲自用 ShadPs4Plus PKG Extractor 1.1 将你自己转储的 1.09 更新 PKG 解包到一个新的空文件夹。不要使用别人分享的单独 eboot.bin。',
-        'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor 1.1).':
-            '将本体游戏 PKG 和 1.09 更新 PKG 重新解包到两个新的空文件夹（ShadPs4Plus PKG Extractor 1.1）。',
-        'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.':
-            '将本体游戏和 1.09 更新重新解包到新的空文件夹（ShadPs4Plus PKG Extractor 1.1），然后再次将更新复制到本体游戏中。',
-        'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG Extractor.':
-            '将本体游戏和 1.09 更新解包到两个新的空文件夹，例如使用 ShadPs4Plus PKG Extractor。',
+        'Put the 1.09 update into a new, empty folder again.':
+            '把 1.09 更新重新放进一个新的空文件夹。',
+        'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+            '使用未经修改的 1.09 更新中的 eboot.bin（正好 93,825,704 字节）。',
+        "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+        'someone shared.':
+            '在新的空文件夹中使用未经修改的 1.09 更新的 eboot.bin。不要使用别人单独分享的 eboot.bin。',
+        'Put the base game and the 1.09 update into two new, empty folders again.':
+            '把基础游戏和 1.09 更新重新放进两个新的空文件夹。',
+        'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+        'base game again.':
+            '把基础游戏和 1.09 更新重新放进新的空文件夹，然后再把更新复制到基础游戏中。',
+        'Put the base game and the 1.09 update into two new, empty folders.':
+            '把基础游戏和 1.09 更新放进两个新的空文件夹。',
         'Unpacking broke: some files have 0 bytes.':
             '解包出错：部分文件为 0 字节。',
         'Unsupported key':
@@ -13721,18 +13844,21 @@ WORLD = {
             '你当前的存档会先被备份：尝试更早的备份不会丢失任何内容。',
         'Your display: {} × {}. Recommended for your PC: {}.':
             '你的显示器：{} × {}。为你的电脑推荐：{}。',
-        'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
-            '你的 eboot.bin 不是纯净的 1.09 版本（被修改过，或来自其他转储）。移植版无法为它打补丁：游戏将以 30 FPS 运行，“游戏与效果”中的选项无效，某些场景（例如罗姆之后的过场动画）可能会卡死。\n\n请用未经修改的 1.09 更新中的 eboot.bin 替换它。',
+        'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch '
+        'it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the '
+        'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+            '你的 eboot.bin 不是纯净的 1.09 版本（被修改过，或来自其他版本）。移植版无法为它打补丁：游戏将以 30 FPS '
+            '运行，“游戏与效果”中的选项无效，某些场景（例如罗姆之后的过场动画）可能会卡死。\n\n请用未经修改的 1.09 更新中的 eboot.bin 替换它。',
         'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
             '你的版本（年度版，CUSA03173）已包含 The Old Hunters。',
         'Your game':
             '你的游戏',
         'Your game and your PC':
             '你的游戏和电脑',
-        'Your game dump and its add-ons. Set once, usually by the setup guide.':
-            '你的游戏转储及其追加内容。只需设置一次，通常在初始设置时完成。',
-        'Your game dump, its languages and how it starts.':
-            '你的游戏转储、它的语言和启动方式。',
+        'Your game files and their add-ons. Set once, usually by the setup guide.':
+            '你的游戏文件及其追加内容。只需设置一次，通常由设置向导完成。',
+        'Your game files, their languages and how the game starts.':
+            '你的游戏文件、其语言以及游戏的启动方式。',
         'Your goal':
             '你的目标',
         'Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest model:':
@@ -13745,8 +13871,8 @@ WORLD = {
             '瓶颈在于你的显卡。',
         'Your memory sets the limit.':
             '瓶颈在于你的内存。',
-        'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-            '你自己转储的 Bloodborne（CUSA03173，年度版），并已安装 1.09 更新。',
+        'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+            '你自己的 Bloodborne 游戏文件（CUSA03173，年度版），含 1.09 更新。',
         'Your previous saves: {}':
             '你之前的存档：{}',
         'Your processor sets the limit.':
@@ -14014,8 +14140,8 @@ WORLD = {
             'AMD ドライバー 26.8.1：ゲームがクラッシュしたりグラフィックが乱れたりする場合は、シェーダーキャッシュを消去するか（ヘルプ）、別のドライバーを試してください。',
         'About 30 FPS':
             '約 30 FPS',
-        'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-            'ゲームのダンプに約 35 GB、移植版に 1 GB。SSD を推奨',
+        'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+            'ゲームファイルに約 35 GB、移植版に 1 GB。SSD を推奨します',
         'Above minimum':
             '最低より上',
         'Achievements':
@@ -14484,8 +14610,9 @@ WORLD = {
             'ゲームフォルダーに問題はありませんか？「ヘルプ」で確認できます。',
         'It broke while unpacking (the log says "prepare failed: out of bounds").':
             '展開中に壊れています（ログに「prepare failed: out of bounds」と出ます）。',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not from Bloodborne.':
-            'アップデート PKG に含まれている状態のファイル（PS4 の SELF ファイル）ではありません。別のツールで変換されたか、Bloodborne のファイルではありません。',
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.':
+            '元のファイル（PS4 の SELF ファイル）ではありません。別のツールで変換されたか、Bloodborne のものではありません。',
         'It may start, but expect low frame rates and problems.':
             '起動はするかもしれませんが、フレームレートが低く、問題が起きる可能性があります。',
         'Items and menus':
@@ -14528,8 +14655,9 @@ WORLD = {
             'この PC 向けに設定済み',
         'Main monitor':
             'メインモニター',
-        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
-            'ダンプは、自分の PS4 で自分の Bloodborne（ディスクまたは PlayStation Store）から作成してください。インターネット上のゲームファイルは海賊版です：移植版には含まれず、入手の手伝いもしません。要求や共有はコミュニティ Discord のルール 2 に違反し、BAN される可能性があります。',
+        "The port does not come with the game, and we can't give out game files or help anyone find them. "
+        'Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            'この移植版にゲームは含まれていません。ゲームファイルの配布や入手の手助けはできません。要求や共有はコミュニティ Discord のルール 2 に違反し、BAN の対象になります。',
         'Measure on this PC':
             'この PC で測定',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -14612,8 +14740,8 @@ WORLD = {
             '{:.0f} 分間、クラッシュもフリーズもありませんでした（平均 {:.0f} FPS）。',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
             'ゲームフォルダーに eboot.bin がありません。eboot.bin、sce_sys、dvdroot_ps4 が直下にあるフォルダーを選択してください（ゲームと言語）。',
-        'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-            'フォルダーがまだ選択されていません。ダンプのフォルダー、つまり eboot.bin が直下にあるフォルダーを選択してください。',
+        'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+            'まだフォルダーが選ばれていません。ゲームフォルダー（eboot.bin が直下にあるもの）を選んでください。',
         'No game files are included or shared, and we do not help find them.':
             'ゲームファイルは同梱も共有もしておらず、入手のお手伝いもしません。',
         'No limit  ⚠':
@@ -15050,8 +15178,8 @@ WORLD = {
             '初回起動は時間がかかり、シェーダーキャッシュの作成中は最初の数分間カクつくことがあります。これは正常です。',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
             'フォルダーに eboot.bin はありますが、ゲーム全体がそろっていません（ログに gxshader.shaderbnd.dcx not found と出ます）。',
-        'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-            'ダンプのフォルダー：eboot.bin、sce_module、sce_sys、dvdroot_ps4 が直下にあるフォルダーです。',
+        'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+            'ゲームフォルダー：eboot.bin、sce_module、sce_sys、dvdroot_ps4 が直下にあるフォルダーです。',
         'The game ended with an error (code {}). Its log names the cause:':
             'ゲームがエラーで終了しました（コード {}）。ログに原因が記録されています：',
         'The game folder is complete ({} files, {} GB).':
@@ -15178,18 +15306,20 @@ WORLD = {
             '不明なプロセッサー',
         'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.':
             '無制限、ディスプレイのリフレッシュレートが上限（最大 120）：この PC は 60 FPS を超えると予想されます。',
-        'Unpack the 1.09 update PKG into a new, empty folder.':
-            '1.09 アップデート PKG を新しい空のフォルダーに展開します。',
-        'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it (exactly 93,825,704 bytes).':
-            '自分のダンプの 1.09 アップデート PKG を ShadPs4Plus PKG Extractor 1.1 で展開し、そこに含まれる eboot.bin（ちょうど 93,825,704 バイト）を使用してください。',
-        "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty folder. Don't use a loose eboot.bin someone shared.":
-            '自分のダンプの 1.09 アップデート PKG を、ShadPs4Plus PKG Extractor 1.1 で新しい空のフォルダーに自分で展開してください。他人が共有した eboot.bin 単体は使わないでください。',
-        'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor 1.1).':
-            '本編の PKG と 1.09 アップデート PKG を、新しい空のフォルダー 2 つにもう一度展開してください（ShadPs4Plus PKG Extractor 1.1）。',
-        'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.':
-            '本編と 1.09 アップデートを新しい空のフォルダーにもう一度展開し（ShadPs4Plus PKG Extractor 1.1）、アップデートを再び本編にコピーしてください。',
-        'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG Extractor.':
-            '本編と 1.09 アップデートを、ShadPs4Plus PKG Extractor などで新しい空のフォルダー 2 つに展開します。',
+        'Put the 1.09 update into a new, empty folder again.':
+            '1.09 アップデートを新しい空のフォルダーに入れ直してください。',
+        'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+            '改変されていない 1.09 アップデートの eboot.bin（ちょうど 93,825,704 バイト）を使ってください。',
+        "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+        'someone shared.':
+            '改変されていない 1.09 アップデートの eboot.bin を、新しい空のフォルダーで使ってください。誰かが単体で共有した eboot.bin は使わないでください。',
+        'Put the base game and the 1.09 update into two new, empty folders again.':
+            '本編と 1.09 アップデートを、新しい空のフォルダー 2 つに入れ直してください。',
+        'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+        'base game again.':
+            '本編と 1.09 アップデートを新しい空のフォルダーに入れ直し、もう一度アップデートを本編にコピーしてください。',
+        'Put the base game and the 1.09 update into two new, empty folders.':
+            '本編と 1.09 アップデートを、新しい空のフォルダー 2 つに入れてください。',
         'Unpacking broke: some files have 0 bytes.':
             '展開に失敗しています：一部のファイルが 0 バイトです。',
         'Unsupported key':
@@ -15296,18 +15426,22 @@ WORLD = {
             '現在のセーブデータは先にバックアップされます。古いバックアップを試しても何も失いません。',
         'Your display: {} × {}. Recommended for your PC: {}.':
             'ディスプレイ：{} × {}。この PC への推奨：{}。',
-        'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
-            'お使いの eboot.bin は無改変の 1.09 のものではありません（改変されているか、別のダンプのもの）。移植版はこれにパッチを当てられないため、ゲームは 30 FPS で動作し、「ゲームとエフェクト」のオプションは効かず、一部の場面（ロマ撃破後のムービーなど）でフリーズすることがあります。\n\neboot.bin を、改変されていない 1.09 アップデートのものに置き換えてください。',
+        'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch '
+        'it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the '
+        'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+            'お使いの eboot.bin は無改変の 1.09 のものではありません（改変されているか、別の版のもの）。移植版はこれにパッチを当てられないため、ゲームは 30 FPS '
+            'で動作し、「ゲームとエフェクト」のオプションは効かず、一部の場面（ロマ撃破後のムービーなど）でフリーズすることがあります。\n\neboot.bin を、改変されていない 1.09 '
+            'アップデートのものに置き換えてください。',
         'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
             'お使いのエディション（Game of the Year、CUSA03173）には The Old Hunters が含まれています。',
         'Your game':
             'あなたのゲーム',
         'Your game and your PC':
             'ゲームと PC',
-        'Your game dump and its add-ons. Set once, usually by the setup guide.':
-            'ゲームのダンプとその追加コンテンツ。通常は初期設定で一度だけ設定します。',
-        'Your game dump, its languages and how it starts.':
-            'ゲームのダンプ、言語、起動方法。',
+        'Your game files and their add-ons. Set once, usually by the setup guide.':
+            'ゲームファイルとその追加コンテンツ。一度だけ設定します（通常はセットアップガイドで）。',
+        'Your game files, their languages and how the game starts.':
+            'ゲームファイル、その言語、ゲームの起動方法。',
         'Your goal':
             '目標',
         'Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest model:':
@@ -15320,8 +15454,8 @@ WORLD = {
             'グラフィックカードが上限を決めています。',
         'Your memory sets the limit.':
             'メモリが上限を決めています。',
-        'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-            '1.09 アップデートを適用した、自分でダンプした Bloodborne（CUSA03173、Game of the Year Edition）。',
+        'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+            'ご自身の Bloodborne のゲームファイル（CUSA03173、Game of the Year Edition）と 1.09 アップデート。',
         'Your previous saves: {}':
             '以前のセーブデータ：{}',
         'Your processor sets the limit.':
@@ -15589,8 +15723,8 @@ WORLD = {
             'AMD 드라이버 26.8.1: 게임이 충돌하거나 그래픽이 깨지면 셰이더 캐시를 지우거나 (도움말) 다른 드라이버를 사용해 보세요.',
         'About 30 FPS':
             '약 30 FPS',
-        'About 35 GB for your game dump plus 1 GB for the port; an SSD is recommended':
-            '게임 덤프용 약 35 GB와 포트용 1 GB, SSD 권장',
+        'About 35 GB for your game files plus 1 GB for the port; an SSD is recommended':
+            '게임 파일 약 35GB, 포트 1GB; SSD 권장',
         'Above minimum':
             '최소 이상',
         'Achievements':
@@ -16059,8 +16193,9 @@ WORLD = {
             '게임 폴더에 문제가 없나요? 도움말에서 확인할 수 있습니다.',
         'It broke while unpacking (the log says "prepare failed: out of bounds").':
             '압축 해제 중에 손상되었습니다 (로그에 "prepare failed: out of bounds"가 표시됨).',
-        'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not from Bloodborne.':
-            '업데이트 PKG에 들어 있는 그대로의 파일 (PS4 SELF 파일)이 아닙니다. 다른 도구로 변환되었거나 Bloodborne 파일이 아닙니다.',
+        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+        'Bloodborne.':
+            '원본 파일(PS4 SELF 파일)이 아닙니다. 다른 도구로 변환되었거나 Bloodborne의 파일이 아닙니다.',
         'It may start, but expect low frame rates and problems.':
             '시작은 될 수 있지만 낮은 프레임 속도와 여러 문제를 각오하세요.',
         'Items and menus':
@@ -16103,8 +16238,10 @@ WORLD = {
             'PC에 맞춤',
         'Main monitor':
             '주 모니터',
-        'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
-            '덤프는 본인의 PS4에서 본인 소유의 Bloodborne(디스크 또는 PlayStation Store)으로 만드세요. 인터넷에서 받은 게임 파일은 불법 복제입니다: 포트에는 포함되어 있지 않으며, 누구도 찾는 것을 돕지 않습니다. 요청하거나 공유하면 커뮤니티 Discord 규칙 2를 위반하며 차단될 수 있습니다.',
+        "The port does not come with the game, and we can't give out game files or help anyone find them. "
+        'Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
+            '포트에는 게임이 포함되어 있지 않으며, 게임 파일을 제공하거나 찾는 것을 도와드릴 수 없습니다. 요청하거나 공유하면 커뮤니티 Discord 규칙 2를 위반하며 차단될 수 '
+            '있습니다.',
         'Measure on this PC':
             '이 PC에서 측정',
         'Measuring takes 2 to 10 minutes: the game starts a few times by itself from your last save, on a copy of it.':
@@ -16187,8 +16324,8 @@ WORLD = {
             '{:.0f}분 동안 충돌이나 멈춤 없음 (평균 {:.0f} FPS).',
         'No eboot.bin in the game folder: choose the folder that has eboot.bin, sce_sys and dvdroot_ps4 directly inside (Game & language).':
             '게임 폴더에 eboot.bin이 없습니다: eboot.bin, sce_sys, dvdroot_ps4가 바로 안에 있는 폴더를 선택하세요 (게임 및 언어).',
-        'No folder chosen yet. Choose the folder of your dump: the one with eboot.bin directly inside.':
-            '아직 폴더를 선택하지 않았습니다. 덤프 폴더, 즉 eboot.bin이 바로 안에 있는 폴더를 선택하세요.',
+        'No folder chosen yet. Choose your game folder: the one with eboot.bin directly inside.':
+            '아직 폴더를 선택하지 않았습니다. 게임 폴더를 선택하세요: eboot.bin이 바로 안에 있는 폴더입니다.',
         'No game files are included or shared, and we do not help find them.':
             '게임 파일은 포함되거나 공유되지 않으며, 구하는 일도 도와드리지 않습니다.',
         'No limit  ⚠':
@@ -16625,8 +16762,8 @@ WORLD = {
             '첫 시작은 더 오래 걸리고, 셰이더 캐시를 만드는 동안 처음 몇 분은 끊길 수 있습니다. 정상입니다.',
         'The folder has eboot.bin but not the whole game (the log says gxshader.shaderbnd.dcx not found).':
             '폴더에 eboot.bin은 있지만 게임 전체가 없습니다 (로그에 gxshader.shaderbnd.dcx not found가 표시됨).',
-        'The folder of your dump: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
-            '덤프 폴더: eboot.bin, sce_module, sce_sys, dvdroot_ps4가 바로 안에 있는 폴더.',
+        'Your game folder: the one with eboot.bin, sce_module, sce_sys and dvdroot_ps4 directly inside.':
+            '게임 폴더: eboot.bin, sce_module, sce_sys, dvdroot_ps4가 바로 안에 있는 폴더입니다.',
         'The game ended with an error (code {}). Its log names the cause:':
             '게임이 오류로 종료되었습니다 (코드 {}). 로그에 나온 원인:',
         'The game folder is complete ({} files, {} GB).':
@@ -16753,18 +16890,20 @@ WORLD = {
             '알 수 없는 프로세서',
         'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.':
             '제한 없음, 디스플레이 주사율로 상한 (최대 120): 이 PC는 60 FPS 이상이 예상됩니다.',
-        'Unpack the 1.09 update PKG into a new, empty folder.':
-            '1.09 업데이트 PKG를 새 빈 폴더에 압축 해제하세요.',
-        'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it (exactly 93,825,704 bytes).':
-            '직접 덤프한 1.09 업데이트 PKG를 ShadPs4Plus PKG Extractor 1.1로 압축 해제하고, 거기서 나온 eboot.bin (정확히 93,825,704바이트)을 사용하세요.',
-        "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty folder. Don't use a loose eboot.bin someone shared.":
-            '직접 덤프한 1.09 업데이트 PKG를 ShadPs4Plus PKG Extractor 1.1로 새 빈 폴더에 직접 압축 해제하세요. 다른 사람이 공유한 eboot.bin 단일 파일은 쓰지 마세요.',
-        'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor 1.1).':
-            '기본 게임 PKG와 1.09 업데이트 PKG를 새 빈 폴더 두 개에 다시 압축 해제하세요 (ShadPs4Plus PKG Extractor 1.1).',
-        'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then copy the update into the base game again.':
-            '기본 게임과 1.09 업데이트를 새 빈 폴더에 다시 압축 해제한 뒤 (ShadPs4Plus PKG Extractor 1.1), 업데이트를 다시 기본 게임에 복사하세요.',
-        'Unpack the base game and the 1.09 update into two new, empty folders, for example with ShadPs4Plus PKG Extractor.':
-            '기본 게임과 1.09 업데이트를 새 빈 폴더 두 개에 압축 해제하세요. 예: ShadPs4Plus PKG Extractor 사용.',
+        'Put the 1.09 update into a new, empty folder again.':
+            '1.09 업데이트를 새 빈 폴더에 다시 넣으세요.',
+        'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+            '수정되지 않은 1.09 업데이트의 eboot.bin(정확히 93,825,704바이트)을 사용하세요.',
+        "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+        'someone shared.':
+            '수정되지 않은 1.09 업데이트의 eboot.bin을 새 빈 폴더에서 사용하세요. 누군가 따로 공유한 eboot.bin은 쓰지 마세요.',
+        'Put the base game and the 1.09 update into two new, empty folders again.':
+            '기본 게임과 1.09 업데이트를 새 빈 폴더 두 개에 다시 넣으세요.',
+        'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the '
+        'base game again.':
+            '기본 게임과 1.09 업데이트를 새 빈 폴더에 다시 넣은 뒤, 업데이트를 기본 게임에 다시 복사하세요.',
+        'Put the base game and the 1.09 update into two new, empty folders.':
+            '기본 게임과 1.09 업데이트를 새 빈 폴더 두 개에 넣으세요.',
         'Unpacking broke: some files have 0 bytes.':
             '압축 해제가 잘못되었습니다: 일부 파일이 0바이트입니다.',
         'Unsupported key':
@@ -16871,18 +17010,21 @@ WORLD = {
             '현재 세이브는 먼저 백업되므로 더 오래된 백업을 시도해도 잃는 것이 없습니다.',
         'Your display: {} × {}. Recommended for your PC: {}.':
             '디스플레이: {} × {}. 이 PC 권장: {}.',
-        'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
-            'eboot.bin이 원본 1.09 파일이 아닙니다 (수정되었거나 다른 덤프의 파일). 포트가 패치할 수 없어 게임이 30 FPS로 실행되고, 효과 옵션이 작동하지 않으며, 일부 장면 (롬 이후의 컷신 등)에서 멈출 수 있습니다.\n\neboot.bin을 수정되지 않은 1.09 업데이트의 파일로 바꾸세요.',
+        'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port cannot patch '
+        'it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the '
+        'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
+            'eboot.bin이 원본 1.09 파일이 아닙니다 (수정되었거나 다른 버전의 파일). 포트가 패치할 수 없어 게임이 30 FPS로 실행되고, 효과 옵션이 작동하지 않으며, '
+            '일부 장면 (롬 이후의 컷신 등)에서 멈출 수 있습니다.\n\neboot.bin을 수정되지 않은 1.09 업데이트의 파일로 바꾸세요.',
         'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
             '이 에디션(Game of the Year, CUSA03173)에는 The Old Hunters가 이미 포함되어 있습니다.',
         'Your game':
             '내 게임',
         'Your game and your PC':
             '게임과 PC',
-        'Your game dump and its add-ons. Set once, usually by the setup guide.':
-            '게임 덤프와 추가 콘텐츠입니다. 보통 초기 설정에서 한 번만 설정합니다.',
-        'Your game dump, its languages and how it starts.':
-            '게임 덤프, 언어, 시작 방식.',
+        'Your game files and their add-ons. Set once, usually by the setup guide.':
+            '게임 파일과 추가 콘텐츠. 한 번만 설정하며, 보통 설정 가이드에서 정합니다.',
+        'Your game files, their languages and how the game starts.':
+            '게임 파일, 그 언어, 그리고 게임 시작 방식.',
         'Your goal':
             '목표',
         'Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest model:':
@@ -16895,8 +17037,8 @@ WORLD = {
             '그래픽 카드가 성능의 한계입니다.',
         'Your memory sets the limit.':
             '메모리가 성능의 한계입니다.',
-        'Your own dump of Bloodborne (CUSA03173, Game of the Year Edition) with the 1.09 update.':
-            '1.09 업데이트가 적용된, 직접 덤프한 Bloodborne (CUSA03173, Game of the Year Edition).',
+        'Your own Bloodborne game files (CUSA03173, Game of the Year Edition) with the 1.09 update.':
+            '본인의 Bloodborne 게임 파일(CUSA03173, Game of the Year Edition)과 1.09 업데이트.',
         'Your previous saves: {}':
             '이전 세이브: {}',
         'Your processor sets the limit.':

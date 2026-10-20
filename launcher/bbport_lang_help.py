@@ -70,10 +70,10 @@ HELP = {'de': {
         'Port bringt seine eigenen 60 FPS mit und patcht nur die saubere Datei: Mit einer veränderten läuft das Spiel '
         'mit 30 FPS, die Effekt-Optionen wirken nicht, und manche Patches (Lance McDonalds 60 FPS) '
         'lassen das Gestenmenü oder die Zwischensequenz nach Rom abstürzen.',
-    "Unpack the 1.09 update PKG of your own dump yourself, with ShadPs4Plus PKG Extractor 1.1, into a new, empty "
-    "folder. Don't use a loose eboot.bin someone shared.":
-        'Entpacke das 1.09-Update-PKG deines eigenen Dumps selbst mit ShadPs4Plus PKG Extractor 1.1 in einen neuen, '
-        'leeren Ordner. Nimm keine einzelne eboot.bin, die jemand geteilt hat.',
+    "Use the eboot.bin of an unmodified 1.09 update, in a new, empty folder. Don't use a loose eboot.bin "
+    'someone shared.':
+        'Nimm die eboot.bin eines unveränderten Updates 1.09, in einem neuen, leeren Ordner. Keine einzelne '
+        'eboot.bin, die jemand geteilt hat.',
     'Copy eboot.bin from it into your game folder (Game & language > Game folder) and replace the old one. Make sure '
     'it is that folder, not another copy of the game.':
         'Kopiere die eboot.bin daraus in deinen Spielordner (Spiel & Sprache > Spielordner) und ersetze die alte. '
@@ -85,28 +85,25 @@ HELP = {'de': {
     'eboot.bin is cut off': 'eboot.bin ist abgeschnitten',
     'It broke while unpacking (the log says "prepare failed: out of bounds").':
         'Sie ist beim Entpacken kaputtgegangen (im Log steht „prepare failed: out of bounds“).',
-    'Unpack the base game PKG and the 1.09 update PKG again into two new, empty folders (ShadPs4Plus PKG Extractor '
-    '1.1).':
-        'Entpacke das Basisspiel-PKG und das 1.09-Update-PKG erneut in zwei neue, leere Ordner (ShadPs4Plus PKG '
-        'Extractor 1.1).',
+    'Put the base game and the 1.09 update into two new, empty folders again.':
+        'Lege das Grundspiel und das Update 1.09 erneut in zwei neue, leere Ordner.',
     'Check the size: eboot.bin of the update is exactly 93,825,704 bytes (89.4 MB).':
         'Prüfe die Größe: Die eboot.bin des Updates hat genau 93.825.704 Bytes (89,4 MB).',
     'Copy everything from the update folder into the base game folder and replace the files.':
         'Kopiere alles aus dem Update-Ordner in den Basisspiel-Ordner und ersetze die Dateien.',
     'eboot.bin cannot be read': 'eboot.bin kann nicht gelesen werden',
-    'It is not the file as the update PKG contains it (a PS4 SELF file): another tool has converted it, or it is not '
-    'from Bloodborne.':
-        'Es ist nicht die Datei, wie sie im Update-PKG steckt (eine PS4-SELF-Datei): Ein anderes Werkzeug hat sie '
-        'umgewandelt, oder sie stammt nicht von Bloodborne.',
-    'Unpack the 1.09 update PKG of your own dump with ShadPs4Plus PKG Extractor 1.1 and use the eboot.bin from it '
-    '(exactly 93,825,704 bytes).':
-        'Entpacke das 1.09-Update-PKG deines eigenen Dumps mit ShadPs4Plus PKG Extractor 1.1 und nimm die eboot.bin '
-        'daraus (genau 93.825.704 Bytes).',
+    'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
+    'Bloodborne.':
+        'Es ist nicht die Originaldatei (eine PS4-SELF-Datei): Ein anderes Werkzeug hat sie umgewandelt, '
+        'oder sie ist nicht von Bloodborne.',
+    'Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).':
+        'Nimm die eboot.bin eines unveränderten Updates 1.09 (genau 93.825.704 Bytes).',
     'The game is not version 1.09': 'Das Spiel ist nicht Version 1.09',
     'The community patches (60 FPS and more, the effect options) exist for 1.09 only; other versions run at 30 FPS.':
         'Die Community-Patches (60 FPS und mehr, die Effekt-Optionen) gibt es nur für 1.09; andere Versionen laufen '
         'mit 30 FPS.',
-    'Unpack the 1.09 update PKG into a new, empty folder.': 'Entpacke das 1.09-Update-PKG in einen neuen, leeren Ordner.',
+    'Put the 1.09 update into a new, empty folder again.': 'Lege das Update 1.09 erneut in einen neuen, '
+                                                            'leeren Ordner.',
     'Open it, press Ctrl + A, then Ctrl + C.': 'Öffne ihn, drücke Strg + A, dann Strg + C.',
     'Open the base game folder (the one with dvdroot_ps4), press Ctrl + V and choose Replace the files in the '
     'destination.':
@@ -120,10 +117,10 @@ HELP = {'de': {
         'Wähle unter Spiel & Sprache den Basisspiel-Ordner. Sein dvdroot_ps4 hat etwa 29 GB in etwa 28.800 Dateien.',
     'Files of the game are empty': 'Dateien des Spiels sind leer',
     'Unpacking broke: some files have 0 bytes.': 'Das Entpacken ist schiefgegangen: Manche Dateien haben 0 Bytes.',
-    'Unpack the base game and the 1.09 update again into new, empty folders (ShadPs4Plus PKG Extractor 1.1), then '
-    'copy the update into the base game again.':
-        'Entpacke Basisspiel und 1.09-Update erneut in neue, leere Ordner (ShadPs4Plus PKG Extractor 1.1) und kopiere '
-        'das Update dann wieder ins Basisspiel.',
+    'Put the base game and the 1.09 update into new, empty folders again, then copy the update into the base '
+    'game again.':
+        'Lege das Grundspiel und das Update 1.09 erneut in neue, leere Ordner und kopiere das Update dann '
+        'wieder ins Grundspiel.',
     'Windows has too little memory for the start': 'Windows hat zu wenig Speicher für den Start',
     'The game reserves about 6 GB at its start (10 GB at 1440p and 4K) in one block, from the RAM and the page file '
     'together. When Windows refuses, the game closes at once with code 3 (the log says "cannot create … MiB of guest '
