@@ -220,7 +220,9 @@ class Frame:
 
     def install(self):
         try:
-            for hwnd in [self.hwnd] + self.covers:
+            # Once per window: the frame can be the toplevel's own window (wm_frame() before Tk wraps
+            # it), and a second subclass would keep the first as Tk's procedure, then free it.
+            for hwnd in dict.fromkeys([self.hwnd] + self.covers):
                 proc = WNDPROC(self.wndproc)  # kept: Windows calls it for as long as the window lives
                 old = self.user32.SetWindowLongPtrW(hwnd, GWLP_WNDPROC, ctypes.cast(proc, ctypes.c_void_p))
                 if not old:

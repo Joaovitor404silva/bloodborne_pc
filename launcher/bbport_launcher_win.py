@@ -1425,6 +1425,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         translucent = bool(self.app.get('translucent_window', False))
         try:
             hwnd = int(self.root.wm_frame(), 16)
+            if hwnd == self.root.winfo_id() and getattr(self, 'chrome_waits', 0) < 100:
+                # Tk has not wrapped the window yet (not mapped): its caption is not there to take off.
+                self.chrome_waits = getattr(self, 'chrome_waits', 0) + 1
+                self.root.after(50, self.window_chrome)
+                return
             dwm = ctypes.windll.dwmapi
 
             def attribute(number, value):
