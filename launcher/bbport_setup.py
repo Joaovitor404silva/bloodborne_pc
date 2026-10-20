@@ -17,6 +17,7 @@ import webbrowser
 from PIL import ImageTk
 
 import bbport_benchmark as bench
+import bbport_display as display
 import bbport_hardware as hardware
 import bbport_saves as saves
 import bbport_theme as theme
@@ -104,7 +105,8 @@ class SetupMixin:
                 self.rating_views.remove(view)  # its widgets are gone
 
     def display_size(self):
-        return self.root.winfo_screenwidth(), self.root.winfo_screenheight()
+        """The size of the monitor the game opens on (Picture & performance: Monitor)."""
+        return self.game_monitor_size()
 
     def apply_settings(self, settings):
         for (store, key), value in settings.items():
@@ -1230,6 +1232,11 @@ class SetupMixin:
         self.section(f, _('Screen'))
         self.check(f, 'fullscreen', 'app', _('Fullscreen', 'Полноэкранный режим'),
                    _('Recommended: the game gets the display to itself (smoother, and 4K downsampling works).'))
+        self.row(f, _('Monitor'), self.choice(f, 'game_monitor', 'app', L.monitor_options(self.app.get('game_monitor'))),
+                 _('Where the game opens, in a window and in fullscreen.'))
+        self.row(f, _('Window size'), self.window_choice(f),
+                 _('In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at '
+                   'the size it had when you last closed the game.'))
         self.check(f, 'hdr', 'app', _('Allow HDR output', 'Разрешить HDR'),
                    _('When HDR is on in Windows and the display supports it.',
                      'Если HDR включён в Windows и монитор его поддерживает.'))
@@ -1242,6 +1249,34 @@ class SetupMixin:
                    'По вертикали, в градусах. Все камеры игры расширяются одинаково.'))
         self.check(f, 'show_fps', 'ini', _('Show the FPS counter', 'Показывать FPS'))
         self.link_row(f, _('Every graphics setting one by one:'), 'graphics')
+
+    WINDOW_SIZES = [('output', ('Same as the output resolution',)), ('last', ('As I left it',)),
+                    ('custom', ('Custom size…',)), ('game', ('As the game opens it',))]
+
+    def window_choice(self, parent):
+        """The game window's size: the output resolution, as the player left it, or their own."""
+        ttk = self.ttk
+        holder = ttk.Frame(parent)
+        mode, own = self.var('window_size', 'app'), self.var('window_custom', 'app')
+        box = self.choice(holder, 'window_size', 'app', self.WINDOW_SIZES, width=30)
+        box.pack(side='left')
+        note = ttk.Label(holder, style='Muted.TLabel')
+        note.pack(side='left', padx=(10, 0))
+        entry = self.size_entry(holder, own, lambda _size: show(), note)
+
+        def show(*_a):
+            if mode.get() == 'custom':
+                entry.pack(side='left', padx=(8, 0), before=note)
+            else:
+                entry.pack_forget()
+            last = display.parse_size(self.app.get('window_last'))
+            text = (_('last time {} × {}').format(*last) if last else _('not played in a window yet')) \
+                if mode.get() == 'last' else ''
+            note.configure(text=text, foreground=theme.MUTED)
+        mode.trace_add('write', show)
+        show()
+        holder.setting_key = 'window_size'
+        return holder
 
     def open_last_report(self):
         done = self.app.get('last_measure') or {}

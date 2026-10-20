@@ -364,6 +364,73 @@ UI = {'de': {
         'Der erste Start dauert länger, und die ersten Minuten können ruckeln, während der Shader-Cache gebaut wird. Das '
         'ist normal.',
     'Off': 'Aus', 'On': 'An',
+    'Main monitor':
+        'Hauptmonitor',
+    'on the left':
+        'links',
+    'on the right':
+        'rechts',
+    'above':
+        'oben',
+    'below':
+        'unten',
+    'Monitor {}':
+        'Monitor {}',
+    'Monitor {} (not connected: the main monitor is used)':
+        'Monitor {} (nicht angeschlossen: der Hauptmonitor wird genutzt)',
+    'The DLC folder does not exist.':
+        'Den DLC-Ordner gibt es nicht.',
+    'This is the game folder. The DLC folder is the one that contains {}.':
+        'Das ist der Spielordner. Der DLC-Ordner ist der, in dem {} liegt.',
+    'This is the add-on itself: choose the folder that contains {}.':
+        'Das ist die Erweiterung selbst: Wähle den Ordner, in dem {} liegt.',
+    'The Old Hunters found ({}).':
+        'The Old Hunters gefunden ({}).',
+    'Rename the folder {} to {}: the game looks for that exact name.':
+        'Benenne den Ordner {} in {} um: Das Spiel sucht genau diesen Namen.',
+    'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+        'Keine Erweiterung in diesem Ordner: The Old Hunters ist darin ein Ordner namens {}.',
+    'The Old Hunters found in the saves folder (addcont).':
+        'The Old Hunters im Spielstandordner gefunden (addcont).',
+    'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+        'Deine Ausgabe (Game of the Year, CUSA03173) enthält The Old Hunters schon.',
+    'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+        'The Old Hunters: nicht gefunden. Nur nötig, wenn du es besitzt; ohne bleiben seine Gebiete verschlossen.',
+    'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+        'Breite × Höhe, z. B. 2400x1080 (von 640x360 bis 7680x4320).',
+    'Same as the monitor':
+        'Wie der Monitor',
+    'Custom size…':
+        'Eigene Größe…',
+    'now {} × {}':
+        'derzeit {} × {}',
+    'Narrower than 16:9: the picture may look stretched.':
+        'Schmaler als 16:9: Das Bild kann gestreckt wirken.',
+    'Monitor':
+        'Monitor',
+    'Where the game opens, in a window and in fullscreen.':
+        'Wo das Spiel aufgeht, im Fenster und im Vollbild.',
+    'Window size':
+        'Fenstergröße',
+    'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+        'Im Fenster: die Größe beim Öffnen. Die Ränder kannst du weiter ziehen; „Wie beim letzten Mal“ öffnet es in der Größe, die es beim letzten Schließen des Spiels hatte.',
+    'Same as the output resolution':
+        'Wie die Ausgabeauflösung',
+    'As I left it':
+        'Wie beim letzten Mal',
+    'last time {} × {}':
+        'zuletzt {} × {}',
+    'not played in a window yet':
+        'noch nicht im Fenster gespielt',
+    'Game files':
+        'Spieldateien',
+    'Language & sound':
+        'Sprache & Ton',
+    'Your game dump and its add-ons. Set once, usually by the setup guide.':
+        'Dein Spiel-Dump und seine Erweiterungen. Einmal eingestellt, meist bei der Einrichtung.',
+    "The game's text and voices, the launcher's language, how the game starts and sounds.":
+        'Texte und Stimmen des Spiels, die Sprache des Launchers, wie das Spiel startet und klingt.',
+    'As the game opens it': 'Wie das Spiel es öffnet',
 }}
 
 for _language, _texts in UI.items():

@@ -19,10 +19,16 @@ class WindowTests(unittest.TestCase):
         self.assertNotIn("get('translucent'", SOURCE)
 
     def test_the_switch_is_on_a_page_of_the_simple_view(self):
-        game = SOURCE[SOURCE.index('    def build_game('):]
-        game = game[:game.index('\n    def ', 10)]
-        self.assertIn('self.appearance_check(f)', game)
-        self.assertNotIn('game', L.EXPERT_PAGES)
+        page = SOURCE[SOURCE.index('    def build_language('):]
+        page = page[:page.index('\n    def ', 10)]
+        self.assertIn('self.appearance_check(f)', page)
+        self.assertNotIn('language', L.EXPERT_PAGES)
+
+    def test_the_game_folder_is_for_experts_and_links_open_it(self):
+        self.assertIn('game', L.EXPERT_PAGES)
+        show = SOURCE[SOURCE.index('    def show(self, name):'):]
+        show = show[:show.index('\n    def ', 10)]
+        self.assertIn('self.expert_var.set(True)', show)  # a check's link to the game folder turns the view on
 
     def test_the_launchers_title_bar_by_default(self):
         self.assertIs(L.APP_DEFAULTS['windows_title_bar'], False)

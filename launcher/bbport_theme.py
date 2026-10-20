@@ -33,11 +33,12 @@ BODY_MEDIUM = BODY_SEMI = 'Segoe UI Semibold'
 ICONS = 'Segoe MDL2 Assets'
 
 # Segoe Fluent Icons (Windows 11) / Segoe MDL2 Assets (Windows 10) code points.
-ICON = {'play': '', 'graphics': '', 'display': '', 'game': '', 'cheats': '',
+ICON = {'play': '', 'graphics': '', 'display': '', 'game': '', 'cheats': '',
         'online': '', 'mods': '', 'trophies': '', 'controls': '',
         'advanced': '', 'log': '', 'ok': '', 'warn': '', 'error': '',
         'info': '', 'keyboard': '', 'link': '', 'system': '',
-        'folder': '', 'cpu': '', 'ram': '', 'pulse': '', 'help': '', 'picture': '', 'saves': ''}
+        'folder': '', 'cpu': '', 'ram': '', 'pulse': '', 'help': '', 'picture': '', 'saves': '',
+        'language': ''}
 
 SS = 4  # supersampling of the drawn images
 

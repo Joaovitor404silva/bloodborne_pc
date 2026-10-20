@@ -111,10 +111,14 @@ WORLD = {
             'Применить (перезапустит лаунчер)',
         'Apply the settings for my PC':
             'Применить настройки для моего ПК',
+        'As I left it':
+            'Как в прошлый раз',
         'As in the game uses the original voice setting; other choices use available tracks.':
             '«Как в игре» использует исходную настройку озвучки; остальные варианты — доступные звуковые дорожки.',
         'As many frames as the game allows, up to 120 FPS; the picture made for your PC.':
             'Столько кадров, сколько позволяет игра, до 120 FPS; изображение настроено под ваш ПК.',
+        'As the game opens it':
+            'Как открывает игра',
         "Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your settings and this PC's details (no passwords), so a helper sees the cause at once.":
             'Спросите на форуме помощи в Discord-сообществе. Сохраните отчёт и приложите его: в нём журнал, ваши настройки и данные этого ПК (без паролей), так помощник сразу увидит причину.',
         "Auto: the display refresh, at most 120 (the game's timing breaks above).":
@@ -231,6 +235,8 @@ WORLD = {
             'Не удалось сохранить: {}',
         'Ctrl+F':
             'Ctrl+F',
+        'Custom size…':
+            'Свой размер…',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
             'DLSS требует GeForce RTX 20-й серии или новее. Генерации кадров DLSS нужна RTX 40 (2×) или RTX 50 (до 4×). Генерация кадров FSR 3.1 работает на любой видеокарте, лучше всего — примерно от 60 базовых FPS.',
         'Debug':
@@ -303,6 +309,8 @@ WORLD = {
             'Видеокарта',
         'Game & language':
             'Игра и язык',
+        'Game files':
+            'Файлы игры',
         'Game server {0}':
             'Игровой сервер {0}',
         'Game test running: the game opens and closes by itself.':
@@ -341,6 +349,8 @@ WORLD = {
             'Импортировать',
         'Import the saves from {} ({}, last played {})?':
             'Импортировать сохранения из {} ({}, последняя игра {})?',
+        'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+            'В окне: размер при открытии. Края окна по-прежнему можно тянуть; «Как в прошлый раз» открывает его в том размере, который был при последнем закрытии игры.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'В игре меню порта открывается клавишей Insert (клавиатура) или L3 + R3 (геймпад).',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
@@ -375,6 +385,8 @@ WORLD = {
             'Клавиатура и мышь: раскладка Dark Souls III с управлением камерой мышью',
         'Language':
             'Язык',
+        'Language & sound':
+            'Язык и звук',
         'Laptops: plug in the charger, set Windows to best performance, and make sure the game runs on the dedicated graphics card if you have one.':
             'Ноутбуки: подключите зарядное устройство, выберите в Windows режим «Максимальная производительность» и убедитесь, что игра работает на дискретной видеокарте, если она есть.',
         'Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report':
@@ -385,6 +397,8 @@ WORLD = {
             'Минимальные настройки (сколько ваш ПК может выдать в принципе)',
         'Made for your PC':
             'Настроено под ваш ПК',
+        'Main monitor':
+            'Основной монитор',
         'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
             'Делайте дамп со своей копии Bloodborne (диск или PlayStation Store) на своей PS4. Файлы игры из интернета — это пиратство: в порт они не входят, и никто не помогает их найти. Просить их или делиться ими — нарушение правила 2 Discord-сообщества, за это могут забанить.',
         'Measure on this PC':
@@ -407,8 +421,16 @@ WORLD = {
             'Детализация моделей «Как в игре», векторы движения объектов выключены.',
         'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.':
             'Моды не должны содержать собственный eboot.bin: проверка вверху этой страницы покажет такие моды.',
+        'Monitor':
+            'Монитор',
+        'Monitor {}':
+            'Монитор {}',
+        'Monitor {} (not connected: the main monitor is used)':
+            'Монитор {} (не подключён: используется основной монитор)',
         'Move the whole port folder to a plain folder like C:\\Games\\BBPort and start Bloodborne.exe from there.':
             'Переместите всю папку порта в простую папку, например C:\\Games\\BBPort, и запускайте Bloodborne.exe оттуда.',
+        'Narrower than 16:9: the picture may look stretched.':
+            'Уже 16:9: картинка может выглядеть растянутой.',
         'Needs the boss saves of the mod “{}” (Nexus Mods, free with an account): download “{}”, unpack it, then choose its folder.':
             'Нужны сохранения боссов из мода «{}» (Nexus Mods, бесплатно с учётной записью): скачайте «{}», распакуйте и выберите эту папку.',
         'New hardware detected: the graphics settings were adjusted to it.':
@@ -419,6 +441,8 @@ WORLD = {
             'Кнопка «Далее» станет доступна, когда файлы игры будут в порядке: иначе игра не запустится или вылетит.',
         'Next time, Play Bloodborne.exe starts the game straight away with these settings.':
             'В следующий раз Play Bloodborne.exe сразу запустит игру с этими настройками.',
+        'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+            'В этой папке нет дополнений: The Old Hunters — это папка {} внутри неё.',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'В папке {} и её подпапках нет полного сохранения Bloodborne: нужны userdata0010 и хотя бы один персонаж (с userdata0000 по userdata0009).',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
@@ -579,6 +603,8 @@ WORLD = {
             'Записать маршрут…',
         'Recorded: every test of this scenario now replays your route.':
             'Записано: каждый тест этого сценария теперь воспроизводит ваш маршрут.',
+        'Rename the folder {} to {}: the game looks for that exact name.':
+            'Переименуйте папку {} в {}: игра ищет именно это имя.',
         'Repeat the setup':
             'Пройти настройку заново',
         'Restart the PC after installing it.':
@@ -597,6 +623,10 @@ WORLD = {
             'Каждый раз проходит один и тот же двухминутный маршрут по этой местности и обратно, с сохранения из мода «All Boss Save Files Ready to Fight» (Nexus Mods). Охотник не может умереть, враги его не трогают: для частоты кадров, подгрузки и подтормаживаний в движении и для сравнения настроек.',
         'SSD':
             'SSD',
+        'Same as the monitor':
+            'Как у монитора',
+        'Same as the output resolution':
+            'Как разрешение вывода',
         'Save':
             'Сохранение',
         'Save a report':
@@ -717,12 +747,20 @@ WORLD = {
             'Тестовые сценарии',
         'The CPU needs AVX, BMI1, MOVBE and LZCNT, which means Intel 4th gen (Haswell) or newer, or any Ryzen.':
             'Процессор должен поддерживать AVX, BMI1, MOVBE и LZCNT, то есть нужен Intel 4-го поколения (Haswell) или новее либо любой Ryzen.',
+        'The DLC folder does not exist.':
+            'Папки DLC не существует.',
         'The Dream':
             'Сон охотника',
         "The Hunter's Dream (with bbhost players)":
             "The Hunter's Dream (с игроками bbhost)",
         "The Hunter's Dream account":
             "Учётная запись The Hunter's Dream",
+        'The Old Hunters found ({}).':
+            'The Old Hunters найдено ({}).',
+        'The Old Hunters found in the saves folder (addcont).':
+            'The Old Hunters найдено в папке сохранений (addcont).',
+        'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+            'The Old Hunters: не найдено. Нужно, только если оно у вас есть; без него его области закрыты.',
         'The account you made at supermedo.com.':
             'Учётная запись, которую вы создали на supermedo.com.',
         'The check stopped: {}':
@@ -761,6 +799,8 @@ WORLD = {
             'Игра {} через {:.0f} мин: в отчёте есть строки журнала и графики до этого момента.',
         "The game's own anti-aliasing only without an upscaler: the upscaler smooths edges itself.":
             'Собственное сглаживание игры — только без апскейлера: апскейлер сам сглаживает края.',
+        "The game's text and voices, the launcher's language, how the game starts and sounds.":
+            'Текст и голоса игры, язык лаунчера, как игра запускается и звучит.',
         "The graphics card's memory runs full":
             'Видеопамять переполняется',
         'The graphics driver stopped (device lost)':
@@ -821,6 +861,10 @@ WORLD = {
             'Этот ПК не соответствует требованиям. Можно продолжить, но игра, скорее всего, не запустится.',
         'This is not a test scenario: {}':
             'Это не тестовый сценарий: {}',
+        'This is the add-on itself: choose the folder that contains {}.':
+            'Это само дополнение: выберите папку, в которой лежит {}.',
+        'This is the game folder. The DLC folder is the one that contains {}.':
+            'Это папка игры. Папка DLC — та, в которой лежит {}.',
         'This port has no saves yet.':
             'У этого порта пока нет сохранений.',
         'This port: {}, last played {}':
@@ -883,8 +927,14 @@ WORLD = {
             'Возможности вашего ПК, оценённые так же, как в проверке оборудования на bbport.de, и тесты игры, которые их измеряют: лучшие настройки для цели, сравнение настроек, стабильность.',
         'Where do you come from?':
             'Где вы играли раньше?',
+        'Where the game opens, in a window and in fullscreen.':
+            'Где открывается игра — в окне и в полноэкранном режиме.',
+        'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+            'Ширина × высота, например 2400x1080 (от 640x360 до 7680x4320).',
         'Window':
             'В окне',
+        'Window size':
+            'Размер окна',
         'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
             'Windows 10 или 11 (64-разрядная) и видеокарта с Vulkan 1.3 и не менее 4 ГБ видеопамяти.',
         'Windows 10 or 11, 64-bit':
@@ -923,10 +973,14 @@ WORLD = {
             'Ваш монитор: {} × {}. Рекомендуется для вашего ПК: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             'Ваш eboot.bin — не чистый файл 1.09 (изменён или из другого дампа). Порт не может его пропатчить: игра работает в 30 FPS, параметры эффектов ничего не делают, а некоторые сцены (например, ролик после битвы с Ром) могут зависать.\n\nЗамените eboot.bin файлом из неизменённого обновления 1.09.',
+        'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+            'Ваше издание (Game of the Year, CUSA03173) уже содержит The Old Hunters.',
         'Your game':
             'Ваша игра',
         'Your game and your PC':
             'Ваша игра и ваш ПК',
+        'Your game dump and its add-ons. Set once, usually by the setup guide.':
+            'Ваш дамп игры и его дополнения. Настраивается один раз, обычно при первой настройке.',
         'Your game dump, its languages and how it starts.':
             'Ваш дамп игры, его языки и параметры запуска.',
         'Your goal':
@@ -949,8 +1003,12 @@ WORLD = {
             'Предел задаёт ваш процессор.',
         'Your setup':
             'Ваша конфигурация',
+        'above':
+            'сверху',
         'as recommended':
             'как рекомендуется',
+        'below':
+            'снизу',
         'cancelled':
             'отменено',
         'checking your PC…':
@@ -1005,18 +1063,28 @@ WORLD = {
             'зависла',
         'last played {}':
             'последняя игра {}',
+        'last time {} × {}':
+            'в прошлый раз {} × {}',
         'measuring…':
             'замер…',
         'no characters':
             'нет персонажей',
         'no costly effects':
             'без тяжёлых эффектов',
+        'not played in a window yet':
+            'ещё не играли в окне',
         'not set':
             'не задано',
         'not signed in ›':
             'вход не выполнен ›',
         'now':
             'сейчас',
+        'now {} × {}':
+            'сейчас {} × {}',
+        'on the left':
+            'слева',
+        'on the right':
+            'справа',
         'once (about 1½ min per value)':
             'один раз (около 1½ мин на значение)',
         "only {} GB are free for the game's start right now, it reserves about {} GB.":
@@ -1208,10 +1276,14 @@ WORLD = {
             'تطبيق (يعيد تشغيل المشغّل)',
         'Apply the settings for my PC':
             'تطبيق الإعدادات المناسبة لحاسوبي',
+        'As I left it':
+            'كما في المرة السابقة',
         'As in the game uses the original voice setting; other choices use available tracks.':
             '«كما في اللعبة» يستخدم إعداد الصوت الأصلي في اللعبة؛ وتستخدم الخيارات الأخرى المسارات الصوتية المتوفرة.',
         'As many frames as the game allows, up to 120 FPS; the picture made for your PC.':
             'أكبر عدد من الإطارات تسمح به اللعبة، حتى 120 FPS؛ وصورة مضبوطة لحاسوبك.',
+        'As the game opens it':
+            'كما تفتحها اللعبة',
         "Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your settings and this PC's details (no passwords), so a helper sees the cause at once.":
             'اسأل في منتدى المساعدة على خادم Discord الخاص بالمجتمع. احفظ تقريرًا وأرفقه: فهو يحتوي على السجل وإعداداتك وتفاصيل هذا الحاسوب (دون كلمات مرور)، فيرى من يساعدك السبب فورًا.',
         'Attack (R1)':
@@ -1366,6 +1438,8 @@ WORLD = {
             'تعذّر الحفظ: {}',
         'Ctrl+F':
             'Ctrl+F',
+        'Custom size…':
+            'حجم مخصص…',
         'D-pad up':
             'زر الاتجاه لأعلى',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
@@ -1472,6 +1546,8 @@ WORLD = {
             'اللعبة واللغة',
         'Game (43°)':
             'كما في اللعبة (43°)',
+        'Game files':
+            'ملفات اللعبة',
         'Game menu (Options)':
             'قائمة اللعبة (Options)',
         'Game server {0}':
@@ -1526,6 +1602,8 @@ WORLD = {
             'استيراد',
         'Import the saves from {} ({}, last played {})?':
             'استيراد ملفات الحفظ من {} ({}، آخر لعب {})؟',
+        'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+            'في نافذة: الحجم الذي تُفتح به. لا يزال بإمكانك سحب حوافها؛ «كما في المرة السابقة» يفتحها بالحجم الذي كانت عليه عند آخر إغلاق للعبة.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'داخل اللعبة، يفتح Insert (لوحة المفاتيح) أو L3 + R3 (يد التحكم) قائمة المنفذ.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
@@ -1584,6 +1662,8 @@ WORLD = {
             'لوحة المفاتيح فقط',
         'Language':
             'اللغة',
+        'Language & sound':
+            'اللغة والصوت',
         'Laptops: plug in the charger, set Windows to best performance, and make sure the game runs on the dedicated graphics card if you have one.':
             'الحواسيب المحمولة: صِل الشاحن، واضبط Windows على «أفضل أداء»، وتأكد من تشغيل اللعبة على بطاقة الرسومات المخصصة إن وُجدت.',
         'Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report':
@@ -1604,6 +1684,8 @@ WORLD = {
             'أدنى الإعدادات (ما يستطيع حاسوبك بلوغه في الأساس)',
         'Made for your PC':
             'مضبوط لحاسوبك',
+        'Main monitor':
+            'الشاشة الرئيسية',
         'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
             'أنشئ التفريغ من نسختك الخاصة من Bloodborne (قرص أو PlayStation Store) على جهاز PS4 الخاص بك. ملفات اللعبة من الإنترنت قرصنة: لا يأتي أي منها مع المنفذ، ولا يساعد أحد في العثور عليها. طلبها أو مشاركتها يخالف القاعدة 2 في Discord المجتمع وقد يؤدي إلى حظرك.',
         'Measure on this PC':
@@ -1628,6 +1710,12 @@ WORLD = {
             'تفاصيل النماذج (LOD) «كما في اللعبة»، ومتجهات حركة الأجسام متوقفة.',
         'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.':
             'يجب ألا تأتي التعديلات بملف eboot.bin خاص بها: الفحص في أعلى هذه الصفحة يذكر أي تعديل يفعل ذلك.',
+        'Monitor':
+            'الشاشة',
+        'Monitor {}':
+            'الشاشة {}',
+        'Monitor {} (not connected: the main monitor is used)':
+            'الشاشة {} (غير متصلة: تُستخدم الشاشة الرئيسية)',
         'Mouse buttons and the scroll wheel are bound in the slots above: click a slot, then click or turn the wheel. They work while the mouse is captured (mouse look on).':
             'تُعيَّن أزرار الماوس وعجلة التمرير في الخانات أعلاه: انقر خانة، ثم انقر أو أدر العجلة. تعمل عندما يكون الماوس محتجزًا داخل اللعبة (النظر بالماوس مفعّل).',
         'Mouse controls':
@@ -1654,6 +1742,8 @@ WORLD = {
             'كتم الصوت عندما تكون اللعبة في الخلفية',
         'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)':
             'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)',
+        'Narrower than 16:9: the picture may look stretched.':
+            'أضيق من 16:9: قد تبدو الصورة ممطوطة.',
         'Needs the boss saves of the mod “{}” (Nexus Mods, free with an account): download “{}”, unpack it, then choose its folder.':
             'يحتاج إلى ملفات حفظ الزعماء من التعديل «{}» (Nexus Mods، مجانًا مع حساب): نزّل «{}» وفك ضغطه ثم اختر مجلده.',
         'New hardware detected: the graphics settings were adjusted to it.':
@@ -1666,6 +1756,8 @@ WORLD = {
             'يمكنك المتابعة بمجرد أن تصبح ملفات اللعبة سليمة: وإلا فلن تبدأ اللعبة أو ستتعطل.',
         'Next time, Play Bloodborne.exe starts the game straight away with these settings.':
             'في المرة القادمة، يشغّل Play Bloodborne.exe اللعبة مباشرةً بهذه الإعدادات.',
+        'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+            'لا توجد إضافة في هذا المجلد: The Old Hunters هو مجلد باسم {} بداخله.',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'لا يوجد ملف حفظ كامل لـ Bloodborne في {} أو مجلداته الفرعية: يلزم userdata0010 وشخصية واحدة على الأقل (من userdata0000 إلى userdata0009).',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
@@ -1846,6 +1938,8 @@ WORLD = {
             'تسجيل المسار…',
         'Recorded: every test of this scenario now replays your route.':
             'تم التسجيل: كل اختبار لهذا السيناريو يعيد الآن تشغيل مسارك.',
+        'Rename the folder {} to {}: the game looks for that exact name.':
+            'أعد تسمية المجلد {} إلى {}: اللعبة تبحث عن هذا الاسم بالضبط.',
         'Repeat the setup':
             'إعادة الإعداد الأولي',
         'Replace your keyboard and mouse bindings with the Dark Souls III layout? Controller bindings stay as they are.':
@@ -1872,6 +1966,10 @@ WORLD = {
             'يقطع المسار نفسه لمدة دقيقتين عبر هذه المنطقة ذهابًا وإيابًا في كل مرة، من ملف الحفظ في التعديل «All Boss Save Files Ready to Fight» (Nexus Mods). لا يمكن أن يموت الصياد ويتركه الأعداء وشأنه: لمعدل الإطارات والتحميل والتقطيع أثناء الحركة ولمقارنة الإعدادات.',
         'SSD':
             'SSD',
+        'Same as the monitor':
+            'مثل الشاشة',
+        'Same as the output resolution':
+            'مثل دقة الإخراج',
         'Save':
             'ملف الحفظ',
         'Save a report':
@@ -2016,12 +2114,20 @@ WORLD = {
             'هذا المفتاح ليس له اسم في bbport؛ اختر مفتاحًا آخر.',
         'The CPU needs AVX, BMI1, MOVBE and LZCNT, which means Intel 4th gen (Haswell) or newer, or any Ryzen.':
             'يحتاج المعالج إلى AVX وBMI1 وMOVBE وLZCNT، أي Intel من الجيل الرابع (Haswell) أو أحدث، أو أي معالج Ryzen.',
+        'The DLC folder does not exist.':
+            'مجلد المحتوى الإضافي غير موجود.',
         'The Dream':
             'الحلم',
         "The Hunter's Dream (with bbhost players)":
             "The Hunter's Dream (مع لاعبي bbhost)",
         "The Hunter's Dream account":
             "حساب The Hunter's Dream",
+        'The Old Hunters found ({}).':
+            'تم العثور على The Old Hunters ({}).',
+        'The Old Hunters found in the saves folder (addcont).':
+            'تم العثور على The Old Hunters في مجلد الحفظ (addcont).',
+        'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+            'The Old Hunters: غير موجود. مطلوب فقط إذا كنت تملكه؛ بدونه تبقى مناطقه مغلقة.',
         'The account you made at supermedo.com.':
             'الحساب الذي أنشأته على supermedo.com.',
         'The check stopped: {}':
@@ -2062,6 +2168,8 @@ WORLD = {
             'رموز الأزرار في اللعبة: مفاتيح لوحة المفاتيح والماوس أثناء اللعب بهما، وأزرار يد التحكم (PlayStation أو Xbox أو Switch) أثناء استخدامها.',
         "The game's own anti-aliasing only without an upscaler: the upscaler smooths edges itself.":
             'التنعيم الخاص باللعبة فقط دون أداة تكبير: فأداة التكبير تنعّم الحواف بنفسها.',
+        "The game's text and voices, the launcher's language, how the game starts and sounds.":
+            'نصوص اللعبة وأصواتها، ولغة المشغّل، وكيف تبدأ اللعبة وكيف يبدو صوتها.',
         "The graphics card's memory runs full":
             'امتلاء ذاكرة بطاقة الرسومات',
         'The graphics driver stopped (device lost)':
@@ -2122,6 +2230,10 @@ WORLD = {
             'هذا الحاسوب لا يلبي المتطلبات. لا يزال بإمكانك المتابعة، لكن على الأرجح لن تعمل اللعبة.',
         'This is not a test scenario: {}':
             'هذا ليس سيناريو اختبار: {}',
+        'This is the add-on itself: choose the folder that contains {}.':
+            'هذه هي الإضافة نفسها: اختر المجلد الذي يحتوي على {}.',
+        'This is the game folder. The DLC folder is the one that contains {}.':
+            'هذا مجلد اللعبة. مجلد المحتوى الإضافي هو الذي يحتوي على {}.',
         'This port has no saves yet.':
             'لا توجد ملفات حفظ لهذا المنفذ بعد.',
         'This port: {}, last played {}':
@@ -2212,6 +2324,12 @@ WORLD = {
             'قدرات حاسوبك، مقيّمة مثل فحص العتاد على bbport.de، واختبارات للعبة تقيسها: أفضل الإعدادات لهدف معين، ومقارنة الإعدادات جنبًا إلى جنب، والثبات.',
         'Where do you come from?':
             'من أين أتيت؟',
+        'Where the game opens, in a window and in fullscreen.':
+            'مكان فتح اللعبة، في نافذة وفي ملء الشاشة.',
+        'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+            'العرض × الارتفاع، مثل 2400x1080 (من 640x360 إلى 7680x4320).',
+        'Window size':
+            'حجم النافذة',
         'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
             'Windows 10 أو 11 (64 بت) وبطاقة رسومات تدعم Vulkan 1.3 بذاكرة فيديو 4 GB على الأقل.',
         'Windows 10 or 11, 64-bit':
@@ -2252,10 +2370,14 @@ WORLD = {
             'شاشتك: {} × {}. الموصى به لحاسوبك: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             'ملف eboot.bin لديك ليس ملف 1.09 السليم (معدّل، أو من نسخة أخرى). لا يستطيع المنفذ ترقيعه: تعمل اللعبة بـ 30 FPS، ولا تعمل خيارات «اللعبة والمؤثرات»، وقد تتجمد بعض المشاهد (مثل المشهد السينمائي بعد روم).\n\nاستبدل eboot.bin بالملف الموجود في تحديث 1.09 غير معدّل.',
+        'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+            'إصدارك (Game of the Year، CUSA03173) يتضمن The Old Hunters بالفعل.',
         'Your game':
             'لعبتك',
         'Your game and your PC':
             'لعبتك وحاسوبك',
+        'Your game dump and its add-ons. Set once, usually by the setup guide.':
+            'نسخة لعبتك وإضافاتها. تُضبط مرة واحدة، عادةً أثناء الإعداد.',
         'Your game dump, its languages and how it starts.':
             'نسخة لعبتك ولغاتها وطريقة تشغيلها.',
         'Your goal':
@@ -2278,10 +2400,14 @@ WORLD = {
             'المعالج هو العامل المحدِّد.',
         'Your setup':
             'إعدادك',
+        'above':
+            'في الأعلى',
         'also {}':
             'وأيضًا {}',
         'as recommended':
             'كما هو موصى به',
+        'below':
+            'في الأسفل',
         'cancelled':
             'أُلغي',
         'checking your PC…':
@@ -2336,18 +2462,28 @@ WORLD = {
             'تجمّدت',
         'last played {}':
             'آخر لعب {}',
+        'last time {} × {}':
+            'آخر مرة {} × {}',
         'measuring…':
             'جارٍ القياس…',
         'no characters':
             'لا توجد شخصيات',
         'no costly effects':
             'دون المؤثرات المكلفة',
+        'not played in a window yet':
+            'لم تُلعب في نافذة بعد',
         'not set':
             'غير محدد',
         'not signed in ›':
             'لم يتم تسجيل الدخول ›',
         'now':
             'الحالي',
+        'now {} × {}':
+            'حاليًا {} × {}',
+        'on the left':
+            'على اليسار',
+        'on the right':
+            'على اليمين',
         'once (about 1½ min per value)':
             'مرة واحدة (نحو 1½ دقيقة لكل قيمة)',
         "only {} GB are free for the game's start right now, it reserves about {} GB.":
@@ -2543,10 +2679,14 @@ WORLD = {
             'Aplicar (reinicia el lanzador)',
         'Apply the settings for my PC':
             'Aplicar los ajustes para mi PC',
+        'As I left it':
+            'Como la última vez',
         'As in the game uses the original voice setting; other choices use available tracks.':
             '«Como en el juego» usa el ajuste de voces original; las demás opciones usan las pistas disponibles.',
         'As many frames as the game allows, up to 120 FPS; the picture made for your PC.':
             'Tantos fotogramas como permita el juego, hasta 120 FPS; la imagen ajustada a tu PC.',
+        'As the game opens it':
+            'Como lo abre el juego',
         "Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your settings and this PC's details (no passwords), so a helper sees the cause at once.":
             'Pregunta en el foro de ayuda del Discord de la comunidad. Guarda un informe y adjúntalo: contiene el registro, tus ajustes y los datos de este PC (sin contraseñas), así quien te ayude verá la causa enseguida.',
         'Attack (R1)':
@@ -2701,6 +2841,8 @@ WORLD = {
             'No se pudo guardar: {}',
         'Ctrl+F':
             'Ctrl+F',
+        'Custom size…':
+            'Tamaño propio…',
         'D-pad up':
             'Cruceta arriba',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
@@ -2807,6 +2949,8 @@ WORLD = {
             'Juego e idioma',
         'Game (43°)':
             'Como en el juego (43°)',
+        'Game files':
+            'Archivos del juego',
         'Game menu (Options)':
             'Menú del juego (Options)',
         'Game server {0}':
@@ -2861,6 +3005,8 @@ WORLD = {
             'Importar',
         'Import the saves from {} ({}, last played {})?':
             '¿Importar las partidas de {} ({}, jugado por última vez {})?',
+        'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+            'En ventana: el tamaño con el que se abre. Puedes seguir arrastrando sus bordes; «Como la última vez» la abre con el tamaño que tenía al cerrar el juego por última vez.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'En el juego, Insert (teclado) o L3 + R3 (mando) abre el menú del port.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
@@ -2919,6 +3065,8 @@ WORLD = {
             'Solo teclado',
         'Language':
             'Idioma',
+        'Language & sound':
+            'Idioma y sonido',
         'Laptops: plug in the charger, set Windows to best performance, and make sure the game runs on the dedicated graphics card if you have one.':
             'Portátiles: conecta el cargador, pon Windows en «Mejor rendimiento» y asegúrate de que el juego use la tarjeta gráfica dedicada si tienes una.',
         'Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report':
@@ -2939,6 +3087,8 @@ WORLD = {
             'Ajustes mínimos (lo que tu PC es capaz de alcanzar)',
         'Made for your PC':
             'Ajustado a tu PC',
+        'Main monitor':
+            'Monitor principal',
         'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
             'Haz el volcado de tu propia copia de Bloodborne (disco o PlayStation Store) en tu propia PS4. Los archivos del juego de internet son piratería: el port no incluye ninguno y nadie ayuda a conseguirlos. Pedirlos o compartirlos incumple la regla 2 del Discord de la comunidad y puede suponer un baneo.',
         'Measure on this PC':
@@ -2963,6 +3113,12 @@ WORLD = {
             'Detalle de modelos (LOD) «Como en el juego», vectores de movimiento de objetos desactivados.',
         'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.':
             'Los mods no deben traer su propio eboot.bin: la comprobación de la parte superior de esta página indica cuáles lo hacen.',
+        'Monitor':
+            'Monitor',
+        'Monitor {}':
+            'Monitor {}',
+        'Monitor {} (not connected: the main monitor is used)':
+            'Monitor {} (no conectado: se usa el monitor principal)',
         'Mouse buttons and the scroll wheel are bound in the slots above: click a slot, then click or turn the wheel. They work while the mouse is captured (mouse look on).':
             'Los botones del ratón y la rueda se asignan en las casillas de arriba: haz clic en una casilla y luego haz clic o gira la rueda. Funcionan mientras el ratón está capturado (vista con ratón activada).',
         'Mouse controls':
@@ -2989,6 +3145,8 @@ WORLD = {
             'Silenciar cuando el juego está en segundo plano',
         'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)':
             'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)',
+        'Narrower than 16:9: the picture may look stretched.':
+            'Más estrecho que 16:9: la imagen puede verse estirada.',
         'Needs the boss saves of the mod “{}” (Nexus Mods, free with an account): download “{}”, unpack it, then choose its folder.':
             'Necesita las partidas de jefes del mod «{}» (Nexus Mods, gratis con una cuenta): descarga «{}», descomprímelo y elige su carpeta.',
         'New hardware detected: the graphics settings were adjusted to it.':
@@ -3001,6 +3159,8 @@ WORLD = {
             'Podrás seguir cuando los archivos del juego estén bien: si no, el juego no se iniciaría o se cerraría.',
         'Next time, Play Bloodborne.exe starts the game straight away with these settings.':
             'La próxima vez, Play Bloodborne.exe iniciará el juego directamente con estos ajustes.',
+        'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+            'No hay ningún add-on en esta carpeta: The Old Hunters es una carpeta llamada {} dentro de ella.',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'No hay una partida completa de Bloodborne en {} ni en sus subcarpetas: necesita userdata0010 y al menos un personaje (userdata0000 a userdata0009).',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
@@ -3181,6 +3341,8 @@ WORLD = {
             'Grabar la ruta…',
         'Recorded: every test of this scenario now replays your route.':
             'Grabada: cada prueba de este escenario reproduce ahora tu ruta.',
+        'Rename the folder {} to {}: the game looks for that exact name.':
+            'Cambia el nombre de la carpeta {} a {}: el juego busca exactamente ese nombre.',
         'Repeat the setup':
             'Repetir la configuración',
         'Replace your keyboard and mouse bindings with the Dark Souls III layout? Controller bindings stay as they are.':
@@ -3207,6 +3369,10 @@ WORLD = {
             'Recorre cada vez la misma ruta de dos minutos por esta zona, ida y vuelta, desde la partida del mod «All Boss Save Files Ready to Fight» (Nexus Mods). El cazador no puede morir y los enemigos lo dejan en paz: para la tasa de fotogramas, la carga y los tirones en movimiento, y para comparar ajustes.',
         'SSD':
             'SSD',
+        'Same as the monitor':
+            'Igual que el monitor',
+        'Same as the output resolution':
+            'Igual que la resolución de salida',
         'Save':
             'Partida',
         'Save a report':
@@ -3351,12 +3517,20 @@ WORLD = {
             'Esa tecla no tiene nombre en bbport; elige otra.',
         'The CPU needs AVX, BMI1, MOVBE and LZCNT, which means Intel 4th gen (Haswell) or newer, or any Ryzen.':
             'La CPU necesita AVX, BMI1, MOVBE y LZCNT, es decir, Intel de 4.ª generación (Haswell) o posterior, o cualquier Ryzen.',
+        'The DLC folder does not exist.':
+            'La carpeta de DLC no existe.',
         'The Dream':
             'El Sueño',
         "The Hunter's Dream (with bbhost players)":
             "The Hunter's Dream (con jugadores de bbhost)",
         "The Hunter's Dream account":
             "Cuenta de The Hunter's Dream",
+        'The Old Hunters found ({}).':
+            'The Old Hunters encontrado ({}).',
+        'The Old Hunters found in the saves folder (addcont).':
+            'The Old Hunters encontrado en la carpeta de partidas (addcont).',
+        'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+            'The Old Hunters: no encontrado. Solo hace falta si lo tienes; sin él, sus zonas siguen cerradas.',
         'The account you made at supermedo.com.':
             'La cuenta que creaste en supermedo.com.',
         'The check stopped: {}':
@@ -3397,6 +3571,8 @@ WORLD = {
             'Los iconos de botones del juego: tus teclas de teclado y ratón mientras juegas con ellos, y los botones del mando (PlayStation, Xbox o Switch) mientras lo usas.',
         "The game's own anti-aliasing only without an upscaler: the upscaler smooths edges itself.":
             'El antialiasing propio del juego solo sin escalador: el escalador ya suaviza los bordes por sí mismo.',
+        "The game's text and voices, the launcher's language, how the game starts and sounds.":
+            'Los textos y las voces del juego, el idioma del lanzador, cómo se inicia y cómo suena el juego.',
         "The graphics card's memory runs full":
             'La memoria de la tarjeta gráfica se llena',
         'The graphics driver stopped (device lost)':
@@ -3457,6 +3633,10 @@ WORLD = {
             'Este PC no cumple los requisitos. Puedes continuar de todos modos, pero lo más probable es que el juego no funcione.',
         'This is not a test scenario: {}':
             'Esto no es un escenario de prueba: {}',
+        'This is the add-on itself: choose the folder that contains {}.':
+            'Este es el propio add-on: elige la carpeta que contiene {}.',
+        'This is the game folder. The DLC folder is the one that contains {}.':
+            'Esta es la carpeta del juego. La carpeta de DLC es la que contiene {}.',
         'This port has no saves yet.':
             'Este port aún no tiene partidas.',
         'This port: {}, last played {}':
@@ -3547,6 +3727,12 @@ WORLD = {
             'Lo que puede hacer tu PC, valorado como en la comprobación de hardware de bbport.de, y pruebas de juego que lo miden: los mejores ajustes para un objetivo, ajustes comparados y estabilidad.',
         'Where do you come from?':
             '¿De dónde vienes?',
+        'Where the game opens, in a window and in fullscreen.':
+            'Dónde se abre el juego, en ventana y en pantalla completa.',
+        'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+            'Ancho × alto, p. ej. 2400x1080 (de 640x360 a 7680x4320).',
+        'Window size':
+            'Tamaño de ventana',
         'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
             'Windows 10 u 11 (64 bits) y una tarjeta gráfica con Vulkan 1.3 y al menos 4 GB de memoria de vídeo.',
         'Windows 10 or 11, 64-bit':
@@ -3587,10 +3773,14 @@ WORLD = {
             'Tu pantalla: {} × {}. Recomendado para tu PC: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             'Tu eboot.bin no es el limpio de la 1.09 (modificado o de otro volcado). El port no puede parchearlo: el juego va a 30 FPS, las opciones de Juego y efectos no hacen nada y algunas escenas (como la cinemática tras Rom) pueden congelarse.\n\nReemplaza eboot.bin por el de una actualización 1.09 sin modificar.',
+        'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+            'Tu edición (Game of the Year, CUSA03173) ya incluye The Old Hunters.',
         'Your game':
             'Tu juego',
         'Your game and your PC':
             'Tu juego y tu PC',
+        'Your game dump and its add-ons. Set once, usually by the setup guide.':
+            'Tu volcado del juego y sus add-ons. Se configura una vez, normalmente en la configuración inicial.',
         'Your game dump, its languages and how it starts.':
             'Tu volcado del juego, sus idiomas y cómo se inicia.',
         'Your goal':
@@ -3613,10 +3803,14 @@ WORLD = {
             'El límite lo pone tu procesador.',
         'Your setup':
             'Tu configuración',
+        'above':
+            'arriba',
         'also {}':
             'también {}',
         'as recommended':
             'según lo recomendado',
+        'below':
+            'abajo',
         'cancelled':
             'cancelado',
         'checking your PC…':
@@ -3671,18 +3865,28 @@ WORLD = {
             'se congeló',
         'last played {}':
             'jugado por última vez {}',
+        'last time {} × {}':
+            'la última vez {} × {}',
         'measuring…':
             'midiendo…',
         'no characters':
             'sin personajes',
         'no costly effects':
             'sin efectos costosos',
+        'not played in a window yet':
+            'aún no se ha jugado en ventana',
         'not set':
             'sin definir',
         'not signed in ›':
             'sin iniciar sesión ›',
         'now':
             'actual',
+        'now {} × {}':
+            'ahora {} × {}',
+        'on the left':
+            'a la izquierda',
+        'on the right':
+            'a la derecha',
         'once (about 1½ min per value)':
             'una vez (aprox. 1½ min por valor)',
         "only {} GB are free for the game's start right now, it reserves about {} GB.":
@@ -3878,8 +4082,12 @@ WORLD = {
             'Aplicar (reinicia o launcher)',
         'Apply the settings for my PC':
             'Aplicar as configurações para o meu PC',
+        'As I left it':
+            'Como da última vez',
         'As many frames as the game allows, up to 120 FPS; the picture made for your PC.':
             'Tantos quadros quanto o jogo permitir, até 120 FPS; a imagem ajustada ao seu PC.',
+        'As the game opens it':
+            'Como o jogo abre',
         "Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your settings and this PC's details (no passwords), so a helper sees the cause at once.":
             'Pergunte no fórum de ajuda do Discord da comunidade. Salve um relatório e anexe-o: ele traz o registro, as suas configurações e os dados deste PC (sem senhas), e assim quem for ajudar vê a causa na hora.',
         'Attack (R1)':
@@ -4034,6 +4242,8 @@ WORLD = {
             'Não foi possível salvar: {}',
         'Ctrl+F':
             'Ctrl+F',
+        'Custom size…':
+            'Tamanho próprio…',
         'D-pad up':
             'Direcional para cima',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
@@ -4140,6 +4350,8 @@ WORLD = {
             'Jogo e idioma',
         'Game (43°)':
             'Como no jogo (43°)',
+        'Game files':
+            'Arquivos do jogo',
         'Game menu (Options)':
             'Menu do jogo (Options)',
         'Game server {0}':
@@ -4194,6 +4406,8 @@ WORLD = {
             'Importar',
         'Import the saves from {} ({}, last played {})?':
             'Importar os saves de {} ({}, última partida em {})?',
+        'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+            'Em janela: o tamanho com que ela abre. Você ainda pode arrastar as bordas; "Como da última vez" abre no tamanho que tinha quando você fechou o jogo pela última vez.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'No jogo, Insert (teclado) ou L3 + R3 (controle) abre o menu do port.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
@@ -4252,6 +4466,8 @@ WORLD = {
             'Só teclado',
         'Language':
             'Idioma',
+        'Language & sound':
+            'Idioma e som',
         'Laptops: plug in the charger, set Windows to best performance, and make sure the game runs on the dedicated graphics card if you have one.':
             'Notebooks: ligue o carregador, coloque o Windows em Melhor desempenho e confira se o jogo roda na placa de vídeo dedicada, se você tiver uma.',
         'Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report':
@@ -4272,6 +4488,8 @@ WORLD = {
             'Configurações mínimas (o limite do que o seu PC alcança)',
         'Made for your PC':
             'Ajustado para o seu PC',
+        'Main monitor':
+            'Monitor principal',
         'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
             'Faça o dump da sua própria cópia de Bloodborne (disco ou PlayStation Store) no seu próprio PS4. Arquivos do jogo baixados da internet são pirataria: nenhum vem com o port, e ninguém ajuda a encontrá-los. Pedir ou compartilhar esses arquivos viola a regra 2 do Discord da comunidade e pode resultar em banimento.',
         'Measure on this PC':
@@ -4296,6 +4514,12 @@ WORLD = {
             'Detalhe dos modelos (LOD) "Como no jogo", vetores de movimento de objetos desligados.',
         'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.':
             'Os mods não podem trazer o próprio eboot.bin: a verificação no topo desta página aponta os que trazem.',
+        'Monitor':
+            'Monitor',
+        'Monitor {}':
+            'Monitor {}',
+        'Monitor {} (not connected: the main monitor is used)':
+            'Monitor {} (não conectado: o monitor principal é usado)',
         'Mouse buttons and the scroll wheel are bound in the slots above: click a slot, then click or turn the wheel. They work while the mouse is captured (mouse look on).':
             'Os botões do mouse e a roda são mapeados nos campos acima: clique em um campo e depois clique ou gire a roda. Eles funcionam enquanto o mouse está capturado (câmera pelo mouse ligada).',
         'Mouse controls':
@@ -4322,6 +4546,8 @@ WORLD = {
             'Silenciar quando o jogo estiver em segundo plano',
         'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)':
             'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)',
+        'Narrower than 16:9: the picture may look stretched.':
+            'Mais estreito que 16:9: a imagem pode parecer esticada.',
         'Needs the boss saves of the mod “{}” (Nexus Mods, free with an account): download “{}”, unpack it, then choose its folder.':
             'Precisa dos saves de chefes do mod “{}” (Nexus Mods, grátis com uma conta): baixe “{}”, descompacte e escolha a pasta.',
         'New hardware detected: the graphics settings were adjusted to it.':
@@ -4334,6 +4560,8 @@ WORLD = {
             'Você pode avançar quando os arquivos do jogo estiverem certos: sem isso, o jogo não iniciaria ou travaria.',
         'Next time, Play Bloodborne.exe starts the game straight away with these settings.':
             'Da próxima vez, o Play Bloodborne.exe inicia o jogo direto com estas configurações.',
+        'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+            'Nenhum add-on nesta pasta: The Old Hunters é uma pasta chamada {} dentro dela.',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'Nenhum save completo do Bloodborne em {} ou nas subpastas: é preciso o userdata0010 e pelo menos um personagem (userdata0000 a userdata0009).',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
@@ -4514,6 +4742,8 @@ WORLD = {
             'Gravar o trajeto…',
         'Recorded: every test of this scenario now replays your route.':
             'Gravado: cada teste deste cenário agora reproduz o seu trajeto.',
+        'Rename the folder {} to {}: the game looks for that exact name.':
+            'Renomeie a pasta {} para {}: o jogo procura exatamente esse nome.',
         'Repeat the setup':
             'Repetir a configuração inicial',
         'Replace your keyboard and mouse bindings with the Dark Souls III layout? Controller bindings stay as they are.':
@@ -4540,6 +4770,10 @@ WORLD = {
             'Percorre sempre o mesmo trajeto de dois minutos por esta área, ida e volta, a partir do save do mod “All Boss Save Files Ready to Fight” (Nexus Mods). O caçador não pode morrer e os inimigos o deixam em paz: para taxa de quadros, carregamento e engasgos em movimento e para comparar configurações.',
         'SSD':
             'SSD',
+        'Same as the monitor':
+            'Igual ao monitor',
+        'Same as the output resolution':
+            'Igual à resolução de saída',
         'Save':
             'Save',
         'Save a report':
@@ -4682,12 +4916,20 @@ WORLD = {
             'Essa tecla não tem nome no bbport; escolha outra.',
         'The CPU needs AVX, BMI1, MOVBE and LZCNT, which means Intel 4th gen (Haswell) or newer, or any Ryzen.':
             'A CPU precisa de AVX, BMI1, MOVBE e LZCNT, ou seja, Intel de 4ª geração (Haswell) ou mais nova, ou qualquer Ryzen.',
+        'The DLC folder does not exist.':
+            'A pasta de DLC não existe.',
         'The Dream':
             'O Sonho',
         "The Hunter's Dream (with bbhost players)":
             "The Hunter's Dream (com jogadores do bbhost)",
         "The Hunter's Dream account":
             "Conta do The Hunter's Dream",
+        'The Old Hunters found ({}).':
+            'The Old Hunters encontrado ({}).',
+        'The Old Hunters found in the saves folder (addcont).':
+            'The Old Hunters encontrado na pasta de saves (addcont).',
+        'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+            'The Old Hunters: não encontrado. Só é necessário se você o tiver; sem ele, suas áreas continuam fechadas.',
         'The account you made at supermedo.com.':
             'A conta que você criou em supermedo.com.',
         'The check stopped: {}':
@@ -4728,6 +4970,8 @@ WORLD = {
             'Os ícones de botões do jogo: as teclas e botões do seu teclado e mouse enquanto você joga com eles, os botões do controle (PlayStation, Xbox ou Switch) enquanto você o usa.',
         "The game's own anti-aliasing only without an upscaler: the upscaler smooths edges itself.":
             'O anti-aliasing do próprio jogo só sem upscaler: o upscaler já suaviza as bordas.',
+        "The game's text and voices, the launcher's language, how the game starts and sounds.":
+            'Os textos e as vozes do jogo, o idioma do launcher, como o jogo inicia e como soa.',
         "The graphics card's memory runs full":
             'A memória da placa de vídeo fica cheia',
         'The graphics driver stopped (device lost)':
@@ -4788,6 +5032,10 @@ WORLD = {
             'Este PC não atende aos requisitos. Você ainda pode continuar, mas o jogo provavelmente não vai rodar.',
         'This is not a test scenario: {}':
             'Isto não é um cenário de teste: {}',
+        'This is the add-on itself: choose the folder that contains {}.':
+            'Este é o próprio add-on: escolha a pasta que contém {}.',
+        'This is the game folder. The DLC folder is the one that contains {}.':
+            'Esta é a pasta do jogo. A pasta de DLC é a que contém {}.',
         'This port has no saves yet.':
             'Este port ainda não tem saves.',
         'This port: {}, last played {}':
@@ -4876,6 +5124,12 @@ WORLD = {
             'O que o seu PC consegue fazer, avaliado como na verificação de hardware do bbport.de, e testes de jogo que medem isso: as melhores configurações para um objetivo, configurações lado a lado, estabilidade.',
         'Where do you come from?':
             'De onde você vem?',
+        'Where the game opens, in a window and in fullscreen.':
+            'Onde o jogo abre, em janela e em tela cheia.',
+        'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+            'Largura × altura, ex.: 2400x1080 (de 640x360 a 7680x4320).',
+        'Window size':
+            'Tamanho da janela',
         'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
             'Windows 10 ou 11 (64 bits) e uma placa de vídeo com Vulkan 1.3 e pelo menos 4 GB de memória de vídeo.',
         'Windows 10 or 11, 64-bit':
@@ -4916,10 +5170,14 @@ WORLD = {
             'Sua tela: {} × {}. Recomendado para o seu PC: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             'Seu eboot.bin não é o 1.09 limpo (modificado ou de outro dump). O port não consegue aplicar patches nele: o jogo roda a 30 FPS, as opções de efeitos não fazem nada e algumas cenas (como a cutscene depois de Rom) podem congelar.\n\nSubstitua o eboot.bin pelo de uma atualização 1.09 não modificada (a Ajuda mostra como).',
+        'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+            'Sua edição (Game of the Year, CUSA03173) já inclui The Old Hunters.',
         'Your game':
             'Seu jogo',
         'Your game and your PC':
             'Seu jogo e seu PC',
+        'Your game dump and its add-ons. Set once, usually by the setup guide.':
+            'Seu dump do jogo e os add-ons dele. Configurado uma vez, normalmente na configuração inicial.',
         'Your game dump, its languages and how it starts.':
             'Seu dump do jogo, os idiomas dele e como ele inicia.',
         'Your goal':
@@ -4942,10 +5200,14 @@ WORLD = {
             'Seu processador é o limite.',
         'Your setup':
             'Sua configuração',
+        'above':
+            'acima',
         'also {}':
             'também {}',
         'as recommended':
             'como recomendado',
+        'below':
+            'abaixo',
         'cancelled':
             'cancelado',
         'checking your PC…':
@@ -5000,18 +5262,28 @@ WORLD = {
             'congelou',
         'last played {}':
             'última partida em {}',
+        'last time {} × {}':
+            'da última vez {} × {}',
         'measuring…':
             'medindo…',
         'no characters':
             'nenhum personagem',
         'no costly effects':
             'sem efeitos pesados',
+        'not played in a window yet':
+            'ainda não jogado em janela',
         'not set':
             'não definido',
         'not signed in ›':
             'não conectado ›',
         'now':
             'atual',
+        'now {} × {}':
+            'agora {} × {}',
+        'on the left':
+            'à esquerda',
+        'on the right':
+            'à direita',
         'once (about 1½ min per value)':
             'uma vez (cerca de 1½ min por valor)',
         "only {} GB are free for the game's start right now, it reserves about {} GB.":
@@ -5207,10 +5479,14 @@ WORLD = {
             'Appliquer (redémarre le lanceur)',
         'Apply the settings for my PC':
             'Appliquer les réglages pour mon PC',
+        'As I left it':
+            'Comme la dernière fois',
         'As in the game uses the original voice setting; other choices use available tracks.':
             '« Comme dans le jeu » utilise le réglage de voix d’origine ; les autres choix utilisent les pistes disponibles.',
         'As many frames as the game allows, up to 120 FPS; the picture made for your PC.':
             'Autant d’images que le jeu le permet, jusqu’à 120 FPS ; l’image adaptée à votre PC.',
+        'As the game opens it':
+            "Comme le jeu l'ouvre",
         "Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your settings and this PC's details (no passwords), so a helper sees the cause at once.":
             'Demandez dans le forum d’aide du Discord de la communauté. Enregistrez un rapport et joignez-le : il contient le journal, vos réglages et les caractéristiques de ce PC (aucun mot de passe), ce qui permet à la personne qui vous aide de voir la cause tout de suite.',
         'Attack (R1)':
@@ -5365,6 +5641,8 @@ WORLD = {
             'Impossible de l’enregistrer : {}',
         'Ctrl+F':
             'Ctrl+F',
+        'Custom size…':
+            'Taille personnalisée…',
         'D-pad up':
             'Croix directionnelle haut',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
@@ -5471,6 +5749,8 @@ WORLD = {
             'Jeu et langue',
         'Game (43°)':
             'Comme dans le jeu (43°)',
+        'Game files':
+            'Fichiers du jeu',
         'Game menu (Options)':
             'Menu du jeu (Options)',
         'Game server {0}':
@@ -5525,6 +5805,8 @@ WORLD = {
             'Importer',
         'Import the saves from {} ({}, last played {})?':
             'Importer les sauvegardes de {} ({}, dernière partie : {}) ?',
+        'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+            "En fenêtre : la taille à l'ouverture. Vous pouvez toujours en tirer les bords ; « Comme la dernière fois » l'ouvre à la taille qu'elle avait quand vous avez fermé le jeu.",
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'En jeu, Inser (clavier) ou L3 + R3 (manette) ouvre le menu du portage.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
@@ -5583,6 +5865,8 @@ WORLD = {
             'Clavier uniquement',
         'Language':
             'Langue',
+        'Language & sound':
+            'Langue et son',
         'Laptops: plug in the charger, set Windows to best performance, and make sure the game runs on the dedicated graphics card if you have one.':
             'Portables : branchez le chargeur, réglez Windows sur « Performances optimales » et assurez-vous que le jeu tourne sur la carte graphique dédiée si vous en avez une.',
         'Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report':
@@ -5603,6 +5887,8 @@ WORLD = {
             'Réglages minimaux (ce que votre PC peut atteindre au maximum)',
         'Made for your PC':
             'Adapté à votre PC',
+        'Main monitor':
+            'Moniteur principal',
         'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
             'Faites le dump de votre propre copie de Bloodborne (disque ou PlayStation Store) sur votre propre PS4. Les fichiers du jeu venant d’internet relèvent du piratage : aucun n’est fourni avec le portage, et personne n’aide à en trouver. Les demander ou les partager enfreint la règle 2 du Discord de la communauté et peut entraîner un bannissement.',
         'Measure on this PC':
@@ -5627,6 +5913,12 @@ WORLD = {
             'Détail des modèles (LOD) « Comme dans le jeu », vecteurs de mouvement des objets désactivés.',
         'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.':
             'Les mods ne doivent pas apporter leur propre eboot.bin : la vérification en haut de cette page indique ceux qui le font.',
+        'Monitor':
+            'Moniteur',
+        'Monitor {}':
+            'Moniteur {}',
+        'Monitor {} (not connected: the main monitor is used)':
+            'Moniteur {} (non branché : le moniteur principal est utilisé)',
         'Mouse buttons and the scroll wheel are bound in the slots above: click a slot, then click or turn the wheel. They work while the mouse is captured (mouse look on).':
             'Les boutons de la souris et la molette s’assignent dans les emplacements ci-dessus : cliquez sur un emplacement, puis cliquez ou tournez la molette. Ils fonctionnent tant que la souris est capturée (caméra à la souris activée).',
         'Mouse controls':
@@ -5653,6 +5945,8 @@ WORLD = {
             'Couper le son quand le jeu est en arrière-plan',
         'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)':
             'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)',
+        'Narrower than 16:9: the picture may look stretched.':
+            "Plus étroit que 16:9 : l'image peut paraître étirée.",
         'Needs the boss saves of the mod “{}” (Nexus Mods, free with an account): download “{}”, unpack it, then choose its folder.':
             'Nécessite les sauvegardes de boss du mod « {} » (Nexus Mods, gratuit avec un compte) : téléchargez « {} », décompressez-le, puis choisissez son dossier.',
         'New hardware detected: the graphics settings were adjusted to it.':
@@ -5665,6 +5959,8 @@ WORLD = {
             '« Suivant » sera disponible dès que les fichiers du jeu seront corrects : sans cela, le jeu ne démarrerait pas ou planterait.',
         'Next time, Play Bloodborne.exe starts the game straight away with these settings.':
             'La prochaine fois, Play Bloodborne.exe lancera directement le jeu avec ces réglages.',
+        'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+            "Aucune extension dans ce dossier : The Old Hunters est un dossier nommé {} à l'intérieur.",
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'Aucune sauvegarde Bloodborne complète dans {} ou ses sous-dossiers : il faut userdata0010 et au moins un personnage (userdata0000 à userdata0009).',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
@@ -5845,6 +6141,8 @@ WORLD = {
             'Enregistrer le trajet…',
         'Recorded: every test of this scenario now replays your route.':
             'Enregistré : chaque test de ce scénario rejoue maintenant votre trajet.',
+        'Rename the folder {} to {}: the game looks for that exact name.':
+            'Renommez le dossier {} en {} : le jeu cherche exactement ce nom.',
         'Repeat the setup':
             'Refaire la configuration',
         'Replace your keyboard and mouse bindings with the Dark Souls III layout? Controller bindings stay as they are.':
@@ -5871,6 +6169,10 @@ WORLD = {
             'Parcourt à chaque fois le même trajet de deux minutes dans cette zone, aller et retour, depuis la sauvegarde du mod « All Boss Save Files Ready to Fight » (Nexus Mods). Le chasseur ne peut pas mourir et les ennemis le laissent tranquille : pour la fréquence d’images, le chargement et les saccades en mouvement, et pour comparer des réglages.',
         'SSD':
             'SSD',
+        'Same as the monitor':
+            'Comme le moniteur',
+        'Same as the output resolution':
+            'Comme la résolution de sortie',
         'Save':
             'Sauvegarde',
         'Save a report':
@@ -6015,12 +6317,20 @@ WORLD = {
             'Cette touche n’a pas de nom bbport ; choisissez-en une autre.',
         'The CPU needs AVX, BMI1, MOVBE and LZCNT, which means Intel 4th gen (Haswell) or newer, or any Ryzen.':
             'Le processeur doit gérer AVX, BMI1, MOVBE et LZCNT, c’est-à-dire un Intel de 4e génération (Haswell) ou plus récent, ou n’importe quel Ryzen.',
+        'The DLC folder does not exist.':
+            "Le dossier des DLC n'existe pas.",
         'The Dream':
             'Le Rêve',
         "The Hunter's Dream (with bbhost players)":
             "The Hunter's Dream (avec les joueurs bbhost)",
         "The Hunter's Dream account":
             "Compte The Hunter's Dream",
+        'The Old Hunters found ({}).':
+            'The Old Hunters trouvé ({}).',
+        'The Old Hunters found in the saves folder (addcont).':
+            'The Old Hunters trouvé dans le dossier des sauvegardes (addcont).',
+        'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+            'The Old Hunters : introuvable. Nécessaire seulement si vous le possédez ; sans lui, ses zones restent fermées.',
         'The account you made at supermedo.com.':
             'Le compte que vous avez créé sur supermedo.com.',
         'The check stopped: {}':
@@ -6061,6 +6371,8 @@ WORLD = {
             'Les icônes des boutons du jeu : vos touches clavier et souris tant que vous jouez avec, celles de la manette (PlayStation, Xbox ou Switch) tant que vous l’utilisez.',
         "The game's own anti-aliasing only without an upscaler: the upscaler smooths edges itself.":
             'L’anticrénelage propre au jeu uniquement sans upscaler : l’upscaler lisse lui-même les contours.',
+        "The game's text and voices, the launcher's language, how the game starts and sounds.":
+            'Les textes et les voix du jeu, la langue du lanceur, le démarrage et le son du jeu.',
         "The graphics card's memory runs full":
             'La mémoire de la carte graphique est saturée',
         'The graphics driver stopped (device lost)':
@@ -6121,6 +6433,10 @@ WORLD = {
             'Ce PC ne remplit pas la configuration requise. Vous pouvez continuer quand même, mais le jeu ne fonctionnera probablement pas.',
         'This is not a test scenario: {}':
             'Ce n’est pas un scénario de test : {}',
+        'This is the add-on itself: choose the folder that contains {}.':
+            "C'est l'extension elle-même : choisissez le dossier qui contient {}.",
+        'This is the game folder. The DLC folder is the one that contains {}.':
+            "C'est le dossier du jeu. Le dossier des DLC est celui qui contient {}.",
         'This port has no saves yet.':
             'Ce portage n’a pas encore de sauvegardes.',
         'This port: {}, last played {}':
@@ -6211,6 +6527,12 @@ WORLD = {
             'Ce dont votre PC est capable, évalué comme dans la vérification du matériel de bbport.de, et des tests en jeu qui le mesurent : les meilleurs réglages pour un objectif, des réglages côte à côte, la stabilité.',
         'Where do you come from?':
             'D’où venez-vous ?',
+        'Where the game opens, in a window and in fullscreen.':
+            "Où le jeu s'ouvre, en fenêtre et en plein écran.",
+        'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+            'Largeur × hauteur, par ex. 2400x1080 (de 640x360 à 7680x4320).',
+        'Window size':
+            'Taille de la fenêtre',
         'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
             'Windows 10 ou 11 (64 bits) et une carte graphique compatible Vulkan 1.3 avec au moins 4 Go de mémoire vidéo.',
         'Windows 10 or 11, 64-bit':
@@ -6251,10 +6573,14 @@ WORLD = {
             'Votre écran : {} × {}. Recommandé pour votre PC : {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             'Votre eboot.bin n’est pas celui d’origine de la 1.09 (modifié, ou issu d’un autre dump). Le portage ne peut pas le patcher : le jeu tourne à 30 FPS, les options d’effets n’ont aucun effet, et certaines scènes (comme la cinématique après Rom) peuvent se figer.\n\nRemplacez eboot.bin par celui d’une mise à jour 1.09 non modifiée.',
+        'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+            'Votre édition (Game of the Year, CUSA03173) inclut déjà The Old Hunters.',
         'Your game':
             'Votre jeu',
         'Your game and your PC':
             'Votre jeu et votre PC',
+        'Your game dump and its add-ons. Set once, usually by the setup guide.':
+            'Votre dump du jeu et ses extensions. Réglé une fois, en général lors de la configuration.',
         'Your game dump, its languages and how it starts.':
             'Votre dump du jeu, ses langues et son lancement.',
         'Your goal':
@@ -6277,10 +6603,14 @@ WORLD = {
             'Votre processeur fixe la limite.',
         'Your setup':
             'Votre configuration',
+        'above':
+            'au-dessus',
         'also {}':
             'aussi {}',
         'as recommended':
             'comme recommandé',
+        'below':
+            'en dessous',
         'cancelled':
             'annulé',
         'checking your PC…':
@@ -6335,18 +6665,28 @@ WORLD = {
             'figé',
         'last played {}':
             'dernière partie : {}',
+        'last time {} × {}':
+            'la dernière fois {} × {}',
         'measuring…':
             'mesure en cours…',
         'no characters':
             'aucun personnage',
         'no costly effects':
             'sans effets coûteux',
+        'not played in a window yet':
+            'pas encore joué en fenêtre',
         'not set':
             'non défini',
         'not signed in ›':
             'non connecté ›',
         'now':
             'actuel',
+        'now {} × {}':
+            'actuellement {} × {}',
+        'on the left':
+            'à gauche',
+        'on the right':
+            'à droite',
         'once (about 1½ min per value)':
             'une fois (environ 1½ min par valeur)',
         "only {} GB are free for the game's start right now, it reserves about {} GB.":
@@ -6542,10 +6882,14 @@ WORLD = {
             'Applica (riavvia il launcher)',
         'Apply the settings for my PC':
             'Applica le impostazioni per il mio PC',
+        'As I left it':
+            "Come l'ultima volta",
         'As in the game uses the original voice setting; other choices use available tracks.':
             '"Come nel gioco" usa l’impostazione originale delle voci; le altre scelte usano le tracce disponibili.',
         'As many frames as the game allows, up to 120 FPS; the picture made for your PC.':
             'Quanti più fotogrammi il gioco consente, fino a 120 FPS; l’immagine pensata per il tuo PC.',
+        'As the game opens it':
+            'Come la apre il gioco',
         "Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your settings and this PC's details (no passwords), so a helper sees the cause at once.":
             'Chiedi nel forum di aiuto del Discord della community. Salva un rapporto e allegalo: contiene il registro, le tue impostazioni e i dati di questo PC (nessuna password), così chi ti aiuta vede subito la causa.',
         'Attack (R1)':
@@ -6700,6 +7044,8 @@ WORLD = {
             'Impossibile salvarlo: {}',
         'Ctrl+F':
             'Ctrl+F',
+        'Custom size…':
+            'Dimensione personalizzata…',
         'D-pad up':
             'Croce direzionale su',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
@@ -6806,6 +7152,8 @@ WORLD = {
             'Gioco e lingua',
         'Game (43°)':
             'Come nel gioco (43°)',
+        'Game files':
+            'File del gioco',
         'Game menu (Options)':
             'Menu di gioco (Options)',
         'Game server {0}':
@@ -6860,6 +7208,8 @@ WORLD = {
             'Importa',
         'Import the saves from {} ({}, last played {})?':
             'Importare i salvataggi da {} ({}, ultima partita {})?',
+        'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+            "In finestra: la dimensione all'apertura. Puoi comunque trascinarne i bordi; «Come l'ultima volta» la apre con la dimensione che aveva quando hai chiuso il gioco l'ultima volta.",
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'Nel gioco, Ins (tastiera) o L3 + R3 (controller) apre il menu del port.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
@@ -6918,6 +7268,8 @@ WORLD = {
             'Solo tastiera',
         'Language':
             'Lingua',
+        'Language & sound':
+            'Lingua e audio',
         'Laptops: plug in the charger, set Windows to best performance, and make sure the game runs on the dedicated graphics card if you have one.':
             'Portatili: collega il caricabatterie, imposta Windows su "Prestazioni ottimali" e assicurati che il gioco usi la scheda video dedicata, se ne hai una.',
         'Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report':
@@ -6938,6 +7290,8 @@ WORLD = {
             'Impostazioni minime (il massimo che il tuo PC può raggiungere)',
         'Made for your PC':
             'Su misura per il tuo PC',
+        'Main monitor':
+            'Monitor principale',
         'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
             'Crea il dump dalla tua copia di Bloodborne (disco o PlayStation Store) sulla tua PS4. I file del gioco presi da internet sono pirateria: il port non ne contiene nessuno e nessuno aiuta a trovarli. Chiederli o condividerli viola la regola 2 del Discord della community e può portare a un ban.',
         'Measure on this PC':
@@ -6962,6 +7316,12 @@ WORLD = {
             'Dettaglio modelli (LOD) "Come nel gioco", vettori di movimento degli oggetti disattivati.',
         'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.':
             'Le mod non devono portare un proprio eboot.bin: la verifica in cima a questa pagina indica quelle che lo fanno.',
+        'Monitor':
+            'Monitor',
+        'Monitor {}':
+            'Monitor {}',
+        'Monitor {} (not connected: the main monitor is used)':
+            'Monitor {} (non collegato: si usa il monitor principale)',
         'Mouse buttons and the scroll wheel are bound in the slots above: click a slot, then click or turn the wheel. They work while the mouse is captured (mouse look on).':
             'I pulsanti del mouse e la rotellina si assegnano nelle caselle qui sopra: fai clic su una casella, poi fai clic o gira la rotellina. Funzionano mentre il mouse è catturato (visuale col mouse attiva).',
         'Mouse controls':
@@ -6988,6 +7348,8 @@ WORLD = {
             'Silenzia quando il gioco è in background',
         'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)':
             'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)',
+        'Narrower than 16:9: the picture may look stretched.':
+            "Più stretto di 16:9: l'immagine può sembrare allungata.",
         'Needs the boss saves of the mod “{}” (Nexus Mods, free with an account): download “{}”, unpack it, then choose its folder.':
             'Servono i salvataggi dei boss della mod «{}» (Nexus Mods, gratis con un account): scarica «{}», estrailo e scegli la sua cartella.',
         'New hardware detected: the graphics settings were adjusted to it.':
@@ -7000,6 +7362,8 @@ WORLD = {
             'Potrai proseguire quando i file del gioco saranno a posto: altrimenti il gioco non si avvierebbe o andrebbe in crash.',
         'Next time, Play Bloodborne.exe starts the game straight away with these settings.':
             'La prossima volta, Play Bloodborne.exe avvia subito il gioco con queste impostazioni.',
+        'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+            'Nessun contenuto aggiuntivo in questa cartella: The Old Hunters è una cartella chiamata {} al suo interno.',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'Nessun salvataggio completo di Bloodborne in {} o nelle sue sottocartelle: servono userdata0010 e almeno un personaggio (da userdata0000 a userdata0009).',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
@@ -7180,6 +7544,8 @@ WORLD = {
             'Registra il tragitto…',
         'Recorded: every test of this scenario now replays your route.':
             'Registrato: ogni test di questo scenario ora riproduce il tuo tragitto.',
+        'Rename the folder {} to {}: the game looks for that exact name.':
+            'Rinomina la cartella {} in {}: il gioco cerca esattamente quel nome.',
         'Repeat the setup':
             'Ripeti la configurazione',
         'Replace your keyboard and mouse bindings with the Dark Souls III layout? Controller bindings stay as they are.':
@@ -7206,6 +7572,10 @@ WORLD = {
             'Percorre ogni volta lo stesso tragitto di due minuti in quest’area, andata e ritorno, dal salvataggio della mod «All Boss Save Files Ready to Fight» (Nexus Mods). Il cacciatore non può morire e i nemici lo lasciano in pace: per frequenza fotogrammi, caricamenti e scatti in movimento e per confrontare le impostazioni.',
         'SSD':
             'SSD',
+        'Same as the monitor':
+            'Come il monitor',
+        'Same as the output resolution':
+            'Come la risoluzione di uscita',
         'Save':
             'Salvataggio',
         'Save a report':
@@ -7350,12 +7720,20 @@ WORLD = {
             'Quel tasto non ha un nome bbport; scegline un altro.',
         'The CPU needs AVX, BMI1, MOVBE and LZCNT, which means Intel 4th gen (Haswell) or newer, or any Ryzen.':
             'La CPU richiede AVX, BMI1, MOVBE e LZCNT, cioè un Intel di 4ª generazione (Haswell) o successivo, oppure qualsiasi Ryzen.',
+        'The DLC folder does not exist.':
+            'La cartella DLC non esiste.',
         'The Dream':
             'Il Sogno',
         "The Hunter's Dream (with bbhost players)":
             "The Hunter's Dream (con i giocatori di bbhost)",
         "The Hunter's Dream account":
             "Account The Hunter's Dream",
+        'The Old Hunters found ({}).':
+            'The Old Hunters trovato ({}).',
+        'The Old Hunters found in the saves folder (addcont).':
+            'The Old Hunters trovato nella cartella dei salvataggi (addcont).',
+        'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+            'The Old Hunters: non trovato. Serve solo se lo possiedi; senza, le sue aree restano chiuse.',
         'The account you made at supermedo.com.':
             'L’account che hai creato su supermedo.com.',
         'The check stopped: {}':
@@ -7396,6 +7774,8 @@ WORLD = {
             'Le icone dei tasti nel gioco: quelle di tastiera e mouse mentre giochi con essi, quelle del controller (PlayStation, Xbox o Switch) mentre usi il controller.',
         "The game's own anti-aliasing only without an upscaler: the upscaler smooths edges itself.":
             'L’antialiasing del gioco solo senza upscaler: l’upscaler leviga i bordi da solo.',
+        "The game's text and voices, the launcher's language, how the game starts and sounds.":
+            'Testi e voci del gioco, la lingua del launcher, come il gioco si avvia e come suona.',
         "The graphics card's memory runs full":
             'La memoria della scheda video si riempie',
         'The graphics driver stopped (device lost)':
@@ -7456,6 +7836,10 @@ WORLD = {
             'Questo PC non soddisfa i requisiti. Puoi comunque proseguire, ma probabilmente il gioco non funzionerà.',
         'This is not a test scenario: {}':
             'Questo non è uno scenario di test: {}',
+        'This is the add-on itself: choose the folder that contains {}.':
+            'Questo è il contenuto aggiuntivo stesso: scegli la cartella che contiene {}.',
+        'This is the game folder. The DLC folder is the one that contains {}.':
+            'Questa è la cartella del gioco. La cartella DLC è quella che contiene {}.',
         'This port has no saves yet.':
             'Questo port non ha ancora salvataggi.',
         'This port: {}, last played {}':
@@ -7546,6 +7930,12 @@ WORLD = {
             'Cosa può fare il tuo PC, valutato come nella verifica hardware su bbport.de, e test di gioco che lo misurano: le impostazioni migliori per un obiettivo, impostazioni a confronto, stabilità.',
         'Where do you come from?':
             'Da dove vieni?',
+        'Where the game opens, in a window and in fullscreen.':
+            'Dove si apre il gioco, in finestra e a schermo intero.',
+        'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+            'Larghezza × altezza, ad es. 2400x1080 (da 640x360 a 7680x4320).',
+        'Window size':
+            'Dimensione finestra',
         'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
             'Windows 10 o 11 (64 bit) e una scheda video con Vulkan 1.3 e almeno 4 GB di memoria video.',
         'Windows 10 or 11, 64-bit':
@@ -7586,10 +7976,14 @@ WORLD = {
             'Il tuo schermo: {} × {}. Consigliata per il tuo PC: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             'Il tuo eboot.bin non è quello pulito della 1.09 (modificato, o da un altro dump). Il port non può applicarvi le patch: il gioco gira a 30 FPS, le opzioni degli effetti non fanno nulla e alcune scene (come il filmato dopo Rom) possono bloccarsi.\n\nSostituisci eboot.bin con quello di un aggiornamento 1.09 non modificato.',
+        'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+            'La tua edizione (Game of the Year, CUSA03173) include già The Old Hunters.',
         'Your game':
             'Il tuo gioco',
         'Your game and your PC':
             'Il tuo gioco e il tuo PC',
+        'Your game dump and its add-ons. Set once, usually by the setup guide.':
+            'Il tuo dump del gioco e i suoi contenuti aggiuntivi. Si imposta una volta, di solito durante la configurazione.',
         'Your game dump, its languages and how it starts.':
             'Il tuo dump del gioco, le sue lingue e come si avvia.',
         'Your goal':
@@ -7612,10 +8006,14 @@ WORLD = {
             'Il limite è il tuo processore.',
         'Your setup':
             'La tua configurazione',
+        'above':
+            'sopra',
         'also {}':
             'anche {}',
         'as recommended':
             'come consigliato',
+        'below':
+            'sotto',
         'cancelled':
             'annullato',
         'checking your PC…':
@@ -7670,18 +8068,28 @@ WORLD = {
             'rimasto bloccato',
         'last played {}':
             'ultima partita {}',
+        'last time {} × {}':
+            "l'ultima volta {} × {}",
         'measuring…':
             'misurazione…',
         'no characters':
             'nessun personaggio',
         'no costly effects':
             'senza effetti costosi',
+        'not played in a window yet':
+            'non ancora giocato in finestra',
         'not set':
             'non impostato',
         'not signed in ›':
             'accesso non effettuato ›',
         'now':
             'attuale',
+        'now {} × {}':
+            'ora {} × {}',
+        'on the left':
+            'a sinistra',
+        'on the right':
+            'a destra',
         'once (about 1½ min per value)':
             'una volta (circa 1½ min per valore)',
         "only {} GB are free for the game's start right now, it reserves about {} GB.":
@@ -7877,10 +8285,14 @@ WORLD = {
             'Zastosuj (uruchamia ponownie launcher)',
         'Apply the settings for my PC':
             'Zastosuj ustawienia dla mojego PC',
+        'As I left it':
+            'Jak ostatnio',
         'As in the game uses the original voice setting; other choices use available tracks.':
             '„Jak w grze” używa oryginalnego ustawienia głosów; pozostałe opcje używają dostępnych ścieżek dźwiękowych.',
         'As many frames as the game allows, up to 120 FPS; the picture made for your PC.':
             'Tyle klatek, na ile pozwala gra, do 120 FPS; obraz dopasowany do twojego PC.',
+        'As the game opens it':
+            'Tak, jak otwiera je gra',
         "Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your settings and this PC's details (no passwords), so a helper sees the cause at once.":
             'Zapytaj na forum pomocy na Discordzie społeczności. Zapisz raport i dołącz go: zawiera dziennik, twoje ustawienia i dane tego PC (bez haseł), więc pomagający od razu zobaczy przyczynę.',
         'Attack (R1)':
@@ -8035,6 +8447,8 @@ WORLD = {
             'Nie udało się zapisać: {}',
         'Ctrl+F':
             'Ctrl+F',
+        'Custom size…':
+            'Własny rozmiar…',
         'D-pad up':
             'Krzyżak w górę',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
@@ -8141,6 +8555,8 @@ WORLD = {
             'Gra i język',
         'Game (43°)':
             'Jak w grze (43°)',
+        'Game files':
+            'Pliki gry',
         'Game menu (Options)':
             'Menu gry (Options)',
         'Game server {0}':
@@ -8195,6 +8611,8 @@ WORLD = {
             'Importuj',
         'Import the saves from {} ({}, last played {})?':
             'Zaimportować zapisy z {} ({}, ostatnio grano {})?',
+        'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+            'W oknie: rozmiar przy otwarciu. Nadal możesz przeciągać jego krawędzie; „Jak ostatnio” otwiera je w rozmiarze, jaki miało przy ostatnim zamknięciu gry.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'W grze Insert (klawiatura) lub L3 + R3 (kontroler) otwiera menu portu.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
@@ -8253,6 +8671,8 @@ WORLD = {
             'Tylko klawiatura',
         'Language':
             'Język',
+        'Language & sound':
+            'Język i dźwięk',
         'Laptops: plug in the charger, set Windows to best performance, and make sure the game runs on the dedicated graphics card if you have one.':
             'Laptopy: podłącz ładowarkę, ustaw w Windows tryb zasilania „Najlepsza wydajność” i upewnij się, że gra działa na dedykowanej karcie graficznej, jeśli ją masz.',
         'Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report':
@@ -8273,6 +8693,8 @@ WORLD = {
             'Najniższe ustawienia (tyle, ile twój PC w ogóle osiąga)',
         'Made for your PC':
             'Dopasowane do twojego PC',
+        'Main monitor':
+            'Monitor główny',
         'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
             'Zrób zrzut z własnej kopii Bloodborne (płyta lub PlayStation Store) na własnej PS4. Pliki gry z internetu to piractwo: port ich nie zawiera i nikt nie pomaga ich znaleźć. Proszenie o nie lub ich udostępnianie łamie zasadę 2 Discorda społeczności i może skończyć się banem.',
         'Measure on this PC':
@@ -8297,6 +8719,12 @@ WORLD = {
             'Szczegółowość modeli (LOD) „Jak w grze”, wektory ruchu obiektów wyłączone.',
         'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.':
             'Mody nie mogą zawierać własnego eboot.bin: sprawdzenie na górze tej strony wymienia takie mody.',
+        'Monitor':
+            'Monitor',
+        'Monitor {}':
+            'Monitor {}',
+        'Monitor {} (not connected: the main monitor is used)':
+            'Monitor {} (niepodłączony: używany jest monitor główny)',
         'Mouse buttons and the scroll wheel are bound in the slots above: click a slot, then click or turn the wheel. They work while the mouse is captured (mouse look on).':
             'Przyciski myszy i kółko przypisuje się w polach powyżej: kliknij pole, a potem kliknij lub obróć kółko. Działają, gdy mysz jest przechwycona (rozglądanie myszą włączone).',
         'Mouse controls':
@@ -8323,6 +8751,8 @@ WORLD = {
             'Wyciszaj, gdy gra jest w tle',
         'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)':
             'Generowanie klatek NVIDIA DLSS (GeForce RTX 40/50)',
+        'Narrower than 16:9: the picture may look stretched.':
+            'Węższe niż 16:9: obraz może wyglądać na rozciągnięty.',
         'Needs the boss saves of the mod “{}” (Nexus Mods, free with an account): download “{}”, unpack it, then choose its folder.':
             'Wymaga zapisów bossów z moda „{}” (Nexus Mods, za darmo z kontem): pobierz „{}”, rozpakuj, a potem wybierz jego folder.',
         'New hardware detected: the graphics settings were adjusted to it.':
@@ -8335,6 +8765,8 @@ WORLD = {
             'Dalej można przejść, gdy pliki gry są w porządku: bez tego gra by się nie uruchomiła albo uległaby awarii.',
         'Next time, Play Bloodborne.exe starts the game straight away with these settings.':
             'Następnym razem Play Bloodborne.exe od razu uruchomi grę z tymi ustawieniami.',
+        'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+            'Brak dodatków w tym folderze: The Old Hunters to folder o nazwie {} w jego wnętrzu.',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             'Brak kompletnego zapisu Bloodborne w {} ani w jego podfolderach: potrzebny jest userdata0010 i co najmniej jedna postać (userdata0000 do userdata0009).',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
@@ -8515,6 +8947,8 @@ WORLD = {
             'Nagraj trasę…',
         'Recorded: every test of this scenario now replays your route.':
             'Nagrano: każdy test tego scenariusza odtwarza teraz twoją trasę.',
+        'Rename the folder {} to {}: the game looks for that exact name.':
+            'Zmień nazwę folderu {} na {}: gra szuka dokładnie tej nazwy.',
         'Repeat the setup':
             'Powtórz konfigurację',
         'Replace your keyboard and mouse bindings with the Dark Souls III layout? Controller bindings stay as they are.':
@@ -8541,6 +8975,10 @@ WORLD = {
             'Za każdym razem przebiega tę samą dwuminutową trasę przez ten obszar i z powrotem, z zapisu z moda „All Boss Save Files Ready to Fight” (Nexus Mods). Łowca nie może zginąć, a wrogowie zostawiają go w spokoju: do liczby klatek, doczytywania i zacięć w ruchu oraz do porównywania ustawień.',
         'SSD':
             'SSD',
+        'Same as the monitor':
+            'Jak monitor',
+        'Same as the output resolution':
+            'Jak rozdzielczość wyjścia',
         'Save':
             'Zapis',
         'Save a report':
@@ -8685,12 +9123,20 @@ WORLD = {
             'Ten klawisz nie ma nazwy w bbport; wybierz inny.',
         'The CPU needs AVX, BMI1, MOVBE and LZCNT, which means Intel 4th gen (Haswell) or newer, or any Ryzen.':
             'Procesor musi obsługiwać AVX, BMI1, MOVBE i LZCNT, czyli Intel od 4. generacji (Haswell) lub dowolny Ryzen.',
+        'The DLC folder does not exist.':
+            'Folder DLC nie istnieje.',
         'The Dream':
             'Sen',
         "The Hunter's Dream (with bbhost players)":
             "The Hunter's Dream (z graczami bbhost)",
         "The Hunter's Dream account":
             "Konto The Hunter's Dream",
+        'The Old Hunters found ({}).':
+            'Znaleziono The Old Hunters ({}).',
+        'The Old Hunters found in the saves folder (addcont).':
+            'Znaleziono The Old Hunters w folderze zapisów (addcont).',
+        'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+            'The Old Hunters: nie znaleziono. Potrzebne tylko, jeśli je posiadasz; bez niego jego obszary pozostają zamknięte.',
         'The account you made at supermedo.com.':
             'Konto założone na supermedo.com.',
         'The check stopped: {}':
@@ -8731,6 +9177,8 @@ WORLD = {
             'Ikony przycisków w grze: klawisze klawiatury i myszy, gdy nimi grasz, a przyciski kontrolera (PlayStation, Xbox lub Switch), gdy go używasz.',
         "The game's own anti-aliasing only without an upscaler: the upscaler smooths edges itself.":
             'Własne wygładzanie gry tylko bez upscalera: upscaler sam wygładza krawędzie.',
+        "The game's text and voices, the launcher's language, how the game starts and sounds.":
+            'Teksty i głosy gry, język launchera, jak gra się uruchamia i jak brzmi.',
         "The graphics card's memory runs full":
             'Pamięć karty graficznej się zapełnia',
         'The graphics driver stopped (device lost)':
@@ -8791,6 +9239,10 @@ WORLD = {
             'Ten PC nie spełnia wymagań. Możesz kontynuować, ale gra prawdopodobnie nie zadziała.',
         'This is not a test scenario: {}':
             'To nie jest scenariusz testowy: {}',
+        'This is the add-on itself: choose the folder that contains {}.':
+            'To jest sam dodatek: wybierz folder, który zawiera {}.',
+        'This is the game folder. The DLC folder is the one that contains {}.':
+            'To jest folder gry. Folder DLC to ten, który zawiera {}.',
         'This port has no saves yet.':
             'Ten port nie ma jeszcze zapisów.',
         'This port: {}, last played {}':
@@ -8881,6 +9333,12 @@ WORLD = {
             'Co potrafi twój PC, z oceną jak w teście sprzętu na bbport.de, oraz testy gry, które to mierzą: najlepsze ustawienia dla celu, porównanie ustawień, stabilność.',
         'Where do you come from?':
             'Skąd przychodzisz?',
+        'Where the game opens, in a window and in fullscreen.':
+            'Gdzie otwiera się gra, w oknie i na pełnym ekranie.',
+        'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+            'Szerokość × wysokość, np. 2400x1080 (od 640x360 do 7680x4320).',
+        'Window size':
+            'Rozmiar okna',
         'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
             'Windows 10 lub 11 (64-bit) i karta graficzna z Vulkan 1.3 i co najmniej 4 GB pamięci wideo.',
         'Windows 10 or 11, 64-bit':
@@ -8921,10 +9379,14 @@ WORLD = {
             'Twój ekran: {} × {}. Zalecane dla twojego PC: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             'Twój eboot.bin nie jest czystym plikiem 1.09 (zmodyfikowany lub z innego zrzutu). Port nie może go załatać: gra działa w 30 FPS, opcje efektów nic nie robią, a niektóre sceny (np. przerywnik po Rom) mogą się zawiesić.\n\nZastąp eboot.bin plikiem z niezmodyfikowanej aktualizacji 1.09.',
+        'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+            'Twoja edycja (Game of the Year, CUSA03173) już zawiera The Old Hunters.',
         'Your game':
             'Twoja gra',
         'Your game and your PC':
             'Twoja gra i twój PC',
+        'Your game dump and its add-ons. Set once, usually by the setup guide.':
+            'Twój zrzut gry i jego dodatki. Ustawiane raz, zwykle podczas konfiguracji.',
         'Your game dump, its languages and how it starts.':
             'Twój zrzut gry, jego języki i sposób uruchamiania.',
         'Your goal':
@@ -8947,10 +9409,14 @@ WORLD = {
             'Limit wyznacza twój procesor.',
         'Your setup':
             'Twoja konfiguracja',
+        'above':
+            'powyżej',
         'also {}':
             'także {}',
         'as recommended':
             'zgodnie z zaleceniem',
+        'below':
+            'poniżej',
         'cancelled':
             'anulowano',
         'checking your PC…':
@@ -9005,18 +9471,28 @@ WORLD = {
             'zawieszenie',
         'last played {}':
             'ostatnio grano {}',
+        'last time {} × {}':
+            'ostatnio {} × {}',
         'measuring…':
             'pomiar…',
         'no characters':
             'brak postaci',
         'no costly effects':
             'bez kosztownych efektów',
+        'not played in a window yet':
+            'jeszcze nie grano w oknie',
         'not set':
             'nie ustawiono',
         'not signed in ›':
             'nie zalogowano ›',
         'now':
             'obecnie',
+        'now {} × {}':
+            'teraz {} × {}',
+        'on the left':
+            'po lewej',
+        'on the right':
+            'po prawej',
         'once (about 1½ min per value)':
             'raz (ok. 1½ min na wartość)',
         "only {} GB are free for the game's start right now, it reserves about {} GB.":
@@ -9212,10 +9688,14 @@ WORLD = {
             'Uygula (başlatıcıyı yeniden başlatır)',
         'Apply the settings for my PC':
             'Bilgisayarıma uygun ayarları uygula',
+        'As I left it':
+            'Son seferki gibi',
         'As in the game uses the original voice setting; other choices use available tracks.':
             '"Oyundaki gibi" orijinal ses ayarını kullanır; diğer seçenekler mevcut ses parçalarını kullanır.',
         'As many frames as the game allows, up to 120 FPS; the picture made for your PC.':
             'Oyunun izin verdiği kadar kare, en fazla 120 FPS; görüntü bilgisayarınıza göre ayarlanır.',
+        'As the game opens it':
+            'Oyunun açtığı gibi',
         "Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your settings and this PC's details (no passwords), so a helper sees the cause at once.":
             'Topluluk Discord’unun yardım forumunda sorun. Bir rapor kaydedip ekleyin: raporda günlük, ayarlarınız ve bu bilgisayarın bilgileri (parolalar hariç) bulunur; böylece yardım eden kişi nedeni hemen görür.',
         'Attack (R1)':
@@ -9370,6 +9850,8 @@ WORLD = {
             'Kaydedilemedi: {}',
         'Ctrl+F':
             'Ctrl+F',
+        'Custom size…':
+            'Özel boyut…',
         'D-pad up':
             'Yön tuşu yukarı',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
@@ -9476,6 +9958,8 @@ WORLD = {
             'Oyun ve dil',
         'Game (43°)':
             'Oyundaki gibi (43°)',
+        'Game files':
+            'Oyun dosyaları',
         'Game menu (Options)':
             'Oyun menüsü (Options)',
         'Game server {0}':
@@ -9530,6 +10014,8 @@ WORLD = {
             'İçe aktar',
         'Import the saves from {} ({}, last played {})?':
             'Kayıtlar {} kaynağından içe aktarılsın mı ({}, son oynanma: {})?',
+        'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+            'Pencerede: açılırken kullanılan boyut. Kenarlarını yine sürükleyebilirsin; "Son seferki gibi" onu oyunu son kapattığındaki boyutta açar.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'Oyunda Insert (klavye) veya L3 + R3 (kumanda) portun menüsünü açar.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
@@ -9588,6 +10074,8 @@ WORLD = {
             'Yalnızca klavye',
         'Language':
             'Dil',
+        'Language & sound':
+            'Dil ve ses',
         'Laptops: plug in the charger, set Windows to best performance, and make sure the game runs on the dedicated graphics card if you have one.':
             'Dizüstü bilgisayarlar: şarj cihazını takın, Windows’u "En iyi performans" moduna alın ve varsa oyunun harici ekran kartında çalıştığından emin olun.',
         'Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report':
@@ -9608,6 +10096,8 @@ WORLD = {
             'En düşük ayarlar (bilgisayarınızın ulaşabileceği sınır)',
         'Made for your PC':
             'Bilgisayarınıza göre ayarlandı',
+        'Main monitor':
+            'Ana monitör',
         'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
             'Dökümü kendi Bloodborne kopyanızdan (disk veya PlayStation Store) kendi PS4’ünüzde alın. İnternetten alınan oyun dosyaları korsanlıktır: Bu port hiçbirini içermez ve kimse bulmanıza yardım etmez. Bunları istemek veya paylaşmak topluluk Discord’unun 2. kuralını ihlal eder ve yasaklanmanıza yol açabilir.',
         'Measure on this PC':
@@ -9632,6 +10122,12 @@ WORLD = {
             'Model ayrıntısı (LOD) "Oyundaki gibi", nesne hareket vektörleri kapalı.',
         'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.':
             'Modlar kendi eboot.bin dosyalarını getirmemeli: bu sayfanın üstündeki kontrol, getirenleri listeler.',
+        'Monitor':
+            'Monitör',
+        'Monitor {}':
+            'Monitör {}',
+        'Monitor {} (not connected: the main monitor is used)':
+            'Monitör {} (bağlı değil: ana monitör kullanılır)',
         'Mouse buttons and the scroll wheel are bound in the slots above: click a slot, then click or turn the wheel. They work while the mouse is captured (mouse look on).':
             'Fare düğmeleri ve kaydırma tekerleği yukarıdaki alanlarda atanır: bir alana tıklayın, ardından tıklayın veya tekerleği çevirin. Fare yakalanmışken (fareyle bakış açık) çalışırlar.',
         'Mouse controls':
@@ -9658,6 +10154,8 @@ WORLD = {
             'Oyun arka plandayken sesi kapat',
         'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)':
             'NVIDIA DLSS Kare Oluşturma (GeForce RTX 40/50)',
+        'Narrower than 16:9: the picture may look stretched.':
+            "16:9'dan dar: görüntü gerilmiş görünebilir.",
         'Needs the boss saves of the mod “{}” (Nexus Mods, free with an account): download “{}”, unpack it, then choose its folder.':
             '“{}” modunun (Nexus Mods, hesapla ücretsiz) boss kayıtları gerekir: “{}” dosyasını indirin, arşivden çıkarın ve klasörünü seçin.',
         'New hardware detected: the graphics settings were adjusted to it.':
@@ -9670,6 +10168,8 @@ WORLD = {
             'Oyun dosyaları doğru olunca ilerleyebilirsiniz: aksi halde oyun başlamaz veya çöker.',
         'Next time, Play Bloodborne.exe starts the game straight away with these settings.':
             'Bir dahaki sefere Play Bloodborne.exe oyunu doğrudan bu ayarlarla başlatır.',
+        'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+            'Bu klasörde eklenti yok: The Old Hunters, içinde {} adlı bir klasördür.',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             '{} veya alt klasörlerinde eksiksiz bir Bloodborne kaydı yok: userdata0010 ve en az bir karakter (userdata0000 ile userdata0009 arası) gerekli.',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
@@ -9850,6 +10350,8 @@ WORLD = {
             'Rotayı kaydet…',
         'Recorded: every test of this scenario now replays your route.':
             'Kaydedildi: bu senaryonun her testi artık sizin rotanızı oynatır.',
+        'Rename the folder {} to {}: the game looks for that exact name.':
+            '{} klasörünü {} olarak yeniden adlandır: oyun tam olarak bu adı arar.',
         'Repeat the setup':
             'Kurulumu tekrarla',
         'Replace your keyboard and mouse bindings with the Dark Souls III layout? Controller bindings stay as they are.':
@@ -9876,6 +10378,10 @@ WORLD = {
             'Her seferinde bu bölgede aynı iki dakikalık rotayı gidip gelir; “All Boss Save Files Ready to Fight” modunun (Nexus Mods) kaydından başlar. Avcı ölemez ve düşmanlar ona dokunmaz: hareket halindeyken kare hızı, yükleme ve takılmalar için ve ayarları karşılaştırmak için.',
         'SSD':
             'SSD',
+        'Same as the monitor':
+            'Monitörle aynı',
+        'Same as the output resolution':
+            'Çıkış çözünürlüğüyle aynı',
         'Save':
             'Kayıt',
         'Save a report':
@@ -10020,12 +10526,20 @@ WORLD = {
             'Bu tuşun bbport adı yok; başka bir tuş seçin.',
         'The CPU needs AVX, BMI1, MOVBE and LZCNT, which means Intel 4th gen (Haswell) or newer, or any Ryzen.':
             'İşlemcinin AVX, BMI1, MOVBE ve LZCNT desteklemesi gerekir; yani Intel 4. nesil (Haswell) veya daha yenisi ya da herhangi bir Ryzen.',
+        'The DLC folder does not exist.':
+            'DLC klasörü mevcut değil.',
         'The Dream':
             'Rüya',
         "The Hunter's Dream (with bbhost players)":
             "The Hunter's Dream (bbhost oyuncularıyla)",
         "The Hunter's Dream account":
             "The Hunter's Dream hesabı",
+        'The Old Hunters found ({}).':
+            'The Old Hunters bulundu ({}).',
+        'The Old Hunters found in the saves folder (addcont).':
+            'The Old Hunters kayıt klasöründe bulundu (addcont).',
+        'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+            'The Old Hunters: bulunamadı. Yalnızca ona sahipsen gerekir; o olmadan bölgeleri kapalı kalır.',
         'The account you made at supermedo.com.':
             'supermedo.com’da oluşturduğunuz hesap.',
         'The check stopped: {}':
@@ -10066,6 +10580,8 @@ WORLD = {
             'Oyunun tuş simgeleri: klavye ve fareyle oynarken klavye ve fare tuşlarınız, kumanda kullanırken kumandanın tuşları (PlayStation, Xbox veya Switch).',
         "The game's own anti-aliasing only without an upscaler: the upscaler smooths edges itself.":
             'Oyunun kendi kenar yumuşatması yalnızca ölçekleyici olmadan: ölçekleyici kenarları kendisi yumuşatır.',
+        "The game's text and voices, the launcher's language, how the game starts and sounds.":
+            'Oyunun metinleri ve sesleri, başlatıcının dili, oyunun nasıl başladığı ve nasıl duyulduğu.',
         "The graphics card's memory runs full":
             'Ekran kartının belleği doluyor',
         'The graphics driver stopped (device lost)':
@@ -10126,6 +10642,10 @@ WORLD = {
             'Bu bilgisayar gereksinimleri karşılamıyor. Yine de devam edebilirsiniz ama oyun büyük olasılıkla çalışmayacak.',
         'This is not a test scenario: {}':
             'Bu bir test senaryosu değil: {}',
+        'This is the add-on itself: choose the folder that contains {}.':
+            'Bu, eklentinin kendisi: {} klasörünü içeren klasörü seç.',
+        'This is the game folder. The DLC folder is the one that contains {}.':
+            'Bu, oyun klasörü. DLC klasörü, {} klasörünü içeren klasördür.',
         'This port has no saves yet.':
             'Bu portun henüz kaydı yok.',
         'This port: {}, last played {}':
@@ -10216,6 +10736,12 @@ WORLD = {
             'Bilgisayarınızın neler yapabildiği (bbport.de’deki donanım kontrolü gibi derecelendirilir) ve bunu ölçen oyun testleri: bir hedef için en iyi ayarlar, ayarların karşılaştırması, kararlılık.',
         'Where do you come from?':
             'Nereden geliyorsunuz?',
+        'Where the game opens, in a window and in fullscreen.':
+            'Oyunun açıldığı yer, pencerede ve tam ekranda.',
+        'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+            'Genişlik × yükseklik, ör. 2400x1080 (640x360 ile 7680x4320 arası).',
+        'Window size':
+            'Pencere boyutu',
         'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
             'Windows 10 veya 11 (64 bit) ve Vulkan 1.3 destekli, en az 4 GB video belleğine sahip bir ekran kartı.',
         'Windows 10 or 11, 64-bit':
@@ -10256,10 +10782,14 @@ WORLD = {
             'Ekranınız: {} × {}. Bilgisayarınız için önerilen: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             'eboot.bin dosyanız temiz 1.09 dosyası değil (değiştirilmiş veya başka bir dökümden). Port ona yama uygulayamaz: oyun 30 FPS’te çalışır, efekt seçenekleri hiçbir şey yapmaz ve bazı sahneler (örneğin Rom’dan sonraki ara sahne) donabilir.\n\neboot.bin’i değiştirilmemiş bir 1.09 güncellemesindeki dosyayla değiştirin.',
+        'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+            "Sürümün (Game of the Year, CUSA03173) The Old Hunters'ı zaten içeriyor.",
         'Your game':
             'Oyununuz',
         'Your game and your PC':
             'Oyununuz ve bilgisayarınız',
+        'Your game dump and its add-ons. Set once, usually by the setup guide.':
+            'Oyun dökümün ve eklentileri. Bir kez ayarlanır, genellikle kurulum sırasında.',
         'Your game dump, its languages and how it starts.':
             'Oyun dökümünüz, dilleri ve nasıl başladığı.',
         'Your goal':
@@ -10282,10 +10812,14 @@ WORLD = {
             'Sınırı işlemciniz belirliyor.',
         'Your setup':
             'Kurulumunuz',
+        'above':
+            'yukarıda',
         'also {}':
             'ayrıca: {}',
         'as recommended':
             'önerildiği gibi',
+        'below':
+            'aşağıda',
         'cancelled':
             'iptal edildi',
         'checking your PC…':
@@ -10340,18 +10874,28 @@ WORLD = {
             'dondu',
         'last played {}':
             'son oynanma: {}',
+        'last time {} × {}':
+            'son sefer {} × {}',
         'measuring…':
             'ölçülüyor…',
         'no characters':
             'karakter yok',
         'no costly effects':
             'ağır efektler olmadan',
+        'not played in a window yet':
+            'henüz pencerede oynanmadı',
         'not set':
             'ayarlanmadı',
         'not signed in ›':
             'oturum açılmadı ›',
         'now':
             'şu anki',
+        'now {} × {}':
+            'şu an {} × {}',
+        'on the left':
+            'solda',
+        'on the right':
+            'sağda',
         'once (about 1½ min per value)':
             'bir kez (değer başına yaklaşık 1½ dk)',
         "only {} GB are free for the game's start right now, it reserves about {} GB.":
@@ -10547,10 +11091,14 @@ WORLD = {
             '应用（将重启启动器）',
         'Apply the settings for my PC':
             '应用适合我电脑的设置',
+        'As I left it':
+            '与上次相同',
         'As in the game uses the original voice setting; other choices use available tracks.':
             '“与游戏相同”使用游戏原本的语音设置；其他选项使用现有的语音音轨。',
         'As many frames as the game allows, up to 120 FPS; the picture made for your PC.':
             '游戏允许的最高帧率，最高 120 FPS；画面根据你的电脑设定。',
+        'As the game opens it':
+            '保持游戏默认',
         "Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your settings and this PC's details (no passwords), so a helper sees the cause at once.":
             '在社区 Discord 的求助论坛中提问。保存一份报告并附上：其中包含日志、你的设置和这台电脑的信息（不含密码），帮助者可以立即看出原因。',
         'Attack (R1)':
@@ -10705,6 +11253,8 @@ WORLD = {
             '无法保存：{}',
         'Ctrl+F':
             'Ctrl+F',
+        'Custom size…':
+            '自定义尺寸…',
         'D-pad up':
             '方向键上',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
@@ -10811,6 +11361,8 @@ WORLD = {
             '游戏与语言',
         'Game (43°)':
             '与游戏相同（43°）',
+        'Game files':
+            '游戏文件',
         'Game menu (Options)':
             '游戏菜单（OPTIONS 键）',
         'Game server {0}':
@@ -10865,6 +11417,8 @@ WORLD = {
             '导入',
         'Import the saves from {} ({}, last played {})?':
             '从 {} 导入存档（{}，上次游玩 {}）？',
+        'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+            '窗口模式：打开时的大小。你仍可拖动窗口边缘；“与上次相同”会以你上次关闭游戏时的大小打开。',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             '在游戏中，按 Insert（键盘）或 L3 + R3（手柄）可打开移植版菜单。',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
@@ -10923,6 +11477,8 @@ WORLD = {
             '仅键盘',
         'Language':
             '语言',
+        'Language & sound':
+            '语言与声音',
         'Laptops: plug in the charger, set Windows to best performance, and make sure the game runs on the dedicated graphics card if you have one.':
             '笔记本电脑：请接上充电器，将 Windows 电源模式设为“最佳性能”；如果有独立显卡，请确保游戏在独立显卡上运行。',
         'Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report':
@@ -10943,6 +11499,8 @@ WORLD = {
             '最低设置（你的电脑能达到的极限）',
         'Made for your PC':
             '为你的电脑定制',
+        'Main monitor':
+            '主显示器',
         'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
             '请在你自己的 PS4 上，从你自己的 Bloodborne（光盘或 PlayStation Store）制作转储。来自互联网的游戏文件属于盗版：移植版不包含任何游戏文件，也没有人会帮你寻找。索要或分享这些文件违反社区 Discord 第 2 条规则，并可能导致封禁。',
         'Measure on this PC':
@@ -10967,6 +11525,12 @@ WORLD = {
             '模型细节 (LOD) 为“与游戏相同”，物体运动矢量关闭。',
         'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.':
             '模组不得自带 eboot.bin：本页顶部的检查会列出所有自带该文件的模组。',
+        'Monitor':
+            '显示器',
+        'Monitor {}':
+            '显示器 {}',
+        'Monitor {} (not connected: the main monitor is used)':
+            '显示器 {}（未连接：使用主显示器）',
         'Mouse buttons and the scroll wheel are bound in the slots above: click a slot, then click or turn the wheel. They work while the mouse is captured (mouse look on).':
             '鼠标按键和滚轮在上方的栏位中绑定：点击一个栏位，然后点击鼠标或滚动滚轮。它们在鼠标被捕获时（鼠标视角开启）生效。',
         'Mouse controls':
@@ -10993,6 +11557,8 @@ WORLD = {
             '游戏在后台时静音',
         'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)':
             'NVIDIA DLSS 帧生成（GeForce RTX 40/50）',
+        'Narrower than 16:9: the picture may look stretched.':
+            '比 16:9 更窄：画面可能看起来被拉伸。',
         'Needs the boss saves of the mod “{}” (Nexus Mods, free with an account): download “{}”, unpack it, then choose its folder.':
             '需要模组 “{}”（Nexus Mods，有账号即可免费下载）中的 Boss 存档：下载 “{}”，解压，然后选择其文件夹。',
         'New hardware detected: the graphics settings were adjusted to it.':
@@ -11005,6 +11571,8 @@ WORLD = {
             '游戏文件正确后才能进行下一步：否则游戏将无法启动或会崩溃。',
         'Next time, Play Bloodborne.exe starts the game straight away with these settings.':
             '下次运行 Play Bloodborne.exe 会直接以这些设置启动游戏。',
+        'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+            '此文件夹中没有追加内容：The Old Hunters 是其中名为 {} 的文件夹。',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             '{} 及其子文件夹中没有完整的 Bloodborne 存档：需要 userdata0010 和至少一个角色（userdata0000 到 userdata0009）。',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
@@ -11185,6 +11753,8 @@ WORLD = {
             '录制路线…',
         'Recorded: every test of this scenario now replays your route.':
             '已录制：此场景的每次测试现在都会重放你的路线。',
+        'Rename the folder {} to {}: the game looks for that exact name.':
+            '请将文件夹 {} 重命名为 {}：游戏只认这个确切的名称。',
         'Repeat the setup':
             '重新进行初始设置',
         'Replace your keyboard and mouse bindings with the Dark Souls III layout? Controller bindings stay as they are.':
@@ -11211,6 +11781,10 @@ WORLD = {
             '每次都从 “All Boss Save Files Ready to Fight” 模组（Nexus Mods）的存档出发，在这一区域往返跑同一条两分钟的路线。猎人不会死亡，敌人也不会理会他：用于测试移动中的帧率、加载和卡顿，以及比较设置。',
         'SSD':
             'SSD',
+        'Same as the monitor':
+            '与显示器相同',
+        'Same as the output resolution':
+            '与输出分辨率相同',
         'Save':
             '存档',
         'Save a report':
@@ -11355,12 +11929,20 @@ WORLD = {
             '该按键没有 bbport 名称；请换一个。',
         'The CPU needs AVX, BMI1, MOVBE and LZCNT, which means Intel 4th gen (Haswell) or newer, or any Ryzen.':
             'CPU 需要支持 AVX、BMI1、MOVBE 和 LZCNT，即 Intel 第 4 代（Haswell）或更新的处理器，或任意 Ryzen。',
+        'The DLC folder does not exist.':
+            'DLC 文件夹不存在。',
         'The Dream':
             '梦境',
         "The Hunter's Dream (with bbhost players)":
             "The Hunter's Dream（与 bbhost 玩家一起）",
         "The Hunter's Dream account":
             "The Hunter's Dream 账户",
+        'The Old Hunters found ({}).':
+            '已找到 The Old Hunters（{}）。',
+        'The Old Hunters found in the saves folder (addcont).':
+            '已在存档文件夹中找到 The Old Hunters（addcont）。',
+        'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+            'The Old Hunters：未找到。仅在你拥有它时才需要；没有它，其区域将保持关闭。',
         'The account you made at supermedo.com.':
             '你在 supermedo.com 注册的账户。',
         'The check stopped: {}':
@@ -11401,6 +11983,8 @@ WORLD = {
             '游戏中的按键图标：使用键盘和鼠标时显示键鼠按键，使用手柄（PlayStation、Xbox 或 Switch）时显示手柄按键。',
         "The game's own anti-aliasing only without an upscaler: the upscaler smooths edges itself.":
             '游戏自带抗锯齿仅在不使用超分辨率时开启：超分辨率本身就会平滑边缘。',
+        "The game's text and voices, the launcher's language, how the game starts and sounds.":
+            '游戏的文字和语音、启动器的语言，以及游戏的启动方式和声音。',
         "The graphics card's memory runs full":
             '显存已满',
         'The graphics driver stopped (device lost)':
@@ -11461,6 +12045,10 @@ WORLD = {
             '这台电脑不满足配置要求。你仍然可以继续，但游戏很可能无法运行。',
         'This is not a test scenario: {}':
             '这不是测试场景：{}',
+        'This is the add-on itself: choose the folder that contains {}.':
+            '这是追加内容本身：请选择包含 {} 的文件夹。',
+        'This is the game folder. The DLC folder is the one that contains {}.':
+            '这是游戏文件夹。DLC 文件夹是包含 {} 的那个文件夹。',
         'This port has no saves yet.':
             '本移植版还没有存档。',
         'This port: {}, last played {}':
@@ -11551,6 +12139,12 @@ WORLD = {
             '你的电脑性能如何：按 bbport.de 硬件检测的标准评级，并通过游戏测试实际测量：达到目标的最佳设置、设置对比、稳定性。',
         'Where do you come from?':
             '你之前在哪里玩？',
+        'Where the game opens, in a window and in fullscreen.':
+            '游戏打开的位置，窗口和全屏均适用。',
+        'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+            '宽 × 高，例如 2400x1080（640x360 到 7680x4320）。',
+        'Window size':
+            '窗口大小',
         'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
             'Windows 10 或 11（64 位），以及支持 Vulkan 1.3、至少 4 GB 显存的显卡。',
         'Windows 10 or 11, 64-bit':
@@ -11591,10 +12185,14 @@ WORLD = {
             '你的显示器：{} × {}。为你的电脑推荐：{}。',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             '你的 eboot.bin 不是纯净的 1.09 版本（被修改过，或来自其他转储）。移植版无法为它打补丁：游戏将以 30 FPS 运行，“游戏与效果”中的选项无效，某些场景（例如罗姆之后的过场动画）可能会卡死。\n\n请用未经修改的 1.09 更新中的 eboot.bin 替换它。',
+        'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+            '你的版本（年度版，CUSA03173）已包含 The Old Hunters。',
         'Your game':
             '你的游戏',
         'Your game and your PC':
             '你的游戏和电脑',
+        'Your game dump and its add-ons. Set once, usually by the setup guide.':
+            '你的游戏转储及其追加内容。只需设置一次，通常在初始设置时完成。',
         'Your game dump, its languages and how it starts.':
             '你的游戏转储、它的语言和启动方式。',
         'Your goal':
@@ -11617,10 +12215,14 @@ WORLD = {
             '瓶颈在于你的处理器。',
         'Your setup':
             '你的配置',
+        'above':
+            '在上方',
         'also {}':
             '还有 {}',
         'as recommended':
             '与推荐一致',
+        'below':
+            '在下方',
         'cancelled':
             '已取消',
         'checking your PC…':
@@ -11675,18 +12277,28 @@ WORLD = {
             '卡死',
         'last played {}':
             '上次游玩 {}',
+        'last time {} × {}':
+            '上次 {} × {}',
         'measuring…':
             '正在测量…',
         'no characters':
             '没有角色',
         'no costly effects':
             '无高开销效果',
+        'not played in a window yet':
+            '尚未以窗口模式游玩',
         'not set':
             '未设置',
         'not signed in ›':
             '未登录 ›',
         'now':
             '当前',
+        'now {} × {}':
+            '当前 {} × {}',
+        'on the left':
+            '在左侧',
+        'on the right':
+            '在右侧',
         'once (about 1½ min per value)':
             '一次（每个值约 1½ 分钟）',
         "only {} GB are free for the game's start right now, it reserves about {} GB.":
@@ -11882,10 +12494,14 @@ WORLD = {
             '適用（ランチャーを再起動）',
         'Apply the settings for my PC':
             'この PC 向けの設定を適用',
+        'As I left it':
+            '前回と同じ',
         'As in the game uses the original voice setting; other choices use available tracks.':
             '「ゲームのまま」はゲーム本来の音声設定を使用し、その他は収録されている音声トラックを使用します。',
         'As many frames as the game allows, up to 120 FPS; the picture made for your PC.':
             'ゲームが許す限りのフレーム数（最大 120 FPS）で、画質はこの PC に合わせます。',
+        'As the game opens it':
+            'ゲームの既定のまま',
         "Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your settings and this PC's details (no passwords), so a helper sees the cause at once.":
             'コミュニティ Discord のヘルプフォーラムで質問してください。レポートを保存して添付すると、ログ、設定、この PC の情報（パスワードは含みません）が入っているので、サポートする人がすぐに原因を把握できます。',
         'Attack (R1)':
@@ -12040,6 +12656,8 @@ WORLD = {
             '保存できませんでした：{}',
         'Ctrl+F':
             'Ctrl+F',
+        'Custom size…':
+            'カスタムサイズ…',
         'D-pad up':
             '方向キー上',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
@@ -12146,6 +12764,8 @@ WORLD = {
             'ゲームと言語',
         'Game (43°)':
             'ゲームのまま（43°）',
+        'Game files':
+            'ゲームファイル',
         'Game menu (Options)':
             'ゲームメニュー（OPTIONS）',
         'Game server {0}':
@@ -12200,6 +12820,8 @@ WORLD = {
             'インポート',
         'Import the saves from {} ({}, last played {})?':
             '{} のセーブデータをインポートしますか？（{}、最終プレイ：{}）',
+        'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+            'ウィンドウ時：開くときのサイズ。端をドラッグして変えることもできます。「前回と同じ」は、前回ゲームを閉じたときのサイズで開きます。',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             'ゲーム中に Insert（キーボード）または L3 + R3（コントローラー）を押すと、移植版メニューが開きます。',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
@@ -12258,6 +12880,8 @@ WORLD = {
             'キーボードのみ',
         'Language':
             '言語',
+        'Language & sound':
+            '言語とサウンド',
         'Laptops: plug in the charger, set Windows to best performance, and make sure the game runs on the dedicated graphics card if you have one.':
             'ノート PC：充電器を接続し、Windows の電源モードを「最適なパフォーマンス」に設定し、専用グラフィックカードがある場合はゲームがそちらで動作していることを確認してください。',
         'Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report':
@@ -12278,6 +12902,8 @@ WORLD = {
             '最低設定（この PC で到達できる上限）',
         'Made for your PC':
             'この PC 向けに設定済み',
+        'Main monitor':
+            'メインモニター',
         'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
             'ダンプは、自分の PS4 で自分の Bloodborne（ディスクまたは PlayStation Store）から作成してください。インターネット上のゲームファイルは海賊版です：移植版には含まれず、入手の手伝いもしません。要求や共有はコミュニティ Discord のルール 2 に違反し、BAN される可能性があります。',
         'Measure on this PC':
@@ -12302,6 +12928,12 @@ WORLD = {
             'モデルの詳細度 (LOD) は「ゲームのまま」、オブジェクトのモーションベクトルはオフ。',
         'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.':
             'MOD に独自の eboot.bin を含めてはいけません。該当する MOD はこのページ上部のチェックに表示されます。',
+        'Monitor':
+            'モニター',
+        'Monitor {}':
+            'モニター {}',
+        'Monitor {} (not connected: the main monitor is used)':
+            'モニター {}（未接続：メインモニターを使用）',
         'Mouse buttons and the scroll wheel are bound in the slots above: click a slot, then click or turn the wheel. They work while the mouse is captured (mouse look on).':
             'マウスボタンとホイールは上の枠で割り当てます：枠をクリックしてから、クリックするかホイールを回してください。マウスがキャプチャされている間（マウス視点オン）に機能します。',
         'Mouse controls':
@@ -12328,6 +12960,8 @@ WORLD = {
             'ゲームがバックグラウンドのときはミュート',
         'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)':
             'NVIDIA DLSS フレーム生成（GeForce RTX 40/50）',
+        'Narrower than 16:9: the picture may look stretched.':
+            '16:9 より縦長：映像が引き伸ばされて見えることがあります。',
         'Needs the boss saves of the mod “{}” (Nexus Mods, free with an account): download “{}”, unpack it, then choose its folder.':
             'MOD「{}」（Nexus Mods、アカウントがあれば無料）のボス用セーブデータが必要です：「{}」をダウンロードして展開し、そのフォルダーを選択してください。',
         'New hardware detected: the graphics settings were adjusted to it.':
@@ -12340,6 +12974,8 @@ WORLD = {
             'ゲームファイルが正しくなれば「次へ」に進めます。そうでないとゲームが起動しないか、クラッシュします。',
         'Next time, Play Bloodborne.exe starts the game straight away with these settings.':
             '次回からは、Play Bloodborne.exe でこの設定のままゲームがすぐに起動します。',
+        'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+            'このフォルダーに追加コンテンツがありません。The Old Hunters はこの中の {} という名前のフォルダーです。',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             '{} またはそのサブフォルダーに完全な Bloodborne のセーブデータがありません。userdata0010 と、少なくとも 1 人のキャラクター（userdata0000〜userdata0009）が必要です。',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
@@ -12520,6 +13156,8 @@ WORLD = {
             'ルートを記録…',
         'Recorded: every test of this scenario now replays your route.':
             '記録しました：このシナリオのテストはすべてあなたのルートを再生します。',
+        'Rename the folder {} to {}: the game looks for that exact name.':
+            'フォルダー {} の名前を {} に変更してください。ゲームはこの名前そのままを探します。',
         'Repeat the setup':
             'セットアップをやり直す',
         'Replace your keyboard and mouse bindings with the Dark Souls III layout? Controller bindings stay as they are.':
@@ -12546,6 +13184,10 @@ WORLD = {
             'MOD「All Boss Save Files Ready to Fight」（Nexus Mods）のセーブデータから、毎回同じ 2 分間のルートでこのエリアを往復します。狩人は死なず、敵にも構われません：移動中のフレームレート、読み込み、カクつきの確認や設定の比較に。',
         'SSD':
             'SSD',
+        'Same as the monitor':
+            'モニターと同じ',
+        'Same as the output resolution':
+            '出力解像度と同じ',
         'Save':
             'セーブデータ',
         'Save a report':
@@ -12690,12 +13332,20 @@ WORLD = {
             'そのキーには bbport での名前がありません。別のキーを選んでください。',
         'The CPU needs AVX, BMI1, MOVBE and LZCNT, which means Intel 4th gen (Haswell) or newer, or any Ryzen.':
             'CPU は AVX、BMI1、MOVBE、LZCNT に対応している必要があります。つまり Intel 第 4 世代（Haswell）以降、またはすべての Ryzen です。',
+        'The DLC folder does not exist.':
+            'DLC フォルダーが存在しません。',
         'The Dream':
             '狩人の夢',
         "The Hunter's Dream (with bbhost players)":
             "The Hunter's Dream（bbhost のプレイヤーと）",
         "The Hunter's Dream account":
             "The Hunter's Dream のアカウント",
+        'The Old Hunters found ({}).':
+            'The Old Hunters が見つかりました（{}）。',
+        'The Old Hunters found in the saves folder (addcont).':
+            'セーブフォルダー内に The Old Hunters が見つかりました（addcont）。',
+        'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+            'The Old Hunters：見つかりません。所有している場合のみ必要です。ない場合、そのエリアは閉じたままです。',
         'The account you made at supermedo.com.':
             'supermedo.com で作成したアカウント。',
         'The check stopped: {}':
@@ -12736,6 +13386,8 @@ WORLD = {
             'ゲーム内のボタンアイコン：キーボードとマウスで遊んでいる間はそのキーを、コントローラー（PlayStation、Xbox、Switch）を使っている間はコントローラーのボタンを表示します。',
         "The game's own anti-aliasing only without an upscaler: the upscaler smooths edges itself.":
             'ゲーム本来のアンチエイリアスはアップスケーラーなしの場合のみ。アップスケーラーは自身でエッジを滑らかにします。',
+        "The game's text and voices, the launcher's language, how the game starts and sounds.":
+            'ゲームのテキストと音声、ランチャーの言語、ゲームの起動とサウンド。',
         "The graphics card's memory runs full":
             'グラフィックカードのメモリが不足する',
         'The graphics driver stopped (device lost)':
@@ -12796,6 +13448,10 @@ WORLD = {
             'この PC は動作環境を満たしていません。続行はできますが、ゲームはおそらく動作しません。',
         'This is not a test scenario: {}':
             'テストシナリオではありません：{}',
+        'This is the add-on itself: choose the folder that contains {}.':
+            'これは追加コンテンツそのものです。{} を含むフォルダーを選んでください。',
+        'This is the game folder. The DLC folder is the one that contains {}.':
+            'これはゲームフォルダーです。DLC フォルダーは {} を含むフォルダーです。',
         'This port has no saves yet.':
             'この移植版にはまだセーブデータがありません。',
         'This port: {}, last played {}':
@@ -12886,6 +13542,12 @@ WORLD = {
             'bbport.de のハードウェアチェックと同じ基準で評価した PC の性能と、それを測定するゲームテスト：目標に最適な設定、設定の比較、安定性。',
         'Where do you come from?':
             'どこから移行しますか？',
+        'Where the game opens, in a window and in fullscreen.':
+            'ゲームを開く場所（ウィンドウとフルスクリーンの両方）。',
+        'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+            '幅 × 高さ（例：2400x1080、640x360～7680x4320）。',
+        'Window size':
+            'ウィンドウサイズ',
         'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
             'Windows 10 または 11（64 ビット）と、Vulkan 1.3 対応でビデオメモリ 4 GB 以上のグラフィックカード。',
         'Windows 10 or 11, 64-bit':
@@ -12926,10 +13588,14 @@ WORLD = {
             'ディスプレイ：{} × {}。この PC への推奨：{}。',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             'お使いの eboot.bin は無改変の 1.09 のものではありません（改変されているか、別のダンプのもの）。移植版はこれにパッチを当てられないため、ゲームは 30 FPS で動作し、「ゲームとエフェクト」のオプションは効かず、一部の場面（ロマ撃破後のムービーなど）でフリーズすることがあります。\n\neboot.bin を、改変されていない 1.09 アップデートのものに置き換えてください。',
+        'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+            'お使いのエディション（Game of the Year、CUSA03173）には The Old Hunters が含まれています。',
         'Your game':
             'あなたのゲーム',
         'Your game and your PC':
             'ゲームと PC',
+        'Your game dump and its add-ons. Set once, usually by the setup guide.':
+            'ゲームのダンプとその追加コンテンツ。通常は初期設定で一度だけ設定します。',
         'Your game dump, its languages and how it starts.':
             'ゲームのダンプ、言語、起動方法。',
         'Your goal':
@@ -12952,10 +13618,14 @@ WORLD = {
             'プロセッサーが上限を決めています。',
         'Your setup':
             'あなたの環境',
+        'above':
+            '上側',
         'also {}':
             '{} でも使用',
         'as recommended':
             '推奨どおり',
+        'below':
+            '下側',
         'cancelled':
             'キャンセル',
         'checking your PC…':
@@ -13010,18 +13680,28 @@ WORLD = {
             'フリーズ',
         'last played {}':
             '最終プレイ：{}',
+        'last time {} × {}':
+            '前回 {} × {}',
         'measuring…':
             '測定中…',
         'no characters':
             'キャラクターなし',
         'no costly effects':
             '重いエフェクトなし',
+        'not played in a window yet':
+            'まだウィンドウでプレイしていません',
         'not set':
             '未設定',
         'not signed in ›':
             '未サインイン ›',
         'now':
             '現在',
+        'now {} × {}':
+            '現在 {} × {}',
+        'on the left':
+            '左側',
+        'on the right':
+            '右側',
         'once (about 1½ min per value)':
             '1 回（値ごとに約 1½ 分）',
         "only {} GB are free for the game's start right now, it reserves about {} GB.":
@@ -13217,10 +13897,14 @@ WORLD = {
             '적용 (런처 다시 시작)',
         'Apply the settings for my PC':
             '내 PC에 맞는 설정 적용',
+        'As I left it':
+            '지난번처럼',
         'As in the game uses the original voice setting; other choices use available tracks.':
             '"게임 그대로"는 게임의 원래 음성 설정을 쓰고, 다른 선택지는 사용 가능한 음성 트랙을 씁니다.',
         'As many frames as the game allows, up to 120 FPS; the picture made for your PC.':
             '게임이 허용하는 만큼, 최대 120 FPS까지. 화질은 PC에 맞춰 설정합니다.',
+        'As the game opens it':
+            '게임 기본값 그대로',
         "Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your settings and this PC's details (no passwords), so a helper sees the cause at once.":
             '커뮤니티 Discord의 도움 포럼에 질문하세요. 보고서를 저장해 첨부하면 로그, 설정, 이 PC의 정보 (비밀번호 제외)가 들어 있어 도와주는 사람이 원인을 바로 알 수 있습니다.',
         'Attack (R1)':
@@ -13375,6 +14059,8 @@ WORLD = {
             '저장할 수 없습니다: {}',
         'Ctrl+F':
             'Ctrl+F',
+        'Custom size…':
+            '사용자 지정 크기…',
         'D-pad up':
             '방향 키 위',
         'DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generation needs RTX 40 (2×) or RTX 50 (up to 4×). FSR 3.1 frame generation works on any card and works best from about 60 base FPS.':
@@ -13481,6 +14167,8 @@ WORLD = {
             '게임 및 언어',
         'Game (43°)':
             '게임 기본 (43°)',
+        'Game files':
+            '게임 파일',
         'Game menu (Options)':
             '게임 메뉴 (OPTIONS)',
         'Game server {0}':
@@ -13535,6 +14223,8 @@ WORLD = {
             '가져오기',
         'Import the saves from {} ({}, last played {})?':
             '{0}에서 세이브를 가져올까요? ({1}, 마지막 플레이 {2})',
+        'In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at the size it had when you last closed the game.':
+            '창 모드: 열릴 때의 크기입니다. 가장자리를 끌어 계속 조절할 수 있으며, "지난번처럼"은 마지막으로 게임을 닫았을 때의 크기로 엽니다.',
         "In the game, Insert (keyboard) or L3 + R3 (controller) opens the port's menu.":
             '게임 중에 Insert (키보드) 또는 L3 + R3 (컨트롤러)를 누르면 포트 메뉴가 열립니다.',
         'In the page that opened ({0}), sign in with Discord and enter this code:':
@@ -13593,6 +14283,8 @@ WORLD = {
             '키보드만',
         'Language':
             '언어',
+        'Language & sound':
+            '언어 및 사운드',
         'Laptops: plug in the charger, set Windows to best performance, and make sure the game runs on the dedicated graphics card if you have one.':
             '노트북: 충전기를 연결하고, Windows 전원 모드를 "최고 성능"으로 설정하고, 전용 그래픽 카드가 있다면 게임이 그 카드에서 실행되는지 확인하세요.',
         'Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report':
@@ -13613,6 +14305,8 @@ WORLD = {
             '최저 설정 (PC가 낼 수 있는 한계)',
         'Made for your PC':
             'PC에 맞춤',
+        'Main monitor':
+            '주 모니터',
         'Make the dump from your own copy of Bloodborne (disc or PlayStation Store) on your own PS4. Game files from the internet are piracy: none come with the port, and nobody helps to find them. Asking for them or sharing them breaks rule 2 of the community Discord and can get you banned.':
             '덤프는 본인의 PS4에서 본인 소유의 Bloodborne(디스크 또는 PlayStation Store)으로 만드세요. 인터넷에서 받은 게임 파일은 불법 복제입니다: 포트에는 포함되어 있지 않으며, 누구도 찾는 것을 돕지 않습니다. 요청하거나 공유하면 커뮤니티 Discord 규칙 2를 위반하며 차단될 수 있습니다.',
         'Measure on this PC':
@@ -13637,6 +14331,12 @@ WORLD = {
             '모델 디테일 (LOD) "게임 그대로", 오브젝트 모션 벡터 끔.',
         'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.':
             '모드에 자체 eboot.bin이 들어 있으면 안 됩니다. 이 페이지 맨 위의 검사에서 그런 모드를 알려 줍니다.',
+        'Monitor':
+            '모니터',
+        'Monitor {}':
+            '모니터 {}',
+        'Monitor {} (not connected: the main monitor is used)':
+            '모니터 {} (연결 안 됨: 주 모니터 사용)',
         'Mouse buttons and the scroll wheel are bound in the slots above: click a slot, then click or turn the wheel. They work while the mouse is captured (mouse look on).':
             '마우스 버튼과 스크롤 휠은 위의 칸에서 지정합니다: 칸을 클릭한 다음 클릭하거나 휠을 돌리세요. 마우스가 캡처된 동안 (마우스 시점 켬) 작동합니다.',
         'Mouse controls':
@@ -13663,6 +14363,8 @@ WORLD = {
             '게임이 백그라운드에 있을 때 음소거',
         'NVIDIA DLSS Frame Generation (GeForce RTX 40/50)':
             'NVIDIA DLSS 프레임 생성 (GeForce RTX 40/50)',
+        'Narrower than 16:9: the picture may look stretched.':
+            '16:9보다 좁음: 화면이 늘어나 보일 수 있습니다.',
         'Needs the boss saves of the mod “{}” (Nexus Mods, free with an account): download “{}”, unpack it, then choose its folder.':
             '“{}” 모드(Nexus Mods, 계정이 있으면 무료)의 보스 세이브가 필요합니다: “{}”를 다운로드해 압축을 풀고 그 폴더를 선택하세요.',
         'New hardware detected: the graphics settings were adjusted to it.':
@@ -13675,6 +14377,8 @@ WORLD = {
             '게임 파일이 올바르면 다음으로 넘어갈 수 있습니다. 그렇지 않으면 게임이 시작되지 않거나 충돌합니다.',
         'Next time, Play Bloodborne.exe starts the game straight away with these settings.':
             '다음부터는 Play Bloodborne.exe가 이 설정으로 게임을 바로 시작합니다.',
+        'No add-on in this folder: The Old Hunters is a folder named {} in it.':
+            '이 폴더에 추가 콘텐츠가 없습니다. The Old Hunters는 그 안의 {} 폴더입니다.',
         'No complete Bloodborne save in {} or its subfolders: it needs userdata0010 and at least one character (userdata0000 to userdata0009).':
             '{} 또는 그 하위 폴더에 완전한 Bloodborne 세이브가 없습니다. userdata0010과 캐릭터 하나 이상 (userdata0000~userdata0009)이 필요합니다.',
         'No crash and no freeze in {:.0f} minutes ({:.0f} FPS on average).':
@@ -13855,6 +14559,8 @@ WORLD = {
             '경로 녹화…',
         'Recorded: every test of this scenario now replays your route.':
             '녹화됨: 이제 이 시나리오의 모든 테스트가 당신의 경로를 재생합니다.',
+        'Rename the folder {} to {}: the game looks for that exact name.':
+            '폴더 {}의 이름을 {}(으)로 바꾸세요. 게임은 정확히 이 이름을 찾습니다.',
         'Repeat the setup':
             '초기 설정 다시 하기',
         'Replace your keyboard and mouse bindings with the Dark Souls III layout? Controller bindings stay as they are.':
@@ -13881,6 +14587,10 @@ WORLD = {
             '“All Boss Save Files Ready to Fight” 모드(Nexus Mods)의 세이브에서 매번 같은 2분짜리 경로로 이 지역을 왕복합니다. 사냥꾼은 죽지 않고 적도 건드리지 않습니다: 이동 중 프레임 속도, 로딩, 끊김 확인과 설정 비교용입니다.',
         'SSD':
             'SSD',
+        'Same as the monitor':
+            '모니터와 같게',
+        'Same as the output resolution':
+            '출력 해상도와 같게',
         'Save':
             '세이브',
         'Save a report':
@@ -14025,12 +14735,20 @@ WORLD = {
             '이 키에는 bbport 이름이 없습니다. 다른 키를 고르세요.',
         'The CPU needs AVX, BMI1, MOVBE and LZCNT, which means Intel 4th gen (Haswell) or newer, or any Ryzen.':
             'CPU에 AVX, BMI1, MOVBE, LZCNT가 필요합니다. 즉 Intel 4세대 (Haswell) 이상 또는 모든 Ryzen입니다.',
+        'The DLC folder does not exist.':
+            'DLC 폴더가 없습니다.',
         'The Dream':
             '꿈',
         "The Hunter's Dream (with bbhost players)":
             "The Hunter's Dream (bbhost 플레이어와 함께)",
         "The Hunter's Dream account":
             "The Hunter's Dream 계정",
+        'The Old Hunters found ({}).':
+            'The Old Hunters를 찾았습니다({}).',
+        'The Old Hunters found in the saves folder (addcont).':
+            '세이브 폴더에서 The Old Hunters를 찾았습니다(addcont).',
+        'The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.':
+            'The Old Hunters: 찾을 수 없음. 보유한 경우에만 필요하며, 없으면 해당 지역은 닫힌 채로 남습니다.',
         'The account you made at supermedo.com.':
             'supermedo.com에서 만든 계정.',
         'The check stopped: {}':
@@ -14071,6 +14789,8 @@ WORLD = {
             '게임의 버튼 아이콘: 키보드와 마우스로 플레이하는 동안은 해당 키를, 컨트롤러 (PlayStation, Xbox 또는 Switch)를 쓰는 동안은 컨트롤러 버튼을 표시합니다.',
         "The game's own anti-aliasing only without an upscaler: the upscaler smooths edges itself.":
             '게임 자체 안티에일리어싱은 업스케일러가 없을 때만: 업스케일러가 직접 가장자리를 부드럽게 합니다.',
+        "The game's text and voices, the launcher's language, how the game starts and sounds.":
+            '게임의 텍스트와 음성, 런처 언어, 게임 시작 방식과 사운드.',
         "The graphics card's memory runs full":
             '그래픽 카드 메모리가 가득 참',
         'The graphics driver stopped (device lost)':
@@ -14131,6 +14851,10 @@ WORLD = {
             '이 PC는 요구 사항을 충족하지 않습니다. 계속 진행할 수는 있지만 게임이 실행되지 않을 가능성이 높습니다.',
         'This is not a test scenario: {}':
             '테스트 시나리오가 아닙니다: {}',
+        'This is the add-on itself: choose the folder that contains {}.':
+            '이것은 추가 콘텐츠 자체입니다. {}이(가) 들어 있는 폴더를 선택하세요.',
+        'This is the game folder. The DLC folder is the one that contains {}.':
+            '이것은 게임 폴더입니다. DLC 폴더는 {}이(가) 들어 있는 폴더입니다.',
         'This port has no saves yet.':
             '이 포트에는 아직 세이브가 없습니다.',
         'This port: {}, last played {}':
@@ -14221,6 +14945,12 @@ WORLD = {
             'bbport.de의 하드웨어 검사와 같은 방식으로 평가한 PC 성능, 그리고 이를 측정하는 게임 테스트: 목표에 맞는 최적 설정, 설정 비교, 안정성.',
         'Where do you come from?':
             '어디에서 넘어오셨나요?',
+        'Where the game opens, in a window and in fullscreen.':
+            '게임이 열리는 위치(창 모드와 전체 화면 모두).',
+        'Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).':
+            '너비 × 높이, 예: 2400x1080 (640x360부터 7680x4320까지).',
+        'Window size':
+            '창 크기',
         'Windows 10 or 11 (64-bit) and a graphics card with Vulkan 1.3 and at least 4 GB of video memory.':
             'Windows 10 또는 11 (64비트)과 Vulkan 1.3을 지원하고 비디오 메모리가 4 GB 이상인 그래픽 카드.',
         'Windows 10 or 11, 64-bit':
@@ -14261,10 +14991,14 @@ WORLD = {
             '디스플레이: {} × {}. 이 PC 권장: {}.',
         'Your eboot.bin is not the clean 1.09 one (modified, or from another dump). The port cannot patch it: the game runs at 30 FPS, the Game & effects options do nothing, and some scenes (like the cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.':
             'eboot.bin이 원본 1.09 파일이 아닙니다 (수정되었거나 다른 덤프의 파일). 포트가 패치할 수 없어 게임이 30 FPS로 실행되고, 효과 옵션이 작동하지 않으며, 일부 장면 (롬 이후의 컷신 등)에서 멈출 수 있습니다.\n\neboot.bin을 수정되지 않은 1.09 업데이트의 파일로 바꾸세요.',
+        'Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.':
+            '이 에디션(Game of the Year, CUSA03173)에는 The Old Hunters가 이미 포함되어 있습니다.',
         'Your game':
             '내 게임',
         'Your game and your PC':
             '게임과 PC',
+        'Your game dump and its add-ons. Set once, usually by the setup guide.':
+            '게임 덤프와 추가 콘텐츠입니다. 보통 초기 설정에서 한 번만 설정합니다.',
         'Your game dump, its languages and how it starts.':
             '게임 덤프, 언어, 시작 방식.',
         'Your goal':
@@ -14287,10 +15021,14 @@ WORLD = {
             '프로세서가 성능의 한계입니다.',
         'Your setup':
             '내 구성',
+        'above':
+            '위쪽',
         'also {}':
             '{}에도 사용됨',
         'as recommended':
             '권장대로',
+        'below':
+            '아래쪽',
         'cancelled':
             '취소됨',
         'checking your PC…':
@@ -14345,18 +15083,28 @@ WORLD = {
             '멈춤',
         'last played {}':
             '마지막 플레이 {}',
+        'last time {} × {}':
+            '지난번 {} × {}',
         'measuring…':
             '측정 중…',
         'no characters':
             '캐릭터 없음',
         'no costly effects':
             '무거운 효과 없음',
+        'not played in a window yet':
+            '아직 창 모드로 플레이하지 않음',
         'not set':
             '설정 안 됨',
         'not signed in ›':
             '로그인 안 됨 ›',
         'now':
             '현재',
+        'now {} × {}':
+            '현재 {} × {}',
+        'on the left':
+            '왼쪽',
+        'on the right':
+            '오른쪽',
         'once (about 1½ min per value)':
             '한 번 (값마다 약 1½분)',
         "only {} GB are free for the game's start right now, it reserves about {} GB.":

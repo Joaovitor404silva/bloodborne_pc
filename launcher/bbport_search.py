@@ -32,7 +32,10 @@ WORDS = {
     'frame_cap': 'fps grenze limit cap 120 144 165 240',
     'frames_ahead': 'latenz input lag ruckelt stutter',
     'present_mode': 'vsync tearing mailbox fifo',
-    'output_res': 'auflosung resolution 4k 1440p 1080p 2160p 720p scharf unscharf pixelig',
+    'output_res': 'auflosung resolution 4k 1440p 1080p 2160p 720p scharf unscharf pixelig eigene custom '
+                  'benutzerdefiniert monitor',
+    'game_monitor': 'monitor bildschirm zweiter display screen dual mehrere',
+    'window_size': 'fenstergrosse fenster grosse window size fenstermodus windowed',
     'upscaler': 'upscaler fsr dlss taa hochskalierung kantenglattung scharf unscharf',
     'preset': 'qualitat quality balanced performance native aa scharfer schoner',
     'sharpen': 'scharf scharfe unscharf blurry verwaschen rcas', 'sharpness': 'scharf scharfe unscharf blurry rcas',
@@ -77,6 +80,8 @@ WORDS = {
                      'bindings keybindings keybinds xbox dualsense',
     'page:saves': 'spielstand spielstande save saves import shadps4 bbhost awaken backup sicherung charakter',
     'page:help': 'hilfe help problem fehler absturz crash',
+    'page:language': 'sprache ton sound audio stimmen sprachausgabe untertitel language voices lautstarke stumm',
+    'page:game': 'spielordner spieldateien dump dlc ordner game folder files eboot',
     'action:setup': 'einrichtung ersteinrichtung setup assistent guide wizard erster start first start neu '
                     'wiederholen repeat again',
     'page:trophies': 'erfolge trophaen trophies achievements platin',
@@ -169,7 +174,7 @@ class SearchMixin:
             title, why, _steps = bbport_help.TOPICS[key]
             entries.append({'kind': 'topic', 'page': 'help', 'topic': key, 'title': _(title), 'hint': _(why),
                             'key': f'topic:{key}'})
-        entries.append({'kind': 'action', 'page': 'game', 'run': 'open_setup', 'title': _('Repeat the setup'),
+        entries.append({'kind': 'action', 'page': 'help', 'run': 'open_setup', 'title': _('Repeat the setup'),
                         'hint': _('Set everything up again, step by step.'), 'key': 'action:setup'})
         for entry in entries:
             words = WORDS.get(entry.get('key') or '', '')

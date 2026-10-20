@@ -137,6 +137,7 @@ import bbport_lang_ui  # noqa: E402,F401 (the regrouped pages, the side bar, the
 import bbport_lang_world  # noqa: E402,F401 (the new texts in the other eleven languages)
 import bbport_hardware as hardware  # noqa: E402
 import bbport_frame  # noqa: E402
+import bbport_display as display  # noqa: E402
 import bbport_help  # noqa: E402
 import bbport_search  # noqa: E402
 import bbport_setup  # noqa: E402
@@ -163,9 +164,11 @@ def _(en, ru=None):
 
 
 def renamed(text):
-    """A translated text of the original launcher that names the page Game & effects, which is
-    Game & language now (its effects moved to Picture & performance and All graphics)."""
-    return text.replace(_('Game & effects', 'Игра и эффекты'), _('Game & language'))
+    """A translated text that names the page with the game folder by an older name: Game & effects
+    (the original launcher) or Game & language (until the folders moved to the expert page Game
+    files; the languages are on Language & sound)."""
+    return text.replace(_('Game & effects', 'Игра и эффекты'), _('Game files')).replace(
+        _('Game & language'), _('Game files'))
 
 
 def windows_language():
@@ -254,6 +257,10 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 # A new key: the first test build saved 'translucent' on for everyone.
                 'translucent_window': False,
                 'windows_title_bar': False,  # Windows' caption instead of the launcher's own (bbport_frame)
+                # The game's window (bbport_display): its monitor ('' = the main one), its size in a
+                # window ('output', 'last' or 'custom'), the player's own size and the last one it had.
+                'game_monitor': '', 'window_size': 'output', 'window_custom': '1600x900', 'window_last': '',
+                'output_display': False,  # output resolution: the game monitor's own, set at every start
                 'seen_version': '',  # the version whose news the Play page has shown
                 # Game tests (System & performance): the kind, the scenario, its options.
                 'test_mode': 'performance', 'test_scenario': 'hunters-view', 'test_compare': 'preset',
@@ -398,6 +405,75 @@ def game_info(folder):
         return values.get('TITLE', 'Bloodborne').replace('™', '').strip(), values.get('APP_VER', '?')
     except (OSError, ValueError, ImportError):
         return 'Bloodborne', '?'
+
+
+def monitor_options(chosen=''):
+    """(value, (label,)) of the game monitor choice: '' (Windows' main monitor) first, then the
+    others; a chosen monitor that is not connected stays listed."""
+    found = display.monitors()
+    main = next((m for m in found if m.primary), None)
+    words = lambda m: (f' · {m.name}' if m.name else '') + ' · {} × {}'.format(*m.size)
+    options = [('', (_('Main monitor') + (words(main) if main else ''),))]
+    for m in found:
+        if m is main:
+            continue
+        dx, dy = (m.rect[0] - main.rect[0], m.rect[1] - main.rect[1]) if main else (0, 0)
+        side = (_('on the left') if dx < 0 else _('on the right')) if abs(dx) >= abs(dy) else \
+            (_('above') if dy < 0 else _('below'))
+        options.append((m.device, (_('Monitor {}').format(m.number) + words(m) + (f' · {side}' if main else ''),)))
+    if chosen and chosen not in [value for value, _t in options]:
+        number = display.Monitor(chosen, (0, 0, 0, 0), (0, 0, 0, 0), False).number
+        options.append((chosen, (_('Monitor {} (not connected: the main monitor is used)').format(number),)))
+    return options
+
+
+OLD_HUNTERS = 'SPEXPANSIONDLC03'  # The Old Hunters' entitlement label: its folder's name
+
+
+def title_id(folder):
+    """The dump's TITLE_ID (sce_sys/param.sfo); '' when unknown."""
+    try:
+        from prepare import sfo
+        return str(sfo((Path(folder or '.') / 'sce_sys/param.sfo').read_bytes()).get('TITLE_ID', '')).strip()
+    except (OSError, ValueError, ImportError, TypeError):
+        return ''
+
+
+def add_ons(folder):
+    """The add-ons the port reports as installed from one folder (src/runtime_content.c: every
+    subfolder, its name the label, up to 16 characters)."""
+    try:
+        return sorted(p.name for p in Path(folder).iterdir()
+                      if p.is_dir() and len(p.name) <= 16 and not p.name.startswith('.'))
+    except OSError:
+        return []
+
+
+def dlc_status(game_dir, dlc_dir, user_dir):
+    """('ok' | 'warn' | 'none', text): does the game get The Old Hunters?"""
+    edition = title_id(game_dir) == 'CUSA03173'  # the Game of the Year Edition has it
+    if dlc_dir:
+        folder = Path(dlc_dir)
+        if not folder.is_dir():
+            return 'warn', _('The DLC folder does not exist.')
+        if (folder / 'eboot.bin').is_file():
+            return 'warn', _('This is the game folder. The DLC folder is the one that contains {}.').format(OLD_HUNTERS)
+        if (folder / 'sce_sys').is_dir():
+            return 'warn', _('This is the add-on itself: choose the folder that contains {}.').format(folder.name)
+        found = add_ons(folder)
+        if OLD_HUNTERS in found:
+            return 'ok', _('The Old Hunters found ({}).').format(OLD_HUNTERS)
+        near = next((name for name in found if name.upper() == OLD_HUNTERS), None)
+        if near:
+            return 'warn', _('Rename the folder {} to {}: the game looks for that exact name.').format(near, OLD_HUNTERS)
+        if not edition:
+            return 'warn', _('No add-on in this folder: The Old Hunters is a folder named {} in it.').format(OLD_HUNTERS)
+    addcont = Path(user_dir) / 'addcont'  # shadPS4's layout, in the saves folder
+    if addcont.is_dir() and any(OLD_HUNTERS in add_ons(title) for title in addcont.iterdir()):
+        return 'ok', _('The Old Hunters found in the saves folder (addcont).')
+    if edition:
+        return 'ok', _('Your edition (Game of the Year, CUSA03173) already includes The Old Hunters.')
+    return 'none', _('The Old Hunters: not found. Only needed if you own it; without it its areas stay closed.')
 
 
 def webapi_address(server):
@@ -607,10 +683,11 @@ GRADE_NAMES = {trophies.PLATINUM: ('Platinum', 'Платиновый'), trophies
 # The side bar: the pages a player needs, then the expert's (shown in the expert view only).
 NAV_SIMPLE = [('play', ('Play', 'Играть')), ('picture', ('Picture & performance',)),
               ('controls', ('Controls', 'Управление')), ('online', ('Online play',)), ('saves', ('Saves',)),
-              ('mods', ('Mods',)), ('game', ('Game & language',)), ('trophies', ('Achievements', 'Достижения')),
-              ('help', ('Help', 'Помощь'))]
-NAV_EXPERT = [('graphics', ('All graphics',)), ('cheats', ('Cheats', 'Читы')), ('system', ('System & tests',)),
-              ('advanced', ('Advanced', 'Дополнительно'))]
+              ('mods', ('Mods',)), ('language', ('Language & sound',)),
+              ('trophies', ('Achievements', 'Достижения')), ('help', ('Help', 'Помощь'))]
+# The game folder is set once (usually by the setup guide); a problem with it links there.
+NAV_EXPERT = [('graphics', ('All graphics',)), ('game', ('Game files',)), ('cheats', ('Cheats', 'Читы')),
+              ('system', ('System & tests',)), ('advanced', ('Advanced', 'Дополнительно'))]
 EXPERT_PAGES = {name for name, _t in NAV_EXPERT} | {'log'}
 
 
@@ -633,7 +710,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.remap_edits = {}
         self.mouse_edited = False  # set by any mouse widget's command/trace; gates the save in collect()
         self.vars = {}
-        self.process = self.job = None
+        self.process = self.job = self.placer = None
         self.hidden = False  # closed while the game runs: it exits with the game
         self.downloading = False
         self.output = queue.Queue()
@@ -731,6 +808,96 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         var.trace_add('write', show)
         box.setting_key = key  # for the search (row() indexes it)
         return box
+
+    def size_entry(self, parent, text, used, note):
+        """An entry for a size like 2400x1080: used once it is a size (when left or confirmed);
+        otherwise `note` says what it takes."""
+        entry = self.ttk.Entry(parent, textvariable=text, width=12)
+
+        def done(_e=None):
+            size = display.parse_size(text.get())
+            if size:
+                text.set(display.size_text(size))
+                used(size)
+            else:
+                note.configure(text=_('Width × height, e.g. 2400x1080 (from 640x360 to 7680x4320).'),
+                               foreground=theme.AMBER)
+        entry.bind('<FocusOut>', done)
+        entry.bind('<Return>', done)
+        return entry
+
+    def game_monitor_size(self):
+        m = display.monitor(self.var('game_monitor', 'app').get())
+        return m.size if m else (self.root.winfo_screenwidth(), self.root.winfo_screenheight())
+
+    def output_choice(self, parent):
+        """Output resolution: the sizes of OUTPUTS, the game monitor's own (set again at every start)
+        or any size of the player's (the port takes any; bbport.ini keeps it)."""
+        ttk = self.ttk
+        res, match = self.var('output_res', 'ini'), self.var('output_display', 'app')
+        sizes = [value for value, _t in OUTPUTS]
+        values = ['display', *sizes, 'custom']
+        holder = ttk.Frame(parent)
+        box = ttk.Combobox(holder, state='readonly', width=30,
+                           values=[_('Same as the monitor'), *[_(*text) for _v, text in OUTPUTS], _('Custom size…')])
+        box.pack(side='left')
+        own = self.tk.StringVar(value=res.get())
+        note = ttk.Label(holder, style='Muted.TLabel', wraplength=self.px(240), justify='left')
+        note.pack(side='left', padx=(10, 0))
+        picked = {'custom': res.get() not in sizes}
+        entry = self.size_entry(holder, own, lambda size: res.set(display.size_text(size)), note)
+
+        def show(*_a):
+            pick = 'display' if match.get() else 'custom' if picked['custom'] or res.get() not in sizes else res.get()
+            box.current(values.index(pick))
+            if pick == 'custom':
+                try:
+                    typing = self.root.focus_get() is entry
+                except KeyError:  # the focus is in a combobox's list
+                    typing = False
+                if not typing:
+                    own.set(res.get())
+                entry.pack(side='left', padx=(8, 0), before=note)
+            else:
+                entry.pack_forget()
+            size = display.parse_size(res.get())
+            text = _('now {} × {}').format(*self.game_monitor_size()) if pick == 'display' else \
+                _('Narrower than 16:9: the picture may look stretched.') if size and display.narrower_than_16_9(size) \
+                else ''
+            note.configure(text=text, foreground=theme.AMBER if pick != 'display' and text else theme.MUTED)
+
+        def choose(_e):
+            pick = values[box.current()]
+            picked['custom'] = pick == 'custom'
+            match.set(pick == 'display')
+            if pick == 'display':
+                res.set(display.size_text(self.game_monitor_size()))
+            elif pick != 'custom':
+                res.set(pick)
+            show()
+            if pick == 'custom':
+                entry.focus_set()
+                entry.select_range(0, 'end')
+
+        def changed(*_a):
+            # another page (the guide, automatic settings) chose a size: that one counts now
+            if match.get() and res.get() != display.size_text(self.game_monitor_size()):
+                match.set(False)
+            if res.get() in sizes:
+                picked['custom'] = False
+            show()
+
+        def monitor_changed(*_a):
+            if match.get():
+                res.set(display.size_text(self.game_monitor_size()))
+            show()
+        box.bind('<<ComboboxSelected>>', choose)
+        res.trace_add('write', changed)
+        match.trace_add('write', show)
+        self.var('game_monitor', 'app').trace_add('write', monitor_changed)
+        show()
+        holder.setting_key = 'output_res'
+        return holder
 
     def next_row(self, parent):
         return parent.grid_size()[1]
@@ -920,10 +1087,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.build_online()
         self.build_saves()
         self.build_mods()
-        self.build_game()
+        self.build_language()
         self.build_trophies()
         self.build_help()
         self.build_graphics()
+        self.build_game()
         self.build_cheats()
         self.build_system()
         self.build_advanced()
@@ -1036,7 +1204,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def window_chrome(self):
         """The title bar in the launcher's colours: dark, and on Windows 11 acrylic (a hint of
-        what lies behind it); the whole window very slightly translucent when chosen (Game & language,
+        what lies behind it); the whole window very slightly translucent when chosen (Language & sound,
         Advanced). Off by default: a dark window lets bright windows behind it show through clearly."""
         translucent = bool(self.app.get('translucent_window', False))
         try:
@@ -1112,6 +1280,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         return 'break'
 
     def show(self, name):
+        if name in EXPERT_PAGES and name != 'log' and self.app.get('ui_mode') != 'expert' and \
+                getattr(self, 'expert_var', None) is not None:
+            self.expert_var.set(True)  # the page and its place in the side bar, not a page out of nowhere
+            self.toggle_mode()
+            self.status.configure(text=_('The expert view is on now, to show this. The switch is at the bottom of '
+                                         'the side bar.'), fg=GOLD)
         for page in self.pages.values():
             page.pack_forget()
         self.pages[name].pack(fill='both', expand=True)
@@ -1319,7 +1493,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.row(f, _('Quality preset', 'Пресет'), self.choice(f, 'preset', 'ini', PRESETS),
                  _('Render scale per axis: Quality renders at 1/1.5 of the output size.',
                    'Масштаб рендера по каждой оси: Quality рисует в 1/1.5 размера вывода.'))
-        self.row(f, _('Output resolution', 'Разрешение вывода'), self.choice(f, 'output_res', 'ini', OUTPUTS),
+        self.row(f, _('Output resolution', 'Разрешение вывода'), self.output_choice(f),
                  _('What the upscaler produces; the HUD is drawn at this size too.',
                    'Что выдаёт апскейлер; интерфейс рисуется в этом же размере.'))
         self.row(f, _('HUD position (ultrawide)', 'Положение интерфейса (21:9)'),
@@ -1414,9 +1588,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         label.bind('<Button-1>', lambda _e: command() if command else self.show(page))
 
     def build_game(self):
-        ttk = self.ttk
-        f = self.scrolled_page('game', _('Game & language'),
-                               _('Your game dump, its languages and how it starts.'))
+        """Expert: the game folder and the DLC folder (set once, usually by the setup guide)."""
+        f = self.scrolled_page('game', _('Game files'),
+                               _('Your game dump and its add-ons. Set once, usually by the setup guide.'))
         self.section(f, _('Game', 'Игра'), top=4)
         self.folder(f, 'game_dir', _('Game folder', 'Папка игры'),
                     _('Choose the folder with eboot.bin', 'Выберите папку с eboot.bin'),
@@ -1426,11 +1600,31 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.folder(f, 'dlc_dir', _('DLC folder'), _('Choose the DLC folder'),
                     _('Your dumped add-ons, one folder each named like SPEXPANSIONDLC03 (The Old Hunters). '
                       'Only needed with a base-game dump; the Game of the Year edition (CUSA03173) has it.'))
+        dlc = self.tk.Label(f, text='', bg=PANEL, font=(theme.BODY, 9), justify='left', anchor='w')
+        dlc.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 2))
+
+        def dlc_shown(*_a):
+            kind, text = dlc_status(self.var('game_dir', 'app').get(), self.var('dlc_dir', 'app').get().strip(),
+                                    self.var('user_dir', 'app').get() or DATA_DIR / 'user')
+            mark = {'ok': '✓', 'warn': '!', 'none': '–'}[kind]
+            dlc.configure(text=f'{mark}  {text}', wraplength=self.px(560),
+                          fg={'ok': theme.GOLD_LIGHT, 'warn': theme.AMBER, 'none': MUTED}[kind])
+        for key in ('game_dir', 'dlc_dir', 'user_dir'):
+            self.var(key, 'app').trace_add('write', lambda *_a: self.root.after_idle(dlc_shown))
+        dlc_shown()
+        self.dlc_note = dlc
         self.link_row(f, _('Is the game folder all right? Help checks it.'), 'help')
         self.link_row(f, _('Set everything up again, step by step.'), None, _('Repeat the setup'), self.open_setup)
         self.piracy_notice(f, PANEL, wrap=720).grid(row=self.next_row(f), column=0, columnspan=2, sticky='we',
                                                     pady=(14, 0))
-        self.section(f, _('Language'))
+
+    def build_language(self):
+        """The languages of the game and the launcher, the player name, how the game starts and sounds."""
+        ttk = self.ttk
+        f = self.scrolled_page('language', _('Language & sound'),
+                               _("The game's text and voices, the launcher's language, how the game starts and "
+                                 'sounds.'))
+        self.section(f, _('Language'), top=4)
         before = self.var('ui_language', 'app').get()
         language = ttk.Frame(f)
         self.choice(language, 'ui_language', 'app', UI_LANGUAGES, 24).pack(side='left')
@@ -2216,7 +2410,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         button = ttk.Button(holder, text=_('Port folder', 'Папка порта'), command=lambda: self.open_path(DATA_DIR))
         button.pack(side='left')
         self.index_entry(button, _('Port folder', 'Папка порта'), key='button:port_folder')
-        ttk.Button(holder, text=_('Launcher language', 'Язык лаунчера') + '  ›', command=lambda: self.show('game')).pack(
+        ttk.Button(holder, text=_('Launcher language', 'Язык лаунчера') + '  ›', command=lambda: self.show('language')).pack(
             side='left', padx=6)
         ttk.Button(holder, text='bbport.ini', command=lambda: self.open_path(ini_path())).pack(side='left')
         ttk.Button(holder, text=_('Repeat the setup'), command=self.open_setup).pack(side='left', padx=6)
@@ -2581,6 +2775,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                 'not your email address.'))
             self.show('online')
             return
+        if self.var('output_display', 'app').get():
+            self.var('output_res', 'ini').set(display.size_text(self.game_monitor_size()))
         self.collect()
         if not game_info(self.app['game_dir']):
             self.messagebox.showerror('Bloodborne', _('Choose the game folder with eboot.bin (CUSA03173).',
@@ -2599,6 +2795,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.process = None
             return
         self.job = GameJob(self.process)
+        self.placer = display.Placer(self.app, display.parse_size(self.ini.get('output_res')) or (1920, 1080)).start()
         threading.Thread(target=self.read_output, args=(self.process,), daemon=True).start()
         self.play_button.configure(state='disabled')
         self.stop_button.configure(state='normal')
@@ -2606,6 +2803,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                      'Подготовка игры; она откроется в своём окне…'), fg=GOLD)
         if self.app.get('close_on_play'):
             self.root.after(5000, lambda: self.process and self.close())
+
+    def window_left(self, size):
+        """The game's last size in a window, for 'As I left it' next time."""
+        if size and not self.app.get('fullscreen'):
+            self.app['window_last'] = display.size_text(size)
+            remember_window(size)
 
     def read_output(self, process):
         """Helper thread: the game's output to the Log page and to <saves folder>/last_run.log."""
@@ -2644,6 +2847,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     self.process = None
                     if self.job:
                         self.job.close()
+                    if self.placer:
+                        self.placer.stop()
+                        self.window_left(self.placer.last)
+                        self.placer = None
                     self.stop_button.configure(state='disabled')
                     self.refresh_status()
                     if self.hidden:
@@ -3025,10 +3232,27 @@ class GameJob:
             self.handle = None
 
 
+def remember_window(size):
+    """Writes the game window's last size into settings.json (and nothing else)."""
+    settings = load_json(CONFIG_FILE, {})
+    settings['window_last'] = display.size_text(size)
+    try:
+        CONFIG_FILE.write_text(json.dumps(settings, indent=2, ensure_ascii=False), encoding='utf-8')
+    except OSError:
+        pass
+
+
 def play_without_window(settings):
     """--play: the game with the saved settings (shortcuts, Steam). Output goes to the console
     when there is one and to <saves folder>/last_run.log."""
     attach_stdio()
+    values, lines = load_ini()
+    if settings.get('output_display'):  # the game monitor's own size, as the launcher's Play does
+        m = display.monitor(settings.get('game_monitor', ''))
+        if m and values.get('output_res') != display.size_text(m.size):
+            values['output_res'] = display.size_text(m.size)
+            save_ini({key: values[key] for key in INI_DEFAULTS}, lines)
+    placer = display.Placer(settings, display.parse_size(values.get('output_res')) or (1920, 1080)).start()
     log_dir = Path(settings.get('user_dir') or DATA_DIR / 'user')
     log_dir.mkdir(parents=True, exist_ok=True)
     tracker = trophies.Tracker(log_dir)
@@ -3045,7 +3269,11 @@ def play_without_window(settings):
                 sys.stdout.write(text)
             except (OSError, ValueError):
                 pass
-        return process.wait()
+        code = process.wait()
+    placer.stop()
+    if placer.last and not settings.get('fullscreen'):
+        remember_window(placer.last)
+    return code
 
 
 def version_tuple(text):

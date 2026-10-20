@@ -32,7 +32,8 @@ def bind(module):
 
 
 def _(*texts):
-    return L._(*texts) if L else texts[0]
+    """Translated; a page named by an older name (Game & language) by its name now."""
+    return L.renamed(L._(*texts)) if L else texts[0]
 
 
 def number(value, digits=0):
@@ -374,6 +375,7 @@ class HelpMixin:
         self.help_button.pack(side='right')
         self.help_list = tk.Frame(card, bg=theme.CARD)
         self.help_list.pack(fill='x', pady=(px(10), 0))
+        self.link_row(f, _('Set everything up again, step by step.'), None, _('Repeat the setup'), self.open_setup)
 
         self.section(f, _('Problems and their fixes'))
         self.help_topics = {}
