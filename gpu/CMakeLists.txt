@@ -126,6 +126,7 @@ add_host_shader(test_fsr411_consume.comp test_fsr411_consume_comp)
 add_host_shader(taa.comp taa_comp)
 add_host_shader(taa_sharpen.comp taa_sharpen_comp)
 add_host_shader(taa_sharpen.comp taa_sharpen_ldr_comp LDR_OUTPUT=1)
+add_host_shader(taa_sharpen.comp taa_sharpen_direct_comp DIRECT_HALF_INPUT=1)
 add_host_shader(buffer_multi_copy.comp buffer_multi_copy_comp)
 add_host_shader(depth_resample.frag depth_resample_frag)
 add_host_shader(depth_resample.frag depth_stencil_resample_frag HAS_STENCIL=1)
@@ -399,3 +400,13 @@ target_link_libraries(fsr4-bench PRIVATE ffx-vulkan::fsr4-v07-vulkan ffx-vulkan:
 if (WIN32)
     include(fg401_dx12/CMakeLists.txt)
 endif()
+
+# Compare the actual host RCAS shaders, including the legacy FP16 -> FP32 blit.
+# Standalone Vulkan context: no game, runtime stubs or window is needed.
+add_executable(fsr411-sharpen-test EXCLUDE_FROM_ALL ../tests/test_fsr411_sharpen.cpp)
+target_include_directories(fsr411-sharpen-test PRIVATE shim shadps4 ${SHADER_INCLUDE})
+target_compile_options(fsr411-sharpen-test PRIVATE -UNDEBUG -fPIC)
+set_source_files_properties(../tests/test_fsr411_sharpen.cpp PROPERTIES
+    COMPILE_OPTIONS "-fvisibility=hidden;-fvisibility-inlines-hidden")
+target_link_libraries(fsr411-sharpen-test PRIVATE Vulkan::Vulkan)
+add_dependencies(fsr411-sharpen-test host_shaders)

@@ -23,6 +23,7 @@
 #include "video_core/host_shaders/taa_comp.h"
 #include "video_core/host_shaders/taa_sharpen_comp.h"
 #include "video_core/host_shaders/taa_sharpen_ldr_comp.h"
+#include "video_core/host_shaders/taa_sharpen_direct_comp.h"
 #include "video_core/renderer_vulkan/vk_shader_util.h"
 #include "video_core/renderer_vulkan/vk_camera_motion.h"
 #include "video_core/renderer_vulkan/vk_frame_capture.h"
@@ -623,6 +624,7 @@ void TemporalUpscaler::CreatePipelines() {
     storage_layout(2, taa_sharpen_desc_layout, taa_sharpen_pipeline_layout, sizeof(float));
     taa_sharpen_pipeline = compute(TAA_SHARPEN_COMP, *taa_sharpen_pipeline_layout);
     taa_sharpen_ldr_pipeline = compute(TAA_SHARPEN_LDR_COMP, *taa_sharpen_pipeline_layout);
+    taa_sharpen_direct_pipeline = compute(TAA_SHARPEN_DIRECT_COMP, *taa_sharpen_pipeline_layout);
     {
         std::array<vk::DescriptorSetLayoutBinding, 7> bindings{};
         for (u32 i = 0; i < bindings.size(); ++i) {
@@ -742,6 +744,92 @@ void TemporalUpscaler::RecordTaa(vk::CommandBuffer cmdbuf, vk::ImageView color,
         cmdbuf.dispatch((out_width + 7) / 8, (out_height + 7) / 8, 1);
     }
     taa_next = 1 - taa_next;
+}
+
+bool TemporalUpscaler::DirectSharpen(vk::CommandBuffer cmdbuf, Fsr4Upscaler::Image& produced) {
+    const auto& settings = BbSettings::Get();
+    const float strength = std::clamp(settings.sharpness.load(), 0.0f, 2.0f);
+    if (settings.upscaler != BbSettings::UpscalerFsr411 ||
+        !(instance.IsFsr4VkSupported() || instance.IsFsr411NativeSupported()) || !UseFsr4() ||
+        !settings.sharpen || strength <= 0.f ||
+        produced.format != vk::Format::eR16G16B16A16Sfloat || !produced.view || !produced.width ||
+        !produced.height) {
+        return false;
+    }
+    const u32 w = produced.width, h = produced.height;
+    const auto device = instance.GetDevice();
+    if (direct_sharpen_width != w || direct_sharpen_height != h) {
+        scheduler.WaitSubmitted();
+        direct_sharpen_view.reset();
+        direct_sharpen_image = VideoCore::UniqueImage(device, instance.GetAllocator());
+        direct_sharpen_image.Create(vk::ImageCreateInfo{
+            .imageType = vk::ImageType::e2D,
+            .format = vk::Format::eR16G16B16A16Sfloat,
+            .extent = {w, h, 1},
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = vk::SampleCountFlagBits::e1,
+            .tiling = vk::ImageTiling::eOptimal,
+            .usage = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled |
+                     vk::ImageUsageFlagBits::eTransferSrc,
+            .initialLayout = vk::ImageLayout::eUndefined});
+        direct_sharpen_view = Check(device.createImageViewUnique(
+            {.image = vk::Image(direct_sharpen_image),
+             .viewType = vk::ImageViewType::e2D,
+             .format = vk::Format::eR16G16B16A16Sfloat,
+             .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}}));
+        direct_sharpen_width = w;
+        direct_sharpen_height = h;
+    }
+    const auto all = vk::PipelineStageFlagBits2::eAllCommands;
+    const auto rw = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
+    const std::array<vk::ImageMemoryBarrier2, 2> before{
+        {{.srcStageMask = all,
+          .srcAccessMask = rw,
+          .dstStageMask = vk::PipelineStageFlagBits2::eComputeShader,
+          .dstAccessMask = vk::AccessFlagBits2::eShaderStorageRead,
+          .oldLayout = vk::ImageLayout::eGeneral,
+          .newLayout = vk::ImageLayout::eGeneral,
+          .image = produced.image,
+          .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}},
+         {.srcStageMask = all,
+          .srcAccessMask = rw,
+          .dstStageMask = vk::PipelineStageFlagBits2::eComputeShader,
+          .dstAccessMask = vk::AccessFlagBits2::eShaderStorageWrite,
+          .oldLayout = vk::ImageLayout::eUndefined,
+          .newLayout = vk::ImageLayout::eGeneral,
+          .image = vk::Image(direct_sharpen_image),
+          .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}}}};
+    cmdbuf.pipelineBarrier2({.imageMemoryBarrierCount = 2, .pImageMemoryBarriers = before.data()});
+    const std::array<vk::DescriptorImageInfo, 2> images{
+        {{.imageView = produced.view, .imageLayout = vk::ImageLayout::eGeneral},
+         {.imageView = *direct_sharpen_view, .imageLayout = vk::ImageLayout::eGeneral}}};
+    std::array<vk::WriteDescriptorSet, 2> writes{};
+    for (u32 i = 0; i < 2; ++i) {
+        writes[i] = {.dstBinding = i,
+                     .descriptorCount = 1,
+                     .descriptorType = vk::DescriptorType::eStorageImage,
+                     .pImageInfo = &images[i]};
+    }
+    cmdbuf.bindPipeline(vk::PipelineBindPoint::eCompute, *taa_sharpen_direct_pipeline);
+    cmdbuf.pushDescriptorSetKHR(vk::PipelineBindPoint::eCompute, *taa_sharpen_pipeline_layout, 0,
+                                writes);
+    cmdbuf.pushConstants(*taa_sharpen_pipeline_layout, vk::ShaderStageFlagBits::eCompute, 0,
+                         sizeof(strength), &strength);
+    cmdbuf.dispatch((w + 7) / 8, (h + 7) / 8, 1);
+    const vk::ImageMemoryBarrier2 after{
+        .srcStageMask = vk::PipelineStageFlagBits2::eComputeShader,
+        .srcAccessMask = vk::AccessFlagBits2::eShaderStorageWrite,
+        .dstStageMask = all,
+        .dstAccessMask = rw,
+        .oldLayout = vk::ImageLayout::eGeneral,
+        .newLayout = vk::ImageLayout::eGeneral,
+        .image = vk::Image(direct_sharpen_image),
+        .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
+    cmdbuf.pipelineBarrier2({.imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &after});
+    produced = {vk::Image(direct_sharpen_image), *direct_sharpen_view, w, h,
+                vk::Format::eR16G16B16A16Sfloat};
+    return true;
 }
 
 void TemporalUpscaler::ExtraSharpen(vk::CommandBuffer cmdbuf, vk::Image target, bool ldr, u32 w,
@@ -1817,7 +1905,8 @@ void TemporalUpscaler::RunScaled() {
                 w, h, ow, oh, frame_ms, false, &produced);
         }
         if (ok4) {
-            if (BbSettings::Get().upscaler != BbSettings::UpscalerTaa) {
+            if (BbSettings::Get().upscaler != BbSettings::UpscalerTaa &&
+                !DirectSharpen(cmdbuf, produced)) {
                 ExtraSharpen(cmdbuf, produced.image, false, ow, oh, produced.view);
             }
             barrier(produced.image, vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral, all,
@@ -2128,7 +2217,8 @@ bool TemporalUpscaler::RecordFsr4(vk::CommandBuffer &cmdbuf, Fsr4Upscaler::Image
         .color = color,
         .depth = depth,
         .motion = {vk::Image(motion_image), *motion_view, w, h},
-        .output = {vk::Image(output_image), *output_view, ow, oh},
+        .output = {vk::Image(output_image), *output_view, ow, oh,
+                   vk::Format::eR16G16B16A16Sfloat},
         .render_width = w,
         .render_height = h,
         .preset = applied_preset,

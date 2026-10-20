@@ -189,6 +189,9 @@ private:
                     u32 w, u32 h, u32 ow, u32 oh, float frame_ms, bool hdr = true,
                     Fsr4Upscaler::Image *produced = nullptr);
     void RecordTaa(vk::CommandBuffer cmdbuf, vk::ImageView color, vk::ImageView depth);
+    /// Host RCAS for the Windows FSR 4.1.1 providers: read FP16 directly into a separate FP16 image.
+    /// Returns false when the existing sharpening path applies. Called from scaled SDR composition.
+    bool DirectSharpen(vk::CommandBuffer cmdbuf, Fsr4Upscaler::Image& produced);
     /// Sharpness above 1 for FSR 3/4 (their RCAS stops at 1): one more RCAS pass over the target
     /// (output_image, or the 8-bit UI image with ldr) in General layout after the upscaler.
     void ExtraSharpen(vk::CommandBuffer cmdbuf, vk::Image target, bool ldr, u32 w, u32 h,
@@ -295,6 +298,10 @@ private:
     vk::UniquePipelineLayout taa_sharpen_pipeline_layout;
     vk::UniquePipeline taa_sharpen_pipeline;
     vk::UniquePipeline taa_sharpen_ldr_pipeline;
+    vk::UniquePipeline taa_sharpen_direct_pipeline;
+    VideoCore::UniqueImage direct_sharpen_image;
+    vk::UniqueImageView direct_sharpen_view;
+    u32 direct_sharpen_width = 0, direct_sharpen_height = 0;
     // ExtraSharpen: a copy of the upscaled frame (RCAS reads neighbours) and the target views.
     VideoCore::UniqueImage extra_sharpen_image;
     vk::UniqueImageView extra_sharpen_view;
