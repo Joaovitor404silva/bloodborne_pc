@@ -1,0 +1,19 @@
+{
+  "name": "Boss fight (your save at a boss)",
+  "description": "Starts from a save in front of a boss fog wall (for example from a boss save mod): walks into the fog, locks on and fights for two minutes while the hunter cannot die. Heavy on effects and the processor, never quite the same twice: for stability and for a worst case, not for exact comparisons.",
+  "kinds": ["stability", "performance"],
+  "save": "ask",
+  "settings": {"cheat_stealth": false},
+  "steps": [
+    {"do": "title"},
+    {"do": "wait", "seconds": 4},
+    {"do": "hold", "pad": "ly=0", "seconds": 1.5},
+    {"do": "press", "button": "cross"},
+    {"do": "wait", "seconds": 4},
+    {"do": "capture", "name": "boss"},
+    {"do": "measure", "name": "fight", "route": "boss-dodge.txt"}
+  ],
+  "loop": [
+    {"do": "measure", "name": "fight", "route": "boss-dodge.txt"}
+  ]
+}

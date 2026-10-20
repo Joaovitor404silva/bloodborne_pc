@@ -23,6 +23,25 @@ https://nativeretro.com/
   server (shadPS4's public one by default).
 - **Launcher with every setting in one window**, in 13 languages: English, Arabic, Russian,
   Spanish, Portuguese, French, German, Italian, Polish, Turkish, Chinese, Japanese, Korean.
+- **Guided first start:** five steps check your game files (a clean 1.09 `eboot.bin`, a complete
+  folder) and your PC before the first start, set the picture for your hardware and your goal,
+  set up keyboard or controller, bring your character along and sign you in for online play.
+- **Simple or expert view:** the simple view shows the pages a player needs and sets everything
+  technical by itself; the expert view adds every option. A switch at the bottom of the side bar.
+- **Your goal instead of graphics jargon:** Smooth (up to 120 FPS), Balanced (60 FPS, the best
+  picture) or Quiet (60 FPS, less work for the card); the settings for it come from your
+  hardware, rated like the hardware check on [bbport.de](https://bbport.de/install/), each with
+  its reason, and "Measure on this PC" checks them in the game.
+- **Search** (Ctrl+F): settings and help by your own words ("stutters", "black screen",
+  "controller").
+- **Saves from other versions:** characters from shadPS4, Awaken's port, bbhost or a PS4 export
+  are found and imported (your own saves are backed up first).
+- **Help page:** checks your installation (a clean 1.09 `eboot.bin`, a complete game folder, the
+  page file, the port's location) and shows the fix for each problem step by step; after a
+  crash the launcher names the cause from the log. "Save a report" makes a zip for the Discord.
+- **Game tests:** the launcher plays a fixed scene by itself and measures it, to find the best
+  settings for 60, 90 or 120 FPS, to compare one setting with screenshots side by side, or to
+  test a beta for crashes over hours; the report has every chart and the logs.
 - **Updates from the launcher:** when a new version is out it tells you, and **Update**
   installs it. Your saves, settings and mods are kept.
 - **NVIDIA DLSS** on GeForce RTX cards (RTX 20 series and newer).
@@ -67,9 +86,9 @@ Nothing else to install: everything the game needs is in the zip.
 
 1. Download the zip from [Releases](https://github.com/Supermedo/bloodborne_pc/releases/latest)
    and unpack it anywhere.
-2. Start `Bloodborne.exe`.
-3. On **Game & effects**, choose your game folder (the one with `eboot.bin`).
-4. Press **PLAY**.
+2. Start `Bloodborne.exe`. The first time, a short guide checks your game folder (the one
+   with `eboot.bin`) and your PC, and sets the picture for your hardware.
+3. Press **PLAY**.
 
 **DLC.** The Game of the Year edition (CUSA03173) already has The Old Hunters. With a base-game
 dump, also dump your add-ons: each is a folder named like `SPEXPANSIONDLC03` with only

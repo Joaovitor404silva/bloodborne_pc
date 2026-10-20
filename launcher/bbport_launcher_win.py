@@ -45,6 +45,8 @@ VERSION = '1.9.2'
 COMMUNITY_SERVER = 'https://thehuntersdream.com'
 RELEASES_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases/latest'
 RELEASES_PAGE = 'https://github.com/Supermedo/bloodborne_pc/releases/latest'
+# The community site (install guide, FAQ, forum), linked from the side bar.
+COMMUNITY_SITE = 'https://bbport.de/'
 RELEASES_LIST_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases?per_page=100'
 # The oldest version Advanced > Other versions offers: older ones cannot install themselves the
 # same way (--install-update) or read today's settings.
@@ -129,7 +131,16 @@ def run_command():
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bbport_lang  # noqa: E402
+import bbport_lang_setup  # noqa: E402,F401 (the setup guide's texts)
+import bbport_lang_help  # noqa: E402,F401 (the Help page's and the game tests' texts)
+import bbport_lang_ui  # noqa: E402,F401 (the regrouped pages, the side bar, the guide)
+import bbport_lang_world  # noqa: E402,F401 (the new texts in the other eleven languages)
+import bbport_hardware as hardware  # noqa: E402
+import bbport_help  # noqa: E402
+import bbport_search  # noqa: E402
+import bbport_setup  # noqa: E402
 import bbport_trophies as trophies  # noqa: E402
+import bbport_theme as theme  # noqa: E402
 from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SLOTS, keysym_to_name,
                                   button_num_to_name, input_ini_path, load_input_ini, reserved_keys,
                                   save_input_ini, save_mouse_settings, wheel_to_name, MAX_COMBO,
@@ -148,6 +159,12 @@ def _(en, ru=None):
     if LANG == 'ru':
         return ru or bbport_lang.table('ru').get(en) or en
     return bbport_lang.table(LANG).get(en) or en
+
+
+def renamed(text):
+    """A translated text of the original launcher that names the page Game & effects, which is
+    Game & language now (its effects moved to Picture & performance and All graphics)."""
+    return text.replace(_('Game & effects', 'Игра и эффекты'), _('Game & language'))
 
 
 def windows_language():
@@ -198,6 +215,8 @@ TWEAKS = [
     ('quit_to_desktop', ('Quit to Desktop in the title menu and in the System menu',
                          'Пункт «Выйти на рабочий стол» в главном меню и в меню «Система»'), True),
 ]
+# Effects that are taste, not performance: on Picture & performance (the others on All graphics).
+TASTE_EFFECTS = ('effect_chromatic_aberration', 'effect_dof', 'effect_motion_blur')
 INI_FLAGS = {'sharpen', 'object_motion', 'show_fps', 'mute_unfocused', 'frame_gen_fit_display',
              *(k for k, _t, _o in EFFECTS + EXTRAS + CHEATS + TWEAKS)}
 INI_DEFAULTS = {'upscaler': 'fsr4', 'preset': '1', 'sharpen': '1', 'sharpness': '0.50',
@@ -216,7 +235,25 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'check_updates': True, 'online': False, 'online_server': 'srv.shadps4.net:31313',
                 'online_webapi': '', 'online_npid': '', 'online_password': '', 'online_upnp': True,
                 'online_community': COMMUNITY_SERVER, 'online_pool': 'shadnet', 'bridge_live_map': False,
-                'supermedo_user': '', 'supermedo_password': '', 'thd_online_id': '', 'thd_token': ''}
+                'supermedo_user': '', 'supermedo_password': '', 'thd_online_id': '', 'thd_token': '',
+                # The setup guide ran (or the launcher was set up before it existed); a graphics card
+                # chosen by hand when the detected one is not in the hardware check's list.
+                'setup_done': False, 'gpu_override': '',
+                # Graphics settings made for the hardware (bbport_setup.auto_settings): on/off, the
+                # hardware they were made for, and what they replaced (Undo).
+                'auto_graphics': True, 'auto_hw': '', 'auto_undo': {},
+                'bench_goal': '60',  # the performance test's frame rate goal
+                'eboot_check': {},
+                # The launcher's view: simple (the pages a player needs) or expert (every page); empty
+                # until decided at the first start (bbport_launcher_win.Launcher.__init__).
+                'ui_mode': '',
+                # The player's goal (Play page): smooth, balanced or quiet (bbport_hardware.GOALS).
+                'goal': 'smooth',
+                'translucent': True,  # a hint of what lies behind the window (window_chrome)
+                'seen_version': '',  # the version whose news the Play page has shown
+                # Game tests (System & performance): the kind, the scenario, its options.
+                'test_mode': 'performance', 'test_scenario': 'hunters-view', 'test_compare': 'preset',
+                'test_repeats': '1', 'test_minutes': '10', 'test_saves': {}}  # the last check of eboot.bin (bbport_help), kept while the file is unchanged
 # bbbridge's own app reads and writes the online_* keys above: keep their names.
 
 UPSCALERS = [('dlss', ('DLSS (NVIDIA GeForce RTX)',)),
@@ -552,21 +589,36 @@ def game_environment(s):
 # ---------------------------------------------------------------------------------------------
 # The window.
 
-BG, PANEL, CARD, LINE = '#0e0c0b', '#151210', '#1c1815', '#2e2722'
-TEXT, MUTED, GOLD, BLOOD, BLOOD_HI = '#e9e2d6', '#9a8f80', '#c8a96a', '#7c1717', '#9e2222'
+# The colours of bbport_theme (bbport.de): BG is the side bar, PANEL the pages.
+BG, PANEL, CARD, LINE = theme.DEEP, theme.BG, theme.CARD, theme.BORDER
+TEXT, MUTED, GOLD, BLOOD, BLOOD_HI = theme.TEXT, theme.MUTED, theme.GOLD_LIGHT, theme.BLOOD, theme.BLOOD_HOVER
 # Trophy glyphs only: the grade colours of the console, toned to the launcher's palette.
 TROPHY_COLORS = {trophies.PLATINUM: '#c4ccd8', trophies.GOLD: GOLD, trophies.SILVER: '#adb1b7',
                  trophies.BRONZE: '#b0774f'}
-TROPHY_LOCKED = '#3b332c'
+TROPHY_LOCKED = '#34373c'
 GRADE_NAMES = {trophies.PLATINUM: ('Platinum', 'Платиновый'), trophies.GOLD: ('Gold', 'Золотой'),
                trophies.SILVER: ('Silver', 'Серебряный'), trophies.BRONZE: ('Bronze', 'Бронзовый')}
 
 
-class Launcher:
+# The side bar: the pages a player needs, then the expert's (shown in the expert view only).
+NAV_SIMPLE = [('play', ('Play', 'Играть')), ('picture', ('Picture & performance',)),
+              ('controls', ('Controls', 'Управление')), ('online', ('Online play',)), ('saves', ('Saves',)),
+              ('mods', ('Mods',)), ('game', ('Game & language',)), ('trophies', ('Achievements', 'Достижения')),
+              ('help', ('Help', 'Помощь'))]
+NAV_EXPERT = [('graphics', ('All graphics',)), ('cheats', ('Cheats', 'Читы')), ('system', ('System & tests',)),
+              ('advanced', ('Advanced', 'Дополнительно'))]
+EXPERT_PAGES = {name for name, _t in NAV_EXPERT} | {'log'}
+
+
+class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.SearchMixin):
     def __init__(self, root, tk, ttk, filedialog, messagebox):
         self.tk, self.ttk, self.filedialog, self.messagebox = tk, ttk, filedialog, messagebox
         self.root = root
-        self.app = {**APP_DEFAULTS, **load_json(CONFIG_FILE, {})}
+        saved = load_json(CONFIG_FILE, {})
+        self.app = {**APP_DEFAULTS, **saved}
+        if self.app.get('ui_mode') not in ('simple', 'expert'):
+            # Set up with an earlier launcher: every page as before (expert). New: the simple view.
+            self.app['ui_mode'] = 'expert' if saved.get('setup_done') or saved.get('game_dir') else 'simple'
         self.ini, self.ini_lines = load_ini()
         self.remap_ini_path = input_ini_path(ini_path())
         self.remap_bindings, self.remap_lines, self.remap_toggle_key, self.remap_reload_key, \
@@ -582,20 +634,28 @@ class Launcher:
         self.downloading = False
         self.output = queue.Queue()
         self.gpu_text = _('• Checking the graphics card…', '• Проверка видеокарты…')
-        self.banner_source = self.banner_image = None
+        self.banner_image = None
         self.ui_calls = queue.Queue()  # work for the Tk thread from helper threads
         self.mod_order, self.mod_vars, self.patch_vars = [], {}, {}
         self.tracker = trophies.Tracker(self.trophy_dir())
+        self.init_hardware()
         self.trophies_loaded, self.toasts = False, []
         root.title('Bloodborne — bbport')
         root.configure(bg=BG)
         self.dpi = root.winfo_fpixels('1i') / 96.0
-        root.geometry(f'{self.px(1120)}x{self.px(740)}')
-        root.minsize(self.px(980), self.px(660))
+        # Never taller or wider than the screen (a 1080p laptop at 150 % has about 1280 × 670 points).
+        free_w, free_h = root.winfo_screenwidth() - self.px(40), root.winfo_screenheight() - self.px(80)
+        root.geometry(f'{min(self.px(1180), free_w)}x{min(self.px(760), free_h)}')
+        root.minsize(min(self.px(1000), free_w), min(self.px(680), free_h))
+        self.compact = min(self.px(760), free_h) < self.px(740)  # a short screen: smaller banner and emblem
+        theme.load_fonts(root)
+        self.theme = theme.Theme(root, self.dpi)
         self.set_icon()
         self.style()
         self.build()
         self.show('play')
+        root.after(50, self.window_chrome)
+        self.maybe_open_setup()
         root.protocol('WM_DELETE_WINDOW', self.close)
         root.after(100, self.drain_output)
         root.after(300, self.poll_trophies)
@@ -623,73 +683,9 @@ class Launcher:
                 continue
 
     # ---- look --------------------------------------------------------------------------------
-    def check_images(self):
-        """16 px (DPI-scaled) check box images: the clam theme draws a cross."""
-        tk = self.tk
-        n = max(14, int(16 * self.dpi))
-        images = []
-        for checked in (False, True):
-            image = tk.PhotoImage(width=n + self.px(8), height=n)  # unset pixels stay transparent
-            fill = BLOOD if checked else CARD
-            image.put(GOLD if checked else '#5a4c40', to=(0, 0, n, n))
-            image.put(fill, to=(1, 1, n - 1, n - 1))
-            if checked:
-                # Tick: down from (0.22n, 0.52n) to (0.42n, 0.72n), up to (0.78n, 0.30n).
-                pts = []
-                x0, y0, x1, y1, x2, y2 = .22 * n, .52 * n, .42 * n, .72 * n, .78 * n, .28 * n
-                for t in range(40):
-                    f = t / 39
-                    pts.append((x0 + (x1 - x0) * f, y0 + (y1 - y0) * f))
-                    pts.append((x1 + (x2 - x1) * f, y1 + (y2 - y1) * f))
-                width = max(1, round(n / 9))
-                for x, y in pts:
-                    image.put('#f4ece0', to=(int(x), int(y), int(x) + width, int(y) + width))
-            images.append(image)
-        self.check_off, self.check_on = images
-
     def style(self):
-        ttk = self.ttk
-        s = ttk.Style(self.root)
-        s.theme_use('clam')
-        self.check_images()
-        s.element_create('Bb.indicator', 'image', self.check_off, ('selected', self.check_on), sticky='')
-        s.layout('TCheckbutton', [('Checkbutton.padding', {'sticky': 'nswe', 'children': [
-            ('Bb.indicator', {'side': 'left', 'sticky': ''}),
-            ('Checkbutton.focus', {'side': 'left', 'sticky': 'w', 'children': [
-                ('Checkbutton.label', {'sticky': 'nswe'})]})]})])
-        base = ('Segoe UI', 10)
-        self.root.option_add('*TCombobox*Listbox.background', CARD)
-        self.root.option_add('*TCombobox*Listbox.foreground', TEXT)
-        self.root.option_add('*TCombobox*Listbox.selectBackground', BLOOD)
-        self.root.option_add('*TCombobox*Listbox.font', base)
-        s.configure('.', background=PANEL, foreground=TEXT, fieldbackground=CARD, bordercolor=LINE,
-                    lightcolor=LINE, darkcolor=LINE, troughcolor=CARD, focuscolor=GOLD, font=base)
-        s.configure('TFrame', background=PANEL)
-        s.configure('TLabel', background=PANEL, foreground=TEXT)
-        s.configure('Muted.TLabel', background=PANEL, foreground=MUTED, font=('Segoe UI', 9))
-        s.configure('Section.TLabel', background=PANEL, foreground=GOLD, font=('Georgia', 13))
-        s.configure('Code.TLabel', background=PANEL, foreground=GOLD, font=('Consolas', 22, 'bold'))
-        s.configure('TCheckbutton', background=PANEL, foreground=TEXT, padding=(0, 3))
-        s.map('TCheckbutton', background=[('active', PANEL)], foreground=[('disabled', MUTED)])
-        s.configure('Warning.TLabel', background='#2a1d12', foreground='#e3b25a', padding=(10, 6))
-        s.configure('TCombobox', arrowcolor=GOLD, foreground=TEXT, padding=4)
-        s.map('TCombobox', fieldbackground=[('readonly', CARD)], foreground=[('readonly', TEXT)],
-              selectbackground=[('readonly', CARD)], selectforeground=[('readonly', TEXT)])
-        s.configure('TEntry', foreground=TEXT, insertcolor=TEXT, padding=4)
-        s.configure('TSpinbox', foreground=TEXT, arrowcolor=GOLD, insertcolor=TEXT, padding=4)
-        s.configure('TButton', background=CARD, foreground=TEXT, padding=(12, 6), borderwidth=1)
-        s.map('TButton', background=[('active', LINE), ('disabled', PANEL)], foreground=[('disabled', MUTED)])
-        # The Controls page's binding slots; they stay as they are while another slot listens.
-        s.configure('Slot.TButton', background=CARD, foreground=TEXT, padding=(6, 5), font=('Segoe UI', 9))
-        s.map('Slot.TButton', background=[('active', LINE), ('disabled', CARD)], foreground=[('disabled', TEXT)])
-        s.configure('Listen.TButton', background=LINE, foreground=GOLD, padding=(6, 5), font=('Segoe UI', 9))
-        s.map('Listen.TButton', background=[('disabled', LINE)], foreground=[('disabled', GOLD)])
-        s.configure('Play.TButton', background=BLOOD, foreground='#f4ece0', font=('Georgia', 15, 'bold'),
-                    padding=(36, 10), borderwidth=0)
-        s.map('Play.TButton', background=[('active', BLOOD_HI), ('disabled', '#3a2420')],
-              foreground=[('disabled', '#8a7a70')])
-        s.configure('Horizontal.TProgressbar', background=GOLD, troughcolor=CARD, bordercolor=LINE)
-        s.configure('Vertical.TScrollbar', background=CARD, arrowcolor=GOLD, troughcolor=PANEL, bordercolor=PANEL)
+        """bbport_theme's ttk style: rounded buttons and fields, switches, cards."""
+        self.theme.style(self.ttk.Style(self.root))
 
     # ---- widget helpers ----------------------------------------------------------------------
     def var(self, key, store):
@@ -714,11 +710,12 @@ class Launcher:
             self.vars[key] = v
         return self.vars[key]
 
-    def choice(self, parent, key, store, options, width=38):
+    def choice(self, parent, key, store, options, width=38, style='TCombobox'):
         """A combobox over (value, (english, russian)) pairs, kept in sync with its variable."""
         var = self.var(key, store)
         values = [v for v, _t in options]
-        box = self.ttk.Combobox(parent, values=[_(*text) for _v, text in options], state='readonly', width=width)
+        box = self.ttk.Combobox(parent, values=[_(*text) for _v, text in options], state='readonly', width=width,
+                               style=style)
         if var.get() not in values:
             var.set(values[0])
 
@@ -728,6 +725,7 @@ class Launcher:
         show()
         box.bind('<<ComboboxSelected>>', lambda _e: var.set(values[box.current()]))
         var.trace_add('write', show)
+        box.setting_key = key  # for the search (row() indexes it)
         return box
 
     def next_row(self, parent):
@@ -736,18 +734,21 @@ class Launcher:
     def row(self, parent, title, widget, hint=None):
         ttk = self.ttk
         r = self.next_row(parent)
-        ttk.Label(parent, text=title).grid(row=r, column=0, sticky='nw', padx=(0, 18), pady=(8, 0))
-        widget.grid(row=r, column=1, sticky='w', pady=(5, 0))
+        label = ttk.Label(parent, text=title)
+        label.grid(row=r, column=0, sticky='w', padx=(0, 18), pady=(6, 0))
+        widget.grid(row=r, column=1, sticky='w', pady=(6, 0))
         if hint:
             ttk.Label(parent, text=hint, style='Muted.TLabel', wraplength=self.px(560), justify='left').grid(
                 row=r + 1, column=1, sticky='w', pady=(2, 2))
+        self.index_entry(widget, title, hint, getattr(widget, 'setting_key', None), mark=label)
         return widget
 
     def check(self, parent, key, store, title, hint=None):
         ttk = self.ttk
         r = self.next_row(parent)
-        ttk.Checkbutton(parent, text=title, variable=self.var(key, store)).grid(
-            row=r, column=0, columnspan=2, sticky='w', pady=(4, 0))
+        box = ttk.Checkbutton(parent, text=title, variable=self.var(key, store))
+        box.grid(row=r, column=0, columnspan=2, sticky='w', pady=(4, 0))
+        self.index_entry(box, title, hint, key)
         if hint:
             ttk.Label(parent, text=hint, style='Muted.TLabel', wraplength=self.px(640), justify='left').grid(
                 row=r + 1, column=0, columnspan=2, sticky='w', padx=(26, 0))
@@ -757,8 +758,11 @@ class Launcher:
             row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(top, 0))
 
     def section(self, parent, title, top=18):
-        self.ttk.Label(parent, text=title, style='Section.TLabel').grid(
-            row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(top, 2))
+        """A heading in Cinzel with a hairline running to the right edge."""
+        head = self.ttk.Frame(parent)
+        head.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='we', pady=(top + 6, 6))
+        self.ttk.Label(head, text=title, style='Section.TLabel').pack(side='left')
+        self.tk.Frame(head, bg=LINE, height=1).pack(side='left', fill='x', expand=True, padx=(14, 0), pady=(4, 0))
 
     def folder(self, parent, key, title, prompt, hint=None, on_change=None):
         ttk = self.ttk
@@ -775,201 +779,462 @@ class Launcher:
             side='left', padx=(6, 0))
         if on_change:
             var.trace_add('write', lambda *_a: on_change())
+        holder.setting_key = key
         return self.row(parent, title, holder, hint)
+
+    def page_header(self, parent, title, subtitle):
+        """A page's head: its title over the cathedral art, fading into the page."""
+        c = self.tk.Canvas(parent, height=self.px(118), bg=PANEL, highlightthickness=0, bd=0)
+
+        def draw():
+            c.pending = None
+            w, h = max(c.winfo_width(), 200), int(c['height'])
+            c.delete('all')
+            c.art = self.theme.cached(('header', w, h), lambda: theme.header((w, h), PANEL))
+            c.create_image(0, 0, image=c.art, anchor='nw')
+            c.create_text(self.px(32), self.px(48), text=title, anchor='w', fill=theme.TEXT_STRONG,
+                          font=(theme.HEAD, 21))
+            if subtitle:
+                c.create_text(self.px(33), self.px(72), text=subtitle, anchor='nw', fill=theme.TEXT_SOFT,
+                              font=(theme.BODY, 9), width=w - self.px(66))
+
+        def schedule(_event=None):
+            if getattr(c, 'pending', None):
+                c.after_cancel(c.pending)
+            c.pending = c.after(30, draw)
+        c.bind('<Configure>', schedule)
+        return c
 
     def scrolled_page(self, name, title, subtitle):
         """A settings page: a heading and content that scrolls vertically."""
         tk, ttk = self.tk, self.ttk
         outer = ttk.Frame(self.content)
-        head = ttk.Frame(outer, padding=(28, 22, 28, 6))
-        head.pack(fill='x')
-        ttk.Label(head, text=title, background=PANEL, foreground=TEXT, font=('Georgia', 20)).pack(anchor='w')
-        ttk.Label(head, text=subtitle, style='Muted.TLabel').pack(anchor='w')
+        self.page_header(outer, title, subtitle).pack(fill='x')
         canvas = tk.Canvas(outer, bg=PANEL, highlightthickness=0, bd=0)
         bar = ttk.Scrollbar(outer, orient='vertical', command=canvas.yview)
-        inner = ttk.Frame(canvas, padding=(28, 0, 28, 24))
+        inner = ttk.Frame(canvas, padding=(self.px(32), 0, self.px(32), self.px(28)))
         inner.columnconfigure(1, weight=1)
         window = canvas.create_window(0, 0, window=inner, anchor='nw')
         inner.bind('<Configure>', lambda _e: canvas.configure(scrollregion=canvas.bbox('all')))
         canvas.bind('<Configure>', lambda e: canvas.itemconfigure(window, width=e.width))
-        canvas.configure(yscrollcommand=bar.set)
-        bar.pack(side='right', fill='y')
+        canvas.configure(yscrollcommand=bar.set, yscrollincrement=1)  # scrolled in pixels (wheel())
+        bar.pack(side='right', fill='y', padx=(0, self.px(4)), pady=(0, self.px(8)))
         canvas.pack(side='left', fill='both', expand=True)
-        outer.scroll = lambda units: canvas.yview_scroll(units, 'units') if inner.winfo_height() > canvas.winfo_height() else None
+        outer.scroll = lambda pixels: canvas.yview_scroll(pixels, 'units') if inner.winfo_height() > canvas.winfo_height() else None
         self.pages[name] = outer
         return inner
 
     # ---- layout ------------------------------------------------------------------------------
     def build(self):
-        tk, ttk = self.tk, self.ttk
-        side = tk.Frame(self.root, bg=BG, width=self.px(220))
+        tk, ttk, px = self.tk, self.ttk, self.px
+        side = tk.Frame(self.root, bg=BG, width=px(248))
         side.pack(side='left', fill='y')
         side.pack_propagate(False)
-        tk.Label(side, text='BLOODBORNE', bg=BG, fg=GOLD, font=('Georgia', 16)).pack(anchor='w', padx=22, pady=(24, 0))
+        tk.Frame(self.root, bg=LINE, width=1).pack(side='left', fill='y')
         self.side = side
-        tk.Label(side, text=_('by Super Medo'), bg=BG, fg=TEXT, font=('Segoe UI', 10)).pack(anchor='w', padx=22)
-        tk.Label(side, text=_('native port · Windows', 'нативный порт · Windows') + f'  ·  v{VERSION}' + ('\n' + _('co-op test build') if COOP_TEST else ''), bg=BG, fg=MUTED, justify='left',
-                 font=('Segoe UI', 9)).pack(anchor='w', padx=22, pady=(0, 20))
+        brand = tk.Frame(side, bg=BG)
+        brand.pack(fill='x', padx=px(20), pady=(px(20), px(4)))
+        mark = theme.emblem(px(48), glow=False)
+        if mark is not None:
+            self.brand_mark = self.theme.photo(mark, BG)
+            tk.Label(brand, image=self.brand_mark, bg=BG, bd=0).pack(side='left', padx=(0, px(10)))
+        words = tk.Frame(brand, bg=BG)
+        words.pack(side='left', fill='x')
+        tk.Label(words, text='BLOODBORNE', bg=BG, fg=theme.TEXT_STRONG, font=(theme.HEAD_BOLD, 14)).pack(anchor='w')
+        tk.Label(words, text='PC PORT', bg=BG, fg=GOLD, font=(theme.HEAD, 8)).pack(anchor='w')
+        tk.Label(side, text=_('by Super Medo') + f'  ·  v{VERSION}' + ('\n' + _('co-op test build') if COOP_TEST else ''),
+                 bg=BG, fg=MUTED, justify='left', font=(theme.BODY, 9)).pack(anchor='w', padx=px(22), pady=(px(2), px(8)))
+        self.build_search(side)  # bbport_search: settings and help by the player's own words
         self.nav, self.current_page = {}, None
-        for name, title in (('play', _('Play', 'Играть')), ('graphics', _('Graphics', 'Графика')),
-                            ('display', _('Display & FPS', 'Экран и FPS')), ('game', _('Game & effects', 'Игра и эффекты')),
-                            ('cheats', _('Cheats', 'Читы')), ('online', _('Online co-op', 'Онлайн-кооператив')),
-                            ('mods', _('Mods & patches', 'Моды и патчи')),
-                            ('trophies', _('Achievements', 'Достижения')),
-                            ('controls', _('Controls', 'Управление')),
-                            ('advanced', _('Advanced', 'Дополнительно')),
-                            ('log', _('Log', 'Журнал'))):
-            item = tk.Label(side, text='    ' + title, bg=BG, fg=TEXT, anchor='w', font=('Segoe UI', 11),
-                            pady=10, cursor='hand2')
-            item.pack(fill='x')
-            item.bind('<Button-1>', lambda _e, n=name: self.show(n))
-            item.bind('<Enter>', lambda _e, n=name: n != self.current_page and self.nav[n].configure(bg='#1a1613'))
-            item.bind('<Leave>', lambda _e, n=name: n != self.current_page and self.nav[n].configure(bg=BG))
-            self.nav[name] = item
-        tk.Frame(side, bg=BG).pack(fill='both', expand=True)
+        # Shorter entries on a short screen, so the expert view (13 pages) still fits.
+        self.nav_h = 37 if not self.compact else 32
+        self.nav_pills = {'on': self.theme.box(224, self.nav_h, 8, CARD, LINE, bg=BG),
+                          'hover': self.theme.box(224, self.nav_h, 8, theme.SURFACE, bg=BG)}
+        accent = self.theme.box(3, 18, 1.5, theme.BLOOD_LIGHT, bg=CARD)
+        self.nav_group = tk.Label(side, text=_('EXPERT'), bg=BG, fg=MUTED, font=(theme.BODY_SEMI, 8), anchor='w')
+        for name, title in NAV_SIMPLE + NAV_EXPERT:
+            if name == NAV_EXPERT[0][0]:
+                self.nav_group.pack(fill='x', padx=px(24), pady=(px(8), px(2)))
+            c = tk.Canvas(side, width=px(224), height=px(self.nav_h), bg=BG, highlightthickness=0, bd=0, cursor='hand2')
+            c.pack(padx=px(12), pady=(0, px(1)))
+            mid = px(self.nav_h / 2)
+            items = {'pill': c.create_image(0, 0, anchor='nw', state='hidden'),
+                     'bar': c.create_image(px(1), mid, anchor='w', image=accent, state='hidden'),
+                     'icon': c.create_text(px(22), mid, text=theme.ICON[name], font=(theme.ICONS, 12)),
+                     'label': c.create_text(px(44), mid, text=_(*title), anchor='w', font=(theme.BODY_MEDIUM, 10))}
+            c.bind('<Button-1>', lambda _e, n=name: self.show(n))
+            c.bind('<Enter>', lambda _e, n=name: self.nav_paint(n, hover=True))
+            c.bind('<Leave>', lambda _e, n=name: self.nav_paint(n))
+            self.nav[name] = (c, items)
+            self.nav_paint(name)
+        self.nav_filler = tk.Frame(side, bg=BG)
+        self.nav_filler.pack(fill='both', expand=True)
         self.update_box = None
         self.version_window = None  # Advanced > Other versions
-        self.side_note = tk.Label(side, text=_('In the game: Insert or L3+R3\nopens the port\'s menu.',
-                                               'В игре: Insert или L3+R3\nоткрывает меню порта.'),
-                                  bg=BG, fg=MUTED, font=('Segoe UI', 9), justify='left', wraplength=self.px(210))
-        self.side_note.pack(anchor='w', padx=22, pady=(0, 18))
+        # The view: the switch never changes a setting, only which pages are shown.
+        expert = tk.BooleanVar(value=self.app['ui_mode'] == 'expert')
+        self.expert_var = expert
+        # Packed ahead of the search and the entries: the switch and the link stay at the bottom
+        # however short the window gets (the entries get flatter instead, fit_nav).
+        site = tk.Label(side, text=COMMUNITY_SITE.split('//')[1].strip('/') + '  \u2197', bg=BG, fg=GOLD,
+                        font=(theme.BODY_MEDIUM, 9), cursor='hand2')
+        site.pack(side='bottom', anchor='w', padx=px(22), pady=(0, px(16)), before=self.search_box)
+        self.mode_switch = ttk.Checkbutton(side, text=_('Expert view'), variable=expert, command=self.toggle_mode)
+        self.mode_switch.pack(side='bottom', anchor='w', padx=px(22), pady=(px(4), px(6)), before=self.search_box)
+        side.bind('<Configure>', lambda _e: self.root.after_idle(self.fit_nav))
+        site.bind('<Button-1>', lambda _e: webbrowser.open(COMMUNITY_SITE))
+        site.bind('<Enter>', lambda _e: site.configure(fg=theme.TEXT_STRONG))
+        site.bind('<Leave>', lambda _e: site.configure(fg=GOLD))
+        self.apply_mode()
 
         right = tk.Frame(self.root, bg=PANEL)
         right.pack(side='left', fill='both', expand=True)
-        bar = tk.Frame(right, bg=BG, height=72)
+        bar = tk.Frame(right, bg=BG, height=px(80))
         bar.pack(fill='x', side='bottom')
         bar.pack_propagate(False)
-        self.status = tk.Label(bar, text='', bg=BG, fg=MUTED, font=('Segoe UI', 10), anchor='w', justify='left')
-        self.status.pack(side='left', padx=24)
+        tk.Frame(right, bg=LINE, height=1).pack(fill='x', side='bottom')
         self.play_button = ttk.Button(bar, text=_('PLAY', 'ИГРАТЬ'), style='Play.TButton', command=self.play)
-        self.play_button.pack(side='right', padx=(10, 24), pady=11)
-        self.stop_button = ttk.Button(bar, text=_('Stop', 'Остановить'), command=self.stop, state='disabled')
-        self.stop_button.pack(side='right', pady=11)
+        self.play_button.pack(side='right', padx=(px(10), px(24)))
+        self.stop_button = ttk.Button(bar, text=_('Stop', 'Остановить'), style='Bar.TButton', command=self.stop,
+                                      state='disabled')
+        self.stop_button.pack(side='right')
+        ttk.Button(bar, text=_('Log', 'Журнал'), style='Bar.TButton', command=lambda: self.show('log')).pack(
+            side='right', padx=(0, px(8)))
+        self.status = tk.Label(bar, text='', bg=BG, fg=MUTED, font=(theme.BODY, 9), anchor='w', justify='left')
+        self.status.pack(side='left', fill='x', expand=True, padx=(px(28), px(16)))
+        self.status.bind('<Configure>', lambda e: self.status.configure(wraplength=max(px(120), e.width)))
         self.content = tk.Frame(right, bg=PANEL)
         self.content.pack(fill='both', expand=True)
 
         self.pages = {}
         self.build_play()
-        self.build_graphics()
-        self.build_display()
-        self.build_game()
-        self.build_cheats()
-        self.build_online()
-        self.build_mods()
-        self.build_trophies()
+        self.build_picture()
         self.build_controls()
+        self.build_online()
+        self.build_saves()
+        self.build_mods()
+        self.build_game()
+        self.build_trophies()
+        self.build_help()
+        self.build_graphics()
+        self.build_cheats()
+        self.build_system()
         self.build_advanced()
         self.build_log()
+        self.search_ready()
+        self.show_goal()
         self.root.bind_all('<MouseWheel>', self.wheel)
+        self.root.bind_class('TCombobox', '<MouseWheel>', self.combobox_wheel)
         self.refresh_status()
 
+    def toggle_mode(self):
+        self.app['ui_mode'] = 'expert' if self.expert_var.get() else 'simple'
+        self.apply_mode()
+        if self.current_page in EXPERT_PAGES and self.app['ui_mode'] == 'simple':
+            self.show('play')
+        self.refresh_status()
+
+    def apply_mode(self):
+        """Shows the expert's pages in the side bar, or hides them (simple view)."""
+        expert = self.app.get('ui_mode') == 'expert'
+        px = self.px
+        self.nav_group.pack_forget()
+        for name, _title in NAV_EXPERT:
+            self.nav[name][0].pack_forget()
+        if expert:
+            self.nav_group.pack(fill='x', padx=px(24), pady=(px(8), px(2)), before=self.nav_filler)
+            for name, _title in NAV_EXPERT:
+                self.nav[name][0].pack(padx=px(12), pady=(0, px(1)), before=self.nav_filler)
+        self.root.after_idle(self.fit_nav)
+
+    def fit_nav(self):
+        """The side bar's entries as tall as the window allows (37 points, down to 26 on a short
+        window or a high scaling), so that every entry and the switch below them stay visible."""
+        px = self.px
+        try:
+            top = self.search_box.winfo_y() + self.search_box.winfo_height() + px(10)
+            bottom = self.mode_switch.winfo_y() - px(4)
+        except self.tk.TclError:
+            return
+        shown = [name for name in self.nav if self.nav[name][0].winfo_manager()]
+        group = self.nav_group.winfo_reqheight() + px(10) if self.nav_group.winfo_manager() else 0
+        if not shown or bottom - top < px(100):
+            return
+        height = max(26, min(37, int(((bottom - top - group) / len(shown) - px(1)) / self.dpi)))
+        if height == self.nav_h:
+            return
+        self.nav_h = height
+        self.nav_pills = {'on': self.theme.box(224, height, 8, CARD, LINE, bg=BG),
+                          'hover': self.theme.box(224, height, 8, theme.SURFACE, bg=BG)}
+        mid = px(height / 2)
+        for name, (c, items) in self.nav.items():
+            c.configure(height=px(height))
+            c.coords(items['pill'], 0, 0)
+            c.coords(items['bar'], px(1), mid)
+            c.coords(items['icon'], px(22), mid)
+            c.coords(items['label'], px(44), mid)
+            self.nav_paint(name)
+
+    def window_chrome(self):
+        """The title bar in the launcher's colours: dark, and on Windows 11 acrylic (a hint of
+        what lies behind it); the whole window very slightly translucent when chosen (Advanced)."""
+        translucent = bool(self.app.get('translucent', True))
+        try:
+            hwnd = int(self.root.wm_frame(), 16)
+            dwm = ctypes.windll.dwmapi
+
+            def attribute(number, value):
+                v = ctypes.c_int(value)
+                return dwm.DwmSetWindowAttribute(hwnd, number, ctypes.byref(v), ctypes.sizeof(v))
+            if attribute(20, 1):  # DWMWA_USE_IMMERSIVE_DARK_MODE; 19 before Windows 10 20H1
+                attribute(19, 1)
+            attribute(38, 3 if translucent else 2)  # DWMWA_SYSTEMBACKDROP_TYPE: acrylic or mica (Windows 11)
+            ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x1 | 0x2 | 0x4 | 0x20)  # redraw the frame
+        except (AttributeError, OSError, ValueError, self.tk.TclError):
+            pass
+        try:
+            self.root.attributes('-alpha', 0.97 if translucent else 1.0)
+        except self.tk.TclError:
+            pass
+
+    def nav_paint(self, name, hover=False):
+        """A side bar entry: a card behind the current page, a softer one under the mouse."""
+        c, items = self.nav[name]
+        on = name == self.current_page
+        pill = self.nav_pills['on'] if on else self.nav_pills['hover'] if hover else ''
+        c.itemconfigure(items['pill'], image=pill, state='normal' if pill else 'hidden')
+        c.itemconfigure(items['bar'], state='normal' if on else 'hidden')
+        c.itemconfigure(items['icon'], fill=GOLD if on else theme.TEXT_SOFT if hover else MUTED)
+        c.itemconfigure(items['label'], fill=theme.TEXT_STRONG if on else TEXT if hover else theme.TEXT_SOFT)
+
     def wheel(self, event):
+        """Scrolls the page in pixels (touchpads send small steps), once per redraw however many
+        wheel events came in meanwhile."""
         page = self.pages.get(self.current_page)
-        if hasattr(page, 'scroll') and not isinstance(event.widget, (self.tk.Text, self.ttk.Combobox)) \
-                and 'popdown' not in str(event.widget):
-            page.scroll(int(-event.delta / 120))
+        if not hasattr(page, 'scroll') or isinstance(event.widget, self.tk.Text) or 'popdown' in str(event.widget):
+            return
+        self.wheel_pixels = getattr(self, 'wheel_pixels', 0.0) - event.delta / 120 * self.px(64)
+        if not getattr(self, 'wheel_pending', None):
+            self.wheel_pending = self.root.after_idle(self.flush_wheel)
+
+    def flush_wheel(self):
+        self.wheel_pending = None
+        pixels = int(self.wheel_pixels)
+        self.wheel_pixels -= pixels
+        page = self.pages.get(self.current_page)
+        if pixels and hasattr(page, 'scroll'):
+            page.scroll(pixels)
+
+    def combobox_wheel(self, event):
+        """The wheel over a closed drop-down scrolls the page instead of changing its value
+        (while a Controls slot listens, the wheel goes on to be bound)."""
+        if getattr(self, 'remap_listening', False):
+            return None
+        (self.guide.wheel if getattr(self, 'guide', None) else self.wheel)(event)
+        return 'break'
 
     def show(self, name):
         for page in self.pages.values():
             page.pack_forget()
         self.pages[name].pack(fill='both', expand=True)
         self.current_page = name
-        for n, item in self.nav.items():
-            item.configure(bg=PANEL if n == name else BG, fg=GOLD if n == name else TEXT)
+        for n in self.nav:
+            self.nav_paint(n)
         if name == 'mods':
             self.refresh_lists()
         elif name == 'graphics':
             self.refresh_fsr4()
         elif name == 'play':
             self.refresh_status()
+            self.show_rating_check()
+        elif name == 'picture':
+            self.update_rating()
+            if getattr(self, 'profile_view', None):
+                self.profile_view.redraw()
         elif name == 'trophies':
             self.render_trophies()
+        elif name == 'system':
+            self.update_rating()
 
     def build_play(self):
-        tk, ttk = self.tk, self.ttk
+        tk, ttk, px = self.tk, self.ttk, self.px
         page = tk.Frame(self.content, bg=PANEL)
         self.pages['play'] = page
-        self.banner = tk.Canvas(page, height=self.px(290), bg=BG, highlightthickness=0, bd=0)
+        self.banner = tk.Canvas(page, height=px(200 if self.compact else 286), bg=PANEL, highlightthickness=0, bd=0)
         self.banner.pack(fill='x')
-        self.banner.bind('<Configure>', lambda _e: self.draw_banner())
-        body = ttk.Frame(page, padding=(28, 12, 28, 8))
+        self.banner.bind('<Configure>', lambda _e: self.schedule_banner())
+        self.banner.bind('<Button-1>', lambda e: self.banner_spot(e) and self.show('game'))
+        self.banner.bind('<Motion>', lambda e: self.banner.configure(cursor='hand2' if self.banner_spot(e) else ''))
+        body = ttk.Frame(page, padding=(px(28), 0, px(28), px(22)))
         body.pack(fill='both', expand=True)
-        body.columnconfigure(0, weight=3)
-        body.columnconfigure(1, weight=2)
-        info = ttk.Frame(body)
-        info.grid(row=0, column=0, sticky='nw', padx=(0, 24))
-        ttk.Label(info, text=_('Ready check', 'Проверка'), style='Section.TLabel').pack(anchor='w', pady=(0, 6))
-        self.checks = {}
-        for key in ('game', 'saves', 'gpu', 'fsr4'):
-            self.checks[key] = ttk.Label(info, text='', justify='left', wraplength=self.px(440))
-            self.checks[key].pack(anchor='w', pady=3)
-        quick = ttk.Frame(body)
-        quick.grid(row=0, column=1, sticky='nw')
-        ttk.Label(quick, text=_('Quick settings', 'Основное'), style='Section.TLabel').grid(
-            row=0, column=0, columnspan=2, sticky='w', pady=(0, 2))
-        self.row(quick, _('Frame rate', 'Частота кадров'), self.choice(quick, 'fps_mode', 'app', FPS_MODES, 26))
-        self.row(quick, _('Upscaler', 'Апскейлер'), self.choice(quick, 'upscaler', 'ini', UPSCALERS, 26))
-        self.row(quick, _('Preset', 'Пресет'), self.choice(quick, 'preset', 'ini', PRESETS, 26))
-        self.row(quick, _('Output', 'Разрешение'), self.choice(quick, 'output_res', 'ini', OUTPUTS, 26))
-        ttk.Checkbutton(quick, text=_('Fullscreen', 'Полный экран'), variable=self.var('fullscreen', 'app')).grid(
-            row=self.next_row(quick), column=1, sticky='w', pady=(8, 0))
-        ttk.Checkbutton(quick, text=_('Play online'), variable=self.var('online', 'app')).grid(
-            row=self.next_row(quick), column=1, sticky='w', pady=(4, 0))
-        ttk.Button(quick, text=_('Add to Steam'), command=self.add_to_steam).grid(
-            row=self.next_row(quick), column=1, sticky='w', pady=(10, 0))
+        body.columnconfigure(0, weight=1, uniform='cards')
+        body.columnconfigure(1, weight=1, uniform='cards')
+        body.rowconfigure(0, weight=1)
+
+        info = ttk.Frame(body, style='Card.TFrame', padding=(px(22), px(18)))
+        info.grid(row=0, column=0, sticky='nsew', padx=(0, px(10)))
+        ttk.Label(info, text=_('Ready check', 'Проверка'), style='Card.Section.TLabel').pack(anchor='w', pady=(0, px(8)))
+        # One line per thing that matters; a line that is not fine leads to its fix with a click.
+        self.checks, self.check_lines, self.check_targets = {}, {}, {}
+        for key in ('news', 'system', 'settings', 'game', 'saves', 'online', 'cheats', 'fsr4'):
+            line = ttk.Frame(info, style='Inner.TFrame')
+            line.pack(fill='x', pady=px(4))
+            icon = tk.Label(line, text='', bg=CARD, fg=MUTED, font=(theme.ICONS, 11))
+            icon.pack(side='left', anchor='n', pady=(px(3), 0))
+            text = ttk.Label(line, text='', style='Card.TLabel', justify='left', wraplength=px(330))
+            text.pack(side='left', fill='x', padx=(px(10), 0))
+            go = tk.Label(line, text='›', bg=CARD, fg=GOLD, font=(theme.BODY_SEMI, 12))
+            self.checks[key] = (icon, text)
+            self.check_lines[key] = (line, go)
+            for widget in (line, icon, text, go):
+                widget.bind('<Button-1>', lambda _e, k=key: self.follow_check(k))
+        info.bind('<Configure>', lambda e: [text.configure(wraplength=max(px(160), e.width - px(96)))
+                                            for _icon, text in self.checks.values()])
+        self.rating_views.append(self.show_rating_check)
+
+        quick = ttk.Frame(body, style='Card.TFrame', padding=(px(22), px(18)))
+        quick.grid(row=0, column=1, sticky='nsew', padx=(px(10), 0))
+        quick.columnconfigure(0, weight=1)
+        ttk.Label(quick, text=_('Your goal'), style='Card.Section.TLabel').grid(row=0, column=0, sticky='w',
+                                                                               pady=(0, px(8)))
+        self.goal_switch(quick).grid(row=1, column=0, sticky='w')
+        self.goal_note = tk.Label(quick, text='', bg=CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9), justify='left',
+                                  anchor='w')
+        self.goal_note.grid(row=2, column=0, sticky='we', pady=(px(8), 0))
+        self.goal_notes = getattr(self, 'goal_notes', []) + [self.goal_note]
+        quick.bind('<Configure>', lambda e: self.goal_note.configure(wraplength=max(px(160), e.width - px(50))))
+        self.expect_label = tk.Label(quick, text='', bg=CARD, fg=MUTED, font=(theme.BODY_MEDIUM, 9), cursor='hand2')
+        self.expect_label.grid(row=3, column=0, sticky='w', pady=(px(6), 0))
+        self.expect_label.bind('<Button-1>', lambda _e: self.show('picture'))
+        tk.Frame(quick, bg=LINE, height=1).grid(row=4, column=0, sticky='we', pady=(px(14), px(10)))
+        toggles = ttk.Frame(quick, style='Inner.TFrame')
+        toggles.grid(row=5, column=0, sticky='we')
+        ttk.Checkbutton(toggles, text=_('Fullscreen', 'Полный экран'), variable=self.var('fullscreen', 'app'),
+                        style='Card.TCheckbutton').pack(anchor='w')
+        online = ttk.Frame(toggles, style='Inner.TFrame')
+        online.pack(fill='x', pady=(px(6), 0))
+        ttk.Checkbutton(online, text=_('Play online'), variable=self.var('online', 'app'),
+                        style='Card.TCheckbutton').pack(side='left')
+        self.online_note = tk.Label(online, text='', bg=CARD, fg=MUTED, font=(theme.BODY, 9), cursor='hand2')
+        self.online_note.pack(side='left', padx=(px(12), 0))
+        self.online_note.bind('<Button-1>', lambda _e: self.show('online'))
         for key in ('fps_mode', 'upscaler', 'output_res'):
-            self.vars[key].trace_add('write', lambda *_a: self.refresh_status())
+            self.var(key, 'app' if key == 'fps_mode' else 'ini').trace_add('write', lambda *_a: self.refresh_status())
+        self.vars['output_res'].trace_add('write', lambda *_a: self.show_rating_check())
+        self.var('online', 'app').trace_add('write', lambda *_a: self.refresh_status())
+        self.show_rating_check()
+
+    GOAL_TEXTS = {'smooth': ('Smooth', 'As many frames as the game allows, up to 120 FPS; the picture made for your PC.'),
+                  'balanced': ('Balanced', 'A steady 60 FPS with the best picture your graphics card has room for.'),
+                  'quiet': ('Quiet', '60 FPS and a little less detail: the graphics card works less, stays cooler '
+                                     'and quieter (laptops).')}
+
+    def goal_switch(self, parent, bg=None):
+        """Three buttons in a row: smooth, balanced, quiet (the player's goal)."""
+        tk, px = self.tk, self.px
+        bg = bg or CARD
+        holder = tk.Frame(parent, bg=LINE, padx=1, pady=1)
+        var = self.var('goal', 'app')
+        for value in ('smooth', 'balanced', 'quiet'):
+            tk.Radiobutton(holder, text=self.goal_name(value), variable=var, value=value, indicatoron=False,
+                           command=lambda v=value: self.set_goal(v), bg=theme.SURFACE, fg=theme.TEXT_SOFT,
+                           selectcolor=theme.BLOOD, activebackground=theme.SURFACE, activeforeground=theme.TEXT_STRONG,
+                           relief='flat', offrelief='flat', bd=0, highlightthickness=0, cursor='hand2',
+                           font=(theme.BODY_MEDIUM, 10), padx=px(14), pady=px(5)).pack(side='left', padx=(0, 1))
+        var.trace_add('write', lambda *_a: self.show_goal())
+        return holder
+
+    def goal_name(self, goal):
+        """A goal's button text. Its key has ' (goal)' after the English, because "Balanced" alone
+        also names an FSR/DLSS preset, which is not translated."""
+        english = self.GOAL_TEXTS.get(goal, self.GOAL_TEXTS['smooth'])[0]
+        text = _(f'{english} (goal)')
+        return english if text == f'{english} (goal)' else text
+
+    def show_goal(self):
+        goal = self.var('goal', 'app').get()
+        for note in getattr(self, 'goal_notes', []):
+            note.configure(text=_(self.GOAL_TEXTS.get(goal, self.GOAL_TEXTS['smooth'])[1]))
+
+    def set_goal(self, goal):
+        """The player chose a goal: the settings for this PC and that goal, at once (Undo on
+        Picture & performance)."""
+        self.var('goal', 'app').set(goal)
+        chosen = self.recommended()
+        if chosen:
+            self.apply_profile(chosen[2])
+        self.show_goal()
+        self.refresh_status()
+
+    def follow_check(self, key):
+        target = self.check_targets.get(key)
+        if target:
+            target()
+
+    def schedule_banner(self):
+        if getattr(self, 'banner_pending', None):
+            self.root.after_cancel(self.banner_pending)
+        self.banner_pending = self.root.after(30, self.draw_banner)
 
     def draw_banner(self):
-        """The cover art of the selected dump (sce_sys/pic1.png) under the title."""
-        tk, c = self.tk, self.banner
-        c.delete('all')
+        """The hero: Yharnam at night, the emblem, the title and which dump is selected."""
+        self.banner_pending = None
+        c, px = self.banner, self.px
         w, h = max(c.winfo_width(), 400), int(c['height'])
-        art = Path(self.var('game_dir', 'app').get() or '.') / 'sce_sys' / 'pic1.png'
-        if self.banner_source != art:
-            self.banner_source, self.banner_image, self.banner_size = art, None, None
-            try:
-                self.banner_image = tk.PhotoImage(file=str(art))
-            except (tk.TclError, OSError):
-                pass
-        if self.banner_image:
-            if self.banner_size != w:
-                self.banner_size, self.banner_scaled = w, self.scaled_art(art, w)
-            # The logo sits in the upper half of the cover: show that part.
-            c.create_image(w // 2, int(h * 0.62), image=self.banner_scaled)
-            for i, stipple in enumerate(('gray12', 'gray25', 'gray50', 'gray75')):
-                c.create_rectangle(0, h - 120 + i * 24, w, h - 96 + i * 24, fill=PANEL, outline='', stipple=stipple)
-            c.create_rectangle(0, h - 24, w, h, fill=PANEL, outline='')
-        else:
-            c.create_text(w // 2, h // 2 - 20, text=_('Choose your game folder (Game & effects)',
-                                                       'Выберите папку игры («Игра и эффекты»)'),
-                          fill=MUTED, font=('Segoe UI', 11))
-        if not self.banner_image:
-            c.create_text(30, h - 70, text='Bloodborne', anchor='w', fill='#f2ead9', font=('Georgia', 36))
+        c.delete('all')
+        x, y = px(40), int(h * 0.27)
         info = game_info(self.var('game_dir', 'app').get())
-        sub = (_('CUSA03173 · game version {}', 'CUSA03173 · версия игры {}').format(info[1]) if info
-               else _('Game folder not set', 'Папка игры не выбрана'))
-        c.create_text(33, h - 30, text=sub, anchor='w', fill=GOLD, font=('Segoe UI', 11))
+        if info:
+            first = (_('CUSA03173 · game version {}', 'CUSA03173 · версия игры {}').format(info[1]), GOLD, theme.GOLD, ())
+        else:
+            first = (renamed(_('Choose your game folder (Game & effects)', 'Выберите папку игры («Игра и эффекты»)')),
+                     theme.TEXT_STRONG, theme.BLOOD_LIGHT, ('choose',))
+        # The chips are drawn into the art itself: one opaque image (see bbport_theme).
+        from tkinter import font as tkfont
+        font = (theme.BODY_MEDIUM, 9)
+        measure = tkfont.Font(root=self.root, font=font).measure
+        chips, left, chip_h, chip_y = [], x, px(28), y + px(92)
+        for text, fg, line, tags in (first, (f'v{VERSION}', theme.TEXT_SOFT, theme.BORDER_STRONG, ())):
+            chip_w = measure(text) + px(26)
+            chips.append((left, chip_w, text, fg, line, tags))
+            left += chip_w + px(8)
 
-    def scaled_art(self, path, width):
-        """The cover art scaled to `width`: Pillow (smooth) or Tk's integer subsampling."""
-        try:
-            from PIL import Image, ImageTk
-            with Image.open(path) as image:
-                height = round(image.height * width / image.width)
-                return ImageTk.PhotoImage(image.convert('RGB').resize((width, height), Image.LANCZOS))
-        except (ImportError, OSError):
-            factor = max(1, round(self.banner_image.width() / max(width, 1)))
-            return self.banner_image.subsample(factor) if factor > 1 else self.banner_image
+        def art():
+            image = theme.hero((w, h), PANEL)
+            for cx, cw, _t, _f, line, _g in chips:
+                pill = theme.rounded((cw, chip_h), chip_h // 2, (8, 9, 10, 190), line, self.dpi)
+                image.alpha_composite(pill, (cx, chip_y - chip_h // 2))
+            return image
+        key = ('hero', w, h) + tuple((cx, cw, line) for cx, cw, _t, _f, line, _g in chips)
+        self.banner_image = self.theme.cached(key, art)
+        c.create_image(0, 0, image=self.banner_image, anchor='nw')
+        c.create_text(x, y, text=_('native port · Windows', 'нативный порт · Windows').upper(), anchor='w',
+                      fill=GOLD, font=(theme.HEAD, 10))
+        c.create_text(x - px(2), y + px(42), text='Bloodborne', anchor='w', fill=theme.TEXT_STRONG,
+                      font=(theme.HEAD_BOLD, 40))
+        self.banner_spots = []
+        for cx, cw, text, fg, _line, tags in chips:
+            c.create_text(cx + px(13), chip_y, text=text, anchor='w', fill=fg, font=font, tags=tags)
+            if tags:
+                self.banner_spots.append((cx, chip_y - chip_h // 2, cx + cw, chip_y + chip_h // 2))
+
+    def banner_spot(self, event):
+        """The chip under the mouse that opens Game & effects (no game folder yet)."""
+        return any(x0 <= event.x <= x1 and y0 <= event.y <= y1 for x0, y0, x1, y1 in getattr(self, 'banner_spots', []))
 
     def build_graphics(self):
+        """Expert: every graphics setting on one page (the taste effects, fullscreen and the field
+        of view are on Picture & performance)."""
         ttk = self.ttk
-        f = self.scrolled_page('graphics', _('Graphics', 'Графика'),
-                               _('Stored in bbport.ini; the in-game menu (Insert or L3+R3) changes the same values.',
-                                 'Хранится в bbport.ini; в игре меняется через меню (Insert или L3+R3).'))
+        f = self.scrolled_page('graphics', _('All graphics'),
+                               _('Every graphics and frame rate setting. Stored in bbport.ini; the in-game menu '
+                                 '(Insert or L3+R3) changes the same values.'))
+        self.version_warning(f)
+        self.link_row(f, _('Fullscreen, HDR, field of view and the taste effects are on Picture & performance.'),
+                      'picture')
         self.section(f, _('Upscaling', 'Апскейлинг'), top=4)
         self.row(f, _('Upscaler', 'Апскейлер'), self.choice(f, 'upscaler', 'ini', UPSCALERS),
-                 _("Temporal upscaling with the game's own motion vectors. FSR 4 needs its assets (below) and "
+                 _("Temporal upscaling with the game's own motion vectors. FSR 4 needs its files (below) and "
                    'a GPU with INT8 dot products; otherwise the game falls back to FSR 3.1 by itself.',
                    'Временной апскейлинг с векторами движения игры. FSR 4 нужны ассеты (ниже) и GPU с INT8; '
                    'иначе игра сама переключится на FSR 3.1.'))
@@ -1000,8 +1265,31 @@ class Launcher:
         show()
         self.row(f, _('Sharpness', 'Сила резкости'), holder)
         self.check(f, 'object_motion', 'ini', _('Object motion vectors', 'Векторы движения объектов'),
-                   _('Less ghosting on characters, cloth and weapons; costs about 10% FPS.',
-                     'Меньше гостинга на персонажах и одежде; стоит около 10% FPS.'))
+                   _('Less ghosting on characters, cloth and weapons; costs about 5–10% FPS.',
+                     'Меньше гостинга на персонажах и одежде; стоит около 5–10% FPS.'))
+        self.section(f, _('Effects', 'Эффекты'))
+        for key, title, _on in EFFECTS:
+            if key not in TASTE_EFFECTS:
+                self.check(f, key, 'ini', _(*title))
+        self.row(f, _('Model detail (LOD)', 'Детализация моделей'), self.choice(f, 'model_lod', 'ini', LODS),
+                 _('A game patch (game version 1.09).', 'Патч игры (версия 1.09).'))
+        self.note(f, _('Effects are game patches for version 1.09, applied at start.'), top=6)
+        self.section(f, _('Frame rate', 'Частота кадров'))
+        self.row(f, _('Frame rate', 'Режим'), self.choice(f, 'fps_mode', 'app', FPS_MODES),
+                 _("Community patches for game version 1.09. Unlocked makes the game use the real frame time. "
+                   'Other game versions always run at 30 FPS (the patches would corrupt them).',
+                   'Патчи сообщества для версии 1.09. «Без ограничения» — игра использует реальное время кадра. '
+                   'Другие версии всегда работают в 30 FPS.'))
+        self.row(f, _('Frame cap (unlocked mode)', 'Ограничение FPS (режим без ограничения)'),
+                 self.choice(f, 'frame_cap', 'app', FRAME_CAPS, 46),
+                 _("Above about 120 FPS the game's movement timing breaks (running and rolling get slower, "
+                   'physics and animations can glitch): higher caps are at your own risk.',
+                   'Выше ~120 FPS ломается тайминг движения игры (бег и перекаты замедляются, возможны '
+                   'сбои физики и анимаций): более высокие значения — на ваш риск.'))
+        self.row(f, _('Frames ahead of the GPU', 'Кадров впереди GPU'), self.choice(f, 'frames_ahead', 'app', FRAMES_AHEAD),
+                 _('1 keeps frame pacing even; more can raise FPS when the graphics card is the limit.',
+                   '1 — ровная подача кадров; больше может поднять FPS, если упирается в видеокарту.'))
+        self.row(f, _('Presentation', 'Режим показа кадров'), self.choice(f, 'present_mode', 'app', PRESENT_MODES))
         self.section(f, _('Frame generation', 'Генерация кадров'))
         self.row(f, _('Frame generation', 'Генерация кадров'),
                  self.choice(f, 'frame_gen', 'ini', FRAME_GENERATION),
@@ -1036,73 +1324,53 @@ class Launcher:
                        'about 30 MB, into the fsr4_shaders folder of the port.',
                        'С GitHub FireBurn/Q2RTX (собраны из MIT-исходников AMD FidelityFX), около 30 МБ, '
                        'в папку fsr4_shaders порта.'), top=6)
-        self.section(f, _('Detail', 'Детализация'))
-        self.row(f, _('Model detail (LOD)', 'Детализация моделей'), self.choice(f, 'model_lod', 'ini', LODS),
-                 _('A game patch (game version 1.09).', 'Патч игры (версия 1.09).'))
-        self.row(f, _('Field of view', 'Поле зрения'), self.choice(f, 'fov', 'ini', fov_options(self.ini.get('fov'))),
-                 _('Vertical, in degrees. Every camera of the game is widened by the same amount.',
-                   'По вертикали, в градусах. Все камеры игры расширяются одинаково.'))
-        self.check(f, 'show_fps', 'ini', _('Show the FPS counter', 'Показывать FPS'))
-        self.check(f, 'mute_unfocused', 'ini', _('Mute when the game is in the background',
-                                                 'Без звука, когда игра в фоне'))
 
-    def build_display(self):
-        ttk = self.ttk
-        f = self.scrolled_page('display', _('Display & FPS', 'Экран и FPS'),
-                               _('Applied when the game starts.', 'Применяется при запуске игры.'))
-        self.version_warning(f)
-        self.section(f, _('Frame rate', 'Частота кадров'), top=4)
-        self.row(f, _('Frame rate', 'Режим'), self.choice(f, 'fps_mode', 'app', FPS_MODES),
-                 _("Community patches for game version 1.09. Unlocked makes the game use the real frame time. "
-                   'Other game versions always run at 30 FPS (the patches would corrupt them).',
-                   'Патчи сообщества для версии 1.09. «Без ограничения» — игра использует реальное время кадра. '
-                   'Другие версии всегда работают в 30 FPS.'))
-        self.row(f, _('Frame cap (unlocked mode)', 'Ограничение FPS (режим без ограничения)'),
-                 self.choice(f, 'frame_cap', 'app', FRAME_CAPS),
-                 _("Above about 120 FPS the game's movement timing breaks (running and rolling get slower, "
-                   'physics and animations can glitch): higher caps are at your own risk.',
-                   'Выше ~120 FPS ломается тайминг движения игры (бег и перекаты замедляются, возможны '
-                   'сбои физики и анимаций): более высокие значения — на ваш риск.'))
-        self.row(f, _('Frames ahead of the GPU', 'Кадров впереди GPU'), self.choice(f, 'frames_ahead', 'app', FRAMES_AHEAD),
-                 _('1 keeps frame pacing even; more can raise FPS when the graphics card is the limit.',
-                   '1 — ровная подача кадров; больше может поднять FPS, если упирается в видеокарту.'))
-        self.section(f, _('Window', 'Окно'))
-        self.check(f, 'fullscreen', 'app', _('Fullscreen', 'Полноэкранный режим'))
-        self.row(f, _('Presentation', 'Режим показа кадров'), self.choice(f, 'present_mode', 'app', PRESENT_MODES))
-        self.check(f, 'hdr', 'app', _('Allow HDR output', 'Разрешить HDR'),
-                   _('When HDR is on in Windows and the display supports it.',
-                     'Если HDR включён в Windows и монитор его поддерживает.'))
+    def link_row(self, parent, text, page):
+        """A muted line with a link to another page."""
+        row = self.ttk.Frame(parent)
+        row.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(4, 0))
+        self.ttk.Label(row, text=text, style='Muted.TLabel').pack(side='left')
+        link = self.tk.Label(row, text=_('Open') + '  ›', bg=PANEL, fg=GOLD, cursor='hand2', font=(theme.BODY_MEDIUM, 9))
+        link.pack(side='left', padx=(8, 0))
+        link.bind('<Button-1>', lambda _e: self.show(page))
 
     def build_game(self):
-        f = self.scrolled_page('game', _('Game & effects', 'Игра и эффекты'),
-                               _('Your game dump, saves and the game patches.', 'Дамп игры, сохранения и патчи игры.'))
+        ttk = self.ttk
+        f = self.scrolled_page('game', _('Game & language'),
+                               _('Your game dump, its languages and how it starts.'))
         self.section(f, _('Game', 'Игра'), top=4)
         self.folder(f, 'game_dir', _('Game folder', 'Папка игры'),
                     _('Choose the folder with eboot.bin', 'Выберите папку с eboot.bin'),
                     _('Your own dump of CUSA03173 (eboot.bin, sce_module, sce_sys, dvdroot_ps4); version 1.09 '
                       'for the community patches.', 'Ваш дамп CUSA03173 (eboot.bin, sce_module, sce_sys, '
                       'dvdroot_ps4); версия 1.09 для патчей сообщества.'), on_change=self.game_changed)
-        self.folder(f, 'user_dir', _('Saves folder', 'Папка сохранений'),
-                    _('Choose the saves folder', 'Выберите папку сохранений'),
-                    _('Empty: {} (shader caches are kept there too).',
-                      'Пусто: {} (там же кэш шейдеров).').format(DATA_DIR / 'user'), on_change=self.refresh_status)
         self.folder(f, 'dlc_dir', _('DLC folder'), _('Choose the DLC folder'),
                     _('Your dumped add-ons, one folder each named like SPEXPANSIONDLC03 (The Old Hunters). '
                       'Only needed with a base-game dump; the Game of the Year edition (CUSA03173) has it.'))
+        self.link_row(f, _('Is the game folder all right? Help checks it.'), 'help')
+        self.section(f, _('Language'))
+        before = self.var('ui_language', 'app').get()
+        language = ttk.Frame(f)
+        self.choice(language, 'ui_language', 'app', UI_LANGUAGES, 24).pack(side='left')
+        restart = ttk.Button(language, text=_('Apply (restarts the launcher)'), command=self.relaunch)
+        self.var('ui_language', 'app').trace_add('write', lambda *_a: restart.pack(side='left', padx=(8, 0))
+                                                 if self.var('ui_language', 'app').get() != before else
+                                                 restart.pack_forget())
+        self.row(f, _('Launcher language', 'Язык лаунчера'), language,
+                 _('Applies when the launcher opens again.', 'Применится при следующем открытии лаунчера.'))
         self.row(f, _('Text language', '\u042f\u0437\u044b\u043a \u0442\u0435\u043a\u0441\u0442\u0430'), self.choice(f, 'language', 'app', LANGUAGES))
         self.row(f, _('Voice language', '\u042f\u0437\u044b\u043a \u043e\u0437\u0432\u0443\u0447\u043a\u0438'), self.choice(f, 'voice_language', 'app', VOICE_LANGUAGES),
                  _('As in the game uses the original voice setting; other choices use available tracks.'))
         self.row(f, _('Player name', 'Имя игрока'), self.ttk.Entry(f, textvariable=self.var('player_name', 'app'), width=30),
                  _('Where the game shows the PSN name; empty: the default.', 'Где игра показывает имя PSN; пусто — по умолчанию.'))
-        self.section(f, _('Effects', 'Эффекты'))
-        self.version_warning(f)
-        for key, title, _on in EFFECTS:
-            self.check(f, key, 'ini', _(*title))
-        self.section(f, _('Extras', 'Дополнительно'))
-        for key, title, _on in EXTRAS:
-            self.check(f, key, 'ini', _(*title))
-        self.note(f, _('Effects and extras are game patches for version 1.09, applied at start.',
-                       'Эффекты и дополнения — патчи игры для версии 1.09, применяются при запуске.'))
+        self.section(f, _('Start and sound'))
+        self.check(f, 'skip_intro', 'ini', _(*dict((k, t) for k, t, _o in EXTRAS)['skip_intro']))
+        shortcuts = ttk.Frame(f)
+        shortcuts.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
+        ttk.Button(shortcuts, text=_('Desktop shortcut', 'Ярлык на рабочем столе'), command=self.shortcut).pack(side='left')
+        ttk.Button(shortcuts, text=_('Add to Steam'), command=self.add_to_steam).pack(side='left', padx=(6, 0))
+        self.check(f, 'mute_unfocused', 'ini', _('Mute when the game is in the background',
+                                                 'Без звука, когда игра в фоне'))
 
     def build_cheats(self):
         f = self.scrolled_page('cheats', _('Cheats', 'Читы'),
@@ -1116,10 +1384,16 @@ class Launcher:
         self.section(f, _('Gameplay tweaks', 'Изменения игрового процесса'))
         for key, title, _on in TWEAKS:
             self.check(f, key, 'ini', _(*title))
+        self.section(f, _('Debug'))
+        for key, title, _on in EXTRAS:
+            if key != 'skip_intro':
+                self.check(f, key, 'ini', _(*title))
         # Enemy control and the free camera share their buttons: one at a time.
         control, camera = self.var('cheat_enemy_control', 'ini'), self.var('debug_camera', 'ini')
         control.trace_add('write', lambda *_a: control.get() and camera.set(False))
         camera.trace_add('write', lambda *_a: camera.get() and control.set(False))
+        for key, _title, _on in CHEATS:
+            self.var(key, 'ini').trace_add('write', lambda *_a: self.refresh_status())
 
     def build_online(self):
         ttk = self.ttk
@@ -1365,18 +1639,18 @@ class Launcher:
         earned = [t for t in known if t[0] in unlocked]
         percent = len(earned) * 100 // len(known)
 
-        card = tk.Frame(body, bg=CARD, highlightthickness=1, highlightbackground=LINE)
+        card = self.ttk.Frame(body, style='Card.TFrame', padding=2)
         card.pack(fill='x', pady=(4, 0))
         left = tk.Frame(card, bg=CARD)
         left.pack(side='left', padx=22, pady=16)
-        tk.Label(left, text=f'{percent}%', bg=CARD, fg=TEXT, font=('Georgia', 26)).pack(anchor='w')
+        tk.Label(left, text=f'{percent}%', bg=CARD, fg=TEXT, font=(theme.HEAD, 26)).pack(anchor='w')
         width, height = self.px(260), max(3, self.px(4))
         bar = tk.Canvas(left, width=width, height=height, bg=LINE, highlightthickness=0, bd=0)
         bar.pack(anchor='w', pady=(2, 8))
         if earned:
             bar.create_rectangle(0, 0, max(height, width * len(earned) // len(known)), height, fill=GOLD, outline='')
         tk.Label(left, text=_('{} of {} trophies earned', '{} из {} трофеев получено').format(len(earned), len(known)),
-                 bg=CARD, fg=MUTED, font=('Segoe UI', 9)).pack(anchor='w')
+                 bg=CARD, fg=MUTED, font=(theme.BODY, 9)).pack(anchor='w')
         grades = tk.Frame(card, bg=CARD)
         grades.pack(side='right', padx=(0, 22))
         for grade in trophies.GRADES:
@@ -1386,7 +1660,7 @@ class Launcher:
             cell.pack(side='left', padx=self.px(9))
             self.trophy_icon(cell, grade, True, self.px(34), CARD).pack()
             tk.Label(cell, text=f'{have} / {total}', bg=CARD, fg=TEXT if have else MUTED,
-                     font=('Segoe UI', 9)).pack(pady=(4, 0))
+                     font=(theme.BODY, 9)).pack(pady=(4, 0))
 
         tabs = tk.Frame(body, bg=PANEL)
         tabs.pack(fill='x', pady=(18, 2))
@@ -1397,7 +1671,7 @@ class Launcher:
             tab = tk.Frame(tabs, bg=PANEL, cursor='hand2')
             tab.pack(side='left', padx=(0, 24))
             label = tk.Label(tab, text=f'{title}   {count}', bg=PANEL, fg=TEXT if on else MUTED, cursor='hand2',
-                             font=('Segoe UI', 10, 'bold' if on else 'normal'))
+                             font=(theme.BODY, 10, 'bold' if on else 'normal'))
             label.pack()
             tk.Frame(tab, bg=GOLD if on else PANEL, height=2).pack(fill='x', pady=(4, 0))
             for widget in (tab, label):
@@ -1414,9 +1688,9 @@ class Launcher:
             shown += len(items)
             head = tk.Frame(body, bg=PANEL)
             head.pack(fill='x', pady=(16, 8))
-            tk.Label(head, text=group, bg=PANEL, fg=GOLD, font=('Georgia', 13)).pack(side='left')
+            tk.Label(head, text=group, bg=PANEL, fg=GOLD, font=(theme.HEAD, 13)).pack(side='left')
             tk.Label(head, text='{} / {}'.format(sum(1 for t in members if t[0] in unlocked), len(members)),
-                     bg=PANEL, fg=MUTED, font=('Segoe UI', 9)).pack(side='left', padx=10, pady=(3, 0))
+                     bg=PANEL, fg=MUTED, font=(theme.BODY, 9)).pack(side='left', padx=10, pady=(3, 0))
             for trophy in items:
                 self.trophy_card(body, trophy, unlocked.get(trophy[0]))
         if not shown:
@@ -1424,26 +1698,26 @@ class Launcher:
                                   'Трофеев пока нет. Они появятся здесь, как только игра их откроет.')
                      if self.trophy_filter == 'earned' else _('Every trophy is earned. Hail, good hunter.',
                                                               'Все трофеи получены. Славной охоты.'),
-                     bg=PANEL, fg=MUTED, font=('Segoe UI', 10)).pack(anchor='w', pady=(22, 0))
+                     bg=PANEL, fg=MUTED, font=(theme.BODY, 10)).pack(anchor='w', pady=(22, 0))
 
     def trophy_card(self, parent, trophy, when):
         tk = self.tk
         _id, name, text, grade, _group = trophy
         earned = when is not None
-        card = tk.Frame(parent, bg=CARD, highlightthickness=1, highlightbackground=LINE)
+        card = self.ttk.Frame(parent, style='Card.TFrame', padding=2)
         card.pack(fill='x', pady=(0, 6))
         self.trophy_icon(card, grade, earned, self.px(46), CARD).pack(side='left', padx=(12, 14), pady=10)
         side = tk.Frame(card, bg=CARD)
         side.pack(side='right', padx=(12, 18))
         tk.Label(side, text=_(*GRADE_NAMES[grade]), bg=CARD, fg=TROPHY_COLORS[grade] if earned else MUTED,
-                 font=('Segoe UI', 9, 'bold')).pack(anchor='e')
+                 font=(theme.BODY, 9, 'bold')).pack(anchor='e')
         tk.Label(side, text=time.strftime('%d %b %Y', time.localtime(when)) if earned else _('Locked', 'Не получен'),
-                 bg=CARD, fg=MUTED, font=('Segoe UI', 9)).pack(anchor='e', pady=(2, 0))
+                 bg=CARD, fg=MUTED, font=(theme.BODY, 9)).pack(anchor='e', pady=(2, 0))
         middle = tk.Frame(card, bg=CARD)
         middle.pack(side='left', fill='x', expand=True, pady=10)
         tk.Label(middle, text=name, bg=CARD, fg=TEXT if earned else MUTED,
-                 font=('Segoe UI', 11, 'bold' if earned else 'normal')).pack(anchor='w')
-        tk.Label(middle, text=text, bg=CARD, fg=MUTED, font=('Segoe UI', 9), justify='left',
+                 font=(theme.BODY, 11, 'bold' if earned else 'normal')).pack(anchor='w')
+        tk.Label(middle, text=text, bg=CARD, fg=MUTED, font=(theme.BODY, 9), justify='left',
                  wraplength=self.px(520)).pack(anchor='w', pady=(1, 0))
 
     def set_trophy_filter(self, name):
@@ -1485,9 +1759,9 @@ class Launcher:
         words = tk.Frame(box, bg=CARD)
         words.pack(side='left', padx=(0, 20), pady=8)
         caption = tk.Label(words, text=_("You've earned a trophy.", 'Вы получили трофей.'), bg=CARD, fg=MUTED,
-                           font=('Segoe UI', 9))
+                           font=(theme.BODY, 9))
         caption.pack(anchor='w')
-        title = tk.Label(words, text=f'{name}', bg=CARD, fg=TEXT, font=('Segoe UI', 11, 'bold'))
+        title = tk.Label(words, text=f'{name}', bg=CARD, fg=TEXT, font=(theme.BODY, 11, 'bold'))
         title.pack(anchor='w')
         for widget in (box, icon, words, caption, title):
             widget.bind('<Button-1>', lambda _e: self.show('trophies'))
@@ -1846,16 +2120,14 @@ class Launcher:
                                _('Launcher options, performance switches and diagnostics.',
                                  'Настройки лаунчера, производительность и диагностика.'))
         self.section(f, _('Launcher', 'Лаунчер'), top=4)
-        self.row(f, _('Launcher language', 'Язык лаунчера'), self.choice(f, 'ui_language', 'app', UI_LANGUAGES),
-                 _('Applies when the launcher opens again.', 'Применится при следующем открытии лаунчера.'))
         self.check(f, 'close_on_play', 'app', _('Close the launcher when the game starts', 'Закрывать лаунчер при запуске игры'))
         self.check(f, 'check_updates', 'app', _('Check for updates when the launcher opens',
                                                 'Проверять обновления при открытии лаунчера'))
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
-        ttk.Button(holder, text=_('Desktop shortcut', 'Ярлык на рабочем столе'), command=self.shortcut).pack(side='left')
-        ttk.Button(holder, text=_('Add to Steam'), command=self.add_to_steam).pack(side='left', padx=(6, 0))
-        ttk.Button(holder, text=_('Port folder', 'Папка порта'), command=lambda: self.open_path(DATA_DIR)).pack(side='left', padx=6)
+        ttk.Button(holder, text=_('Port folder', 'Папка порта'), command=lambda: self.open_path(DATA_DIR)).pack(side='left')
+        ttk.Button(holder, text=_('Launcher language', 'Язык лаунчера') + '  ›', command=lambda: self.show('game')).pack(
+            side='left', padx=6)
         ttk.Button(holder, text='bbport.ini', command=lambda: self.open_path(ini_path())).pack(side='left')
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
@@ -1865,12 +2137,11 @@ class Launcher:
         ttk.Button(holder, text=_('Other versions…', 'Другие версии…'), command=self.choose_version).pack(
             side='left', padx=(6, 0))
         ttk.Label(holder, text=f'v{VERSION}', style='Muted.TLabel').pack(side='left', padx=10)
-        holder = ttk.Frame(f)
-        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
-        ttk.Button(holder, text=_('Clear shader cache', 'Очистить кэш шейдеров'), command=self.clear_cache).pack(side='left')
-        ttk.Label(holder, text=_('If the game only shows a black screen, this usually helps.',
-                                 'Если игра показывает только чёрный экран, обычно это помогает.'),
-                  style='Muted.TLabel').pack(side='left', padx=10)
+        self.section(f, _('Appearance'))
+        self.check(f, 'translucent', 'app', _('Slightly translucent window'),
+                   _('A hint of what lies behind the launcher: a blurred title bar (Windows 11) and the window at 97 %.'))
+        self.var('translucent', 'app').trace_add('write', lambda *_a: (self.app.__setitem__(
+            'translucent', self.var('translucent', 'app').get()), self.window_chrome()))
         self.section(f, _('Performance', 'Производительность'))
         self.row(f, _('Two-stage GPU pipeline', 'Двухстадийный конвейер GPU'), self.choice(f, 'draw_pipe', 'app', DRAW_PIPE),
                  _('20–30% faster; switch it off if the game is unstable.', 'Быстрее на 20–30%; при нестабильности выключите.'))
@@ -1886,19 +2157,23 @@ class Launcher:
                  _('NAME=value pairs separated by spaces (README lists them).', 'Пары ИМЯ=значение через пробел (список в README).'))
 
     def build_log(self):
-        tk, ttk = self.tk, self.ttk
-        page = ttk.Frame(self.content, padding=(20, 14, 20, 8))
+        tk, ttk, px = self.tk, self.ttk, self.px
+        page = ttk.Frame(self.content)
         self.pages['log'] = page
-        top = ttk.Frame(page)
-        top.pack(fill='x', pady=(0, 8))
-        ttk.Label(top, text=_('Log', 'Журнал'), font=('Georgia', 20)).pack(side='left')
+        self.page_header(page, _('Log', 'Журнал'), '').pack(fill='x')
+        body = ttk.Frame(page, padding=(px(32), 0, px(24), px(22)))
+        body.pack(fill='both', expand=True)
+        top = ttk.Frame(body)
+        top.pack(fill='x', pady=(0, px(10)))
         ttk.Button(top, text=_('Copy', 'Копировать'), command=self.copy_log).pack(side='right')
         ttk.Button(top, text=_('Clear', 'Очистить'), command=lambda: self.set_log('')).pack(side='right', padx=6)
-        self.log = tk.Text(page, wrap='none', bg='#0a0908', fg='#cfc6b8', insertbackground=TEXT, relief='flat',
-                           font=('Consolas', 9), padx=8, pady=6, state='disabled', highlightthickness=0)
-        bar = ttk.Scrollbar(page, command=self.log.yview)
+        self.log = tk.Text(body, wrap='none', bg=theme.DEEP, fg=theme.TEXT_SOFT, insertbackground=TEXT, relief='flat',
+                           font=('Consolas', 9), padx=12, pady=10, state='disabled', highlightthickness=1,
+                           highlightbackground=LINE, highlightcolor=LINE, selectbackground=BLOOD,
+                           selectforeground=theme.TEXT_STRONG)
+        bar = ttk.Scrollbar(body, command=self.log.yview)
         self.log.configure(yscrollcommand=bar.set)
-        bar.pack(side='right', fill='y')
+        bar.pack(side='right', fill='y', padx=(px(4), 0))
         self.log.pack(fill='both', expand=True)
 
     def version_warning(self, parent):
@@ -1914,15 +2189,40 @@ class Launcher:
 
     # ---- state -------------------------------------------------------------------------------
     def game_changed(self):
-        self.banner_source = None
         self.draw_banner()
         self.set_icon()
         self.refresh_status()
 
+    def check_line(self, key, text, target=None):
+        """A line of the ready check: '✓ …', '• …', '⚠ …' or '✗ …' ('' hides it); a target makes it
+        a link."""
+        icon, label = self.checks[key]
+        line, go = self.check_lines[key]
+        if not text:
+            line.pack_forget()
+            return
+        if not line.winfo_manager():
+            order = list(self.check_lines)
+            after = [self.check_lines[k][0] for k in order[order.index(key) + 1:] if self.check_lines[k][0].winfo_manager()]
+            line.pack(fill='x', pady=self.px(4), **({'before': after[0]} if after else {}))
+        glyph, color = {'✓': ('ok', GOLD), '•': ('info', MUTED), '⚠': ('warn', theme.AMBER),
+                        '✗': ('error', theme.BLOOD_LIGHT)}.get(text[:1], (None, TEXT))
+        icon.configure(text=theme.ICON[glyph] if glyph else '', fg=color)
+        label.configure(text=text[1:].lstrip() if glyph else text,
+                        foreground=TEXT if glyph == 'ok' else MUTED if glyph == 'info' else color)
+        self.check_targets[key] = target
+        cursor = 'hand2' if target else ''
+        for widget in (line, icon, label, go):
+            widget.configure(cursor=cursor)
+        if target:
+            go.pack(side='right', anchor='n')
+        else:
+            go.pack_forget()
+
     def refresh_status(self):
         info = game_info(self.var('game_dir', 'app').get())
         if not info:
-            game = _('✗ No eboot.bin in the game folder (Game & effects)', '✗ В папке игры нет eboot.bin («Игра и эффекты»)')
+            game = renamed(_('✗ No eboot.bin in the game folder (Game & effects)', '✗ В папке игры нет eboot.bin («Игра и эффекты»)'))
         elif info[1] == PATCH_VERSION:
             game = _('✓ Game version {}: every patch available', '✓ Версия игры {}: доступны все патчи').format(info[1])
         else:
@@ -1931,14 +2231,32 @@ class Launcher:
         user = Path(self.var('user_dir', 'app').get() or DATA_DIR / 'user')
         saves = list((user / 'savedata').glob('*/*/SPRJ*')) if (user / 'savedata').is_dir() else []
         save = (_('✓ Saves found in {}', '✓ Найдены сохранения в {}').format(user) if saves
-                else _('• No saves yet: the game creates them in {}', '• Сохранений пока нет: игра создаст их в {}').format(user))
+                else _('• No saves yet: bring your character from another version, or the game creates them'))
         missing = fsr4_missing()
-        fsr4 = (_('✓ FSR 4 assets installed', '✓ Ассеты FSR 4 установлены') if not missing else
-                _('• FSR 4 assets missing (Graphics); FSR 3.1 is used meanwhile',
-                  '• Нет ассетов FSR 4 («Графика»); пока используется FSR 3.1'))
-        for key, text in (('game', game), ('saves', save), ('gpu', self.gpu_text), ('fsr4', fsr4)):
-            self.checks[key].configure(text=text, foreground=MUTED if text.startswith('•') else
-                                       '#d9a441' if text.startswith('⚠') else '#d36b5c' if text.startswith('✗') else TEXT)
+        eboot = self.eboot_note() if info else None
+        problem = (self.app.get('eboot_check') or {}).get('state') not in (None, 'clean')
+        self.check_line('game', eboot or game, (lambda: self.open_topic('eboot_modified')) if eboot and problem else
+                        (lambda: self.show('game')) if not info or info[1] != PATCH_VERSION else None)
+        self.check_line('saves', save, lambda: self.show('saves'))
+        self.check_line('fsr4', _('• FSR 4 files missing: FSR 3.1 is used meanwhile. Click to download (30 MB)')
+                        if missing and self.var('upscaler', 'ini').get() == 'fsr4' else '', self.download_fsr4)
+        online, pool = self.var('online', 'app').get(), self.var('online_pool', 'app').get()
+        signed_in = (bool(self.var('thd_token', 'app').get()) if pool == 'huntersdream' else
+                     bool(self.var('supermedo_user', 'app').get()) if pool == 'supermedo' else
+                     bool(self.var('online_npid', 'app').get().strip()))
+        self.check_line('online', ('⚠ ' + _('Online is on, but you are not signed in yet: sign in now')
+                                   if online and not signed_in else ''), lambda: self.show('online'))
+        if getattr(self, 'online_note', None):
+            name = self.var('thd_online_id', 'app').get() if pool == 'huntersdream' else ''
+            self.online_note.configure(text=(_('signed in as {}').format(name) if online and signed_in and name else
+                                             _('not signed in ›') if online and not signed_in else ''),
+                                       fg=MUTED if signed_in else theme.AMBER)
+        cheats = [_(*title) for key, title, _on in CHEATS if self.var(key, 'ini').get()]
+        self.check_line('cheats', ('⚠ ' + _('Cheats on: {}').format(', '.join(t.split(' (')[0] for t in cheats))
+                                   if cheats else ''), lambda: self.show('cheats'))
+        news = self.var('setup_done', 'app').get() and self.app.get('seen_version') != VERSION
+        self.check_line('news', '• ' + _('New in version {}: what has changed').format(VERSION) if news else '',
+                        self.open_news)
         for label in getattr(self, 'warnings', []):
             if info and info[1] != PATCH_VERSION:
                 label.configure(text=label.template.format(info[1]))
@@ -1946,9 +2264,14 @@ class Launcher:
             else:
                 label.grid_remove()
         if not self.process:
-            self.play_button.configure(state='normal' if info else 'disabled')
+            self.play_button.configure(state='normal' if info and not self.test_running() else 'disabled')
             self.status.configure(text=self.summary() if info else _('Choose the game folder first.',
                                                                      'Сначала выберите папку игры.'), fg=MUTED)
+
+    def open_news(self):
+        self.app['seen_version'] = VERSION
+        webbrowser.open(RELEASES_PAGE)
+        self.refresh_status()
 
     def summary(self):
         fps = dict(FPS_MODES).get(self.var('fps_mode', 'app').get(), ('?',))
@@ -1973,6 +2296,7 @@ class Launcher:
             clang64 = Path(os.environ.get('MSYS2_ROOT', r'C:\msys64')) / 'clang64' / 'bin'
             env['PATH'] = f'{clang64}{os.pathsep}{env.get("PATH", "")}'
         text = _('• Graphics card: not checked', '• Видеокарта: не проверена')
+        names = []
         try:
             result = subprocess.run([str(exe), '--live-resolution'], capture_output=True, text=True, timeout=30,
                                     env=env, creationflags=NO_WINDOW)
@@ -1985,7 +2309,13 @@ class Launcher:
         except (OSError, subprocess.TimeoutExpired):
             pass
         self.gpu_text = text
+        self.gpu_line = hardware.best_gpu_line(names)  # 'Name, discrete, 16304 MiB' for the hardware check
+        try:
+            self.cpu, self.ram = hardware.detect_cpu(), hardware.memory_gb()
+        except Exception:  # the rating is a guide: never stop the launcher over it
+            self.cpu, self.ram = hardware.Cpu('', None), 16
         self.ui_calls.put(self.refresh_status)
+        self.ui_calls.put(self.hardware_ready)
 
     def refresh_fsr4(self):
         total, missing = len(fsr4_files()), len(fsr4_missing())
@@ -2048,8 +2378,10 @@ class Launcher:
             line.pack(fill='x', pady=1)
             var = tk.BooleanVar(value=old.get(name, name not in profile.get('disabled', [])))
             self.mod_vars[name] = var
-            ttk.Button(line, text='▲', width=3, command=lambda i=index: self.move_mod(i, -1)).pack(side='left')
-            ttk.Button(line, text='▼', width=3, command=lambda i=index: self.move_mod(i, 1)).pack(side='left', padx=(2, 10))
+            ttk.Button(line, text='▲', width=3, style='Slot.TButton',
+                       command=lambda i=index: self.move_mod(i, -1)).pack(side='left')
+            ttk.Button(line, text='▼', width=3, style='Slot.TButton',
+                       command=lambda i=index: self.move_mod(i, 1)).pack(side='left', padx=(4, 12))
             ttk.Checkbutton(line, text=f'{index + 1}.  {name}', variable=var).pack(side='left')
         if len(self.mod_order) > 1:
             ttk.Label(self.mods_frame, text=_('Lower in the list loads later and wins conflicts.',
@@ -2136,10 +2468,12 @@ class Launcher:
         pool_name = self.var('online_pool', 'app').get()
         hunters_dream = pool_name == 'huntersdream'
         if online.get() and hunters_dream and not self.var('thd_token', 'app').get():
-            self.messagebox.showwarning(
-                'Bloodborne', _("To play online with The Hunter's Dream, sign in with Discord first."))
-            self.show('online')
-            return
+            if self.messagebox.askyesno(
+                    'Bloodborne', _("To play online with The Hunter's Dream, sign in with Discord first.") + '\n\n' +
+                    _('Sign in now? (No: play offline this time.)')):
+                self.show('online')
+                return
+            online.set(False)
         if online.get() and pool_name == 'supermedo' and not (
                 self.var('supermedo_user', 'app').get().strip() and self.var('supermedo_password', 'app').get()):
             self.messagebox.showwarning(
@@ -2158,6 +2492,8 @@ class Launcher:
             self.messagebox.showerror('Bloodborne', _('Choose the game folder with eboot.bin (CUSA03173).',
                                                       'Выберите папку игры с eboot.bin (CUSA03173).'))
             self.show('game')
+            return
+        if not self.preflight():  # bbport_help: a start that would fail for a reason the player can fix
             return
         self.set_log('')
         try:
@@ -2224,6 +2560,7 @@ class Launcher:
                         self.hidden = False
                         self.root.deiconify()
                         self.show('log')
+                    self.root.after(300, lambda code=item[0]: self.after_exit(code))  # the known causes in its log
                 else:
                     if 'Entering original x86-64 code' in item:
                         self.status.configure(text=_('The game is running.', 'Игра запущена.'), fg=GOLD)
@@ -2297,18 +2634,19 @@ class Launcher:
             return
         tk, ttk = self.tk, self.ttk
         text = _('Version {} is available.', 'Доступна версия {}.').format(version)
-        box = tk.Frame(self.side, bg=CARD, highlightthickness=1, highlightbackground=GOLD)
-        self.update_label = tk.Label(box, text=text, bg=CARD, fg=GOLD, font=('Segoe UI', 10, 'bold'),
-                                     wraplength=self.px(160), justify='left')
-        self.update_label.pack(anchor='w', padx=10, pady=(8, 6))
+        box = tk.Frame(self.side, bg=CARD, highlightthickness=1, highlightbackground=theme.GOLD)
+        self.update_label = tk.Label(box, text=text, bg=CARD, fg=GOLD, font=(theme.BODY_SEMI, 10),
+                                     wraplength=self.px(180), justify='left')
+        self.update_label.pack(anchor='w', padx=12, pady=(10, 8))
         buttons = tk.Frame(box, bg=CARD)
-        buttons.pack(fill='x', padx=10, pady=(0, 10))
-        self.update_button = ttk.Button(buttons, text=_('Update', 'Обновить'),
+        buttons.pack(fill='x', padx=12, pady=(0, 12))
+        buttons.columnconfigure((0, 1), weight=1, uniform='update')
+        self.update_button = ttk.Button(buttons, text=_('Update', 'Обновить'), style='Card.Tight.Accent.TButton',
                                         command=lambda: self.install_update(version, url, page))
-        self.update_button.pack(fill='x')
-        ttk.Button(buttons, text=_("What's new", 'Что нового'), command=lambda: webbrowser.open(page)).pack(
-            fill='x', pady=(4, 0))
-        box.pack(fill='x', padx=(22, 18), pady=(0, 14), before=self.side_note)
+        self.update_button.grid(row=0, column=0, sticky='we')
+        ttk.Button(buttons, text=_("What's new", 'Что нового'), style='Card.Tight.TButton',
+                   command=lambda: webbrowser.open(page)).grid(row=0, column=1, sticky='we', padx=(6, 0))
+        box.pack(fill='x', padx=self.px(14), pady=(self.px(8), self.px(12)), before=self.side_note)
         self.update_box = box
         if not self.process:
             self.status.configure(text=text, fg=GOLD)
@@ -2552,6 +2890,11 @@ class Launcher:
                                                  'saved in this launcher.'))
 
     def close(self):
+        if self.test_running():  # a game test: its game must not stay behind
+            if not self.messagebox.askyesno('Bloodborne', _('A game test is running. Stop it and close the launcher?')):
+                return
+            self.bench.cancelled = True
+            subprocess.run(['taskkill', '/IM', 'bb-probe.exe', '/F'], capture_output=True, creationflags=NO_WINDOW)
         try:
             self.collect()
         except Exception:  # never keep the window open over a settings problem
@@ -2676,6 +3019,22 @@ def install_update(target, wait_pid):
     return 0
 
 
+class _ThisModule:
+    """bbport_setup's view of this module: its globals when used (the tests load this file under
+    another name, and they and the preview tools change PORT_DIR and others after the import)."""
+
+    def __getattr__(self, name):
+        try:
+            return globals()[name]
+        except KeyError:
+            raise AttributeError(name) from None
+
+
+bbport_setup.bind(_ThisModule())
+bbport_help.bind(_ThisModule())
+bbport_search.bind(_ThisModule())
+
+
 def main():
     global LANG
     args = sys.argv[1:]
@@ -2688,7 +3047,7 @@ def main():
     if FROZEN and UPDATE_DIR not in PORT_DIR.parents:
         shutil.rmtree(UPDATE_DIR, ignore_errors=True)  # what a finished update left behind
     # Without a usable game folder there is nothing to play yet: open the launcher instead.
-    if '--play' in args and (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file():
+    if '--play' in args and (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file() and CONFIG_FILE.exists():
         sys.exit(play_without_window(settings))
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # sharp text on scaled displays
