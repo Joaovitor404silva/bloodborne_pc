@@ -179,7 +179,7 @@ def _(en, ru=None):
 def renamed(text):
     """A translated text that names the page with the game folder by an older name: Game & effects
     (the original launcher) or Game & language (until the folders moved to the expert page Game
-    files; the languages are on Language & sound)."""
+    files; the game's languages are on Gameplay)."""
     return text.replace(_('Game & effects', 'Игра и эффекты'), _('Game files')).replace(
         _('Game & language'), _('Game files'))
 
@@ -799,7 +799,7 @@ GRADE_NAMES = {trophies.PLATINUM: ('Platinum', 'Платиновый'), trophies
 NAV_SIMPLE = [('play', ('Play', 'Играть')), ('picture', ('Picture & performance',)),
               ('controls', ('Controls', 'Управление')), ('gameplay', ('Gameplay', 'Игровой процесс')),
               ('online', ('Online play',)), ('saves', ('Saves',)),
-              ('mods', ('Mods',)), ('language', ('Language & sound',)),
+              ('mods', ('Mods',)), ('language', ('Launcher customization', 'Настройки лаунчера')),
               ('trophies', ('Achievements', 'Достижения')), ('help', ('Help', 'Помощь'))]
 # The game folder is set once (usually by the setup guide); a problem with it links there.
 NAV_EXPERT = [('graphics', ('All graphics',)), ('game', ('Game files',)), ('cheats', ('Cheats', 'Читы')),
@@ -1553,7 +1553,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def window_chrome(self):
         """The title bar in the launcher's colours: dark, and on Windows 11 acrylic (a hint of
-        what lies behind it); the whole window very slightly translucent when chosen (Language & sound,
+        what lies behind it); the whole window very slightly translucent when chosen (Launcher customization,
         Advanced). Off by default: a dark window lets bright windows behind it show through clearly."""
         translucent = bool(self.app.get('translucent_window', False))
         try:
@@ -2148,18 +2148,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                                     pady=(14, 0))
 
     def build_language(self):
-        """The languages of the game and the launcher, the player name, how the game starts and sounds."""
+        """Launcher customization (the page key stays 'language'): the launcher's language and look,
+        what it does when the game starts, the shortcuts. The game's own settings are on Gameplay."""
         ttk = self.ttk
-        f = self.scrolled_page('language', _('Language & sound'),
-                               _("The game's text and voices, the launcher's language, how the game starts and "
-                                 'sounds.'))
-        self.section(f, _('In the game'), top=4)
-        self.row(f, _('Text language', 'Язык текста'), self.choice(f, 'language', 'app', LANGUAGES))
-        self.row(f, _('Voice language', 'Язык озвучки'), self.choice(f, 'voice_language', 'app', VOICE_LANGUAGES),
-                 _('As in the game uses the original voice setting; other choices use available tracks.'))
-        self.row(f, _('Player name', 'Имя игрока'), self.ttk.Entry(f, textvariable=self.var('player_name', 'app'), width=30),
-                 _('Where the game shows the PSN name; empty: the default.', 'Где игра показывает имя PSN; пусто — по умолчанию.'))
-        self.section(f, _('Launcher'))
+        f = self.scrolled_page('language', _('Launcher customization'),
+                               _("The launcher's language and look, what it does while you play, and shortcuts to "
+                                 'the game.'))
+        self.section(f, _('Launcher'), top=4)
         before = self.var('ui_language', 'app').get()
         language = ttk.Frame(f)
         self.choice(language, 'ui_language', 'app', UI_LANGUAGES, 24).pack(side='left')
@@ -2170,6 +2165,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.row(f, _('Launcher language', 'Язык лаунчера'), language,
                  _('Applies when the launcher opens again.', 'Применится при следующем открытии лаунчера.'))
         self.appearance_check(f)  # Advanced > Appearance has the title bar (expert)
+        self.section(f, _('While you play'))
         self.row(f, _('When the game starts'), self.choice(f, 'on_play', 'app', ON_PLAY, 24),
                  _('Closed, it ends with the game; minimized, it waits on the task bar (or in the tray).'))
         self.check(f, 'reopen_after_game', 'app', _('Open the launcher again when the game closes'),
@@ -2177,8 +2173,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.check(f, 'minimize_to_tray', 'app', _('Minimize to the system tray'),
                    _('Minimized, the launcher leaves the task bar for an icon next to the clock: click it to '
                      'open the launcher again.'))
-        self.section(f, _('Starting the game'))
-        self.check(f, 'skip_intro', 'ini', _(*dict((k, t) for k, t, _o in EXTRAS)['skip_intro']))
+        self.section(f, _('Shortcuts'))
         shortcuts = ttk.Frame(f)
         button = ttk.Button(shortcuts, text=_('Desktop shortcut', 'Ярлык на рабочем столе'), command=self.shortcut)
         button.pack(side='left')
@@ -2186,20 +2181,28 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         button = ttk.Button(shortcuts, text=_('Add to Steam'), command=self.add_to_steam)
         button.pack(side='left', padx=(6, 0))
         self.index_entry(button, _('Add to Steam'), key='button:steam')
-        self.row(f, _('Shortcuts'), shortcuts,
+        self.row(f, '', shortcuts,
                  _('The desktop shortcut opens this launcher; the Steam entry starts the game straight away '
                    'with these settings.'), key='button:shortcut')
-        self.section(f, _('Sound'))
-        self.check(f, 'mute_unfocused', 'ini', _('Mute when the game is in the background',
-                                                 'Без звука, когда игра в фоне'))
 
     def build_gameplay(self):
-        """The game's own rules made to taste (not cheats): for everyone, in the simple view too."""
+        """The game's own settings for everyone (the simple view too): its text and voices, how it starts
+        and sounds, and the gameplay tweaks (game patches, not cheats)."""
         f = self.scrolled_page('gameplay', _('Gameplay'),
-                               _('Changes to how the game plays and its menus. Game patches for version 1.09, '
-                                 'applied at start.'))
+                               _("The game's language and sound, and changes to how it plays and its menus."))
+        self.section(f, _('Language'), top=4)
+        self.row(f, _('Text language', 'Язык текста'), self.choice(f, 'language', 'app', LANGUAGES))
+        self.row(f, _('Voice language', 'Язык озвучки'), self.choice(f, 'voice_language', 'app', VOICE_LANGUAGES),
+                 _('As in the game uses the original voice setting; other choices use available tracks.'))
+        self.row(f, _('Player name', 'Имя игрока'), self.ttk.Entry(f, textvariable=self.var('player_name', 'app'), width=30),
+                 _('Where the game shows the PSN name; empty: the default.', 'Где игра показывает имя PSN; пусто — по умолчанию.'))
+        self.section(f, _('Starting the game and sound'))
+        self.check(f, 'skip_intro', 'ini', _(*dict((k, t) for k, t, _o in EXTRAS)['skip_intro']))
+        self.check(f, 'mute_unfocused', 'ini', _('Mute when the game is in the background',
+                                                 'Без звука, когда игра в фоне'))
+        self.section(f, _('Gameplay tweaks', 'Изменения игрового процесса'))
+        self.note(f, _('Game patches for version 1.09, applied at start.'), top=0)
         self.version_warning(f)
-        self.section(f, _('Gameplay tweaks', 'Изменения игрового процесса'), top=4)
         for key, title, _on in TWEAKS:
             self.check(f, key, 'ini', _(*title))
 
@@ -2717,16 +2720,36 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    "the controller's (PlayStation, Xbox or Switch) while you use it.",
                    'Значки кнопок в игре: ваши клавиши и мышь, пока вы играете ими, и кнопки '
                    'геймпада (PlayStation, Xbox или Switch), пока вы используете его.'))
-        # Two tabs: keyboard and mouse, or the controller (a page each would be twice the scrolling).
-        tab = tk.StringVar(value=self.app.get('controls_tab', 'keyboard'))
-        switch = tk.Frame(f, bg=LINE, padx=1, pady=1)
-        for value, text in (('keyboard', _('Keyboard & mouse')), ('controller', _('Controller', 'Геймпад'))):
-            tk.Radiobutton(switch, text=text, variable=tab, value=value, indicatoron=False, bg=theme.SURFACE,
-                           fg=theme.TEXT_SOFT, selectcolor=theme.BLOOD, activebackground=theme.SURFACE,
-                           activeforeground=theme.TEXT_STRONG, relief='flat', offrelief='flat', bd=0,
-                           highlightthickness=0, cursor='hand2', font=(theme.BODY_MEDIUM, 10), padx=self.px(14),
-                           pady=self.px(5)).pack(side='left', padx=(0, 1))
-        switch.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(self.px(18), self.px(4)))
+        # The settings of each device in a tab of its own (a page each would be twice the scrolling).
+        # Tabs, not a second switch like "You play with" above: they only show, they change nothing,
+        # and they follow that choice.
+        px = self.px
+        played = self.var('play_with', 'app') if 'play_with' in self.app else None
+        tab = tk.StringVar(value=played.get() if played is not None and played.get() else
+                           self.app.get('controls_tab', 'keyboard'))
+        bar = tk.Frame(f, bg=PANEL)
+        bar.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(22), 0))
+        heads = {}
+        for value, text in (('controller', _('Controller settings')), ('keyboard', _('Keyboard and mouse settings'))):
+            cell = tk.Frame(bar, bg=PANEL)
+            cell.pack(side='left', padx=(0, px(26)))
+            label = tk.Label(cell, text=text, bg=PANEL, font=(theme.BODY_MEDIUM, 11), cursor='hand2', pady=px(4))
+            label.pack()
+            line = tk.Frame(cell, height=px(2), bg=PANEL)
+            line.pack(fill='x')
+            label.bind('<Button-1>', lambda _e, v=value: tab.set(v))
+            heads[value] = (label, line)
+        tk.Frame(f, bg=LINE, height=1).grid(row=self.next_row(f), column=0, columnspan=2, sticky='we',
+                                             pady=(0, px(6)))
+
+        def paint_tabs(*_a):
+            for value, (label, line) in heads.items():
+                label.configure(fg=theme.TEXT_STRONG if value == tab.get() else MUTED)
+                line.configure(bg=GOLD if value == tab.get() else PANEL)
+        tab.trace_add('write', paint_tabs)
+        paint_tabs()
+        if played is not None:
+            played.trace_add('write', lambda *_a: played.get() in heads and tab.set(played.get()))
         tabs, before = {}, set(f.grid_slaves())
         indexed = len(getattr(self, 'search_settings', []))
 
@@ -3279,7 +3302,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         ttk.Button(holder, text=_('Other versions…', 'Другие версии…'), command=self.choose_version).pack(
             side='left', padx=(6, 0))
         ttk.Label(holder, text=f'v{VERSION}', style='Muted.TLabel').pack(side='left', padx=10)
-        self.section(f, _('Appearance'))  # the translucent window: Language & sound > Launcher
+        self.section(f, _('Appearance'))  # the translucent window: Launcher customization > Launcher
         self.check(f, 'windows_title_bar', 'app', _("Windows' title bar instead of the launcher's own"),
                    _('Applies when the launcher opens again.', 'Применится при следующем открытии лаунчера.'))
         self.var('windows_title_bar', 'app').trace_add('write', lambda *_a: self.app.__setitem__(
