@@ -1482,7 +1482,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         px = self.px
         try:
             top = self.search_box.winfo_y() + self.search_box.winfo_height() + px(10)
-            bottom = self.mode_switch.winfo_y() - px(4)
+            bottom = (self.update_box if self.update_box and self.update_box.winfo_manager() else
+                      self.mode_switch).winfo_y() - px(4)
         except self.tk.TclError:
             return
         shown = [name for name in self.nav if self.nav[name][0].winfo_manager()]
@@ -4157,7 +4158,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.update_button.grid(row=0, column=0, sticky='we')
         ttk.Button(buttons, text=_("What's new", 'Что нового'), style='Card.Tight.TButton',
                    command=lambda: webbrowser.open(page)).grid(row=0, column=1, sticky='we', padx=(6, 0))
-        box.pack(fill='x', padx=self.px(14), pady=(self.px(8), self.px(12)), before=self.side_note)
+        # above the Expert view switch at the bottom of the side bar (side_note of the old launcher
+        # is gone: the box failed to show, so 1.9.3 never offered an update)
+        box.pack(side='bottom', fill='x', padx=self.px(14), pady=(self.px(8), self.px(4)), before=self.search_box)
+        self.root.after_idle(self.fit_nav)
         self.update_box = box
         if not self.process:
             self.status.configure(text=text, fg=GOLD)
