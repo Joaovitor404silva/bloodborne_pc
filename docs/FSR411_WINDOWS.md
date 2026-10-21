@@ -42,14 +42,22 @@ as the renderer. These capability checks run in an isolated helper process;
 context creation is still checked by the renderer at the actual render size.
 
 The fsr4vk DLL and bundled license files are verified separately. Missing or
-changed files produce a **Download fsr4vk** instruction and identify the files.
+changed files show **Vulkan (fsr4vk – download required)**. On a supported
+adapter, selecting it asks **Download Vulkan files for FSR 4.1.1. now?** Both selectors use the
+Graphics download function. Success verifies the files and selects Vulkan;
+declining or a download failure retains the previous method. The existing
+Graphics download button installs the files and retains the method preference.
+An unsupported adapter keeps the Vulkan entry disabled. Captions expand
+to fit their translation in both Graphics and Play quick settings.
+Logs retain the affected file names.
 A missing DX12 DLL produces a Windows-package reinstall instruction. Driver
 feature, provider and DLL-loading failures have separate messages. **Recheck
 support** refreshes the check after installation or a driver change.
 
-Known unavailable alternatives are filtered from the launcher selectors. A
-saved selection remains visible for diagnosis, and launching is stopped with
-the specific reason until that method is available or another is selected.
+Unsupported backend entries are disabled in both launcher selectors. A saved
+selection remains visible, and PLAY stays disabled with an inline hint until
+that method is available or another is selected. Startup rechecks files;
+shortcuts open Graphics when the saved method is unavailable.
 The in-game overlay also distinguishes an unavailable FSR 4.1.1 method from a
 GPU limitation. Direct renderer starts retain the safe FSR 3.1 fallback and log
 the actual cause, including missing provider files.

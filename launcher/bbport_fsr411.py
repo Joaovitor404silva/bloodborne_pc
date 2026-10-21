@@ -102,6 +102,32 @@ def method_status(port, data_dir, method, capabilities, fetch_fsr4vk, env=None):
     return capabilities[method]
 
 
+DOWNLOAD_HINT = 'fsr4vk download required.'
+VULKAN_DOWNLOAD_LABEL = 'Vulkan (fsr4vk – download required)'
+DOWNLOAD_TITLE = 'FSR 4.1.1. - Vulkan (fsr4vk)'
+DOWNLOAD_QUESTION = 'Download Vulkan files for FSR 4.1.1. now?'
+
+
+def needs_download(status):
+    return status['reason'] == 'download' or bool(status.get('files_problem') and
+                                                status['files_problem']['reason'] == 'download')
+
+
+def can_download(status, capabilities):
+    """Offer installation only after the selected adapter passed the Vulkan check."""
+    return bool(needs_download(status) and capabilities and capabilities['vk']['supported'])
+
+
+def hint(status, translate):
+    """Compact UI hint; message() retains file names for logs/diagnosis."""
+    if status['reason'] == 'download':
+        return translate(DOWNLOAD_HINT)
+    text = message({k: v for k, v in status.items() if k != 'files_problem'}, translate)
+    if needs_download(status):
+        text += '\n' + translate(DOWNLOAD_HINT)
+    return text
+
+
 def message(status, translate):
     key = {
         'ready': 'Available for this GPU and driver.',
@@ -215,4 +241,52 @@ TEXTS = {
         '이 GPU/드라이버에서 AMD FSR 4.1.1을 사용할 수 없습니다: {}',
         '공급자 비활성화: {}', '다시 확인'),
 }
+DOWNLOAD_TEXTS = {
+    'en': DOWNLOAD_HINT,
+    'de': 'fsr4vk-Download benötigt.',
+    'ru': 'Требуется скачать fsr4vk.',
+    'ar': 'يلزم تنزيل fsr4vk.',
+    'es': 'Es necesario descargar fsr4vk.',
+    'pt': 'É necessário baixar fsr4vk.',
+    'fr': 'Téléchargement de fsr4vk requis.',
+    'it': 'È necessario scaricare fsr4vk.',
+    'pl': 'Wymagane pobranie fsr4vk.',
+    'tr': 'fsr4vk indirilmesi gerekiyor.',
+    'zh': '需要下载 fsr4vk。',
+    'ja': 'fsr4vk のダウンロードが必要です。',
+    'ko': 'fsr4vk 다운로드 필요.',
+}
+VULKAN_DOWNLOAD_TEXTS = {
+    'en': VULKAN_DOWNLOAD_LABEL,
+    'de': 'Vulkan (fsr4vk – Download benötigt)',
+    'ru': 'Vulkan (fsr4vk – требуется скачать)',
+    'ar': 'Vulkan (fsr4vk – يلزم التنزيل)',
+    'es': 'Vulkan (fsr4vk – requiere descarga)',
+    'pt': 'Vulkan (fsr4vk – requer download)',
+    'fr': 'Vulkan (fsr4vk – téléchargement requis)',
+    'it': 'Vulkan (fsr4vk – download necessario)',
+    'pl': 'Vulkan (fsr4vk – wymagane pobranie)',
+    'tr': 'Vulkan (fsr4vk – indirme gerekli)',
+    'zh': 'Vulkan（fsr4vk – 需要下载）',
+    'ja': 'Vulkan（fsr4vk – ダウンロードが必要）',
+    'ko': 'Vulkan (fsr4vk – 다운로드 필요)',
+}
+DOWNLOAD_QUESTIONS = {
+    'en': DOWNLOAD_QUESTION,
+    'de': 'Vulkan-Dateien für FSR 4.1.1 jetzt herunterladen?',
+    'ru': 'Скачать файлы Vulkan для FSR 4.1.1 сейчас?',
+    'ar': 'هل تريد تنزيل ملفات Vulkan لـ FSR 4.1.1 الآن؟',
+    'es': '¿Descargar ahora los archivos Vulkan para FSR 4.1.1?',
+    'pt': 'Baixar agora os arquivos Vulkan para FSR 4.1.1?',
+    'fr': 'Télécharger maintenant les fichiers Vulkan pour FSR 4.1.1 ?',
+    'it': 'Scaricare ora i file Vulkan per FSR 4.1.1?',
+    'pl': 'Pobrać teraz pliki Vulkan dla FSR 4.1.1?',
+    'tr': 'FSR 4.1.1 için Vulkan dosyaları şimdi indirilsin mi?',
+    'zh': '现在下载 FSR 4.1.1 的 Vulkan 文件？',
+    'ja': 'FSR 4.1.1 用の Vulkan ファイルを今すぐダウンロードしますか？',
+    'ko': '지금 FSR 4.1.1용 Vulkan 파일을 다운로드할까요?',
+}
+KEYS += (DOWNLOAD_HINT, VULKAN_DOWNLOAD_LABEL, DOWNLOAD_QUESTION)
+TEXTS = {lang: texts + (DOWNLOAD_TEXTS[lang], VULKAN_DOWNLOAD_TEXTS[lang], DOWNLOAD_QUESTIONS[lang])
+         for lang, texts in TEXTS.items()}
 TRANSLATIONS = {lang: dict(zip(KEYS, texts, strict=True)) for lang, texts in TEXTS.items()}

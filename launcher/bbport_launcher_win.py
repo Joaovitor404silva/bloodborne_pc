@@ -728,6 +728,9 @@ class Launcher:
         s.configure('TCombobox', arrowcolor=GOLD, foreground=TEXT, padding=4)
         s.map('TCombobox', fieldbackground=[('readonly', CARD)], foreground=[('readonly', TEXT)],
               selectbackground=[('readonly', CARD)], selectforeground=[('readonly', TEXT)])
+        s.configure('Fsr411.TMenubutton', background=CARD, arrowcolor=GOLD, padding=4)
+        s.map('Fsr411.TMenubutton', foreground=[('disabled', MUTED)], background=[('active', CARD)])
+        s.configure('Unavailable.Fsr411.TMenubutton', foreground=MUTED)
         s.configure('TEntry', foreground=TEXT, insertcolor=TEXT, padding=4)
         s.configure('TSpinbox', foreground=TEXT, arrowcolor=GOLD, insertcolor=TEXT, padding=4)
         s.configure('TButton', background=CARD, foreground=TEXT, padding=(12, 6), borderwidth=1)
@@ -796,37 +799,86 @@ class Launcher:
         backend = self.var('fsr411_backend', 'ini')
         upscaler = self.var('upscaler', 'ini')
         values = [value for value, _text in FSR411_BACKENDS]
-        box = self.ttk.Combobox(parent, values=[_(*text) for _value, text in FSR411_BACKENDS],
-                               state='readonly', width=width)
+        box = self.ttk.Frame(parent)
+        # A menu can disable individual methods while keeping their names visible.
+        # Negative width is a minimum: long translated captions get their natural width.
+        box.button = self.ttk.Menubutton(box, width=-width, style='Fsr411.TMenubutton')
+        box.button.grid(row=0, column=0, sticky='w')
+        box.menu = self.tk.Menu(box.button, tearoff=False, background=CARD, foreground=TEXT,
+                               activebackground=BLOOD, activeforeground=TEXT, disabledforeground=MUTED)
+        box.button.configure(menu=box.menu)
+        # Menu clicks are provisional until the requested method is ready.
+        box.selection = self.tk.StringVar(value=backend.get())
+        def choose(method):
+            self.select_fsr411_backend(method)
+            refresh()
+        for value, text in FSR411_BACKENDS:
+            box.menu.add_radiobutton(label=_(*text), variable=box.selection, value=value,
+                command=lambda method=value: choose(method))
+        box.hint = self.ttk.Label(box, style='Muted.TLabel', wraplength=self.px(width * 9), justify='left')
+        box.hint.grid(row=1, column=0, sticky='w', pady=(3, 0))
         if backend.get() not in values:
             backend.set(values[0])
 
         def refresh(*_args):
-            caps = getattr(self, 'fsr411_support', None)
-            # Keep a saved selection visible; unavailable alternatives are described below.
-            options = [(v, t) for v, t in FSR411_BACKENDS if caps is None or
-                       caps[v]['supported'] or caps[v]['reason'] == 'files' or v == backend.get()]
-            values[:] = [v for v, _t in options]
-            box.configure(values=[_(*t) for _v, t in options])
-            if upscaler.get() == 'fsr411':
-                box.configure(state='readonly')
-                box.current(values.index(backend.get()) if backend.get() in values else 0)
+            active = upscaler.get() == 'fsr411'
+            statuses = {method: self.fsr411_status(method) for method in values}
+            selected = statuses[backend.get()]
+            downloading = getattr(self, 'fsr411_downloading', False)
+            offer = not getattr(self, 'process', None) and bbport_fsr411.can_download(
+                statuses['vk'], getattr(self, 'fsr411_support', None))
+            labels = {method: _(*text) for method, text in FSR411_BACKENDS}
+            if bbport_fsr411.needs_download(statuses['vk']):
+                labels['vk'] = _(bbport_fsr411.VULKAN_DOWNLOAD_LABEL)
+            for index, method in enumerate(values):
+                box.menu.entryconfigure(index, label=labels[method],
+                    state='normal' if active and not downloading and
+                        (statuses[method]['supported'] or method == 'vk' and offer) else 'disabled')
+            box.selection.set(backend.get())
+            box.button.configure(state='normal' if active and not downloading else 'disabled',
+                text=labels[backend.get()] if active else '—',
+                style='Unavailable.Fsr411.TMenubutton' if active and not selected['supported'] and
+                    not (backend.get() == 'vk' and offer) else 'Fsr411.TMenubutton')
+            if active and not selected['supported'] and selected['reason'] != 'download':
+                text = bbport_fsr411.hint(selected, _)
+                if bbport_fsr411.needs_download(selected):
+                    text = bbport_fsr411.message({k: v for k, v in selected.items() if k != 'files_problem'}, _)
             else:
-                # Placeholder is display-only: retain the last method for FSR 4.1.1.
-                box.set('—')
-                box.configure(state='disabled')
-
-        def choose(_event):
-            index = box.current()
-            if upscaler.get() == 'fsr411' and 0 <= index < len(values):
-                backend.set(values[index])
-        box.bind('<<ComboboxSelected>>', choose)
-        backend.trace_add('write', refresh)
-        upscaler.trace_add('write', refresh)
+                text = ''
+            box.hint.configure(text=text)
+            if text:
+                box.hint.grid()
+            else:
+                box.hint.grid_remove()
+        traces = [(var, var.trace_add('write', refresh)) for var in (backend, upscaler)]
         if hasattr(self, 'fsr411_refreshers'):
             self.fsr411_refreshers.append(refresh)
+        def cleanup(event):
+            if event.widget == box:
+                for var, trace in traces:
+                    var.trace_remove('write', trace)
+                if refresh in getattr(self, 'fsr411_refreshers', []):
+                    self.fsr411_refreshers.remove(refresh)
+        box.bind('<Destroy>', cleanup)
         refresh()
         return box
+
+    def select_fsr411_backend(self, method):
+        if self.var('upscaler', 'ini').get() != 'fsr411' or getattr(self, 'fsr411_downloading', False):
+            return
+        backend = self.var('fsr411_backend', 'ini')
+        status = self.fsr411_status(method)
+        if status['supported']:
+            backend.set(method)
+        elif method == 'vk' and not getattr(self, 'process', None) and bbport_fsr411.can_download(
+                status, getattr(self, 'fsr411_support', None)):
+            if not self.messagebox.askyesno(bbport_fsr411.DOWNLOAD_TITLE, _(bbport_fsr411.DOWNLOAD_QUESTION), parent=self.root):
+                return
+            previous = backend.get()
+            def activate():
+                if self.var('upscaler', 'ini').get() == 'fsr411' and backend.get() == previous:
+                    backend.set('vk')
+            self.download_fsr411(on_success=activate)
 
     def next_row(self, parent):
         return parent.grid_size()[1]
@@ -1047,6 +1099,17 @@ class Launcher:
             row=self.next_row(quick), column=1, sticky='w', pady=(10, 0))
         for key in ('fps_mode', 'upscaler', 'output_res'):
             self.vars[key].trace_add('write', lambda *_a: self.refresh_status())
+
+        def fit_quick(_event=None):
+            # Reserve the translated controls' width; wrap ready-check text into the remainder.
+            controls = quick.winfo_reqwidth()
+            body.columnconfigure(1, minsize=controls)
+            remaining = body.winfo_width() - controls - 80  # body padding + column gap
+            wrap = max(self.px(180), min(self.px(440), remaining))
+            for label in self.checks.values():
+                label.configure(wraplength=wrap)
+        body.bind('<Configure>', fit_quick)
+        quick.bind('<Configure>', fit_quick)
 
     def draw_banner(self):
         """The cover art of the selected dump (sce_sys/pic1.png) under the title."""
@@ -2083,9 +2146,11 @@ class Launcher:
         fsr4 = (_('✓ FSR 4 assets installed', '✓ Ассеты FSR 4 установлены') if not missing else
                 _('• FSR 4 assets missing (Graphics); FSR 3.1 is used meanwhile',
                   '• Нет ассетов FSR 4 («Графика»); пока используется FSR 3.1'))
+        fsr411_ready = True
         if self.var('upscaler', 'ini').get() == 'fsr411':
             status = self.fsr411_status(self.var('fsr411_backend', 'ini').get())
-            fsr4 = ('✓ ' if status['supported'] else '• ') + 'FSR 4.1.1: ' + bbport_fsr411.message(status, _)
+            fsr411_ready = status['supported']
+            fsr4 = ('✓ ' if fsr411_ready else '• ') + 'FSR 4.1.1: ' + bbport_fsr411.hint(status, _)
         for key, text in (('game', game), ('saves', save), ('gpu', self.gpu_text), ('fsr4', fsr4)):
             self.checks[key].configure(text=text, foreground=MUTED if text.startswith('•') else
                                        '#d9a441' if text.startswith('⚠') else '#d36b5c' if text.startswith('✗') else TEXT)
@@ -2096,9 +2161,9 @@ class Launcher:
             else:
                 label.grid_remove()
         if not self.process:
-            self.play_button.configure(state='normal' if info and not self.fsr411_downloading else 'disabled')
-            self.status.configure(text=self.summary() if info else _('Choose the game folder first.',
-                                                                     'Сначала выберите папку игры.'), fg=MUTED)
+            self.play_button.configure(state='normal' if info and fsr411_ready and not self.fsr411_downloading else 'disabled')
+            self.status.configure(text=bbport_fsr411.hint(status, _) if info and not fsr411_ready else
+                self.summary() if info else _('Choose the game folder first.', 'Сначала выберите папку игры.'), fg=MUTED)
 
     def summary(self):
         fps = dict(FPS_MODES).get(self.var('fps_mode', 'app').get(), ('?',))
@@ -2180,7 +2245,7 @@ class Launcher:
         installed = fetch_fsr4vk.files_ok(folder)
         self.fsr411_verified = installed
         self.fsr411_label.configure(text=_('Vulkan (fsr4vk)') + ': ' +
-            bbport_fsr411.message(self.fsr411_status('vk'), _))
+            bbport_fsr411.hint(self.fsr411_status('vk'), _))
         self.fsr411_native_label.configure(text=_('AMD DX12') + ': ' +
             bbport_fsr411.message(self.fsr411_status('dx12'), _))
         for refresh in getattr(self, 'fsr411_refreshers', []):
@@ -2193,7 +2258,7 @@ class Launcher:
         if installed:
             self.fsr411_progress.configure(value=100)
 
-    def download_fsr411(self):
+    def download_fsr411(self, on_success=None):
         if self.process or self.fsr411_downloading:
             return
         self.fsr411_downloading = True
@@ -2209,11 +2274,15 @@ class Launcher:
             error = None
             try:
                 fetch_fsr4vk.fetch(folder, progress)
+                if not fetch_fsr4vk.files_ok(folder):
+                    raise fetch_fsr4vk.FetchError(_('Vulkan (fsr4vk): files missing or need updating.'))
             except (OSError, fetch_fsr4vk.FetchError) as failure:
                 error = str(failure)
 
             def done():
                 self.fsr411_downloading = False
+                if not error and on_success and self.fsr411_status('vk')['supported']:
+                    on_success()
                 self.refresh_fsr411()
                 self.refresh_status()
                 if error:
@@ -2401,7 +2470,6 @@ class Launcher:
             self.fsr411_support = bbport_fsr411.query(PORT_DIR, bbport_fsr411.environment(PORT_DIR, self.app), refresh=True)
             status = self.fsr411_status(self.ini['fsr411_backend'])
             if not status['supported']:
-                self.messagebox.showwarning('FSR 4.1.1', bbport_fsr411.message(status, _))
                 self.show('graphics')
                 self.refresh_fsr411()
                 self.refresh_status()
@@ -2866,8 +2934,7 @@ def play_without_window(settings):
         if not status['supported']:
             text = bbport_fsr411.message(status, _)
             print('FSR 4.1.1: ' + text)
-            ctypes.windll.user32.MessageBoxW(None, text, 'FSR 4.1.1', 0x30)
-            return 1
+            return None  # Show the launcher controls instead of a popup.
     log_dir = Path(settings.get('user_dir') or DATA_DIR / 'user')
     log_dir.mkdir(parents=True, exist_ok=True)
     tracker = trophies.Tracker(log_dir)
@@ -2964,8 +3031,12 @@ def main():
     if FROZEN and UPDATE_DIR not in PORT_DIR.parents:
         shutil.rmtree(UPDATE_DIR, ignore_errors=True)  # what a finished update left behind
     # Without a usable game folder there is nothing to play yet: open the launcher instead.
+    page = 'play'
     if '--play' in args and (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file():
-        sys.exit(play_without_window(settings))
+        result = play_without_window(settings)
+        if result is not None:
+            sys.exit(result)
+        page = 'graphics'
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # sharp text on scaled displays
     except (AttributeError, OSError):
@@ -2973,7 +3044,9 @@ def main():
     import tkinter as tk
     from tkinter import filedialog, messagebox, ttk
     root = tk.Tk()
-    Launcher(root, tk, ttk, filedialog, messagebox)
+    launcher = Launcher(root, tk, ttk, filedialog, messagebox)
+    if page != 'play':
+        launcher.show(page)
     root.mainloop()
 
 

@@ -149,7 +149,7 @@ class DetectionTests(unittest.TestCase):
             ui.play()
         popen.assert_not_called()
         ui.show.assert_called_once_with('graphics')
-        self.assertIn(support.DLL['vk'], ui.messagebox.showwarning.call_args.args[1])
+        ui.messagebox.showwarning.assert_not_called()
         self.assertEqual(ui.ini['fsr411_backend'], 'vk')
 
     def test_messages_cover_all_launcher_languages(self):
@@ -176,23 +176,25 @@ class SelectionWidgetsTest(unittest.TestCase):
         ui.fsr411_refreshers, ui.fsr411_upscaler_refreshers = [], []
         ui.fsr411_support = {m: dict(supported=False, reason='hardware', detail='required feature')
                              for m in ('vk', 'dx12')}
+        ui.fsr411_status = lambda method: ui.fsr411_support[method]
         self.parent = ttk.Frame(self.root)
 
-    def test_unsupported_choices_are_filtered_and_saved_selection_is_retained(self):
+    def test_unsupported_methods_are_disabled_and_saved_selection_is_retained(self):
         ui = self.ui
         upscale = ui.choice(self.parent, 'upscaler', 'ini', launcher.UPSCALERS)
         self.assertFalse(any('4.1.1' in text for text in upscale['values']))
         ui.vars['upscaler'].set('fsr411')
         self.assertIn('4.1.1', upscale.get())
         methods = ui.fsr411_choice(self.parent)
-        self.assertNotIn('AMD DX12', methods['values'])
+        self.assertEqual(methods.menu.entrycget(1, 'label'), 'AMD DX12')
+        self.assertEqual(methods.menu.entrycget(1, 'state'), 'disabled')
         self.assertEqual(ui.vars['fsr411_backend'].get(), 'vk')
         ui.fsr411_support = copy.deepcopy(READY)
         for refresh in ui.fsr411_refreshers + ui.fsr411_upscaler_refreshers:
             refresh()
-        self.assertIn('AMD DX12', methods['values'])
+        self.assertEqual(methods.menu.entrycget(1, 'state'), 'normal')
         ui.vars['upscaler'].set('fsr3')
-        self.assertEqual(methods.get(), '—')
+        self.assertEqual(methods.button.cget('text'), '—')
         self.assertEqual(ui.vars['fsr411_backend'].get(), 'vk')
 
     def test_unverified_probe_hides_new_selection_but_keeps_saved_selection(self):
