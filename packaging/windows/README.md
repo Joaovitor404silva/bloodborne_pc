@@ -72,9 +72,10 @@ The launcher texts are written in English with the Russian beside them; the othe
 are in `launcher/bbport_lang.py` (one list per language in the order of `KEYS`; a missing or
 empty text falls back to English). The FSR 4.1.1 controls/status texts are merged from
 `launcher/bbport_lang_fsr411.py`, with complete entries for all 13 languages.
-The icon (`launcher/bloodborne.ico`/`.png`) is drawn by
-`packaging/windows/make_icon.py` and built into `Bloodborne.exe`, `bb-probe.exe` (the game
-window) and `bb-gpu-capabilities.exe`.
+The icon (`launcher/bloodborne.ico`/`.png`: the launcher's emblem on a dark tile) is made from
+`launcher/assets/emblem.png` by `packaging/windows/make_icon.py` and built into
+`Bloodborne.exe`, `Play Bloodborne.exe`, `bb-probe.exe` (the game window) and
+`bb-gpu-capabilities.exe`.
 
 ## What is different from Linux
 

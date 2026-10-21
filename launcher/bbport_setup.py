@@ -1965,8 +1965,6 @@ class SetupGuide:
         self.fullscreen_offered = False  # the picture step turns fullscreen on once (its default)
         self.online_offered = False  # the online step turns online play on once (its default)
         self.origin = tk.StringVar(value='new')  # where the player comes from (step I)
-        self.device = tk.StringVar(value='controller')  # what they play with (step III)
-        self.layout_applied = False
         self.mode = tk.StringVar(value=app.app.get('ui_mode') or 'simple')  # the launcher's view (step V)
         # Repeated from Help: the player's own choices (online, fullscreen, key bindings) are only
         # changed when they say so; the first setup sets the defaults.
@@ -2165,7 +2163,6 @@ class SetupGuide:
         key = STEPS[self.step][0]
         if key == 'picture':
             self.apply_graphics()
-            self.apply_controls()
         if key == 'ready':
             self.finish(play=True)
         else:
@@ -2470,40 +2467,15 @@ class SetupGuide:
                             style='Card.TCheckbutton').pack(anchor='w')
         device = self.card(body, pady=(px(14), 0))
         self.heading(device, _('What do you play with?'))
-        ttk.Radiobutton(device, text=_('A controller (PlayStation, Xbox, Switch)'), variable=self.device,
-                        value='controller', style='Card.TRadiobutton').pack(anchor='w', pady=px(2))
-        ttk.Radiobutton(device, text=_('Keyboard and mouse: the Dark Souls III layout with the mouse camera'),
-                        variable=self.device, value='keyboard', style='Card.TRadiobutton').pack(anchor='w', pady=px(2))
+        # The launcher's own setting (also on Play and Controls): applied at once (set_play_with).
+        for value, text in (('controller', _('A controller (PlayStation, Xbox, Switch)')),
+                            ('keyboard', _('Keyboard and mouse: the Dark Souls III layout with the mouse camera'))):
+            ttk.Radiobutton(device, text=text, variable=app.var('play_with', 'app'), value=value,
+                            command=lambda v=value: app.set_play_with(v),
+                            style='Card.TRadiobutton').pack(anchor='w', pady=px(2))
         tk.Label(device, text=_('The game shows the buttons of whatever you use; the keys can be changed on the '
                                 'Controls page.'), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9),
                  justify='left', wraplength=px(660)).pack(anchor='w', pady=(px(6), 0))
-
-    def apply_controls(self):
-        """Keyboard and mouse: the Dark Souls III layout (with the 1:1 mouse camera), once."""
-        if self.device.get() != 'keyboard' or self.layout_applied:
-            return
-        app = self.app
-        if not self.first and not app.messagebox.askyesno(
-                _('Dark Souls III layout', 'Раскладка Dark Souls III'),
-                _('Replace your keyboard and mouse bindings with the Dark Souls III layout? '
-                  'Controller bindings stay as they are.',
-                  'Заменить привязки клавиатуры и мыши раскладкой Dark Souls III? Привязки '
-                  'геймпада не изменятся.')):
-            self.device.set('controller')
-            return
-        self.layout_applied = True
-        try:
-            lines = L.apply_layout(app.remap_lines)
-            Path(app.remap_ini_path).write_text('\n'.join(lines) + '\n', encoding='utf-8')
-            app.remap_bindings, app.remap_lines, app.remap_toggle_key, app.remap_reload_key, mouse = \
-                L.load_input_ini(app.remap_ini_path)
-            app.remap_edits = {}
-            app.mouse_settings.update(mouse)
-            for key, var in getattr(app, 'mouse_vars', {}).items():
-                var.set(mouse[key])
-            app.mouse_edited = False
-        except (OSError, ValueError, KeyError):
-            pass
 
     # -- IV: saves and online --
     def step_carry(self, body):

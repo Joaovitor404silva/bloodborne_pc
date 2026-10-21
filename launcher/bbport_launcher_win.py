@@ -157,7 +157,8 @@ from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SL
                                   MODIFIER_NAMES, apply_layout, slot_conflicts, binding_parts,
                                   display_name, CONTROLLER_OUTPUTS, DEFAULT_CONTROLLER,
                                   controller_conflicts, controller_display_name,
-                                  load_controller_bindings, save_controller_bindings)  # noqa: E402
+                                  load_controller_bindings, save_controller_bindings,
+                                  keyboard_layout)  # noqa: E402
 import bbport_gamepad  # noqa: E402
 import bbport_respec as respec  # noqa: E402
 
@@ -271,6 +272,9 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'ui_mode': '',
                 # The player's goal (Play page): smooth, balanced or quiet (bbport_hardware.GOALS).
                 'goal': 'smooth',
+                # What the player plays with: 'controller' or 'keyboard' (and mouse); empty until
+                # chosen, then taken from mouse look (Launcher.__init__).
+                'play_with': '',
                 # A hint of what lies behind the window (window_chrome); off by default, easiest to read.
                 # A new key: the first test build saved 'translucent' on for everyone.
                 'translucent_window': False,
@@ -825,6 +829,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         # Controls page after a cancelled edit shows what is actually on disk, not a half-edit.
         self.remap_edits = {}
         self.mouse_edited = False  # set by any mouse widget's command/trace; gates the save in collect()
+        if self.app.get('play_with') not in ('controller', 'keyboard'):
+            self.app['play_with'] = 'keyboard' if self.mouse_settings['enabled'] else 'controller'
         # The Controller section: {output: controller button or None}, edits apart as above.
         self.controller_bindings = load_controller_bindings(self.remap_lines)
         self.controller_edits = {}
@@ -1835,6 +1841,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         tk.Frame(quick, bg=LINE, height=1).grid(row=4, column=0, sticky='we', pady=(px(14), px(10)))
         toggles = ttk.Frame(quick, style='Inner.TFrame')
         toggles.grid(row=5, column=0, sticky='we')
+        device = ttk.Frame(toggles, style='Inner.TFrame')
+        device.pack(fill='x', pady=(0, px(10)))
+        ttk.Label(device, text=_('You play with'), style='Card.TLabel').pack(side='left')
+        switch = self.device_switch(device)
+        switch.pack(side='left', padx=(px(12), 0))
+        self.index_entry(switch, _('You play with'), '{}, {}'.format(_('Controller', 'Геймпад'), _(
+            'Keyboard and mouse', 'Клавиатура и мышь')), 'play_with')
         ttk.Checkbutton(toggles, text=_('Fullscreen', 'Полный экран'), variable=self.var('fullscreen', 'app'),
                         style='Card.TCheckbutton').pack(anchor='w')
         online = ttk.Frame(toggles, style='Inner.TFrame')
@@ -2694,6 +2707,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.remap_listening = False
         self.mouse_vars = {}  # mouse_settings key -> its widget's variable (apply_layout_preset)
 
+        self.row(f, _('You play with'), self.device_switch(f),
+                 _('Keyboard and mouse turns the mouse camera on and uses the Dark Souls III layout '
+                   '(asked first if you changed keys yourself). Controller turns the mouse camera off, so '
+                   'the game leaves the pointer alone. Keys and controller buttons keep working either way.'),
+                 key='play_with')
         self.row(f, _('Button prompts', 'Подсказки кнопок'), self.choice(f, 'button_prompts', 'ini', PROMPT_MODES),
                  _("The game's button icons: your keyboard and mouse keys while you play with them, "
                    "the controller's (PlayStation, Xbox or Switch) while you use it.",
@@ -3024,29 +3042,77 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.root.after(15, poll)
 
     def apply_layout_preset(self):
-        """Writes the Dark Souls III layout into input.ini now (bbport_input_config.apply_layout)
-        and shows it: pending edits on this page are replaced by it."""
-        if not self.messagebox.askyesno(
+        if self.messagebox.askyesno(
                 _('Dark Souls III layout', 'Раскладка Dark Souls III'),
                 _('Replace your keyboard and mouse bindings with the Dark Souls III layout? '
                   'Controller bindings stay as they are.',
                   'Заменить привязки клавиатуры и мыши раскладкой Dark Souls III? Привязки '
                   'геймпада не изменятся.')):
-            return
+            self.write_layout()
+
+    def write_layout(self):
+        """Writes the Dark Souls III layout into input.ini now (bbport_input_config.apply_layout)
+        and shows it: pending edits on the Controls page are replaced by it. False when the file
+        cannot be written (said in a message)."""
         lines = apply_layout(self.remap_lines)
         try:
             Path(self.remap_ini_path).write_text('\n'.join(lines) + '\n', encoding='utf-8')
         except OSError as error:
             self.messagebox.showerror(_('Layout', 'Раскладка'), str(error))
-            return
+            return False
+        self.remap_edits = {}
+        self.mouse_edited = False
+        self.reload_input_ini()
+        for key, var in getattr(self, 'mouse_vars', {}).items():
+            var.set(self.mouse_settings[key])
+        self.mouse_edited = False  # the widgets' traces mark what was just read
+        if getattr(self, 'remap_rows', None):
+            self.refresh_remap_row(None)
+        return True
+
+    def reload_input_ini(self):
+        """input.ini read again after a save. The mouse settings are updated in place (the Controls
+        page's widgets hold that dict) and keep changes not saved yet."""
         self.remap_bindings, self.remap_lines, self.remap_toggle_key, self.remap_reload_key, \
             mouse = load_input_ini(self.remap_ini_path)
-        self.remap_edits = {}
-        self.mouse_settings.update(mouse)  # the widgets hold this dict: update it in place
-        for key, var in self.mouse_vars.items():
-            var.set(mouse[key])
-        self.mouse_edited = False
-        self.refresh_remap_row(None)
+        if not self.mouse_edited:
+            self.mouse_settings.update(mouse)
+
+    def device_switch(self, parent):
+        """Two buttons in a row: controller, keyboard and mouse (play_with)."""
+        tk, px = self.tk, self.px
+        holder = tk.Frame(parent, bg=LINE, padx=1, pady=1)
+        var = self.var('play_with', 'app')
+        for value, text in (('controller', _('Controller', 'Геймпад')),
+                            ('keyboard', _('Keyboard and mouse', 'Клавиатура и мышь'))):
+            tk.Radiobutton(holder, text=text, variable=var, value=value, indicatoron=False,
+                           command=lambda v=value: self.set_play_with(v), bg=theme.SURFACE, fg=theme.TEXT_SOFT,
+                           selectcolor=theme.BLOOD, activebackground=theme.SURFACE, activeforeground=theme.TEXT_STRONG,
+                           relief='flat', offrelief='flat', bd=0, highlightthickness=0, cursor='hand2',
+                           font=(theme.BODY_MEDIUM, 10), padx=px(14), pady=px(5)).pack(side='left', padx=(0, 1))
+        return holder
+
+    def set_play_with(self, device):
+        """The player plays with a controller or with keyboard and mouse. Keyboard and mouse: the
+        mouse camera on and the Dark Souls III layout, at once while the keys are the shipped ones,
+        asked when they were changed by hand. Controller: the mouse camera off, so the game leaves
+        the pointer alone; the keys stay. Saved with the other settings (collect)."""
+        self.var('play_with', 'app').set(device)
+        if device == 'keyboard':
+            layout = 'own' if self.remap_edits else keyboard_layout(self.remap_lines)
+            if layout == 'default' or layout == 'own' and self.messagebox.askyesno(
+                    _('Dark Souls III layout', 'Раскладка Dark Souls III'),
+                    _('You changed the keyboard and mouse bindings yourself. Replace them with the '
+                      'Dark Souls III layout? The controller\'s buttons stay.\n\nNo keeps your keys '
+                      'and only turns the mouse camera on.')):
+                self.write_layout()
+        on = device == 'keyboard'
+        if self.mouse_settings['enabled'] != on:
+            if 'enabled' in getattr(self, 'mouse_vars', {}):
+                self.mouse_vars['enabled'].set(on)  # its trace marks the change
+            else:
+                self.mouse_settings['enabled'] = on
+                self.mouse_edited = True
 
     def refresh_remap_row(self, output):
         """Every row, since a change to one binding can add or clear another's conflict mark."""
@@ -3737,22 +3803,19 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if self.remap_edits:
             save_input_ini(self.remap_ini_path, {key: [v for v in values if v]
                                                  for key, values in self.remap_edits.items()}, self.remap_lines)
-            self.remap_bindings, self.remap_lines, self.remap_toggle_key, self.remap_reload_key, \
-                self.mouse_settings = load_input_ini(self.remap_ini_path)
+            self.reload_input_ini()
             self.remap_edits = {}
             if getattr(self, 'remap_rows', None):
                 self.refresh_remap_row(None)  # emptied slots close up, as the file has them
         if getattr(self, 'controller_edits', None):  # a Launcher built without __init__ (tests) has none
             save_controller_bindings(self.remap_ini_path, self.controller_edits, self.remap_lines)
-            self.remap_bindings, self.remap_lines, self.remap_toggle_key, self.remap_reload_key, \
-                self.mouse_settings = load_input_ini(self.remap_ini_path)
+            self.reload_input_ini()
             self.controller_bindings = load_controller_bindings(self.remap_lines)
             self.controller_edits = {}
         if self.mouse_edited:
             save_mouse_settings(self.remap_ini_path, self.mouse_settings, self.remap_lines)
-            self.remap_bindings, self.remap_lines, self.remap_toggle_key, self.remap_reload_key, \
-                self.mouse_settings = load_input_ini(self.remap_ini_path)
             self.mouse_edited = False
+            self.reload_input_ini()
         if self.mod_order:
             (DATA_DIR / 'mods.json').write_text(json.dumps(
                 {'order': self.mod_order, 'disabled': [n for n, v in self.mod_vars.items() if not v.get()]},

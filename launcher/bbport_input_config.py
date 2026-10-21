@@ -426,6 +426,17 @@ def apply_layout(lines, layout=DS3_LAYOUT):
     return out + [''] + layout.splitlines()
 
 
+def keyboard_layout(lines):
+    """Which keyboard and mouse bindings `lines` hold: 'ds3' (DS3_LAYOUT), 'default' (the shipped
+    file's) or 'own' (changed by hand). The order of an action's bindings does not count."""
+    def bindings(of):
+        return {output: sorted(values) for output, values in read_input_lines(of)[0].items()}
+    current, default = bindings(lines), DEFAULT_INPUT_INI.splitlines()
+    if current == bindings(apply_layout(default)):
+        return 'ds3'
+    return 'default' if current == bindings(default) else 'own'
+
+
 # shadPS4/bbport defaults when mouse_movement_params is absent (spec section 4.2 / 4.3).
 MOUSE_SETTINGS_DEFAULTS = {'enabled': False, 'stick': 'right',
                             'deadzone_offset': 0.5, 'speed': 1.0, 'speed_offset': 0.125,
@@ -489,13 +500,18 @@ def load_input_ini(path):
     just whether the mouse is live right now -- uncommenting it is exactly what the "Enable
     mouse look" checkbox does in save_input_ini.
     """
-    bindings = {key: [] for key in KEYBOARD_OUTPUTS}
     try:
         lines = Path(path).read_text(encoding='utf-8').splitlines()
     except FileNotFoundError:
         lines = DEFAULT_INPUT_INI.splitlines()
     except OSError:
         lines = []
+    return read_input_lines(lines)
+
+
+def read_input_lines(lines):
+    """load_input_ini for lines already read."""
+    bindings = {key: [] for key in KEYBOARD_OUTPUTS}
     toggle_key, reload_key = 'f7', 'f8'
     mouse = dict(MOUSE_SETTINGS_DEFAULTS)
     for raw in lines:
@@ -577,7 +593,9 @@ def save_mouse_settings(path, settings, lines):
     """Rewrites mouse_to_joystick (commenting it out when settings['enabled'] is False, same as
     the default file ships it) and mouse_movement_params in place; appends either line if the
     file never had it (an input.ini from before this feature, or one copied from shadPS4, which
-    uses the same key names but never had mouse_to_joystick to begin with)."""
+    uses the same key names but never had mouse_to_joystick to begin with). The line's key itself,
+    not hotkey_toggle_mouse_to_joystick (after the Dark Souls III layout it comes first); a second
+    mouse_to_joystick line is dropped, or it would decide instead."""
     written_toggle = written_params = False
     written_simple = set()
     out = []
@@ -586,13 +604,14 @@ def save_mouse_settings(path, settings, lines):
         hash_pos = line.find('#')
         body = line[:hash_pos] if hash_pos >= 0 else line
         commented_body = line[hash_pos + 1:] if hash_pos >= 0 else ''
-        is_toggle_line = ('mouse_to_joystick' in body.split('=', 1)[0] if '=' in body else False) or \
-            ('mouse_to_joystick' in commented_body.split('=', 1)[0] if '=' in commented_body else False)
+        is_toggle_line = any('=' in part and part.split('=', 1)[0].split(':')[0] == 'mouse_to_joystick'
+                             for part in (body, commented_body))
         is_params_line = '=' in body and body.split('=', 1)[0].split(':')[0] == 'mouse_movement_params'
-        if is_toggle_line and not written_toggle:
-            written_toggle = True
-            new_line = f"mouse_to_joystick = {settings['stick']}"
-            out.append(new_line if settings['enabled'] else f'# {new_line}')
+        if is_toggle_line:
+            if not written_toggle:
+                written_toggle = True
+                new_line = f"mouse_to_joystick = {settings['stick']}"
+                out.append(new_line if settings['enabled'] else f'# {new_line}')
             continue
         simple = next((key for key, name in MOUSE_SIMPLE_LINES.items()
                        if '=' in body and body.split('=', 1)[0].split(':')[0] == name), None)

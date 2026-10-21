@@ -83,6 +83,8 @@ WORDS = {
     'reopen_after_game': 'wieder oeffnen reopen back',
     'windows_title_bar': 'titelleiste title bar caption rahmen fensterrahmen windows',
     'goal': 'ziel goal flussig ausgewogen leise smooth balanced quiet laptop akku',
+    'play_with': 'spiele mit play with eingabe input gerat device controller gamepad tastatur keyboard maus mouse '
+                 'mauskamera kb m+k wasd',
     'auto_backup': 'sicherung sichern backup automatisch spielstand spielstande',
     'button:backup': 'sicherung sichern backup jetzt spielstand spielstande zuruckholen wiederherstellen restore',
     'online_npid': 'npid online id konto account shadnet',
