@@ -17,7 +17,7 @@ shared selection, including changes saved by the overlay while the launcher is o
 | Method | Provider | Installation |
 |---|---|---|
 | AMD DX12 | AMD's original FSR 4.1.1 runtime through a Vulkan/DX12 shared-texture bridge (buffer fallback) | Included in the Windows package |
-| Vulkan (fsr4vk) | fsr4vk's INT8 FSR 4.1.1 implementation/model | Press **Download fsr4vk** in Graphics |
+| Vulkan (fsr4vk) | fsr4vk's INT8 FSR 4.1.1 implementation/model | Included in the Windows package; **Download fsr4vk** in Graphics repairs missing or changed files |
 
 The launcher remembers the method independently of the upscaler. When another
 upscaler is selected, both method controls show a disabled dash; returning to
@@ -110,9 +110,10 @@ python packaging/windows/fetch_fsr411_dx12.py
 cp out/fsr411-dx12/amd_fidelityfx_upscaler_dx12.dll out/
 ```
 
-## Vulkan: download and lifetime
+## Vulkan: packaging and repair
 
-The optional provider is installed into `<data>/fsr4vk` (the port folder by
+The provider is included in the Windows package under `fsr4vk/`. The launcher
+download repairs missing or changed files in `<data>/fsr4vk` (the port folder by
 default). `run.py` passes this folder as `BB_FSR4VK_DIR`. Both the launcher
 updater and package refresh preserve it. Downloading and replacement are
 disabled while the game runs.
@@ -132,8 +133,17 @@ supports interrupted downloads, and replaces files atomically:
 
 The download includes provider licenses and a source/patch provenance note.
 fsr4vk is GPLv3, its AMD-derived data MIT licensed, and zstd BSD licensed.
-The standard package offers it as a verified launcher download; the fork's test
-ZIPs include it.
+`packaging/windows/prepare_fsr4vk.py` prepares the same verified provider and
+licenses in `out/fsr4vk/provider/`. It also fetches and verifies the exact patched
+source archive (SHA-256
+`23a05d16ca6116760bff4cd6dbf667bf38319eb20d0107c781e9d65a9b065c90`).
+Subsequent builds reuse the verified cache. A failed provider or source check
+stops packaging.
+
+Standard packaging writes `dist/bbport-windows.zip` and the companion
+`dist/fsr4vk-v0.4.3-amdfix-src.zip`. Publish both files together; the provider's
+`SOURCE.txt` records the source archive name, original source URL and patch
+provenance. The Windows ZIP includes the runtime, license texts and patch note.
 
 ### Coalesced output stores
 

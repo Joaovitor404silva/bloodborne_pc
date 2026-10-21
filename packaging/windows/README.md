@@ -32,6 +32,8 @@ bash packaging/windows/package.sh  # dist/bbport-windows/ and .zip: Bloodborne.e
 For build/CI checks, `bash packaging/windows/package.sh --zip-only` creates the
 ZIP from fresh staging files and leaves an existing playable
 `dist/bbport-windows/` copy untouched.
+Both modes also write `dist/fsr4vk-v0.4.3-amdfix-src.zip`. Publish this
+corresponding-source archive alongside `dist/bbport-windows.zip`.
 
 `run.py` is the Windows `run.sh` (same variables; works from a plain Windows Python too).
 The package freezes the launcher with PyInstaller (a private venv in `out/pyenv`, from a
@@ -49,8 +51,12 @@ FSR 4.1.1 (experimental): choose **AMD DX12** or **Vulkan (fsr4vk)** in Graphics
 or Play's quick settings. `package.sh` prepares AMD's original 4.1.1 runtime from
 the pinned official SDK archive (about 127 MB on the first build), verifies its
 hash, and includes the DLL with AMD's license/notices. The cached runtime is in
-`out/fsr411-dx12/`. Vulkan's optional fsr4vk provider with the AMD Windows fix is
-downloaded by the player in Graphics and preserved through updates. Both use
+`out/fsr411-dx12/`. The fsr4vk provider with the AMD Windows fix is also included,
+with its licenses and patch/source notice. `prepare_fsr4vk.py` verifies and caches
+the provider and corresponding source under `out/fsr4vk/`; the first build
+downloads about 14 MB of runtime files and 61 MB of source. Later builds reuse
+the verified cache. Graphics -> **Download fsr4vk** repairs missing or changed
+files, and the updater preserves the provider folder. Both use
 the normal PLAY path. See [FSR411_WINDOWS.md](../../docs/FSR411_WINDOWS.md) for
 source setup, requirements, synchronization and the uncapped Hunter's Dream
 comparison. The package also ships that document under `docs/`.

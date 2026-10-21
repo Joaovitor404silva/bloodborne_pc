@@ -71,10 +71,11 @@ Upscaling
 - FSR 4.1.1 (experimental): choose FSR 4.1.1 in Upscaler, then AMD DX12 or
   Vulkan (fsr4vk) in Graphics or Play's quick settings, and press PLAY. A method
   change applies at the next game start. AMD DX12 uses the included original AMD
-  runtime through a shared GPU-fence bridge. Vulkan uses fsr4vk's INT8 model;
-  Graphics -> Download fsr4vk installs it (about 14 MB, with the AMD Windows fix).
-  Files in fsr4vk\ survive launcher updates. Existing profiles keep Vulkan by
-  default. Standard outputs up to 3840 x 2160 were tested. See docs\FSR411_WINDOWS.md
+  runtime through a shared GPU-fence bridge. Vulkan uses the included fsr4vk INT8
+  provider with the AMD Windows fix. Graphics -> Download fsr4vk repairs missing
+  or changed files (about 14 MB). Files in fsr4vk\ survive launcher updates.
+  Existing profiles keep their saved method; new AMD profiles default to DX12.
+  Standard outputs up to 3840 x 2160 were tested. See docs\FSR411_WINDOWS.md
   for hardware requirements and validation; these providers need no Linux setup.
 - DLSS: NVIDIA GeForce RTX 20 series or newer with a current driver (Graphics -> Upscaler ->
   DLSS, or the in-game menu). On other GPUs the option is greyed out.
