@@ -135,6 +135,7 @@ import bbport_lang  # noqa: E402
 import bbport_fg401  # noqa: E402
 import bbport_fsr411  # noqa: E402
 import bbport_character as character  # noqa: E402
+import bbport_tray  # noqa: E402
 import bbport_lang_setup  # noqa: E402,F401 (the setup guide's texts)
 import bbport_lang_help  # noqa: E402,F401 (the Help page's and the game tests' texts)
 import bbport_lang_ui  # noqa: E402,F401 (the regrouped pages, the side bar, the guide)
@@ -251,6 +252,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'fps_mode': 'uncap', 'frame_cap': '', 'draw_pipe': '', 'readbacks': '', 'low_vram': '',
                 'frames_ahead': '', 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'extra_env': '', 'close_on_play': False,
+                'on_play': 'stay', 'reopen_after_game': False, 'minimize_to_tray': False,
                 'check_updates': True, 'save_backups': False, 'online': False, 'online_server': 'srv.shadps4.net:31313',
                 'online_webapi': '', 'online_npid': '', 'online_password': '', 'online_upnp': True,
                 'online_custom_servers': False,
@@ -350,6 +352,8 @@ DRAW_PIPE = [('', ('Auto (8+ threads)', 'Авто (8+ потоков)')), ('1', 
              ('0', ('Off (more stable)', 'Выключен (стабильнее)'))]
 READBACKS = [('', ('Relaxed (default)', 'Relaxed (по умолчанию)')), ('0', ('Off', 'Выключены')),
              ('2', ('Precise',))]
+# What the launcher does when the game starts (close_on_play of earlier launchers: 'close').
+ON_PLAY = [('stay', ('Keep it open',)), ('minimize', ('Minimize it',)), ('close', ('Close it',))]
 # BB_LOW_VRAM (run.py's low-VRAM profile): '' leaves it to the card's memory.
 LOW_VRAM = [('', ('Auto (4 GB cards)', 'Авто (карты на 4 ГБ)')), ('1', ('On', 'Включён')),
             ('0', ('Off', 'Выключен'))]
@@ -789,7 +793,8 @@ GRADE_NAMES = {trophies.PLATINUM: ('Platinum', 'Платиновый'), trophies
 
 # The side bar: the pages a player needs, then the expert's (shown in the expert view only).
 NAV_SIMPLE = [('play', ('Play', 'Играть')), ('picture', ('Picture & performance',)),
-              ('controls', ('Controls', 'Управление')), ('online', ('Online play',)), ('saves', ('Saves',)),
+              ('controls', ('Controls', 'Управление')), ('gameplay', ('Gameplay', 'Игровой процесс')),
+              ('online', ('Online play',)), ('saves', ('Saves',)),
               ('mods', ('Mods',)), ('language', ('Language & sound',)),
               ('trophies', ('Achievements', 'Достижения')), ('help', ('Help', 'Помощь'))]
 # The game folder is set once (usually by the setup guide); a problem with it links there.
@@ -832,6 +837,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.vars = {}
         self.process = self.job = self.placer = None
         self.hidden = False  # closed while the game runs: it exits with the game
+        self.tray = None  # bbport_tray.Tray once the launcher went to the notification area
+        if self.app.get('on_play') not in [v for v, _t in ON_PLAY]:
+            self.app['on_play'] = 'stay'
+        if 'on_play' not in saved and saved.get('close_on_play'):
+            self.app['on_play'] = 'close'
         self.downloading = False
         self.fsr411_downloading = False
         self.output = queue.Queue()
@@ -1331,6 +1341,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.custom_frame = None  # bbport_frame.Frame once installed (window_chrome), False if it failed
         self.titlebar = None if self.app.get('windows_title_bar') else self.build_titlebar()
         self.root.bind('<Map>', self.restored, add='+')
+        self.root.bind('<Unmap>', self.minimized, add='+')
         side = tk.Frame(self.root, bg=BG, width=px(248))
         side.pack(side='left', fill='y')
         side.pack_propagate(False)
@@ -1423,6 +1434,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.build_help()
         self.build_graphics()
         self.build_game()
+        self.build_gameplay()
         self.build_cheats()
         self.build_system()
         self.build_advanced()
@@ -1658,6 +1670,47 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         elif getattr(self, 'restore_cover', None) is None:
             self.restore_cover = self.cover(self.root)
         self.root.iconify()
+
+    def setting(self, key):
+        """A launcher setting as shown now (its switch), before collect() saves it to self.app."""
+        return self.vars[key].get() if key in self.vars else self.app.get(key)
+
+    def minimized(self, event):
+        """Minimized, with "Minimize to the system tray" on: off the task bar, an icon in the tray."""
+        if event.widget is self.root and self.setting('minimize_to_tray'):
+            self.root.after(1, self.to_tray)
+
+    def to_tray(self):
+        if self.root.state() != 'iconic':
+            return
+        try:
+            if self.tray is None:
+                self.tray = bbport_tray.Tray(PORT_DIR / 'launcher' / 'bloodborne.ico', 'Bloodborne',
+                                             lambda: self.root.after(0, self.bring_back),
+                                             lambda: self.root.after(0, self.quit_from_tray),
+                                             (_('Open'), _('Quit')))
+            if self.tray.show():
+                self.root.withdraw()
+        except OSError:
+            pass  # no tray: it stays on the task bar
+
+    def bring_back(self):
+        """The launcher in front again: from the tray, the task bar or hidden."""
+        if self.tray:
+            self.tray.hide()
+        self.root.deiconify()
+        self.root.state('normal')
+        self.root.lift()
+        self.root.focus_force()
+
+    def quit_from_tray(self):
+        self.bring_back()
+        self.close()
+
+    def drop_tray(self):
+        if self.tray:
+            self.tray.close()
+            self.tray = None
 
     def restored(self, event):
         """Back from the task bar: the picture goes once the window is built under it."""
@@ -2104,6 +2157,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.row(f, _('Launcher language', 'Язык лаунчера'), language,
                  _('Applies when the launcher opens again.', 'Применится при следующем открытии лаунчера.'))
         self.appearance_check(f)  # Advanced > Appearance has the title bar (expert)
+        self.row(f, _('When the game starts'), self.choice(f, 'on_play', 'app', ON_PLAY, 24),
+                 _('Closed, it ends with the game; minimized, it waits on the task bar (or in the tray).'))
+        self.check(f, 'reopen_after_game', 'app', _('Open the launcher again when the game closes'),
+                   _('After a crash it always comes back, with the log.'))
+        self.check(f, 'minimize_to_tray', 'app', _('Minimize to the system tray'),
+                   _('Minimized, the launcher leaves the task bar for an icon next to the clock: click it to '
+                     'open the launcher again.'))
         self.section(f, _('Starting the game'))
         self.check(f, 'skip_intro', 'ini', _(*dict((k, t) for k, t, _o in EXTRAS)['skip_intro']))
         shortcuts = ttk.Frame(f)
@@ -2120,6 +2180,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.check(f, 'mute_unfocused', 'ini', _('Mute when the game is in the background',
                                                  'Без звука, когда игра в фоне'))
 
+    def build_gameplay(self):
+        """The game's own rules made to taste (not cheats): for everyone, in the simple view too."""
+        f = self.scrolled_page('gameplay', _('Gameplay'),
+                               _('Changes to how the game plays and its menus. Game patches for version 1.09, '
+                                 'applied at start.'))
+        self.version_warning(f)
+        self.section(f, _('Gameplay tweaks', 'Изменения игрового процесса'), top=4)
+        for key, title, _on in TWEAKS:
+            self.check(f, key, 'ini', _(*title))
+
     def build_cheats(self):
         f = self.scrolled_page('cheats', _('Cheats', 'Читы'),
                                _('Game patches for version 1.09, applied at start. Leave them off for a normal '
@@ -2128,9 +2198,6 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.version_warning(f)
         self.section(f, _('Cheats', 'Читы'), top=4)
         for key, title, _on in CHEATS:
-            self.check(f, key, 'ini', _(*title))
-        self.section(f, _('Gameplay tweaks', 'Изменения игрового процесса'))
-        for key, title, _on in TWEAKS:
             self.check(f, key, 'ini', _(*title))
         self.section(f, _('Debug'))
         for key, title, _on in EXTRAS:
@@ -2619,10 +2686,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def build_controls(self):
         ttk, tk = self.ttk, self.tk
         f = self.scrolled_page('controls', _('Controls', 'Управление'),
-                               _('Keyboard and mouse bindings, up to three per action, and the '
-                                 'controller\'s buttons below. Both work side by side.',
-                                 'Раскладка клавиатуры и мыши, до трёх привязок на действие, и '
-                                 'кнопки геймпада ниже. Работают одновременно.'))
+                               _('Keyboard, mouse and controller: each has its own buttons, and both work '
+                                 'side by side.',
+                                 'Клавиатура, мышь и геймпад: у каждого свои кнопки, и они работают '
+                                 'одновременно.'))
         self.remap_rows = {}  # output -> ([slot buttons], conflict label)
         self.remap_listening = False
         self.mouse_vars = {}  # mouse_settings key -> its widget's variable (apply_layout_preset)
@@ -2632,11 +2699,36 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    "the controller's (PlayStation, Xbox or Switch) while you use it.",
                    'Значки кнопок в игре: ваши клавиши и мышь, пока вы играете ими, и кнопки '
                    'геймпада (PlayStation, Xbox или Switch), пока вы используете его.'))
+        # Two tabs: keyboard and mouse, or the controller (a page each would be twice the scrolling).
+        tab = tk.StringVar(value=self.app.get('controls_tab', 'keyboard'))
+        switch = tk.Frame(f, bg=LINE, padx=1, pady=1)
+        for value, text in (('keyboard', _('Keyboard & mouse')), ('controller', _('Controller', 'Геймпад'))):
+            tk.Radiobutton(switch, text=text, variable=tab, value=value, indicatoron=False, bg=theme.SURFACE,
+                           fg=theme.TEXT_SOFT, selectcolor=theme.BLOOD, activebackground=theme.SURFACE,
+                           activeforeground=theme.TEXT_STRONG, relief='flat', offrelief='flat', bd=0,
+                           highlightthickness=0, cursor='hand2', font=(theme.BODY_MEDIUM, 10), padx=self.px(14),
+                           pady=self.px(5)).pack(side='left', padx=(0, 1))
+        switch.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(self.px(18), self.px(4)))
+        tabs, before = {}, set(f.grid_slaves())
+        indexed = len(getattr(self, 'search_settings', []))
+
+        def tab_rows(name):
+            nonlocal before, indexed
+            now = set(f.grid_slaves())
+            tabs[name] = list(now - before)
+            before = now
+            for entry in getattr(self, 'search_settings', [])[indexed:]:  # a search jump opens its tab
+                entry['reveal'] = lambda n=name, inner=entry.get('reveal'): (tab.set(n), inner and inner())
+            indexed = len(getattr(self, 'search_settings', []))
+
         self.section(f, _('Controller test'))
         self.pad_card = self.controller_card(f)
         self.pad_card.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(self.px(4), self.px(6)))
         self.index_entry(self.pad_card, _('Controller test'), _('Press the buttons: what lights up here reaches the '
                                                                   'game.'), 'controller_test')
+        self.build_controller_bindings(f)
+        tab_rows('controller')
+
         preset = ttk.Frame(f)
         ttk.Button(preset, text=_('Use the Dark Souls III layout', 'Раскладка Dark Souls III'),
                    command=self.apply_layout_preset).pack(side='left')
@@ -2650,6 +2742,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'Shift + правый клик (или Ctrl) — левая рука, E — действие, R — предмет, F — флакон, '
                    'Q — захват цели, Tab или Esc — меню и камера мыши 1:1. Заменяет привязки клавиатуры и '
                    'мыши; у геймпада остаются свои.'))
+        self.build_mouse_look(f)
         self.note(f, _('Click a slot, then press a key, click a mouse button or turn the wheel; '
                        'Esc cancels. Right-click a slot to clear it. Movement and camera '
                        'directions take keys only.',
@@ -2698,9 +2791,22 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                        'Зарезервированы: Insert/Escape (меню порта), F9 (запись маршрута), а '
                        'также клавиши переключения мыши и перезагрузки input.ini (по умолчанию '
                        'F7/F8).')])
+        tab_rows('keyboard')
 
-        self.build_controller_bindings(f)
+        def show_tab(*_a):
+            self.app['controls_tab'] = tab.get()
+            for name, widgets in tabs.items():
+                for widget in widgets:
+                    widget.grid() if name == tab.get() else widget.grid_remove()
+        tab.trace_add('write', show_tab)
+        # The label column as wide as the wider tab needs: switching never moves the rows beside it.
+        f.update_idletasks()
+        f.columnconfigure(0, minsize=f.grid_bbox(0, 0)[2])
+        show_tab()
 
+    def build_mouse_look(self, f):
+        """Mouse look: on or off, what the mouse moves, the camera mode and its sliders."""
+        ttk, tk = self.ttk, self.tk
         self.section(f, _('Mouse look', 'Обзор мышью'))
         ms = self.mouse_settings
 
@@ -2756,12 +2862,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'предела скорости поворота. При захвате цели движение мыши переключает цель.'))
         # Only the sliders of the chosen camera mode: the other mode's do nothing meanwhile.
         modes, before = {}, set(f.grid_slaves())
+        indexed = len(getattr(self, 'search_settings', []))
 
         def mode_rows(name):
-            nonlocal before
+            nonlocal before, indexed
             now = set(f.grid_slaves())
             modes[name] = list(now - before)
             before = now
+            for entry in getattr(self, 'search_settings', [])[indexed:]:  # found by the search: shown
+                entry['reveal'] = lambda rows=modes[name]: [widget.grid() for widget in rows]
+            indexed = len(getattr(self, 'search_settings', []))
         slider_row('camera_sensitivity', _('Sensitivity (direct)', 'Чувствительность (прямая)'),
                    _('How far the direct camera turns per mouse movement (1.00 = 900 counts per '
                      'radian).', 'Насколько поворачивается прямая камера при движении мыши (1.00 = '
@@ -2798,10 +2908,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.note(f, _('Vertical sensitivity and inverting apply to both camera modes.',
                        'Вертикальная чувствительность и инверсия действуют в обоих режимах камеры.'), top=2)
 
-        self.note(f, _('Mouse buttons and the scroll wheel are bound in the slots above: click a '
+        self.note(f, _('Mouse buttons and the scroll wheel are bound in the slots below: click a '
                        'slot, then click or turn the wheel. They work while the mouse is captured '
                        '(mouse look on).',
-                       'Кнопки мыши и колесо назначаются в ячейках выше: щёлкните ячейку, затем '
+                       'Кнопки мыши и колесо назначаются в ячейках ниже: щёлкните ячейку, затем '
                        'щёлкните или прокрутите колесо. Они работают, пока мышь захвачена '
                        '(обзор мышью включён).'), top=10)
         self.note(f, _('Changes apply the next time the game starts, or press F8 in-game to '
@@ -3082,7 +3192,6 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                _('Launcher options, performance switches and diagnostics.',
                                  'Настройки лаунчера, производительность и диагностика.'))
         self.section(f, _('Launcher', 'Лаунчер'), top=4)
-        self.check(f, 'close_on_play', 'app', _('Close the launcher when the game starts', 'Закрывать лаунчер при запуске игры'))
         self.check(f, 'check_updates', 'app', _('Check for updates when the launcher opens',
                                                 'Проверять обновления при открытии лаунчера'))
         holder = ttk.Frame(f)
@@ -3721,8 +3830,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.refresh_fsr411()
         self.status.configure(text=_('Preparing the game; it opens in its own window…',
                                      'Подготовка игры; она откроется в своём окне…'), fg=GOLD)
-        if self.app.get('close_on_play'):
+        if self.setting('on_play') == 'close':
             self.root.after(5000, lambda: self.process and self.close())
+        elif self.setting('on_play') == 'minimize':
+            self.root.after(5000, lambda: self.process and self.root.state() == 'normal' and self.minimize())
 
     def auto_backup(self):
         """Before a start: the saves backed up when they changed since the last backup (never in the way)."""
@@ -3812,14 +3923,19 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     self.stop_button.configure(state='disabled')
                     self.stop_button.pack_forget()
                     self.refresh_status()
+                    reopen = self.setting('reopen_after_game')
                     if self.hidden:
-                        if item[0] == 0:
+                        if item[0] == 0 and not reopen:
+                            self.drop_tray()
                             self.root.destroy()
                             return
-                        # It stopped with an error: back with its log instead of vanishing.
+                        # Back (asked for, or it stopped with an error: then with its log).
                         self.hidden = False
-                        self.root.deiconify()
-                        self.show('log')
+                        self.bring_back()
+                        if item[0] != 0:
+                            self.show('log')
+                    elif reopen:
+                        self.bring_back()
                     self.root.after(300, lambda code=item[0]: self.after_exit(code))  # the known causes in its log
                 else:
                     if 'Entering original x86-64 code' in item:
@@ -4167,6 +4283,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.hidden = True
             self.root.withdraw()
             return
+        self.drop_tray()
         self.root.destroy()
 
 
