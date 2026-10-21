@@ -101,6 +101,16 @@ class LiveSearchTests(unittest.TestCase):
         self.assertEqual([e['title'] for e in self.app.search_entries if e['kind'] == 'setting' and not e.get('key')],
                          [])
 
+    def test_the_game_tests_are_gone_while_they_are_off(self):
+        if self.L.GAME_TESTS:
+            self.skipTest('the game tests are on')
+        titles = [e['title'] for e in self.app.search_entries]
+        self.assertNotIn(self.L._('Measure on this PC'), titles)
+        self.assertNotIn(self.L._('Game tests'), titles)
+        self.assertEqual(self.app.page_titles['system'], self.L._('Your PC'))
+        self.assertFalse(getattr(self.app, 'bench_views', {}))
+        self.assertTrue(self.app.search('benchmark'))  # Advanced > Run benchmark stays
+
     def test_its_own_title_finds_it_first(self):
         for entry in self.settings:
             with self.subTest(entry['title']):

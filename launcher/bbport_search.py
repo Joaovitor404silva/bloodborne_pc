@@ -70,6 +70,7 @@ WORDS = {
     'button:port_folder': 'ordner port folder installation explorer',
     'button:updates': 'update updates aktualisieren neue version',
     'button:report': 'bericht report support zip discord fehler',
+    'button:benchmark': 'benchmark test messen route kathedrale cathedral fps tester',
     'button:shader_cache': 'shader cache leeren loschen clear',
     'online': 'online koop coop multiplayer freunde glocke beschworen invasion',
     'online_pool': 'server online shadnet hunters dream thd bbhost spielen mit play with',
@@ -111,8 +112,8 @@ WORDS = {
     'page:trophies': 'erfolge trophaen trophies achievements platin',
     'page:online': 'online koop coop multiplayer freunde hunters dream shadnet anmelden discord',
     'page:mods': 'reihenfolge order ziehen drag drop mods mod remaster patches',
-    'page:system': 'pc hardware grafikkarte prozessor anforderungen requirements benchmark test messen stabilitat beta',
-    'page:picture': 'grafik bild leistung fps ziel flussig ausgewogen leise laptop akku messen benchmark',
+    'page:system': 'pc hardware grafikkarte prozessor anforderungen requirements system',
+    'page:picture': 'grafik bild leistung fps ziel flussig ausgewogen leise laptop akku',
     'page:graphics': 'grafik graphics alle einstellungen',
     'page:cheats': 'cheats unsterblich god mode tricks debug',
     'page:advanced': 'erweitert update verknupfung steam diagnose',
@@ -139,6 +140,8 @@ WORDS = {
     'topic:smartscreen': 'smartscreen windows geschutzt schutz warnung',
     'topic:black_screen': 'schwarz schwarzer bildschirm black screen shader cache leeren',
 }
+# With the game tests on (bbport_launcher_win.GAME_TESTS): their words, added to their pages.
+GAME_TEST_WORDS = {'page:system': 'benchmark test messen stabilitat beta tests', 'page:picture': 'messen benchmark'}
 
 
 def fold(text):
@@ -230,6 +233,8 @@ class SearchMixin:
                         'hint': _('Set everything up again, step by step.'), 'key': 'action:setup'})
         for entry in entries:
             words = WORDS.get(entry.get('key') or '', '')
+            if getattr(L, 'GAME_TESTS', True):
+                words += ' ' + GAME_TEST_WORDS.get(entry.get('key') or '', '')
             entry['haystack'] = (fold(entry['title']), fold(entry['hint']), fold(words))
         self.search_entries = entries
 

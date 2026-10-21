@@ -791,9 +791,14 @@ NAV_SIMPLE = [('play', ('Play', 'Играть')), ('picture', ('Picture & perfor
               ('controls', ('Controls', 'Управление')), ('online', ('Online play',)), ('saves', ('Saves',)),
               ('mods', ('Mods',)), ('language', ('Language & sound',)),
               ('trophies', ('Achievements', 'Достижения')), ('help', ('Help', 'Помощь'))]
+# The game tests (Measure on this PC, the Game tests on System & tests) are off for now, until they play
+# a fixed benchmark character instead of the player's last save. True brings them back with their
+# page name.
+GAME_TESTS = False
 # The game folder is set once (usually by the setup guide); a problem with it links there.
 NAV_EXPERT = [('graphics', ('All graphics',)), ('game', ('Game files',)), ('cheats', ('Cheats', 'Читы')),
-              ('system', ('System & tests',)), ('advanced', ('Advanced', 'Дополнительно'))]
+              ('system', ('System & tests',) if GAME_TESTS else ('Your PC',)),
+              ('advanced', ('Advanced', 'Дополнительно'))]
 EXPERT_PAGES = {name for name, _t in NAV_EXPERT} | {'log'}
 
 
@@ -3039,6 +3044,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         ttk.Label(holder, text=_('A fixed route in Cathedral Ward for testers: one zip to send.',
                                  'Фиксированный маршрут в Соборном округе для тестеров: один zip для отправки.'),
                   style='Muted.TLabel').pack(side='left', padx=10)
+        self.index_entry(holder, _('Run benchmark…', 'Запустить тест…'),
+                         _('A fixed route in Cathedral Ward for testers: one zip to send.',
+                           'Фиксированный маршрут в Соборном округе для тестеров: один zip для отправки.'),
+                         'button:benchmark')
 
     def build_log(self):
         tk, ttk, px = self.tk, self.ttk, self.px
