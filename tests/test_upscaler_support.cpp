@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <initializer_list>
+#include <string>
 #ifdef _WIN32
 #include <filesystem>
 #include <windows.h>
@@ -68,6 +69,18 @@ int main() {
             }
         }
     }
+    for (const char* reason : {"Vulkan (fsr4vk): missing amd_fidelityfx_upscaler_vk.dll; download fsr4vk in Graphics",
+                              "Vulkan (fsr4vk): GPU/driver lacks VK_EXT_descriptor_buffer",
+                              "AMD DX12: runtime load failure - Windows error 126"}) {
+        s.upscaler = UpscalerFsr411;
+        ConfigureUpscalerSupport(true, false, reason);
+        assert(s.upscaler == UpscalerFsr3);
+        assert(std::string(s.fsr4_problem.load()).find(reason) == 0);
+        assert(std::string(s.fsr411_problem.load()) == reason);
+        assert(std::string(s.fsr4_problem.load()).find("using FSR 3.1") != std::string::npos);
+    }
+    ConfigureUpscalerSupport(true, true);
+    assert(!s.fsr411_problem.load());
     s.startup_preset = Quality;
     s.startup_upscaler = UpscalerFsr3;
     s.upscaler = UpscalerFsr3;

@@ -152,7 +152,14 @@ struct NativeFsr411::Impl {
     void Initialize() {
         const auto dll = ModuleDirectory() / L"amd_fidelityfx_upscaler_dx12.dll";
         module = LoadLibraryExW(dll.c_str(), nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
-        if (!module) throw std::runtime_error("amd_fidelityfx_upscaler_dx12.dll is missing or cannot be loaded");
+        if (!module) {
+            const auto loader_error = GetLastError();
+            std::error_code error;
+            if (!std::filesystem::is_regular_file(dll, error))
+                throw std::runtime_error("missing amd_fidelityfx_upscaler_dx12.dll; reinstall the Windows package");
+            throw std::runtime_error("cannot load amd_fidelityfx_upscaler_dx12.dll (Windows error " +
+                std::to_string(loader_error) + "); check its runtime dependencies");
+        }
         ffxLoadFunctions(&ffx, module);
         if (!ffx.CreateContext || !ffx.DestroyContext || !ffx.Query || !ffx.Dispatch)
             throw std::runtime_error("AMD upscaler DLL does not export the FidelityFX API");

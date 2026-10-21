@@ -22,7 +22,9 @@ shared selection, including changes saved by the overlay while the launcher is o
 The launcher remembers the method independently of the upscaler. When another
 upscaler is selected, both method controls show a disabled dash; returning to
 FSR 4.1.1 restores the saved method. The controls stay synchronized. Existing
-profiles created before `fsr411_backend` keep Vulkan (`vk`). All new controls and
+profiles keep their explicit method, including legacy launcher settings. When no
+method has been saved, the launcher selects AMD DX12 on the selected AMD adapter
+and Vulkan on other adapters. All new controls and
 status messages cover the 13 launcher
 languages; `vk` and `dx12` are language-independent stored values.
 
@@ -30,12 +32,34 @@ Both methods use the normal Windows launcher.
 The pre-existing **FSR 4 assets** controls and `fsr4_shaders/` are for the older
 FSR 4 v07 path, independent of these two providers.
 
+## Availability and diagnostics
+
+The launcher checks the selected Vulkan adapter, including `BB_GPU_ID`, rather
+than a GPU-series allowlist. AMD DX12 requires an AMD adapter, Vulkan/DX12 shared
+memory and GPU fences, and an FSR 4.1.1 provider reported by the installed AMD
+runtime on that adapter. Vulkan checks the same device features and extensions
+as the renderer. These capability checks run in an isolated helper process;
+context creation is still checked by the renderer at the actual render size.
+
+The fsr4vk DLL and bundled license files are verified separately. Missing or
+changed files produce a **Download fsr4vk** instruction and identify the files.
+A missing DX12 DLL produces a Windows-package reinstall instruction. Driver
+feature, provider and DLL-loading failures have separate messages. **Recheck
+support** refreshes the check after installation or a driver change.
+
+Known unavailable alternatives are filtered from the launcher selectors. A
+saved selection remains visible for diagnosis, and launching is stopped with
+the specific reason until that method is available or another is selected.
+The in-game overlay also distinguishes an unavailable FSR 4.1.1 method from a
+GPU limitation. Direct renderer starts retain the safe FSR 3.1 fallback and log
+the actual cause, including missing provider files.
+
 ## Windows 1.9.2 integration
 
 The PR incorporates the Windows 1.9.2 branch through
 [`de2e38a`](https://github.com/Supermedo/bloodborne_pc/commit/de2e38af055f09f819946951075c6bb119e62ae6).
-The selectable providers, shared overlay settings and optional motion-vector
-cache retain their behavior and defaults. The original Vulkan FSR 3.1 frame-
+The Windows merge preserves saved provider and motion-vector cache preferences.
+The original Vulkan FSR 3.1 frame-
 generation path includes upstream's per-frame bridge-allocation retirement fix.
 Build and package checks cover both providers and the original frame-generation
 method; shader caches rebuild for upstream's updated shader format.

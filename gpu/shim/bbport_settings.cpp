@@ -178,16 +178,24 @@ void Load() {
     v.startup_live_resolution = v.live_resolution;
 }
 
-void ConfigureUpscalerSupport(bool fsr4, bool fsr411) {
+void ConfigureUpscalerSupport(bool fsr4, bool fsr411, const char* fsr411_problem) {
     auto& v = Get();
     v.fsr4_supported = fsr4;
     v.fsr411_supported = fsr411;
+    static std::string method_problem;
+    method_problem = fsr411 ? "" : fsr411_problem ? fsr411_problem :
+        "GPU/driver does not support the selected FSR 4.1.1 method";
+    v.fsr411_problem = method_problem.empty() ? nullptr : method_problem.c_str();
     const int requested = v.upscaler;
     if ((requested == UpscalerFsr4 && !v.fsr4_supported) ||
         (requested == UpscalerFsr411 && !v.fsr411_supported)) {
-        v.fsr4_problem = "GPU does not support the selected FSR 4 shaders; using FSR 3.1";
-        std::printf("Upscaler: %s unsupported on this GPU; falling back to FSR 3.1 before the first frame\n",
-                    UpscalerName(requested));
+        static std::string kept;
+        kept = requested == UpscalerFsr411 && fsr411_problem ? fsr411_problem :
+            "GPU/driver does not support the selected FSR 4 shaders";
+        std::printf("Upscaler: %s unavailable: %s; falling back to FSR 3.1 before the first frame\n",
+                    UpscalerName(requested), kept.c_str());
+        kept += "; using FSR 3.1";
+        v.fsr4_problem = kept.c_str();
         v.upscaler = UpscalerFsr3;
     }
 }

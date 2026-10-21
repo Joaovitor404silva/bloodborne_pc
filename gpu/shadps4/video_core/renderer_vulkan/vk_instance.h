@@ -306,8 +306,13 @@ public:
 
     /// bbport: FSR 4.1.1 (INT8 model passes and VK_VALVE_shader_mixed_float_dot_product).
     bool IsFsr411Supported() const {
+#ifdef _WIN32
+        return fsr411_problem.empty();
+#else
         return native_fsr411 || fsr4vk || (IsFsr4Int8Supported() && mixed_float_dot_product);
+#endif
     }
+    const char* Fsr411Problem() const { return fsr411_problem.empty() ? nullptr : fsr411_problem.c_str(); }
     bool IsFsr411NativeSupported() const { return native_fsr411; }
     bool IsFsr411AsyncSupported() const { return native_fsr411_async; }
     bool IsFsr4VkSupported() const { return fsr4vk; }
@@ -596,6 +601,7 @@ private:
     bool compute_shader_derivatives{};
     bool mixed_float_dot_product{}; // bbport: VK_VALVE_shader_mixed_float_dot_product (FSR 4.1.1)
     bool fsr4vk{};
+    std::string fsr411_problem;
     bool native_fsr411_async{};
     bool native_fsr411{}; // Windows: AMD's DX12 runtime through shared GPU memory
     bool supports_memory_budget{};

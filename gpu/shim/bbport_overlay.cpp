@@ -211,7 +211,12 @@ void Menu() {
             ImGui::EndDisabled();
             if (!supported) {
                 ImGui::SameLine();
-                ImGui::TextDisabled("- unsupported by this GPU");
+                if (i == BbSettings::UpscalerFsr411) {
+                    ImGui::TextDisabled("- unavailable");
+                    if (const char* problem = s.fsr411_problem.load()) Hint(problem);
+                } else {
+                    ImGui::TextDisabled("- unsupported by this GPU");
+                }
             }
         }
         for (const char* name : later) {
