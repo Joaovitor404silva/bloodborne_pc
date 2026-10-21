@@ -82,6 +82,7 @@ class Scenario:
         self.settings = data.get('settings', {})
         self.steps = data.get('steps', [])
         self.loop = data.get('loop', [])
+        self.port_details = bool(data.get('port_details'))  # the texture cache, VRAM details (bug reports)
         self.builtin = BUILTIN_SCENARIOS in self.path.parents
 
     def route(self, name):
@@ -161,6 +162,31 @@ FRAME_PACING = re.compile(r'^Frame pacing: median ([\d.]+) ms, stddev ([\d.]+) m
 UPSCALER = re.compile(r'^Upscaler: ([^\n]+)|^(DLSS[^\n]*)|^(FSR 3[^\n]*)', re.M)
 EVENT_LINES = re.compile(r'^(?:.*(?:error|Error|ERROR|failed|Failed|assert|Assert|STOP:|device lost|memory pressure|'
                          r'Exception|Traceback)[^\n]*)$', re.M)
+
+
+TEXTURE_CACHE = re.compile(r'^Texture cache: memory pressure.*?(\d+) images evicted, (\d+) written back.*?(\d+) dropped',
+                           re.M)
+PORT_VRAM = re.compile(r'^Memory: VRAM (\d+) MiB', re.M)
+STALE_CACHE = re.compile(r'WarmUp: (\d+) stale pipelines')
+SETUP_LINES = re.compile(r'^(?:GPU:|DLSS:|Upscaler:|Object motion:|Output resolution|Patches: FPS|Frame generation:|'
+                         r'VideoOut:)[^\n]*$', re.M)
+
+
+def port_details(text):
+    """The port's own view of a run (the scenarios with port_details): the texture cache under
+    memory pressure, the VRAM the renderer counts, its "video memory full" messages, shader cache
+    entries from another build, pipelines that failed, and the setup lines from the log's start."""
+    cache = [tuple(int(v) for v in m) for m in TEXTURE_CACHE.findall(text)]
+    vram = [int(v) for v in PORT_VRAM.findall(text)]
+    return {'evicted': sum(c[0] for c in cache), 'written_back': sum(c[1] for c in cache),
+            'dropped': sum(c[2] for c in cache), 'port_vram_mib': max(vram) if vram else None,
+            'vram_full': text.count('video memory full'),
+            'stale_cache': sum(int(v) for v in STALE_CACHE.findall(text)),
+            'failed_pipelines': text.count('Failed to create graphics pipeline'),
+            'device_lost': text.lower().count('device lost'),
+            'setup': [line.strip() for line in SETUP_LINES.findall(text)
+                      if not re.match(r'(Frame generation pacing|Object motion: \d)', line)
+                      and 'video memory full' not in line][:20]}
 
 
 def stats(text):
@@ -517,8 +543,11 @@ class Run:
         log_path = t.folder / f'run-{self.index}.log'
         self.monitor = Monitor(log_path)
         status, text, code = 'ok', '', None
+        env = t.environment()
+        if t.scenario.port_details:  # the allocator's statistics: VRAM by purpose
+            env['BB_VMA_DUMP'] = str(t.folder / f'run-{self.index}-vram.json')
         with open(log_path, 'w', encoding='utf-8', errors='replace') as log:
-            self.process = subprocess.Popen(t.command, cwd=str(t.port_dir), env=t.environment(), stdin=subprocess.DEVNULL,
+            self.process = subprocess.Popen(t.command, cwd=str(t.port_dir), env=env, stdin=subprocess.DEVNULL,
                                             stdout=log, stderr=subprocess.STDOUT, creationflags=NO_WINDOW)
             self.monitor.start_time = time.time()
             self.monitor.start()
@@ -671,6 +700,23 @@ class Run:
             out['p99_ms'] = round(statistics.mean(p['p99_ms'] for p in pacing), 2)
             out['low1'] = round(1000 / out['p99_ms'], 1) if out['p99_ms'] else None
             out['stutters'] = sum(p['stutters'] for p in pacing)
+        # each measured part on its own (a scenario with several: standing, camera turn, walk)
+        sections = {}
+        for name, a, b in windows:
+            sections.setdefault(name, []).append((a, b))
+        if len(sections) > 1:
+            out['sections'] = []
+            for name, spans in sections.items():
+                part = lambda rows: [r for r in rows if any(a + 4 < r['t'] <= b + 1 for a, b in spans)]
+                f, p = part(m.frames), part(m.pacing)
+                p99 = statistics.mean(x['p99_ms'] for x in p) if p else None
+                out['sections'].append({'name': name, 'fps': round(statistics.mean(x['fps'] for x in f), 1) if f else None,
+                                        'low1': round(1000 / p99, 1) if p99 else None,
+                                        'worst_ms': max(x['worst_ms'] for x in f) if f else None})
+        if self.test.scenario.port_details:
+            out['port'] = port_details(m.text)
+            vram_file = self.test.folder / f'run-{self.index}-vram.json'
+            out['port']['vram_file'] = vram_file.name if vram_file.is_file() else None
         ram = [s['ram_gb'] for s in m.telemetry if 'ram_gb' in s]
         if len(ram) > 20:  # memory that keeps growing: the last quarter against the second
             quarter = len(ram) // 4

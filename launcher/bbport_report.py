@@ -230,6 +230,36 @@ def write(folder, test, runs):
              '<th>Worst frame ms</th><th>Stutters</th><th>Shader compiles</th><th>RAM GB</th><th>VRAM GB</th>'
              '<th>Upscaler</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table>')
 
+    # each measured part of a scenario with several (standing, camera turn, walk)
+    parts = ''.join(f'<tr><td><i class="dot" style="background:{color[r["index"]]}"></i>{esc(name)}</td>'
+                    f'<td>{esc(s["name"])}</td><td>{fmt(s.get("fps"))}</td><td>{fmt(s.get("low1"))}</td>'
+                    f'<td>{fmt(s.get("worst_ms"))}</td></tr>'
+                    for name, r in named for s in r.get('sections', []))
+    if parts:
+        table += ('<h2>Each part of the route</h2><table><thead><tr><th>Run</th><th>Part</th><th>FPS</th>'
+                  '<th>1 % low</th><th>Worst frame ms</th></tr></thead><tbody>' + parts + '</tbody></table>')
+
+    # the port's own view (scenarios for bug reports): what the texture cache and VRAM went through
+    details = []
+    for name, r in named:
+        p = r.get('port')
+        if not p:
+            continue
+        vram = f'<a href="{esc(p["vram_file"])}">allocator statistics</a>' if p.get('vram_file') else '–'
+        details.append(f'<tr><td><i class="dot" style="background:{color[r["index"]]}"></i>{esc(name)}</td>'
+                       f'<td>{p["evicted"]} / {p["written_back"]} / {p["dropped"]}</td>'
+                       f'<td>{p["port_vram_mib"] if p.get("port_vram_mib") is not None else "–"}</td>'
+                       f'<td>{p["vram_full"]}</td><td>{p["stale_cache"]}</td><td>{p["failed_pipelines"]}</td>'
+                       f'<td>{p["device_lost"]}</td><td>{vram}</td></tr>')
+    if details:
+        setup = next((r['port']['setup'] for r in runs if r.get('port', {}).get('setup')), [])
+        table += ('<h2>Port details</h2><table><thead><tr><th>Run</th><th>Textures evicted / written back / dropped'
+                  '</th><th>VRAM peak MiB (renderer)</th><th>"Video memory full"</th><th>Shader cache from another '
+                  'build</th><th>Failed pipelines</th><th>Device lost</th><th>VRAM by purpose</th></tr></thead><tbody>'
+                  + ''.join(details) + '</tbody></table>'
+                  + (f'<details><summary>Setup (from the log)</summary><div class="log">'
+                     + ''.join(f'<div>{esc(line)}</div>' for line in setup) + '</div></details>' if setup else ''))
+
     # the charts
     pts = lambda rows, key: [(x['t'], x.get(key)) for x in rows]
     charts = []

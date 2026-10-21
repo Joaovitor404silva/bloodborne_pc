@@ -37,8 +37,9 @@ PROFILE = 'userdata0010'
 SAVE_FILES = re.compile(r'^(userdata|backup)\d{4}$')
 SKIP = {'dvdroot_ps4', 'sce_module', 'cache', 'shader', 'shader_cache', 'fsr4_shaders', '_internal', 'bin',
         'mods', 'patches', 'licenses', 'tools', 'scripts', 'out', 'node_modules', '.git', 'windows', 'program files',
-        # a benchmark's own character (a port build's benchmark/ folder, recorded routes): not a player's save
-        'benchmark', 'recordings'}
+        # a benchmark's own character (an old build's benchmark/ folder, the game tests' scenarios in
+        # assets, recorded routes): not a player's save
+        'benchmark', 'recordings', 'assets'}
 
 
 # ---- where this port wants them --------------------------------------------------------------

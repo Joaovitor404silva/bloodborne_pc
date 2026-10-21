@@ -590,7 +590,9 @@ class SetupMixin:
         mode = mode or self.var('test_mode', 'app').get()
         if not scenario:
             return
-        if not L.game_info(self.var('game_dir', 'app').get()) or not saves.is_save_folder(save):
+        # a scenario with a save of its own (Cathedral Ward) needs none of the player's
+        own_save = scenario.save in ('own', 'ask')
+        if not L.game_info(self.var('game_dir', 'app').get()) or own_save and not saves.is_save_folder(save):
             self.messagebox.showinfo('Bloodborne', _('The test needs your game folder and a save to start from: '
                                                      'play until the game has saved once.'))
             return

@@ -61,7 +61,7 @@ ldd "$dest/bin/bb-probe.exe" "$dest/bin/bb-gpu-capabilities.exe" "$dest/bin/bb-f
     awk '/\/clang64\/bin\// {print $3}' | sort -u | while read -r dll; do
         cp -u "$dll" "$dest/bin/"
     done
-cp -r scripts patches benchmark "$dest/"
+cp -r scripts patches "$dest/"
 # FSR 4.1.1: the original AMD DX12 runtime, loaded dynamically beside bb-probe.exe.
 # The first build downloads AMD's SDK archive; subsequent builds verify the cached DLL.
 out/pyenv/Scripts/python.exe packaging/windows/fetch_fsr411_dx12.py

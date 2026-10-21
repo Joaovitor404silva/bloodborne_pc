@@ -67,14 +67,20 @@ class ReadingTests(unittest.TestCase):
     def test_builtin_scenarios(self):
         with tempfile.TemporaryDirectory() as folder:
             found = {s.id: s for s in bench.scenarios(folder)}
-        self.assertEqual(set(found), {'hunters-view'})  # only finished benchmarks ship
+        self.assertEqual(set(found), {'hunters-view', 'cathedral-ward'})  # only finished benchmarks ship
         view = found['hunters-view']
         self.assertEqual(view.save, 'own')
         self.assertEqual(view.steps[0]['do'], 'title')
         self.assertTrue(view.loop)
         self.assertEqual(view.route('pan:24'), bench.pan_route(24))
         self.assertTrue(bench.FIXED_INI['cheat_stealth'] and bench.FIXED_INI['cheat_no_death'])
-        self.assertFalse(list((ROOT / 'launcher/assets/tests').rglob('userdata*')))
+        # saves only inside the folder of a scenario that starts from its own (Cathedral Ward)
+        own = [scenario.save_folder() for scenario in found.values() if scenario.save not in ('own', 'ask')]
+        self.assertFalse([p for p in (ROOT / 'launcher/assets/tests').rglob('userdata*')
+                          if not any(folder in p.parents for folder in own)])
+        ward = found['cathedral-ward']
+        self.assertTrue(ward.port_details and (ward.save_folder() / 'userdata0010').is_file())
+        self.assertEqual([s['name'] for s in ward.steps if s['do'] == 'measure'], ['standing', 'camera turn', 'walk'])
         known = {'title', 'wait', 'press', 'hold', 'route', 'measure', 'capture'}
         for scenario in found.values():
             self.assertEqual(scenario.missing_routes(), [])

@@ -149,7 +149,6 @@ import bbport_search  # noqa: E402
 import bbport_setup  # noqa: E402
 import bbport_trophies as trophies  # noqa: E402
 import bbport_theme as theme  # noqa: E402
-import bbport_routebench as routebench  # noqa: E402
 from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SLOTS, keysym_to_name,
                                   button_num_to_name, input_ini_path, load_input_ini, reserved_keys,
                                   save_input_ini, save_mouse_settings, wheel_to_name, MAX_COMBO,
@@ -3065,10 +3064,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                  _('NAME=value pairs separated by spaces (README lists them).', 'Пары ИМЯ=значение через пробел (список в README).'))
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
-        ttk.Button(holder, text=_('Run benchmark…', 'Запустить тест…'), command=self.run_benchmark).pack(side='left')
-        ttk.Label(holder, text=_('A fixed route in Cathedral Ward for testers: one zip to send.',
-                                 'Фиксированный маршрут в Соборном округе для тестеров: один zip для отправки.'),
+        ttk.Button(holder, text=_('Benchmark for bug reports…'), command=self.open_bug_benchmark).pack(side='left')
+        ttk.Label(holder, text=_('Game tests with the Cathedral Ward scenario: the same save and route for everyone.'),
                   style='Muted.TLabel').pack(side='left', padx=10)
+
+    def open_bug_benchmark(self):
+        """The game tests (System) with the Cathedral Ward scenario chosen."""
+        self.var('test_scenario', 'app').set('cathedral-ward')
+        self.show('system')
 
     def build_log(self):
         tk, ttk, px = self.tk, self.ttk, self.px
@@ -3995,74 +3998,6 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.ui_calls.put(lambda: show(versions))
         threading.Thread(target=fetch, daemon=True).start()
 
-    def run_benchmark(self):
-        """Advanced > Run benchmark (bbport_routebench.py): a fixed route on a fixed save with the
-        player's settings; the results zip is shown in Explorer."""
-        if self.process or getattr(self, 'benchmark_run', None):
-            return
-        self.collect()
-        if not game_info(self.app['game_dir']):
-            self.messagebox.showerror('Bloodborne', _('Choose the game folder with eboot.bin (CUSA03173).',
-                                                      'Выберите папку игры с eboot.bin (CUSA03173).'))
-            self.show('game')
-            return
-        if not self.messagebox.askokcancel('Bloodborne', _(
-                'The benchmark plays a fixed route in Cathedral Ward on its own save with your graphics '
-                'settings (offline, frame rate uncapped). It takes about 4 minutes.\n\nDo not touch the '
-                'mouse, keyboard or controller while it runs. Your own save is put aside and comes back '
-                'afterwards.\n\nThe results (a zip to send) open in Explorer at the end.',
-                'Тест проходит один и тот же маршрут в Соборном округе на своём сохранении с вашими '
-                'настройками графики (офлайн, без ограничения FPS). Займёт около 4 минут.\n\nНе трогайте '
-                'мышь, клавиатуру и геймпад во время теста. Ваше сохранение будет отложено и вернётся '
-                'после.\n\nРезультаты (zip для отправки) откроются в Проводнике.')):
-            return
-        tk, ttk = self.tk, self.ttk
-        window = tk.Toplevel(self.root)
-        window.title(_('Benchmark', 'Тест'))
-        window.configure(bg=BG)
-        window.transient(self.root)
-        window.resizable(False, False)
-        frame = ttk.Frame(window, padding=self.px(16))
-        frame.pack(fill='both', expand=True)
-        status = ttk.Label(frame, text=_('Starting…', 'Запуск…'), wraplength=self.px(380), justify='left')
-        status.pack(anchor='w')
-        user_dir = Path(self.app.get('user_dir') or DATA_DIR / 'user')
-        run = routebench.Run(PORT_DIR, DATA_DIR, user_dir, game_environment(self.app), run_command(),
-                            progress=lambda text: self.ui_calls.put(
-                                lambda: window.winfo_exists() and status.configure(text=text)))
-        self.benchmark_run = run
-        ttk.Button(frame, text=_('Cancel', 'Отмена'), command=run.cancel).pack(anchor='w', pady=(12, 0))
-        window.protocol('WM_DELETE_WINDOW', run.cancel)
-        self.play_button.configure(state='disabled')
-
-        def done(archive, error):
-            self.benchmark_run = None
-            self.play_button.configure(state='normal')
-            if window.winfo_exists():
-                window.destroy()
-            if archive:
-                subprocess.Popen(['explorer', '/select,', str(archive)])
-                summary = archive.with_suffix('') / 'summary.txt'
-                text = summary.read_text(encoding='utf-8') if summary.is_file() else ''
-                self.messagebox.showinfo('Bloodborne', _('Benchmark finished. Send this file: {}',
-                                                         'Тест завершён. Отправьте этот файл: {}').format(
-                    archive.name) + '\n\n' + text.split('Results', 1)[-1][:900])
-            elif error:
-                self.messagebox.showerror('Bloodborne', _('The benchmark stopped: {}',
-                                                          'Тест остановлен: {}').format(error))
-
-        def work():
-            archive = error = None
-            try:
-                archive = run.run()
-            except routebench.Cancelled:
-                pass
-            except Exception as failure:  # shown to the player; the save is restored either way
-                error = failure
-            self.ui_calls.put(lambda: done(archive, error))
-
-        threading.Thread(target=work, daemon=True).start()
-
     def clear_cache(self):
         """Shader and pipeline caches; they are rebuilt while playing."""
         if self.process:
@@ -4255,22 +4190,6 @@ def play_without_window(settings):
     return code
 
 
-def benchmark_without_window(settings):
-    """--benchmark: Advanced > Run benchmark without the window; prints the progress and the zip."""
-    attach_stdio()
-    user_dir = Path(settings.get('user_dir') or DATA_DIR / 'user')
-    run = routebench.Run(PORT_DIR, DATA_DIR, user_dir, game_environment(settings), run_command(),
-                        progress=lambda text: print(text, flush=True))
-    try:
-        archive = run.run()
-    except Exception as error:
-        print(f'Benchmark stopped: {error}', flush=True)
-        return 1
-    print(f'Results: {archive}', flush=True)
-    print((archive.with_suffix('') / 'summary.txt').read_text(encoding='utf-8'), flush=True)
-    return 0
-
-
 def version_tuple(text):
     return tuple(int(number) for number in re.findall(r'\d+', text or ''))
 
@@ -4363,13 +4282,15 @@ def main():
     saves.WORDS.update({key: _(text) for key, text in saves.REASONS.items()})  # backup file names
     if args[:1] == ['--install-update'] and len(args) == 3:
         sys.exit(install_update(args[1], args[2]))
-    # A benchmark that did not finish (closed launcher, crash) left its save in place of the player's.
+    # The route benchmark of the 1.9.3 test builds left its own save in place of the player's when it
+    # did not finish (closed launcher, crash): the player's comes back.
     try:
-        routebench.restore_save(Path(settings.get('user_dir') or DATA_DIR / 'user'))
+        user = Path(settings.get('user_dir') or DATA_DIR / 'user')
+        if (user / 'savedata.benchmark-backup').is_dir():
+            shutil.rmtree(user / 'savedata', ignore_errors=True)
+            (user / 'savedata.benchmark-backup').rename(user / 'savedata')
     except OSError:
         pass
-    if args[:1] == ['--benchmark']:
-        sys.exit(benchmark_without_window(settings))
     if FROZEN and UPDATE_DIR not in PORT_DIR.parents:
         shutil.rmtree(UPDATE_DIR, ignore_errors=True)  # what a finished update left behind
     # Without a usable game folder there is nothing to play yet: open the launcher instead.
