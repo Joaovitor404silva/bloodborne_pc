@@ -139,8 +139,7 @@ int main(int argc, char **argv) {
     }
 #endif
     if (live_mode || vram_mode) {
-        if (live_mode) printf("%d
-", live_resolution_suits(selected));
+        if (live_mode) printf("%d\n", live_resolution_suits(selected));
         else print_vram(selected);
         free(devices);
         vkDestroyInstance(instance, NULL);
