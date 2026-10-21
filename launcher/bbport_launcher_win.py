@@ -41,7 +41,7 @@ PATCH_VERSION = '01.09'
 MAX_LOG_LINES = 6000
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 # This build; GitHub release tags are windows-v<VERSION>.
-VERSION = '1.9.3'
+VERSION = '1.9.4'
 # Co-op: the community server that answers the game's own server requests.
 COMMUNITY_SERVER = 'https://thehuntersdream.com'
 RELEASES_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases/latest'
@@ -3308,20 +3308,86 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                                 'Слои валидации Vulkan (нужен Vulkan SDK; сильно замедляет)'))
         self.row(f, _('Extra variables', 'Доп. переменные'), ttk.Entry(f, textvariable=self.var('extra_env', 'app'), width=58),
                  _('NAME=value pairs separated by spaces (README lists them).', 'Пары ИМЯ=значение через пробел (список в README).'))
+        # The Cathedral Ward benchmark for testers: with the game tests off (GAME_TESTS) it runs by
+        # itself with the player's settings and gives one zip to send.
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
         ttk.Button(holder, text=_('Benchmark for bug reports…'), command=self.open_bug_benchmark).pack(side='left')
-        ttk.Label(holder, text=_('Game tests with the Cathedral Ward scenario: the same save and route for everyone.'),
+        ttk.Label(holder, text=_('A fixed route in Cathedral Ward for testers: one zip to send.'),
                   style='Muted.TLabel').pack(side='left', padx=10)
-        self.index_entry(holder, _('Run benchmark…', 'Запустить тест…'),
-                         _('A fixed route in Cathedral Ward for testers: one zip to send.',
-                           'Фиксированный маршрут в Соборном округе для тестеров: один zip для отправки.'),
-                         'button:benchmark')
+        self.index_entry(holder, _('Benchmark for bug reports…'),
+                         _('A fixed route in Cathedral Ward for testers: one zip to send.'), 'button:benchmark')
 
     def open_bug_benchmark(self):
-        """The game tests (System) with the Cathedral Ward scenario chosen."""
+        """The game tests (System) with the Cathedral Ward scenario chosen; with the game tests off,
+        the benchmark by itself (run_bug_benchmark)."""
+        if not GAME_TESTS:
+            self.run_bug_benchmark()
+            return
         self.var('test_scenario', 'app').set('cathedral-ward')
         self.show('system')
+
+    def run_bug_benchmark(self):
+        """Cathedral Ward with the player's settings: one run on the scenario's own save, offline and
+        in fullscreen; at the end its report as a zip, shown in Explorer."""
+        import bbport_benchmark as bench
+        title = _('Benchmark for bug reports…').rstrip('…')
+        if self.process or bench.game_pids():
+            self.messagebox.showinfo(title, _('Close the game first.'))
+            return
+        if self.test_running():
+            self.messagebox.showinfo(title, _('A game test is running already.'))
+            return
+        scenario = next((s for s in bench.scenarios(self.tests_dir() / 'scenarios') if s.id == 'cathedral-ward'), None)
+        if not scenario or not game_info(self.var('game_dir', 'app').get()):
+            self.messagebox.showinfo(title, _('Choose the game folder first.', 'Сначала выберите папку игры.'))
+            return
+        if not self.messagebox.askokcancel(title, _(
+                'The benchmark plays a fixed route in Cathedral Ward on a save of its own, with your graphics '
+                'settings, in fullscreen (about 3 minutes). Your saves and settings stay as they are.\n\n'
+                'Leave the mouse, keyboard and controller alone until it ends. Then a zip to send opens in '
+                'Explorer.'), parent=self.root):
+            return
+        self.collect()
+        import platform
+        import time as clock
+        w, h = self.display_size()
+        info = {'Launcher': f'v{VERSION}', 'Graphics card': self.gpu_line or '?',
+                'Processor': self.cpu.name if self.cpu else '?', 'Memory': f'{self.ram} GB', 'Display': f'{w} × {h}',
+                'Windows': platform.version(), 'Game': ' '.join(game_info(self.var('game_dir', 'app').get()) or ())}
+        folder = self.tests_dir() / (clock.strftime('%Y-%m-%d_%H%M%S') + '_benchmark')
+        settings = {**self.app, 'online': False, 'fullscreen': True}
+        self.bench = bench.Test(PORT_DIR, run_command(), game_environment(settings), self.save_user_dir(),
+                                self.var('game_dir', 'app').get(),
+                                ini_path().read_text(encoding='utf-8') if ini_path().is_file() else '',
+                                scenario, bench.Variants({}, [('benchmark', {})]), folder,
+                                lambda kind, data: self.ui_calls.put(lambda: self.bug_benchmark_event(kind, data)),
+                                kind='compare', info=info)
+        self.play_button.configure(state='disabled')
+        self.status.configure(text=_('Game test running: the game opens and closes by itself.'), fg=GOLD)
+        self.bench.start(self.save_target())
+
+    def bug_benchmark_event(self, kind, data):
+        if kind not in ('done', 'error'):
+            return
+        test, self.bench = self.bench, None
+        if test:
+            test.finished = True
+        self.refresh_status()
+        title = _('Benchmark for bug reports…').rstrip('…')
+        run = (data[1] or [None])[0] if kind == 'done' else None
+        if kind == 'error' or not run or run.get('status') != 'ok':
+            reason = data if kind == 'error' else (run or {}).get('message') or (run or {}).get('status') or '?'
+            self.messagebox.showwarning(title, _('The benchmark stopped: {}').format(reason))
+            return
+        import bbport_report
+        try:
+            archive = bbport_report.export(data[2])
+        except OSError as error:
+            self.messagebox.showwarning(title, _('The benchmark stopped: {}').format(error))
+            return
+        subprocess.Popen(['explorer', '/select,', str(archive)])
+        self.messagebox.showinfo(title, _('Benchmark finished. Send this file: {}').format(archive))
 
     def build_log(self):
         tk, ttk, px = self.tk, self.ttk, self.px
