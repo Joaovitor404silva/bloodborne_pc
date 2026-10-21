@@ -253,6 +253,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'vk_validation': False, 'extra_env': '', 'close_on_play': False,
                 'check_updates': True, 'save_backups': False, 'online': False, 'online_server': 'srv.shadps4.net:31313',
                 'online_webapi': '', 'online_npid': '', 'online_password': '', 'online_upnp': True,
+                'online_custom_servers': False,
                 'online_community': COMMUNITY_SERVER, 'online_pool': 'huntersdream', 'bridge_live_map': False,
                 'thd_online_id': '', 'thd_token': '',
                 # The setup guide ran (or the launcher was set up before it existed); a graphics card
@@ -965,6 +966,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         var.trace_add('write', refresh)
         self.fg401_refreshers.append(refresh)
         refresh()
+        box.setting_key = 'frame_gen'  # for the search (row() indexes it)
         return box
 
     def refresh_fg401(self):
@@ -974,13 +976,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def refresh_fg401_status(self):
         if hasattr(self, 'fg401_status'):
-            text = bbport_fg401.message(self.fg401_support, _,
-                hdr=bool(self.var('hdr', 'app').get()), selected=self.var('frame_gen', 'ini').get()=='fsr401')
+            selected = self.var('frame_gen', 'ini').get() == 'fsr401'
+            # only with ML-FG chosen: on other PCs it is not offered, and its reasons would be noise
+            text = bbport_fg401.message(self.fg401_support, _, hdr=bool(self.var('hdr', 'app').get()),
+                                        selected=selected) if selected else ''
             self.fg401_status.configure(text=text)
-            if text:
-                self.fg401_status.grid()
-            else:
-                self.fg401_status.grid_remove()
+            for widget in (self.fg401_status, getattr(self, 'fg401_recheck', None)):
+                if widget is not None:
+                    widget.grid() if text else widget.grid_remove()
 
     def recheck_fg401(self):
         self.fg401_support = None
@@ -1059,6 +1062,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     self.fsr411_refreshers.remove(refresh)
         box.bind('<Destroy>', cleanup)
         refresh()
+        box.setting_key = 'fsr411_backend'  # for the search (row() indexes it)
         return box
 
     def size_entry(self, parent, text, used, note):
@@ -1182,6 +1186,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             'May improve FSR performance; uses extra VRAM. Requires object motion vectors. '
             'Applies at next game start.'), style='Muted.TLabel', wraplength=self.px(640),
             justify='left').grid(row=row + 1, column=0, columnspan=2, sticky='w', padx=(26, 0))
+        self.index_entry(button, _('Motion-vector cache (experimental)'), key='object_motion_cache')
 
         def refresh(*_args):
             available = motion_cache_available({'upscaler': upscaler.get(),
@@ -1224,6 +1229,24 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def note(self, parent, text, top=12):
         self.ttk.Label(parent, text=text, style='Muted.TLabel', wraplength=self.px(680), justify='left').grid(
             row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(top, 0))
+
+    def fold(self, parent, title, texts, top=10):
+        """Details most players never need: a gold link that shows or hides the notes `texts`."""
+        link = self.tk.Label(parent, text=title + '  ›', bg=PANEL, fg=GOLD, cursor='hand2', font=(theme.BODY_MEDIUM, 9))
+        link.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(top, 0))
+        notes = []
+        for text in texts:
+            label = self.ttk.Label(parent, text=text, style='Muted.TLabel', wraplength=self.px(680), justify='left')
+            label.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(6, 0))
+            label.grid_remove()
+            notes.append(label)
+
+        def toggle(_e=None):
+            shown = bool(notes[0].winfo_manager())
+            for label in notes:
+                label.grid_remove() if shown else label.grid()
+            link.configure(text=title + ('  ›' if shown else '  ⌄'))
+        link.bind('<Button-1>', toggle)
 
     def section(self, parent, title, top=18):
         """A heading in Cinzel with a hairline running to the right edge."""
@@ -1377,9 +1400,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         tk.Frame(right, bg=LINE, height=1).pack(fill='x', side='bottom')
         self.play_button = ttk.Button(bar, text=_('PLAY', 'ИГРАТЬ'), style='Play.TButton', command=self.play)
         self.play_button.pack(side='right', padx=(px(10), px(24)))
+        # Stop only while the game runs (beside Play, game_running): a greyed-out button the rest of the time
         self.stop_button = ttk.Button(bar, text=_('Stop', 'Остановить'), style='Bar.TButton', command=self.stop,
                                       state='disabled')
-        self.stop_button.pack(side='right')
         ttk.Button(bar, text=_('Log', 'Журнал'), style='Bar.TButton', command=lambda: self.show('log')).pack(
             side='right', padx=(0, px(8)))
         self.status = tk.Label(bar, text='', bg=BG, fg=MUTED, font=(theme.BODY, 9), anchor='w', justify='left')
@@ -1895,8 +1918,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.row(f, _('Quality preset', 'Пресет'), self.choice(f, 'preset', 'ini', PRESETS),
                  _('Render scale per axis: Quality renders at 1/1.5 of the output size.',
                    'Масштаб рендера по каждой оси: Quality рисует в 1/1.5 размера вывода.'))
+        before = set(f.grid_slaves())
         self.row(f, _('FSR 4.1.1 backend'), self.fsr411_choice(f),
                  _("AMD DX12 uses AMD's FSR library. Vulkan uses fsr4vk. Switching applies the next time the game starts."))
+        fsr411_rows = list(set(f.grid_slaves()) - before)
         self.row(f, _('Output resolution', 'Разрешение вывода'), self.output_choice(f),
                  _('What the upscaler produces; the HUD is drawn at this size too.',
                    'Что выдаёт апскейлер; интерфейс рисуется в этом же размере.'))
@@ -1958,13 +1983,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'частотой (120 Гц и выше при 60 FPS); иначе генерация приостанавливается. Немного добавляет '
                    'задержку ввода. Меню и ролики не генерируются. DLSS нужна GeForce RTX 40 или новее, иначе '
                    'используется FSR 3.1.'))
-        self.fg401_status = self.ttk.Label(f, wraplength=self.px(640), justify='left')
-        self.fg401_status.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        self.fg401_status = self.ttk.Label(f, wraplength=self.px(640), justify='left', style='Muted.TLabel')
+        self.fg401_status.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 0))
+        self.fg401_recheck = ttk.Frame(f)
+        self.fg401_recheck.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
+        ttk.Button(self.fg401_recheck, text=_('Recheck support'), command=self.recheck_fg401).pack(side='left')
         self.refresh_fg401()
         self.var('hdr', 'app').trace_add('write', lambda *_a: self.refresh_fg401_status())
-        holder = ttk.Frame(f)
-        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
-        ttk.Button(holder, text=_('Recheck support'), command=self.recheck_fg401).pack(side='left')
+        self.var('frame_gen', 'ini').trace_add('write', lambda *_a: self.refresh_fg401_status())
         self.row(f, _('Multiplier', 'Множитель'),
                  self.choice(f, 'frame_gen_multiplier', 'ini', FRAME_GEN_MULTIPLIERS),
                  _('FSR 3.1 makes one frame (2×); DLSS on a GeForce RTX 50 up to three (4×).',
@@ -1975,7 +2001,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                      'Вкл.: не больше кадров, чем показывает монитор (при снятом ограничении FPS генерируется меньше, '
                      'видеокарта меньше нагружена). Выкл.: множитель как выбран.'))
         self.section(f, _('FSR 4 assets', 'Ассеты FSR 4'))
-        self.fsr4_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left')
+        self.fsr4_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left', style='Muted.TLabel')
         self.fsr4_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(8, 0))
@@ -1988,10 +2014,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                        'about 30 MB, into the fsr4_shaders folder of the port.',
                        'С GitHub FireBurn/Q2RTX (собраны из MIT-исходников AMD FidelityFX), около 30 МБ, '
                        'в папку fsr4_shaders порта.'), top=6)
+        before = set(f.grid_slaves())
         self.section(f, _('FSR 4.1.1 (experimental)', 'FSR 4.1.1 (экспериментально)'))
-        self.fsr411_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left')
+        self.fsr411_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left', style='Muted.TLabel')
         self.fsr411_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
-        self.fsr411_native_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left')
+        self.fsr411_native_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left', style='Muted.TLabel')
         self.fsr411_native_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(8, 0))
@@ -2002,6 +2029,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.fsr411_progress.pack(side='left', padx=12)
         self.ttk.Button(holder, text=_('Recheck support'), command=self.recheck_fsr411).pack(side='left')
         self.note(f, _('Download fsr4vk here. AMD DX12 is included.'), top=6)
+        fsr411_rows += list(set(f.grid_slaves()) - before)
+
+        def show_fsr411(*_a):
+            for widget in fsr411_rows:
+                widget.grid() if self.var('upscaler', 'ini').get() == 'fsr411' else widget.grid_remove()
+        self.var('upscaler', 'ini').trace_add('write', show_fsr411)
+        show_fsr411()
         self.refresh_fsr411()
         self.vars['fsr411_backend'].trace_add('write', lambda *_a: (self.refresh_fsr411(), self.refresh_status()))
 
@@ -2053,7 +2087,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         f = self.scrolled_page('language', _('Language & sound'),
                                _("The game's text and voices, the launcher's language, how the game starts and "
                                  'sounds.'))
-        self.section(f, _('Language'), top=4)
+        self.section(f, _('In the game'), top=4)
+        self.row(f, _('Text language', 'Язык текста'), self.choice(f, 'language', 'app', LANGUAGES))
+        self.row(f, _('Voice language', 'Язык озвучки'), self.choice(f, 'voice_language', 'app', VOICE_LANGUAGES),
+                 _('As in the game uses the original voice setting; other choices use available tracks.'))
+        self.row(f, _('Player name', 'Имя игрока'), self.ttk.Entry(f, textvariable=self.var('player_name', 'app'), width=30),
+                 _('Where the game shows the PSN name; empty: the default.', 'Где игра показывает имя PSN; пусто — по умолчанию.'))
+        self.section(f, _('Launcher'))
         before = self.var('ui_language', 'app').get()
         language = ttk.Frame(f)
         self.choice(language, 'ui_language', 'app', UI_LANGUAGES, 24).pack(side='left')
@@ -2063,22 +2103,20 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                                  restart.pack_forget())
         self.row(f, _('Launcher language', 'Язык лаунчера'), language,
                  _('Applies when the launcher opens again.', 'Применится при следующем открытии лаунчера.'))
-        self.appearance_check(f)
-        self.row(f, _('Text language', '\u042f\u0437\u044b\u043a \u0442\u0435\u043a\u0441\u0442\u0430'), self.choice(f, 'language', 'app', LANGUAGES))
-        self.row(f, _('Voice language', '\u042f\u0437\u044b\u043a \u043e\u0437\u0432\u0443\u0447\u043a\u0438'), self.choice(f, 'voice_language', 'app', VOICE_LANGUAGES),
-                 _('As in the game uses the original voice setting; other choices use available tracks.'))
-        self.row(f, _('Player name', 'Имя игрока'), self.ttk.Entry(f, textvariable=self.var('player_name', 'app'), width=30),
-                 _('Where the game shows the PSN name; empty: the default.', 'Где игра показывает имя PSN; пусто — по умолчанию.'))
-        self.section(f, _('Start and sound'))
+        self.appearance_check(f)  # Advanced > Appearance has the title bar (expert)
+        self.section(f, _('Starting the game'))
         self.check(f, 'skip_intro', 'ini', _(*dict((k, t) for k, t, _o in EXTRAS)['skip_intro']))
         shortcuts = ttk.Frame(f)
-        shortcuts.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
         button = ttk.Button(shortcuts, text=_('Desktop shortcut', 'Ярлык на рабочем столе'), command=self.shortcut)
         button.pack(side='left')
         self.index_entry(button, _('Desktop shortcut', 'Ярлык на рабочем столе'), key='button:shortcut')
         button = ttk.Button(shortcuts, text=_('Add to Steam'), command=self.add_to_steam)
         button.pack(side='left', padx=(6, 0))
         self.index_entry(button, _('Add to Steam'), key='button:steam')
+        self.row(f, _('Shortcuts'), shortcuts,
+                 _('The desktop shortcut opens this launcher; the Steam entry starts the game straight away '
+                   'with these settings.'), key='button:shortcut')
+        self.section(f, _('Sound'))
         self.check(f, 'mute_unfocused', 'ini', _('Mute when the game is in the background',
                                                  'Без звука, когда игра в фоне'))
 
@@ -2290,10 +2328,27 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         credit.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(8, 0))
         credit.bind('<Button-1>', lambda _e: webbrowser.open('https://github.com/Awakenchan/BloodBorneButPc'))
         group('huntersdream')
+        self.section(f, _('Account'))
+        self.row(f, _('Online ID (NPID)'), ttk.Entry(f, textvariable=self.var('online_npid', 'app'), width=40),
+                 _('Your shadNet account name, not your email. Register one at shadnet.shadps4.net, or ask the '
+                   'owner of a private server.'))
+        self.row(f, _('Password'), ttk.Entry(f, textvariable=self.var('online_password', 'app'), width=40, show='•'),
+                 _('Saved on this PC with the other launcher settings.'))
+        # The servers' addresses only for those who play on their own (a private server, a friend's):
+        # everyone else plays on the public ones and never needs to see a port number.
+        if 'online_custom_servers' not in self.app:
+            self.app['online_custom_servers'] = any(
+                self.app.get(key, '').strip() not in ('', APP_DEFAULTS[key])
+                for key in ('online_server', 'online_webapi', 'online_community'))
+        custom = self.var('online_custom_servers', 'app')
+        self.check(f, 'online_custom_servers', 'app', _('Use my own servers'),
+                   _('Off: the public servers. On: a private server, with the addresses from the person who '
+                     'runs it.'))
+        group('shadnet')
         self.section(f, _('Game server (messages, bloodstains, ghosts)'))
         community = self.var('online_community', 'app')
         self.row(f, _('Game server'), ttk.Entry(f, textvariable=community, width=40),
-                 _('The Hunter\'s Dream by default. Only the name is needed; the game picks the ports.'))
+                 _("The Hunter's Dream by default. Only the name is needed; the game picks the ports."))
         self.section(f, _('Co-op server (bells and summons)'))
         server = self.var('online_server', 'app')
         self.row(f, _('Server address'), ttk.Entry(f, textvariable=server, width=40),
@@ -2302,13 +2357,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.row(f, _('WebAPI address'), ttk.Entry(f, textvariable=self.var('online_webapi', 'app'), width=40),
                  _('Of the shadNet server, not the game server. Leave empty: the server address with '
                    'port 31315 is used.'))
-        self.section(f, _('Account'))
-        self.row(f, _('Online ID (NPID)'), ttk.Entry(f, textvariable=self.var('online_npid', 'app'), width=40),
-                 _('Your shadNet account name, not your email. Register one at shadnet.shadps4.net, or ask the '
-                   'owner of a private server.'))
-        self.row(f, _('Password'), ttk.Entry(f, textvariable=self.var('online_password', 'app'), width=40, show='•'),
-                 _('Saved on this PC with the other launcher settings.'))
-        group('shadnet')
+        group('servers')
         self.section(f, _('Connection'))
         self.check(f, 'online_upnp', 'app', _('UPnP (open a port on the router automatically)'),
                    _('Turn it off on Tailscale or another VPN.'))
@@ -2350,7 +2399,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             if pool.get() == 'huntersdream' and not HUNTERS_DREAM_POOL:
                 pool.set('shadnet')  # runs show_pool again
                 return
-            want = shown.get(pool.get(), shown['shadnet'])
+            want = set(shown.get(pool.get(), shown['shadnet']))
+            if 'shadnet' in want and custom.get():
+                want.add('servers')
             for name, widgets in groups.items():
                 for widget in widgets:
                     if widget is not code_box:
@@ -2360,6 +2411,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             else:
                 code_box.grid_remove()
         pool.trace_add('write', show_pool)
+        custom.trace_add('write', show_pool)
         show_pool()
 
     def build_mods(self):
@@ -2626,7 +2678,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 warn.grid(row=r, column=SLOTS + 1, sticky='w', padx=(8, 0))
                 self.remap_rows[output] = (buttons, warn)
         self.refresh_remap_row(None)
-        self.note(f, _('Combinations: hold Shift, Ctrl or Alt while pressing the key or mouse '
+        self.fold(f, _('Key combinations and reserved keys'), [_('Combinations: hold Shift, Ctrl or Alt while pressing the key or mouse '
                        'button (up to three inputs, such as Shift + left click). A held '
                        'combination wins over the bindings on its parts, so left click and Shift + '
                        'left click can be two actions. ⚠ marks an input another action uses too. A '
@@ -2639,13 +2691,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                        'быть разными действиями. ⚠ отмечает ввод, который использует и другое '
                        'действие. Клавиша, которая сама является действием и частью сочетания, '
                        'нажимается по пути к нему: если Shift — это Круг, Shift + левый клик '
-                       'начинает бег, который заканчивается уклонением.'))
-        self.note(f, _('Reserved: Insert/Escape (the port\'s menu), F9 (route recording), and '
+                       'начинает бег, который заканчивается уклонением.'),
+                       _('Reserved: Insert/Escape (the port\'s menu), F9 (route recording), and '
                        'whichever key toggles mouse look or reloads input.ini (F7/F8 by '
                        'default).',
                        'Зарезервированы: Insert/Escape (меню порта), F9 (запись маршрута), а '
                        'также клавиши переключения мыши и перезагрузки input.ini (по умолчанию '
-                       'F7/F8).'))
+                       'F7/F8).')])
 
         self.build_controller_bindings(f)
 
@@ -2702,10 +2754,19 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'turn-speed cap. While locked on, moving the mouse switches target.',
                    'Прямая поворачивает камеру игры на точные углы: без ускорения стика и '
                    'предела скорости поворота. При захвате цели движение мыши переключает цель.'))
+        # Only the sliders of the chosen camera mode: the other mode's do nothing meanwhile.
+        modes, before = {}, set(f.grid_slaves())
+
+        def mode_rows(name):
+            nonlocal before
+            now = set(f.grid_slaves())
+            modes[name] = list(now - before)
+            before = now
         slider_row('camera_sensitivity', _('Sensitivity (direct)', 'Чувствительность (прямая)'),
                    _('How far the direct camera turns per mouse movement (1.00 = 900 counts per '
                      'radian).', 'Насколько поворачивается прямая камера при движении мыши (1.00 = '
                      '900 отсчётов на радиан).'), 0.1, 5.0)
+        mode_rows('direct')
         slider_row('speed', _('Sensitivity (stick)', 'Чувствительность (стик)'),
                    _('How fast the camera turns for a given mouse movement in stick emulation.',
                      'Насколько быстро поворачивается камера при движении мыши в эмуляции стика.'), 0.1, 5.0)
@@ -2714,6 +2775,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                      'movements without affecting fast ones as much.',
                      'Добавляется поверх чувствительности; поднимает минимальную скорость для '
                      'медленных движений, почти не влияя на быстрые.'), 0.0, 1.0)
+        mode_rows('stick')
+
+        def show_mode(*_a):
+            for name, widgets in modes.items():
+                for widget in widgets:
+                    widget.grid() if name == camera_var.get() else widget.grid_remove()
+        camera_var.trace_add('write', show_mode)
+        show_mode()
         slider_row('sensitivity_y', _('Vertical sensitivity', 'Вертикальная чувствительность'),
                    _('Up and down as a multiple of left and right (1.00 = the same).',
                      'Вверх и вниз относительно влево и вправо (1.00 = одинаково).'), 0.1, 3.0)
@@ -3035,8 +3104,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         ttk.Button(holder, text=_('Other versions…', 'Другие версии…'), command=self.choose_version).pack(
             side='left', padx=(6, 0))
         ttk.Label(holder, text=f'v{VERSION}', style='Muted.TLabel').pack(side='left', padx=10)
-        self.section(f, _('Appearance'))
-        self.appearance_check(f)
+        self.section(f, _('Appearance'))  # the translucent window: Language & sound > Launcher
         self.check(f, 'windows_title_bar', 'app', _("Windows' title bar instead of the launcher's own"),
                    _('Applies when the launcher opens again.', 'Применится при следующем открытии лаунчера.'))
         self.var('windows_title_bar', 'app').trace_add('write', lambda *_a: self.app.__setitem__(
@@ -3289,6 +3357,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def refresh_fsr4(self):
         total, missing = len(fsr4_files()), len(fsr4_missing())
         self.fsr4_progress.configure(value=total - missing)
+        if missing:  # how much is there; a full bar beside a finished download says nothing
+            self.fsr4_progress.pack(side='left', padx=12)
+        else:
+            self.fsr4_progress.pack_forget()
         self.fsr4_label.configure(
             text=_('Installed: {} files in {}.', 'Установлены: {} файлов в {}.').format(total, PORT_DIR / 'fsr4_shaders')
             if not missing else _('{} of {} files missing in {}.', 'Нет {} из {} файлов в {}.').format(
@@ -3333,6 +3405,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.fsr411_button.configure(state='normal' if hardware_ok and not installed and not self.fsr411_downloading and not self.process else 'disabled')
         if installed:
             self.fsr411_progress.configure(value=100)
+        if self.fsr411_downloading:  # the bar only while fsr4vk downloads
+            beside = {'after': self.fsr411_button} if self.fsr411_button.winfo_manager() == 'pack' else {}
+            self.fsr411_progress.pack(side='left', padx=12, **beside)
+        else:
+            self.fsr411_progress.pack_forget()
 
     def download_fsr411(self, on_success=None):
         if self.process or self.fsr411_downloading:
@@ -3640,6 +3717,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         threading.Thread(target=self.read_output, args=(self.process,), daemon=True).start()
         self.play_button.configure(state='disabled')
         self.stop_button.configure(state='normal')
+        self.stop_button.pack(side='right', after=self.play_button)
         self.refresh_fsr411()
         self.status.configure(text=_('Preparing the game; it opens in its own window…',
                                      'Подготовка игры; она откроется в своём окне…'), fg=GOLD)
@@ -3732,6 +3810,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                         self.window_left(self.placer.last)
                         self.placer = None
                     self.stop_button.configure(state='disabled')
+                    self.stop_button.pack_forget()
                     self.refresh_status()
                     if self.hidden:
                         if item[0] == 0:

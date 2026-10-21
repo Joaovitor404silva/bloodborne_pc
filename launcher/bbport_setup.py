@@ -1628,6 +1628,8 @@ class SetupMixin:
                    _('Recommended: the game gets the display to itself (smoother, and 4K downsampling works).'))
         self.row(f, _('Monitor'), self.choice(f, 'game_monitor', 'app', L.monitor_options(self.app.get('game_monitor'))),
                  _('Where the game opens, in a window and in fullscreen.'))
+        self.row(f, _('Resolution'), self.output_choice(f),
+                 _('The size of the picture. Your goal picks it for this PC; change it here if you like.'))
         self.row(f, _('Window size'), self.window_choice(f),
                  _('In a window: the size it opens at. You can still drag its edges; "As I left it" opens it at '
                    'the size it had when you last closed the game.'))

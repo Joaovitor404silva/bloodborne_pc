@@ -635,7 +635,28 @@ PORT = {
     ],
 }
 
+
+# The regrouped pages (Language & sound, Online's own servers, Controls' fold-out, Picture's resolution).
+PORT_UI_KEYS = ['In the game', 'Starting the game', 'Shortcuts', 'The desktop shortcut opens this launcher; the Steam entry starts the game straight away with these settings.', 'Sound', 'Use my own servers', 'Off: the public servers. On: a private server, with the addresses from the person who runs it.', 'Key combinations and reserved keys', 'Resolution', 'The size of the picture. Your goal picks it for this PC; change it here if you like.']
+PORT_UI = {
+    'de': ['Im Spiel', 'Spielstart', 'Verknüpfungen', 'Die Desktop-Verknüpfung öffnet diesen Launcher; der Steam-Eintrag startet das Spiel sofort mit diesen Einstellungen.', 'Ton', 'Eigene Server verwenden', 'Aus: die öffentlichen Server. An: ein privater Server, mit den Adressen von der Person, die ihn betreibt.', 'Tastenkombinationen und reservierte Tasten', 'Auflösung', 'Die Größe des Bildes. Dein Ziel wählt sie für diesen PC; hier kannst du sie ändern.'],
+    'fr': ['En jeu', 'Lancement du jeu', 'Raccourcis', 'Le raccourci du bureau ouvre ce lanceur ; l’entrée Steam lance directement le jeu avec ces réglages.', 'Son', 'Utiliser mes propres serveurs', 'Désactivé : les serveurs publics. Activé : un serveur privé, avec les adresses données par la personne qui le gère.', 'Combinaisons de touches et touches réservées', 'Résolution', 'La taille de l’image. Votre objectif la choisit pour ce PC ; vous pouvez la changer ici.'],
+    'es': ['En el juego', 'Inicio del juego', 'Accesos directos', 'El acceso directo del escritorio abre este lanzador; la entrada de Steam inicia el juego directamente con estos ajustes.', 'Sonido', 'Usar mis propios servidores', 'Desactivado: los servidores públicos. Activado: un servidor privado, con las direcciones de quien lo gestiona.', 'Combinaciones de teclas y teclas reservadas', 'Resolución', 'El tamaño de la imagen. Tu objetivo la elige para este PC; puedes cambiarla aquí.'],
+    'pt': ['No jogo', 'Início do jogo', 'Atalhos', 'O atalho da área de trabalho abre este launcher; a entrada da Steam inicia o jogo direto com estas configurações.', 'Som', 'Usar meus próprios servidores', 'Desligado: os servidores públicos. Ligado: um servidor privado, com os endereços de quem o administra.', 'Combinações de teclas e teclas reservadas', 'Resolução', 'O tamanho da imagem. O seu objetivo escolhe para este PC; você pode mudar aqui.'],
+    'it': ['Nel gioco', 'Avvio del gioco', 'Collegamenti', 'Il collegamento sul desktop apre questo launcher; la voce di Steam avvia subito il gioco con queste impostazioni.', 'Audio', 'Usa i miei server', 'Disattivato: i server pubblici. Attivato: un server privato, con gli indirizzi di chi lo gestisce.', 'Combinazioni di tasti e tasti riservati', 'Risoluzione', 'La dimensione dell’immagine. Il tuo obiettivo la sceglie per questo PC; puoi cambiarla qui.'],
+    'pl': ['W grze', 'Uruchamianie gry', 'Skróty', 'Skrót na pulpicie otwiera ten launcher; wpis w Steam od razu uruchamia grę z tymi ustawieniami.', 'Dźwięk', 'Używaj własnych serwerów', 'Wyłączone: serwery publiczne. Włączone: serwer prywatny, z adresami od osoby, która go prowadzi.', 'Kombinacje klawiszy i zarezerwowane klawisze', 'Rozdzielczość', 'Rozmiar obrazu. Twój cel dobiera go do tego komputera; możesz go tu zmienić.'],
+    'tr': ['Oyunda', 'Oyunu başlatma', 'Kısayollar', 'Masaüstü kısayolu bu başlatıcıyı açar; Steam kaydı oyunu bu ayarlarla doğrudan başlatır.', 'Ses', 'Kendi sunucularımı kullan', 'Kapalı: genel sunucular. Açık: işleten kişinin verdiği adreslerle özel bir sunucu.', 'Tuş kombinasyonları ve ayrılmış tuşlar', 'Çözünürlük', 'Görüntünün boyutu. Hedefiniz bunu bu bilgisayar için seçer; isterseniz burada değiştirin.'],
+    'ar': ['داخل اللعبة', 'تشغيل اللعبة', 'الاختصارات', 'اختصار سطح المكتب يفتح هذا المشغّل؛ وإدخال Steam يشغّل اللعبة مباشرة بهذه الإعدادات.', 'الصوت', 'استخدام خوادمي الخاصة', 'معطّل: الخوادم العامة. مفعّل: خادم خاص، بالعناوين من الشخص الذي يديره.', 'تركيبات المفاتيح والمفاتيح المحجوزة', 'الدقة', 'حجم الصورة. هدفك يختارها لهذا الحاسوب؛ ويمكنك تغييرها هنا.'],
+    'zh': ['游戏内', '启动游戏', '快捷方式', '桌面快捷方式会打开此启动器；Steam 条目会直接以这些设置启动游戏。', '声音', '使用我自己的服务器', '关闭：使用公共服务器。开启：使用私人服务器，地址由运营者提供。', '组合键与保留按键', '分辨率', '画面的尺寸。你的目标会为这台电脑选择它；也可以在这里更改。'],
+    'ja': ['ゲーム内', 'ゲームの起動', 'ショートカット', 'デスクトップのショートカットはこのランチャーを開きます。Steam の項目はこの設定でゲームを直接起動します。', 'サウンド', '自分のサーバーを使う', 'オフ：公開サーバー。オン：運営者から教わったアドレスでプライベートサーバーを使います。', 'キーの組み合わせと予約済みキー', '解像度', '画面のサイズ。目標がこの PC に合わせて選びます。ここで変更することもできます。'],
+    'ko': ['게임 안', '게임 시작', '바로 가기', '바탕 화면 바로 가기는 이 런처를 엽니다. Steam 항목은 이 설정으로 게임을 바로 시작합니다.', '소리', '내 서버 사용', '끄기: 공개 서버. 켜기: 운영자에게 받은 주소로 개인 서버를 사용합니다.', '키 조합과 예약된 키', '해상도', '화면의 크기. 목표가 이 PC에 맞게 고릅니다. 여기서 바꿀 수도 있습니다.'],
+}
+
 for _language, _texts in PORT.items():
     if len(_texts) != len(PORT_KEYS):
         raise ValueError(f'bbport_lang_port {_language}: {len(_texts)} texts for {len(PORT_KEYS)} keys')
     bbport_lang.EXTRA_TRANSLATIONS.setdefault(_language, {}).update(zip(PORT_KEYS, _texts))
+for _language, _texts in PORT_UI.items():
+    if len(_texts) != len(PORT_UI_KEYS):
+        raise ValueError(f'bbport_lang_port {_language}: {len(_texts)} texts for {len(PORT_UI_KEYS)} keys')
+    bbport_lang.EXTRA_TRANSLATIONS.setdefault(_language, {}).update(zip(PORT_UI_KEYS, _texts))
