@@ -681,7 +681,7 @@ def profile(rating, res, output, current=None, goal='smooth'):
     elif goal in ('balanced', 'quiet') and level >= 3:
         add('app', 'fps_mode', '60', {'balanced': 'Goal "Balanced": a steady 60 FPS.',
                                       'quiet': 'Goal "Quiet": 60 FPS; the card rests between frames.'}[goal])
-    elif cpu_limit:
+    elif cpu_limit and level <= 3:
         add('app', 'fps_mode', '60' if level == 3 else '30',
             'Your processor sets the limit: a steady cap at what it is expected to hold. Lower graphics '
             'settings would not raise the frame rate.')

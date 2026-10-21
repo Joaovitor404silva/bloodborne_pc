@@ -145,6 +145,13 @@ class ProfileTests(unittest.TestCase):
         for key in ('output_res', 'preset', 'effect_ssao', 'effect_dynamic_shadows', 'model_lod', 'object_motion'):
             self.assertEqual(settings[key], same_card[key], key)
 
+    def test_the_frame_rate_cap_follows_the_processor(self):
+        for cpu, fps in (('Intel(R) Core(TM) i7-7820HK CPU @ 2.90GHz', '30'),  # below the minimum
+                         ('Intel(R) Core(TM) i3-10100 CPU @ 3.60GHz', '60'),  # the minimum: 30-60 FPS
+                         ('Intel(R) Core(TM) i5-11400F CPU @ 2.60GHz', 'uncap'),  # above it: 60-120 FPS
+                         ('AMD Ryzen 7 5800X 8-Core Processor', 'uncap')):
+            self.assertEqual(profile(rate('nvidia-rtx-4070', cpu, 32))['fps_mode'], fps, cpu)
+
     def test_a_card_below_the_minimum_still_goes_to_720p(self):
         r = rate('nvidia-gtx-1630', 'AMD Ryzen 7 5800X', 16)
         self.assertEqual((r.tier_label, r.limit, r.picture_levels['1080p']), ('Below minimum', 'gpu', 1))
