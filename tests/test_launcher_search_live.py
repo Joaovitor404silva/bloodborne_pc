@@ -44,6 +44,8 @@ QUERIES = [
     ('einrichtung', {'action:setup'}), ('bericht', {'button:report'}),
     ('controller test', {'controller_test'}), ('dualsense', {'controller_test'}),
     ('controller geht nicht', {'topic:controller'}), ('spielstand kaputt', {'topic:save_lost'}),
+    ('tastatur und maus', {'play_with'}), ('spiele mit', {'play_with'}), ('mauskamera', {'play_with'}),
+    ('keyboard', {'play_with', 'mouse:layout'}),
     ('charakter weg', {'topic:save_lost'}),
 ]
 
