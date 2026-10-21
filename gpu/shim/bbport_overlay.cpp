@@ -365,12 +365,15 @@ void Menu() {
                 (i != BbSettings::FrameGenFsr401 || s.fg401_supported);
             ImGui::BeginDisabled(!supported);
             if (ImGui::Selectable(frame_gens[i], i == frame_gen)) {
-                Store(s.frame_gen, i, true);
+                BbSettings::SelectFrameGen(i);
+                dirty = true;
             }
             ImGui::EndDisabled();
             if (!supported) {
                 ImGui::SameLine();
-                ImGui::TextDisabled("- unsupported by this GPU");
+                ImGui::TextDisabled(i == BbSettings::FrameGenFsr401 ? "- unavailable" : "- unsupported by this GPU");
+                if (i == BbSettings::FrameGenFsr401)
+                    if (const char* problem = s.fg401_problem.load()) Hint(problem);
             }
         }
         ImGui::EndCombo();
@@ -389,7 +392,7 @@ void Menu() {
     ImGui::EndDisabled();
     Hint("On: no more frames than the display shows (an uncapped game gets fewer generated frames, and the GPU does less). Off: the multiplier as chosen; past the refresh rate the display shows the newest frames.");
     // What runs now (fitted: at most the frames the display shows between two of the game's).
-    if (s.frame_gen != BbSettings::FrameGenOff && s.frame_gen_display_hz > 0) {
+    if (s.ActiveFrameGen() != BbSettings::FrameGenOff && !s.frame_gen_hdr && s.frame_gen_display_hz > 0) {
         const int now = std::min(s.frame_gen_now.load(), multiplier - 1);
         if (now > 0 && s.frame_gen_flip_limit > 0) {
             ImGui::TextDisabled("Now %dx on a %d Hz display; V-Sync (FIFO) caps the game at %d FPS",
@@ -405,7 +408,16 @@ void Menu() {
             ImGui::TextDisabled("Paused: presenting fell behind (V-Sync on a slower display?)");
         }
     }
-    if (const char* problem = s.frame_gen_problem.load()) {
+    if (s.frame_gen == BbSettings::FrameGenFsr401) {
+        if (const char* problem = s.fg401_problem.load()) {
+            ImGui::PushTextWrapPos();
+            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s", problem);
+            ImGui::PopTextWrapPos();
+        }
+        if (s.frame_gen_hdr)
+            ImGui::TextDisabled("ML-FG paused: HDR output.");
+    }
+    if (const char* problem = s.frame_gen_problem.load(); problem && !s.frame_gen_hdr) {
         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s", problem);
     }
 

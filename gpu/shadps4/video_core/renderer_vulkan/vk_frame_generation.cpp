@@ -108,14 +108,15 @@ FrameGenerator::FrameGenerator(const Instance& instance_, Scheduler& scheduler_)
                          .getProperties2<vk::PhysicalDeviceProperties2,
                                          vk::PhysicalDeviceIDProperties>();
     const auto& id = ids.get<vk::PhysicalDeviceIDProperties>();
-    const auto support = instance.IsFg401InteropSupported() && id.deviceLUIDValid
-                             ? ProbeFg401(id.deviceLUID.data())
-                             : Fg401Support{false, "interop"};
-    settings.fg401_supported = support.supported;
+    auto support = ProbeFg401(id.deviceLUID.data());
+    if (support.supported && (!instance.IsFg401InteropSupported() || !id.deviceLUIDValid))
+        support = {false, "interop"};
+    const auto support_message = Fg401SupportMessage(support);
+    BbSettings::ConfigureFg401Support(support.supported, support_message.c_str());
     std::printf("ML-FG 4.0.1 support: %s (%s)\n", support.supported ? "available" : "unavailable",
                 support.reason.c_str());
     if (settings.frame_gen == BbSettings::FrameGenFsr401 && !support.supported) {
-        Fail(BbSettings::FrameGenFsr401, "ML-FG 4.0.1 is unavailable on the selected GPU/driver");
+        Fail(BbSettings::FrameGenFsr401, support_message.c_str());
     }
 #endif
     const int dlss_max = DlssMaxCount();
@@ -135,11 +136,11 @@ FrameGenerator::FrameGenerator(const Instance& instance_, Scheduler& scheduler_)
         settings.frame_gen_problem = "DLSS Frame Generation needs a GeForce RTX 40 or newer";
         settings.frame_gen = BbSettings::FrameGenFsr3;
     }
-    if (settings.frame_gen != BbSettings::FrameGenOff) {
-        const int max = settings.frame_gen == BbSettings::FrameGenDlss ? dlss_max + 1 : 2;
+    if (settings.ActiveFrameGen() != BbSettings::FrameGenOff) {
+        const int max = settings.ActiveFrameGen() == BbSettings::FrameGenDlss ? dlss_max + 1 : 2;
         std::printf("Frame generation: %s, %dx\n",
-                    settings.frame_gen == BbSettings::FrameGenDlss      ? "DLSS"
-                    : settings.frame_gen == BbSettings::FrameGenFsr401 ? "AMD ML-FG 4.0.1"
+                    settings.ActiveFrameGen() == BbSettings::FrameGenDlss      ? "DLSS"
+                    : settings.ActiveFrameGen() == BbSettings::FrameGenFsr401 ? "AMD ML-FG 4.0.1"
                                                                         : "FSR 3.1",
                     std::min(settings.frame_gen_multiplier.load(), max));
     }
@@ -161,12 +162,12 @@ FrameGenerator::~FrameGenerator() {
 }
 
 bool FrameGenerator::Wanted() const {
-    return BbSettings::Get().frame_gen != BbSettings::FrameGenOff;
+    return BbSettings::Get().ActiveFrameGen() != BbSettings::FrameGenOff;
 }
 
 u32 FrameGenerator::WantedCount() const {
     const auto& settings = BbSettings::Get();
-    switch (settings.frame_gen) {
+    switch (settings.ActiveFrameGen()) {
     case BbSettings::FrameGenDlss:
         return u32(std::clamp(settings.frame_gen_multiplier.load() - 1, 1,
                               std::clamp(DlssMaxCount(), 1, int(MaxGenerated))));
@@ -532,7 +533,7 @@ u32 FrameGenerator::Generate(vk::CommandBuffer& cmdbuf, vk::Image color, vk::Ima
     if (!(frame_ms > 0.0f && frame_ms < 200.0f)) {
         frame_ms = 16.6f;
     }
-    if (captured && BbSettings::Get().frame_gen == BbSettings::FrameGenFsr401) {
+    if (captured && BbSettings::Get().ActiveFrameGen() == BbSettings::FrameGenFsr401) {
         frame_ms = capture_frame_ms;
     }
     // Views the FSR 3.1 context took for frames the GPU has finished.
@@ -541,10 +542,11 @@ u32 FrameGenerator::Generate(vk::CommandBuffer& cmdbuf, vk::Image color, vk::Ima
         fsr3_pending.pop_front();
     }
     const auto& settings = BbSettings::Get();
-    if (settings.frame_gen == BbSettings::FrameGenFsr401 && !settings.fg401_supported) {
-        Fail(BbSettings::FrameGenFsr401, "ML-FG 4.0.1 is unavailable on the selected GPU/driver");
+    if (settings.ActiveFrameGen() == BbSettings::FrameGenFsr401 && !settings.fg401_supported) {
+        const char* problem = settings.fg401_problem.load();
+        Fail(BbSettings::FrameGenFsr401, problem ? problem : "ML-FG support check failed.");
     }
-    const int provider = settings.frame_gen;
+    const int provider = settings.ActiveFrameGen();
     const bool had_capture = captured;
     captured = false;
     hudless_captured = false;
@@ -663,7 +665,7 @@ void FrameGenerator::DestroyFsr3() {
 bool FrameGenerator::OverlapWanted() {
 #ifdef _WIN32
     const auto& settings = BbSettings::Get();
-    return settings.frame_gen == BbSettings::FrameGenFsr401 && settings.fg401_supported;
+    return settings.ActiveFrameGen() == BbSettings::FrameGenFsr401 && settings.fg401_supported;
 #else
     return false;
 #endif
@@ -934,15 +936,10 @@ u32 FrameGenerator::GenerateDlss(vk::CommandBuffer cmdbuf, vk::Image color,
 
 void FrameGenerator::Fail(int provider, const char* reason) {
     auto& settings = BbSettings::Get();
-    const bool to_fsr3 =
-        provider == BbSettings::FrameGenDlss || provider == BbSettings::FrameGenFsr401;
-    std::printf("Frame generation: %s; %s\n", reason, to_fsr3 ? "using FSR 3.1" : "off");
-    settings.frame_gen_problem =
-        provider == BbSettings::FrameGenFsr401 ? "ML-FG 4.0.1 unavailable; using FSR 3.1" : reason;
-    if (provider == BbSettings::FrameGenFsr401) {
-        settings.fg401_supported = false;
-    }
-    settings.frame_gen = to_fsr3 ? BbSettings::FrameGenFsr3 : BbSettings::FrameGenOff;
+    BbSettings::FrameGenFailure(provider, reason);
+    std::printf("Frame generation: %s; active=%s, selected=%s\n", reason,
+                BbSettings::FrameGenName(settings.ActiveFrameGen()),
+                BbSettings::FrameGenName(settings.frame_gen));
     reset = true;
 }
 

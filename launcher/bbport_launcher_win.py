@@ -809,11 +809,12 @@ class Launcher:
             values[:] = [v for v,t in options]
             box.configure(values=[_(*t) for v,t in options])
             if var.get()=='fsr401' and not ready:
-                if self.fg401_support is None:
-                    box.set(_('ML-FG 4.0.1: checking support…'))
-                    return
-                var.set('fsr3')
-            box.current(values.index(var.get()) if var.get() in values else values.index('off'))
+                # Display the saved choice without offering it as a new unsupported choice.
+                box.set(_('ML-FG 4.0.1: checking support…') if self.fg401_support is None else
+                        _(bbport_fg401.KEYS[0]))
+            else:
+                box.current(values.index(var.get()) if var.get() in values else values.index('off'))
+            self.refresh_fg401_status()
         box.bind('<<ComboboxSelected>>', lambda _e: var.set(values[box.current()]))
         var.trace_add('write', refresh)
         self.fg401_refreshers.append(refresh)
@@ -823,15 +824,28 @@ class Launcher:
     def refresh_fg401(self):
         for refresh in self.fg401_refreshers:
             refresh()
+        self.refresh_fg401_status()
+
+    def refresh_fg401_status(self):
         if hasattr(self, 'fg401_status'):
-            key = ('ML-FG 4.0.1: checking support…' if self.fg401_support is None else
-                   '' if self.fg401_support.get('supported') else
-                   'ML-FG 4.0.1 requires an RX 9000, Windows 11 and a supported AMD driver/runtime. FSR 3.1 remains available.')
-            self.fg401_status.configure(text=_(key))
-            if key:
+            text = bbport_fg401.message(self.fg401_support, _,
+                hdr=bool(self.var('hdr', 'app').get()), selected=self.var('frame_gen', 'ini').get()=='fsr401')
+            self.fg401_status.configure(text=text)
+            if text:
                 self.fg401_status.grid()
             else:
                 self.fg401_status.grid_remove()
+
+    def recheck_fg401(self):
+        self.fg401_support = None
+        self.refresh_fg401()
+        def work():
+            support = bbport_fg401.query(PORT_DIR, bbport_fsr411.environment(PORT_DIR, self.app))
+            def done():
+                self.fg401_support = support
+                self.refresh_fg401()
+            self.ui_calls.put(done)
+        threading.Thread(target=work, daemon=True).start()
 
     def fsr411_choice(self, parent, width=38):
         backend = self.var('fsr411_backend', 'ini')
@@ -1248,6 +1262,10 @@ class Launcher:
         self.fg401_status = self.ttk.Label(f, wraplength=self.px(640), justify='left')
         self.fg401_status.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
         self.refresh_fg401()
+        self.var('hdr', 'app').trace_add('write', lambda *_a: self.refresh_fg401_status())
+        holder = ttk.Frame(f)
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        ttk.Button(holder, text=_('Recheck support'), command=self.recheck_fg401).pack(side='left')
         self.row(f, _('Multiplier', 'Множитель'),
                  self.choice(f, 'frame_gen_multiplier', 'ini', FRAME_GEN_MULTIPLIERS),
                  _('FSR 3.1 makes one frame (2×); DLSS on a GeForce RTX 50 up to three (4×).',
