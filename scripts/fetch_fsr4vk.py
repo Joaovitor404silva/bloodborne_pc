@@ -6,9 +6,10 @@
     scripts/fetch_fsr4vk.py [--dir DIR] [--check]
 
 fsr4vk (https://github.com/dvj5411/fsr4vk, GPLv3; its AMD shader and model data are MIT) is a Vulkan
-FFX provider for the INT8 FSR 4.1.1 model. The port loads its DLL at run time (vk_fsr4vk.cpp) and
-does not ship it: this script fetches the pinned zip, checks its SHA-256, extracts the provider DLL
-and licenses, and checks the DLL's SHA-256. The zip is fsr4vk v0.4.3 plus one patch for AMD's Windows
+FFX provider for the INT8 FSR 4.1.1 model. Windows packages include it and load its DLL at run time
+(vk_fsr4vk.cpp). For repair or source builds, this script fetches the pinned zip,
+checks its SHA-256, extracts the provider DLL and licenses, and checks the DLL's SHA-256.
+The zip is fsr4vk v0.4.3 plus one patch for AMD's Windows
 driver (upstream's DLL fails there), hosted in 0xCydral's pinned GitHub release. A folder that holds
 the original upstream DLL does not verify, so `fetch` replaces it. Resumable (HTTP Range into a .part
 file), stdlib only, so the launcher can import `fetch` or run it as a process.

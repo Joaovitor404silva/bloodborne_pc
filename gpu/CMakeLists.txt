@@ -249,9 +249,10 @@ if (WIN32)
     # Guest code is entered with the System V ABI; NOMINMAX/WIN32_LEAN_AND_MEAN keep
     # <windows.h> out of the way of std::min/max and the Vulkan/SDL headers.
     target_compile_definitions(bbgpu PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN VK_USE_PLATFORM_WIN32_KHR)
-    target_sources(bbgpu PRIVATE fsr411_dx12/native_fsr411.cpp)
+    target_sources(bbgpu PRIVATE fsr411_dx12/native_fsr411.cpp fsr411_dx12/fsr411_support.cpp)
     # AMD's runtime loader checks MSBuild's _WINDOWS macro, not MinGW's _WIN32.
     set_source_files_properties(fsr411_dx12/native_fsr411.cpp PROPERTIES COMPILE_DEFINITIONS _WINDOWS)
+    set_source_files_properties(fsr411_dx12/fsr411_support.cpp PROPERTIES COMPILE_DEFINITIONS _WINDOWS)
     target_include_directories(bbgpu PRIVATE fsr411_dx12 fsr411_dx12/sdk/api/include fsr411_dx12/sdk/upscalers/include)
     target_compile_options(bbgpu PRIVATE -include ${CMAKE_CURRENT_SOURCE_DIR}/shim/bb_win_compat.h)
     target_include_directories(bbgpu PRIVATE third_party/xbyak)
@@ -295,8 +296,12 @@ if (WIN32)
     # The PS4 range (64 GiB - 1 TiB) must stay free: no high-entropy ASLR for heaps and stacks.
     # The guest main thread runs on the process stack: 16 MiB, committed (no stack probes).
     target_link_options(bb-probe PRIVATE -Wl,--disable-high-entropy-va "SHELL:-Xlinker --stack -Xlinker 16777216,16777216")
-    add_executable(bb-gpu-capabilities ../tools/gpu_capabilities.c ../packaging/windows/bb-gpu-capabilities.rc)
-    target_link_libraries(bb-gpu-capabilities PRIVATE Vulkan::Vulkan)
+    add_executable(bb-gpu-capabilities ../tools/gpu_capabilities.c ../tools/fsr411_capabilities.cpp
+        fsr411_dx12/fsr411_support.cpp ../packaging/windows/bb-gpu-capabilities.rc)
+    target_include_directories(bb-gpu-capabilities PRIVATE shim fsr411_dx12
+        fsr411_dx12/sdk/api/include fsr411_dx12/sdk/upscalers/include)
+    target_compile_definitions(bb-gpu-capabilities PRIVATE NOMINMAX)
+    target_link_libraries(bb-gpu-capabilities PRIVATE Vulkan::Vulkan d3d12 dxgi)
     # "Play Bloodborne.exe": the game with the launcher's saved settings, no launcher window.
     add_executable(bb-play WIN32 ../packaging/windows/play.c ../packaging/windows/play.rc)
     target_compile_options(bb-play PRIVATE -municode)
@@ -304,6 +309,11 @@ if (WIN32)
 endif()
 
 # Explicit test targets; neither launches the game nor needs a Vulkan device.
+add_executable(fsr411-requirements-test EXCLUDE_FROM_ALL ../tests/test_fsr411_requirements.cpp)
+target_include_directories(fsr411-requirements-test PRIVATE shim)
+target_link_libraries(fsr411-requirements-test PRIVATE Vulkan::Headers)
+target_compile_options(fsr411-requirements-test PRIVATE -UNDEBUG -Wall -Wextra -Werror -Wno-missing-field-initializers)
+
 add_executable(command-buffer-test EXCLUDE_FROM_ALL ../tests/test_command_buffers.cpp)
 target_compile_options(command-buffer-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
 target_include_directories(command-buffer-test PRIVATE ..)
