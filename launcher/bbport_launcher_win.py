@@ -3370,32 +3370,37 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             if child.winfo_class() == 'Label':
                 child.configure(bg=bg)
 
-    def sync_shared_graphics(self):
-        """Merge overlay edits while preserving an explicit, unsaved launcher edit."""
+    @staticmethod
+    def ini_text(key, value):
+        return ('1' if value else '0') if key in INI_FLAGS else \
+            f'{float(value):.2f}' if key == 'sharpness' else str(value)
+
+    def sync_ini(self):
+        """Takes what the in-game menu wrote to bbport.ini while the launcher was open, except where
+        the launcher has an edit of its own that is not saved yet (else Play wrote the launcher's
+        older values over the menu's)."""
         disk, lines = load_ini()
-        for key in SHARED_GRAPHICS_KEYS:
-            var = self.vars.get(key)
-            value = var.get() if var is not None else self.ini[key]
-            shown = ('1' if value else '0') if key in INI_FLAGS and var is not None else str(value)
-            if shown == self.ini[key]:
-                self.ini[key] = disk[key]
-                new = disk[key] == '1' if key in INI_FLAGS else disk[key]
-                # Only on a change: each set fires the traces, which re-hash the fsr4vk DLL.
-                if var is not None and var.get() != new:
-                    var.set(new)
-        self.ini_lines = lines
+        for key, var in self.vars.items():
+            if var.store != 'ini' or key not in disk:
+                continue
+            try:
+                shown = self.ini_text(key, var.get())
+            except (self.tk.TclError, ValueError):  # an unfinished number in a spinbox
+                continue
+            if shown == self.ini.get(key) and shown != disk[key]:
+                var.set(disk[key] == '1' if key in INI_FLAGS else disk[key])
+        self.ini, self.ini_lines = disk, lines
 
     def collect(self):
         """Writes settings.json, bbport.ini, mods.json and patches.json."""
-        self.sync_shared_graphics()
+        self.sync_ini()
         for key, var in self.vars.items():
             try:
                 value = var.get()
             except self.tk.TclError:  # an unfinished number in a spinbox
                 value = APP_DEFAULTS.get(key, INI_DEFAULTS.get(key))
             if var.store == 'ini':
-                self.ini[key] = ('1' if value else '0') if key in INI_FLAGS else \
-                    f'{float(value):.2f}' if key == 'sharpness' else str(value)
+                self.ini[key] = self.ini_text(key, value)
             else:
                 self.app[key] = value
         for key in SHARED_GRAPHICS_KEYS:
@@ -3554,7 +3559,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 stamp = ini_path().stat().st_mtime_ns
                 # Wait for a stable write before merging an overlay save into the UI.
                 if stamp == getattr(self, '_shared_ini_seen', None) and stamp != getattr(self, '_shared_ini_synced', None):
-                    self.sync_shared_graphics()
+                    self.sync_ini()
                     self._shared_ini_synced = stamp
                 self._shared_ini_seen = stamp
             except OSError:
@@ -3570,7 +3575,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 if isinstance(item, tuple):
                     self.append(_('\n— the game exited (code {}) —\n', '\n— игра завершилась (код {}) —\n').format(item[0]))
                     self.process = None
-                    self.sync_shared_graphics()
+                    self.sync_ini()
                     self.refresh_fsr411()
                     if self.job:
                         self.job.close()

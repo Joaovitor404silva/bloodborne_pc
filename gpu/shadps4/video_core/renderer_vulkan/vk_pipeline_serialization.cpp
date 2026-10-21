@@ -12,9 +12,19 @@
 
 namespace Serialization {
 /* You should increment versions below once corresponding serialization scheme is changed. */
-static constexpr u32 ShaderBinaryVersion = 7u; // bbport: interpolated integer fix (Pascal)
-static constexpr u32 ShaderMetaVersion = 7u; // bbport: ImageResource::needs_native
-static constexpr u32 PipelineKeyVersion = 5u; // bbport: Info layout (ImageResource::needs_native)
+// bbport: above every version a release has used (1.9.2: 11, 8, 6), never back to an old one: the
+// GPU rollback to 1.8.2's code took them back to 7, 7, 5, and a cache another build wrote into
+// the same folder then passed as this build's.
+static constexpr u32 ShaderBinaryVersion = 12u;
+static constexpr u32 ShaderMetaVersion = 9u;
+static constexpr u32 PipelineKeyVersion = 7u;
+
+// bbport: shader binaries carry no version of their own, so their names do: a build with another
+// version writes its binaries beside these instead of over them (where a shader's metadata
+// passed its version check and then loaded the other build's binary).
+static std::string ShaderBinaryName(u64 pgm_hash, size_t perm_idx) {
+    return fmt::format("{:#018x}_{}_v{}", pgm_hash, perm_idx, ShaderBinaryVersion);
+}
 } // namespace Serialization
 
 namespace Vulkan {
@@ -87,7 +97,7 @@ void RegisterShaderBinary(std::vector<u32>&& spv, u64 pgm_hash, size_t perm_idx)
     }
 
     Storage::DataBase::Instance().Save(Storage::BlobType::ShaderBinary,
-                                       fmt::format("{:#018x}_{}", pgm_hash, perm_idx),
+                                       Serialization::ShaderBinaryName(pgm_hash, perm_idx),
                                        std::move(spv));
 }
 
@@ -287,7 +297,7 @@ bool PipelineCache::LoadPipelineStage(Serialization::Archive& ar, size_t stage) 
 
     std::vector<u32> spv{};
     Storage::DataBase::Instance().Load(Storage::BlobType::ShaderBinary,
-                                       fmt::format("{:#018x}_{}", program->info.pgm_hash, perm_idx),
+                                       Serialization::ShaderBinaryName(program->info.pgm_hash, perm_idx),
                                        spv);
     if (spv.empty()) {
         return false;
