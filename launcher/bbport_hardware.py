@@ -216,14 +216,46 @@ RYZEN = {9000: (None, 215, 235, 242), 8000: (140, 172, 185, None), 7000: (150, 2
          3000: (100, 120, 130, 138), 2000: (72, 92, 102, None), 1000: (68, 85, 95, None)}
 CORE_ULTRA = {'u2-5': 188, 'u2-7': 215, 'u2-9': 228, 'u1-5': 125, 'u1-7': 140, 'u1-9': 148}
 CORE_NO_I = {'3': 135, '5': 165, '7': 195}
+# The tables score desktop chips. A laptop's Core i or Ryzen of the same generation holds lower clocks
+# under long load: H-class (H, HK, HQ, HS, MQ, QM) about four fifths of it, U-class (U, Y, P, M,
+# Intel's G1-G7) about two thirds. HX chips run at desktop power.
+LAPTOP_SHARE = {'h': 0.8, 'u': 0.65}
+
+
+def laptop_class(suffix, intel=True):
+    """'h', 'u' or None (a desktop chip, or HX) for the letters after a model number (7820HK: 'HK')."""
+    if not suffix or suffix.startswith('HX'):
+        return None
+    if suffix[0] == 'H' or suffix in ('MQ', 'QM', 'XM', 'MX'):
+        return 'h'
+    if suffix[0] in 'UYP' or suffix == 'M' or (intel and re.fullmatch(r'G\d', suffix)):
+        return 'u'
+    return None
 
 
 class Cpu:
     """A processor: its name, the website's score (None: not in the tables) and support:
-    ok, compat (instructions translated: Intel 2nd/3rd gen) or none (no AVX)."""
+    ok, compat (instructions translated: Intel 2nd/3rd gen) or none (no AVX). laptop: 'h' or 'u'
+    when the score was lowered for a laptop chip (LAPTOP_SHARE)."""
 
-    def __init__(self, name, score, support='ok', family=''):
-        self.name, self.score, self.support, self.family = name, score, support, family
+    def __init__(self, name, score, support='ok', family='', laptop=None):
+        self.name, self.score, self.support, self.family, self.laptop = name, score, support, family, laptop
+        if laptop and score:
+            self.score = round(score * LAPTOP_SHARE[laptop])
+
+    @property
+    def label(self):
+        """'Intel Core i7-7820HK' for Windows' 'Intel(R) Core(TM) i7-7820HK CPU @ 2.90GHz'."""
+        name = re.sub(r'\((R|TM|tm|r)\)', ' ', self.name)
+        name = re.sub(r'@.*$|\bw(ith|/) Radeon.*$|\b\d+-Core Processor\b|\bProcessor\b|\bCPU\b|\b\d+(st|nd|rd|th) Gen\b',
+                      ' ', name)
+        return ' '.join(name.split())
+
+
+def model_suffix(text):
+    """The letters right after a model number ('HK CPU @ 2.90GHz' -> 'HK', 'G7 CPU' -> 'G7')."""
+    m = re.match(r'[A-Z]{1,3}\d?(?![A-Za-z])', text)
+    return m.group() if m else ''
 
 
 def cpu_from_name(name):
@@ -243,7 +275,7 @@ def cpu_from_name(name):
             return Cpu(name, 0, 'none', 'Core i')
         scores = INTEL_CORE.get(min(gen, 14))
         score = scores and (scores[tier] if scores[tier] is not None else max(s for s in scores if s))
-        return Cpu(name, score, 'compat' if gen <= 3 else 'ok', 'Core i')
+        return Cpu(name, score, 'compat' if gen <= 3 else 'ok', 'Core i', laptop_class(model_suffix(n[m.end():])))
     m = re.search(r'\bCore\s+([357])\s+\d{3}', n)
     if m:
         return Cpu(name, CORE_NO_I[m.group(1)], family='Core')
@@ -261,7 +293,7 @@ def cpu_from_name(name):
         scores = RYZEN.get(int(m.group(2)) * 1000)
         if scores:
             score = scores[tier] if scores[tier] is not None else max(s for s in scores if s)
-            return Cpu(name, score, family='Ryzen')
+            return Cpu(name, score, family='Ryzen', laptop=laptop_class(model_suffix(n[m.end():]), intel=False))
     if re.search(r'\bAthlon\b', n):
         zen = re.search(r'\bAthlon\s+(?:Silver|Gold|PRO)?\s*\d{3,4}', n) and not re.search(r'Athlon\s+(II|X\d|64)', n)
         return Cpu(name, 50 if zen else 0, 'ok' if zen else 'none', 'Athlon')
@@ -466,12 +498,16 @@ def assess(g, cpu, ram, tr=str):
     rating.tier, rating.tiers = tier, tiers
     rating.tier_label, rating.summary = tr(TIERS[tier]), tr(SUMMARIES[tier])
     rating.limit = None if tier == 5 else next(k for k in ('gpu', 'cpu', 'ram') if capped[k] == tier)
-    rating.levels = {}
+    # levels: the frame rate to expect, where the processor can set the limit; picture_levels: what
+    # the graphics card can do, for the picture settings (with the processor as the limit, a lower
+    # picture would not add frames).
+    rating.cap, rating.levels, rating.picture_levels = cap, {}, {}
     rating.rows = []
     for res, level in zip(RESOLUTIONS, resolution_levels(g, tiers['gpu'])):
+        picture = min(level, 0 if tiers['ram'] == 0 else 5)
         level = min(level, cap)
-        rating.levels[res] = level
-        rating.rows.append((res, level, tr(LEVELS[level]), settings_text(g, level, res, tr)))
+        rating.levels[res], rating.picture_levels[res] = level, picture
+        rating.rows.append((res, level, tr(LEVELS[level]), settings_text(g, picture if level else 0, res, tr)))
 
     checks = []
     if cpu.support == 'none':
@@ -484,10 +520,13 @@ def assess(g, cpu, ram, tr=str):
         checks.append(('ok', 'cpu', tr('Not in the website\'s list; it has every instruction the port needs. '
                                        'Counted as the minimum.')))
     else:
-        checks.append((('bad', 'warn', 'ok', 'ok', 'ok')[tiers['cpu']], 'cpu', tr((
-            '', 'Below the minimum (Core i3-10100 / Ryzen 3 3100): expect low frame rates and stutter.',
-            'Meets the minimum (Core i3-10100 / Ryzen 3 3100).', 'Above the minimum.',
-            'Meets the recommendation (Ryzen 7 5700X / Core i7-12700).')[tiers['cpu']])))
+        text = tr(('', 'Below the minimum (Core i3-10100 / Ryzen 3 3100): expect low frame rates and stutter.',
+                   'Meets the minimum (Core i3-10100 / Ryzen 3 3100).', 'Above the minimum.',
+                   'Meets the recommendation (Ryzen 7 5700X / Core i7-12700).')[tiers['cpu']])
+        if cpu.laptop:
+            text += ' ' + tr('Laptop processor: counted lower than the desktop chip of its generation '
+                             '(it holds lower clocks under long load).')
+        checks.append((('bad', 'warn', 'ok', 'ok', 'ok')[tiers['cpu']], 'cpu', text))
     if not g.vulkan13:
         checks.append(('bad', 'gpu', tr('Not supported: no Vulkan 1.3 driver for this card.')))
     elif not g.igpu and g.vram < 4:
@@ -572,8 +611,9 @@ def recommended_class(rating, available):
 
 
 def low_end(rating):
-    """Below the minimum at 1080p: the website's 720p end of the minimum."""
-    return rating.levels['1080p'] <= 1
+    """The graphics card below the minimum at 1080p: the website's 720p end of the minimum. (A
+    processor below the minimum is not helped by fewer pixels.)"""
+    return rating.picture_levels['1080p'] <= 1
 
 
 # The player's goal (the launcher's Play page): it moves the profile along one line, the hardware
@@ -597,12 +637,15 @@ def profile(rating, res, output, current=None, goal='smooth'):
     screen-space reflections (not in the original) are only switched off when the card has no room
     for them, and frame generation (input latency) is only switched off where it cannot work well.
     `current` ({key: value}) is what is set now, for those two."""
-    g, level = rating.gpu, rating.levels[res]
+    # level: the frame rate to expect (frame rate cap, frame generation); picture: what the card can
+    # do (preset, effects, model detail). They differ when the processor sets the limit.
+    g, level, picture = rating.gpu, rating.levels[res], rating.picture_levels[res]
     four_gb = not g.igpu and g.vram <= 4
     goal = goal if goal in GOALS else 'smooth'
     current = current or {}
     if low_end(rating) and res == '1080p':
-        output, level = '1280x720', 2  # 720p: about 2.25 times fewer pixels than 1080p
+        # 720p: about 2.25 times fewer pixels than 1080p
+        output, level, picture = '1280x720', min(2, rating.cap), 2
     name = upscaler_name(g)
     upscaler = {'DLSS': 'dlss', 'FSR 4': 'fsr4', 'FSR 3.1': 'fsr3', None: 'off'}[name]
     out = []
@@ -624,19 +667,24 @@ def profile(rating, res, output, current=None, goal='smooth'):
         pass  # the quality preset is the upscaler's render scale
     elif output == '1280x720':
         add('ini', 'preset', '2', 'Balanced: Performance would render 720p from only 360 lines.')
-    elif goal == 'balanced' and level >= 5:
-        add('ini', 'preset', step_preset(quality_for(level, res), -1),
+    elif goal == 'balanced' and picture >= 5:
+        add('ini', 'preset', step_preset(quality_for(picture, res), -1),
             'Goal "Balanced": at 60 FPS your card has room for a sharper picture, one quality step up.')
     elif goal == 'quiet':
-        add('ini', 'preset', step_preset(quality_for(level, res), 1),
+        add('ini', 'preset', step_preset(quality_for(picture, res), 1),
             'Goal "Quiet": one quality step down, less work for the graphics card.')
     else:
-        add('ini', 'preset', quality_for(level, res), 'The website\'s suggestion for the expected frame rate.')
+        add('ini', 'preset', quality_for(picture, res), 'The website\'s suggestion for the expected frame rate.')
+    cpu_limit = level < picture  # the processor holds the frame rate below what the card could do
     if four_gb:
         add('app', 'fps_mode', '60', 'The website\'s settings for 4 GB cards: a 60 FPS cap.')
     elif goal in ('balanced', 'quiet') and level >= 3:
         add('app', 'fps_mode', '60', {'balanced': 'Goal "Balanced": a steady 60 FPS.',
                                       'quiet': 'Goal "Quiet": 60 FPS; the card rests between frames.'}[goal])
+    elif cpu_limit:
+        add('app', 'fps_mode', '60' if level == 3 else '30',
+            'Your processor sets the limit: a steady cap at what it is expected to hold. Lower graphics '
+            'settings would not raise the frame rate.')
     else:
         add('app', 'fps_mode', 'uncap' if level >= 4 else '60' if level == 3 else '30',
             {True: 'Unlocked, capped at the display refresh (at most 120): your PC is expected above 60 FPS.',
@@ -644,17 +692,17 @@ def profile(rating, res, output, current=None, goal='smooth'):
     add('app', 'frame_cap', '', 'Auto: the display refresh, at most 120 (the game\'s timing breaks above).')
     add('ini', 'effect_game_aa', upscaler == 'off' and not four_gb,
         'The game\'s own anti-aliasing only without an upscaler: the upscaler smooths edges itself.')
-    add('ini', 'effect_ssao', level >= 3, 'Ambient occlusion costs GPU time: on from "Above minimum".')
-    add('ini', 'effect_dynamic_shadows', level >= 3, 'Shadows of dynamic lights: on from "Above minimum".')
-    if level < 5 and current.get('effect_ssr'):
+    add('ini', 'effect_ssao', picture >= 3, 'Ambient occlusion costs GPU time: on from "Above minimum".')
+    add('ini', 'effect_dynamic_shadows', picture >= 3, 'Shadows of dynamic lights: on from "Above minimum".')
+    if picture < 5 and current.get('effect_ssr'):
         add('ini', 'effect_ssr', False, 'Screen-space reflections are expensive: off below "4K-ready" headroom.')
     if four_gb:
         lod, why = '0', 'The website\'s settings for 4 GB cards: model detail as in the game.'
-    elif goal == 'quiet' and level >= 3 and not g.igpu:
+    elif goal == 'quiet' and picture >= 3 and not g.igpu:
         lod, why = '0', 'Goal "Quiet": model detail as in the game.'
-    elif (level >= 5 or (goal == 'balanced' and level >= 4)) and g.vram >= 8 and rating.ram >= 16:
+    elif (picture >= 5 or (goal == 'balanced' and picture >= 4)) and g.vram >= 8 and rating.ram >= 16:
         lod, why = '-2', 'Highest model detail: your card has room to spare at this resolution.'
-    elif level >= 3 and not g.igpu:
+    elif picture >= 3 and not g.igpu:
         lod, why = '0', 'Model detail as in the game.'
     else:
         lod, why = '1', 'Lower model detail: below "Above minimum" every millisecond counts.'
@@ -662,7 +710,7 @@ def profile(rating, res, output, current=None, goal='smooth'):
     if goal == 'quiet':
         add('ini', 'object_motion', False, 'Goal "Quiet": object motion vectors off (they cost about 5–10% FPS).')
     else:
-        add('ini', 'object_motion', level >= 4 and not four_gb,
+        add('ini', 'object_motion', picture >= 4 and not four_gb,
             'Object motion vectors cost about 5–10% FPS: on from "Recommended".')
     frame_gen_ok = level >= 4 and (g.frame_gen or g.vram >= 12)
     if current.get('frame_gen', 'off') != 'off' and not frame_gen_ok:

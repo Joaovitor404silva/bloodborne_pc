@@ -48,6 +48,22 @@ class TableTests(unittest.TestCase):
             cpu = hardware.cpu_from_name(name)
             self.assertEqual((cpu.score, cpu.support), (score, support), name)
 
+    def test_laptop_processors_count_lower(self):
+        """The tables score desktop chips; a laptop's H-class gets four fifths, its U-class two thirds."""
+        for name, score, laptop, label in (
+                ('Intel(R) Core(TM) i7-7820HK CPU @ 2.90GHz', 84, 'h', 'Intel Core i7-7820HK'),
+                ('Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz', 105, None, 'Intel Core i7-7700K'),
+                ('Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz', 70, 'u', 'Intel Core i5-8250U'),
+                ('Intel(R) Core(TM) i7-1065G7 CPU @ 1.30GHz', 86, 'u', 'Intel Core i7-1065G7'),
+                ('Intel(R) Core(TM) i7-4710MQ CPU @ 2.50GHz', 70, 'h', 'Intel Core i7-4710MQ'),
+                ('13th Gen Intel(R) Core(TM) i9-13980HX', 230, None, 'Intel Core i9-13980HX'),
+                ('AMD Ryzen 7 5800H with Radeon Graphics', 144, 'h', 'AMD Ryzen 7 5800H'),
+                ('AMD Ryzen 7 7840HS w/ Radeon 780M Graphics', 178, 'h', 'AMD Ryzen 7 7840HS'),
+                ('AMD Ryzen 5 5600G with Radeon Graphics', 160, None, 'AMD Ryzen 5 5600G'),
+                ('AMD Ryzen 7 5800X3D 8-Core Processor', 180, None, 'AMD Ryzen 7 5800X3D')):
+            cpu = hardware.cpu_from_name(name)
+            self.assertEqual((cpu.score, cpu.laptop, cpu.label), (score, laptop, label), name)
+
     def test_the_laptops_dedicated_card_wins(self):
         lines = ['AMD Radeon(TM) Graphics, integrated, 512 MiB', 'NVIDIA GeForce RTX 4060 Laptop GPU, discrete, 8188 MiB']
         self.assertEqual(hardware.best_gpu_line(lines), lines[1])
@@ -113,6 +129,26 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(profile(weak, (1920, 1080), {'frame_gen': 'fsr3'})['frame_gen'], 'off')
         strong = rate('nvidia-rtx-4070', 'AMD Ryzen 7 5800X', 32)
         self.assertNotIn('frame_gen', profile(strong, current={'frame_gen': 'dlss'}))
+
+    def test_a_processor_below_the_minimum_sets_the_frame_rate_not_the_picture(self):
+        """A player's GTX 1080 laptop with an i7-7820HK: 21-28 FPS in every test run, from the recommended
+        settings down to 640x360. Expect under 30 FPS and cap at 30; the picture follows the card."""
+        r = rate('nvidia-gtx-1080', 'Intel(R) Core(TM) i7-7820HK CPU @ 2.90GHz', 32)
+        self.assertEqual((r.tier_label, r.limit, r.levels['1080p'], r.picture_levels['1080p']),
+                         ('Below minimum', 'cpu', 1, 3))
+        self.assertTrue(any(part == 'cpu' and 'Laptop processor' in text for _s, part, text in r.checks))
+        settings = profile(r)
+        self.assertEqual((settings['output_res'], settings['fps_mode'], settings['preset']), ('1920x1080', '30', '2'))
+        self.assertTrue(settings['effect_ssao'] and settings['effect_dynamic_shadows'])
+        self.assertEqual(settings['model_lod'], '0')
+        same_card = profile(rate('nvidia-gtx-1080', 'AMD Ryzen 7 5800X', 32))
+        for key in ('output_res', 'preset', 'effect_ssao', 'effect_dynamic_shadows', 'model_lod', 'object_motion'):
+            self.assertEqual(settings[key], same_card[key], key)
+
+    def test_a_card_below_the_minimum_still_goes_to_720p(self):
+        r = rate('nvidia-gtx-1630', 'AMD Ryzen 7 5800X', 16)
+        self.assertEqual((r.tier_label, r.limit, r.picture_levels['1080p']), ('Below minimum', 'gpu', 1))
+        self.assertEqual(profile(r, (1920, 1080))['output_res'], '1280x720')
 
     def test_ultrawide_outputs(self):
         self.assertEqual(hardware.outputs(3440, 1440), {'1080p': '2560x1080', '1440p': '3440x1440'})

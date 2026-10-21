@@ -1602,7 +1602,10 @@ class SetupMixin:
                                   _('{} differ from the recommendation').format(len(diff)) if diff else _('checking your PC…')),
                             fg=theme.GOLD_LIGHT if chosen and not diff else theme.AMBER if diff else theme.MUTED)
             r = self.rating
-            pc.configure(text=(_('Your PC: {} · {}').format(r.tier_label, r.gpu.label) if r else ''))
+            # The part that sets the limit: the processor named instead of the card when it is the one.
+            pc.configure(text=(_('Your PC: {} · {}').format(r.tier_label, r.cpu.label) + '  ·  ' + _(hardware.LIMITS['cpu'])
+                               if r and r.limit == 'cpu' else
+                               _('Your PC: {} · {}').format(r.tier_label, r.gpu.label) if r else ''))
             if self.app.get('auto_undo'):
                 undo.pack(side='left', padx=(px(8), 0))
             else:

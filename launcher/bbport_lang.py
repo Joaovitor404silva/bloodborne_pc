@@ -1234,6 +1234,7 @@ from bbport_lang_more import MORE, MORE_KEYS  # noqa: E402 (texts added later, R
 from bbport_lang_fsr411 import TRANSLATIONS as FSR411_TRANSLATIONS  # noqa: E402
 from bbport_lang_motion_cache import TRANSLATIONS as MOTION_CACHE_TRANSLATIONS  # noqa: E402
 from bbport_lang_input import TRANSLATIONS as INPUT_TRANSLATIONS  # noqa: E402
+from bbport_lang_cpu import TRANSLATIONS as CPU_TRANSLATIONS  # noqa: E402
 from bbport_fg401 import TRANSLATIONS as FG401_TRANSLATIONS  # noqa: E402
 
 EXTRA_TRANSLATIONS = {
@@ -1263,5 +1264,6 @@ def table(language):
         _tables[language].update(FSR411_TRANSLATIONS.get(language, {}))
         _tables[language].update(MOTION_CACHE_TRANSLATIONS.get(language, {}))
         _tables[language].update(INPUT_TRANSLATIONS.get(language, {}))
+        _tables[language].update(CPU_TRANSLATIONS.get(language, {}))
         _tables[language].update(FG401_TRANSLATIONS.get(language, {}))
     return _tables[language]
