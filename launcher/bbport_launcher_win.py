@@ -134,6 +134,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bbport_lang  # noqa: E402
 import bbport_fg401  # noqa: E402
 import bbport_fsr411  # noqa: E402
+import bbport_character as character  # noqa: E402
 import bbport_lang_setup  # noqa: E402,F401 (the setup guide's texts)
 import bbport_lang_help  # noqa: E402,F401 (the Help page's and the game tests' texts)
 import bbport_lang_ui  # noqa: E402,F401 (the regrouped pages, the side bar, the guide)
@@ -2141,12 +2142,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         chosen = tk.StringVar(value=labels[0])
         ttk.Combobox(body, textvariable=chosen, values=labels, state='readonly', width=36).grid(
             row=0, column=0, columnspan=2, sticky='w', pady=(0, 10))
-        names = {'vitality': _('Vitality', 'Живучесть'), 'endurance': _('Endurance', 'Выносливость'),
-                 'strength': _('Strength', 'Сила'), 'skill': _('Skill', 'Ловкость'),
-                 'bloodtinge': _('Bloodtinge', 'Кровь'), 'arcane': _('Arcane', 'Тайна')}
+        # the attributes as the game names them in its text language (as on the Saves page)
+        words = character.names(self.var('game_dir', 'app').get(), self.var('language', 'app').get())
         values = {a: tk.IntVar() for a in respec.ATTRIBUTES}
         for row, a in enumerate(respec.ATTRIBUTES, start=1):
-            ttk.Label(body, text=names[a]).grid(row=row, column=0, sticky='w', padx=(0, 16), pady=2)
+            ttk.Label(body, text=words.attribute(a)).grid(row=row, column=0, sticky='w', padx=(0, 16), pady=2)
             ttk.Spinbox(body, from_=respec.FLOORS[a], to=respec.MAX, textvariable=values[a], width=6).grid(
                 row=row, column=1, sticky='w', pady=2)
         left = ttk.Label(body, style='Muted.TLabel')
