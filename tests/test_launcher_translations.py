@@ -57,6 +57,14 @@ class TranslationTests(unittest.TestCase):
                     found = table.get(text) or (inline.get(text) if language == 'ru' else None)
                     self.assertTrue(found, f'{text!r} has no {language} translation')
 
+    def test_the_processor_texts_are_translated_everywhere(self):
+        import bbport_lang_cpu
+        self.assertEqual(set(bbport_lang_cpu.TEXTS) - {'en'}, set(LANGUAGES))
+        for language in LANGUAGES:
+            for text in bbport_lang_cpu.KEYS:
+                with self.subTest(language=language, text=text[:30]):
+                    self.assertTrue(bbport_lang.table(language).get(text))
+
 
 if __name__ == '__main__':
     unittest.main()

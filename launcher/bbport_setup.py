@@ -135,7 +135,8 @@ class SetupMixin:
         else:
             gpu = self.detected_gpu()[0]
             icon.configure(text=theme.ICON['system'], fg=theme.MUTED)
-            label.configure(text=_('Performance: pick your graphics card (System & tests)')
+            label.configure(text=_('Performance: pick your graphics card (System & tests)').replace(
+                                _('System & tests'), _(*dict(L.NAV_EXPERT)['system']))
                             if self.hw_ready and not gpu else _('Performance: checking your PC…'),
                             foreground=theme.MUTED)
         expected = self.expectation()
@@ -1547,30 +1548,33 @@ class SetupMixin:
         self.goal_notes = getattr(self, 'goal_notes', []) + [note]
         buttons = tk.Frame(body, bg=theme.CARD)
         buttons.pack(fill='x', pady=(px(14), 0))
-        measure = ttk.Button(buttons, text=_('Measure on this PC'), style='Card.Accent.TButton',
-                             command=lambda: self.start_benchmark('picture', 'performance'))
-        measure.pack(side='left')
-        cancel = ttk.Button(buttons, text=_('Cancel'), style='Card.TButton', command=self.cancel_benchmark)
+        last = None  # the last measurement, under the buttons (with the game tests on)
+        if L.GAME_TESTS:
+            measure = ttk.Button(buttons, text=_('Measure on this PC'), style='Card.Accent.TButton',
+                                 command=lambda: self.start_benchmark('picture', 'performance'))
+            measure.pack(side='left', padx=(0, px(8)))
+            cancel = ttk.Button(buttons, text=_('Cancel'), style='Card.TButton', command=self.cancel_benchmark)
         details = ttk.Button(buttons, text=_('Show the settings one by one'), style='Card.TButton')
-        details.pack(side='left', padx=(px(8), 0))
+        details.pack(side='left')
         undo = ttk.Button(buttons, text=_('Undo'), style='Card.TButton',
                           command=lambda: (self.undo_profile(), draw()))
-        last = tk.Label(body, text='', bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), anchor='w', justify='left',
-                        cursor='hand2')
-        last.pack(anchor='w', pady=(px(8), 0))
-        last.bind('<Button-1>', lambda _e: self.open_last_report())
-        bench_list = tk.Frame(body, bg=theme.CARD)
-        bench_list.pack(fill='x', pady=(px(6), 0))
-        bench_note = tk.Label(body, text=_('Measuring takes 2 to 10 minutes: the game starts a few times by itself from '
-                                           'your last save, on a copy of it.'), bg=theme.CARD, fg=theme.MUTED,
-                              font=(theme.BODY, 9), justify='left', wraplength=px(700))
-        bench_note.pack(anchor='w', pady=(px(4), 0))
-        bench_apply = tk.Frame(body, bg=theme.CARD)
-        bench_apply.pack(fill='x')
-        self.bench_views = getattr(self, 'bench_views', {})
-        self.bench_views['picture'] = {'start': measure, 'cancel': cancel, 'list': bench_list, 'note': bench_note,
-                                       'apply': bench_apply}
-        self.index_entry(measure, _('Measure on this PC'), _('Performance test'), 'page:picture')
+        if L.GAME_TESTS:
+            last = tk.Label(body, text='', bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), anchor='w',
+                            justify='left', cursor='hand2')
+            last.pack(anchor='w', pady=(px(8), 0))
+            last.bind('<Button-1>', lambda _e: self.open_last_report())
+            bench_list = tk.Frame(body, bg=theme.CARD)
+            bench_list.pack(fill='x', pady=(px(6), 0))
+            bench_note = tk.Label(body, text=_('Measuring takes 2 to 10 minutes: the game starts a few times by itself '
+                                               'from your last save, on a copy of it.'), bg=theme.CARD, fg=theme.MUTED,
+                                  font=(theme.BODY, 9), justify='left', wraplength=px(700))
+            bench_note.pack(anchor='w', pady=(px(4), 0))
+            bench_apply = tk.Frame(body, bg=theme.CARD)
+            bench_apply.pack(fill='x')
+            self.bench_views = getattr(self, 'bench_views', {})
+            self.bench_views['picture'] = {'start': measure, 'cancel': cancel, 'list': bench_list, 'note': bench_note,
+                                           'apply': bench_apply}
+            self.index_entry(measure, _('Measure on this PC'), _('Performance test'), 'page:picture')
         self.profile_view = self.profile_card(f)
         self.profile_view.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(12), 0))
         self.profile_view.grid_remove()
@@ -1604,12 +1608,17 @@ class SetupMixin:
                                   _('{} differ from the recommendation').format(len(diff)) if diff else _('checking your PC…')),
                             fg=theme.GOLD_LIGHT if chosen and not diff else theme.AMBER if diff else theme.MUTED)
             r = self.rating
-            pc.configure(text=(_('Your PC: {} · {}').format(r.tier_label, r.gpu.label) if r else ''))
+            # The part that sets the limit: the processor named instead of the card when it is the one.
+            pc.configure(text=(_('Your PC: {} · {}').format(r.tier_label, r.cpu.label) + '  ·  ' + _(hardware.LIMITS['cpu'])
+                               if r and r.limit == 'cpu' else
+                               _('Your PC: {} · {}').format(r.tier_label, r.gpu.label) if r else ''))
             if self.app.get('auto_undo'):
                 undo.pack(side='left', padx=(px(8), 0))
             else:
                 undo.pack_forget()
             done = self.app.get('last_measure') or {}
+            if last is None:
+                return
             last.configure(text=(_('Last measured on {}: {:.0f} FPS (1 % low {:.0f}) for {} FPS  ›  report').format(
                 done['date'], done['fps'], done.get('low1') or 0, done['goal']) if done.get('fps') else ''))
             if done.get('fps'):
@@ -1723,9 +1732,14 @@ class SetupMixin:
     # ---- the System page --------------------------------------------------------------------------
     def build_system(self):
         tk, ttk, px = self.tk, self.ttk, self.px
-        f = self.scrolled_page('system', _('System & tests'),
-                               _('What your PC can do, rated like the hardware check on bbport.de, and game tests that '
-                                 'measure it: the best settings for a goal, settings side by side, stability.'))
+        if L.GAME_TESTS:
+            f = self.scrolled_page('system', _('System & tests'),
+                                   _('What your PC can do, rated like the hardware check on bbport.de, and game tests '
+                                     'that measure it: the best settings for a goal, settings side by side, stability.'))
+        else:
+            f = self.scrolled_page('system', _('Your PC'),
+                                   _('What your PC can do, rated like the hardware check on bbport.de, and the system '
+                                     'requirements.'))
         rating = self.rating_card(f)
         rating.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(10), 0))
         self.index_entry(rating, _('Wrong graphics card?'), _('Detected automatically'), 'gpu_override')
@@ -1739,7 +1753,8 @@ class SetupMixin:
                 self.state_line(notes, 'info', note, L.PANEL, wrap=760).pack(fill='x', pady=px(3))
         draw_notes()
         self.rating_views.append(draw_notes)
-        self.benchmark_card(f).grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(14), 0))
+        if L.GAME_TESTS:
+            self.benchmark_card(f).grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(14), 0))
 
         self.section(f, _('System requirements'))
         table = ttk.Frame(f, style='Card.TFrame', padding=(px(22), px(16)))
