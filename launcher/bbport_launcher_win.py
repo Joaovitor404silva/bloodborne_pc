@@ -2720,36 +2720,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    "the controller's (PlayStation, Xbox or Switch) while you use it.",
                    'Значки кнопок в игре: ваши клавиши и мышь, пока вы играете ими, и кнопки '
                    'геймпада (PlayStation, Xbox или Switch), пока вы используете его.'))
-        # The settings of each device in a tab of its own (a page each would be twice the scrolling).
-        # Tabs, not a second switch like "You play with" above: they only show, they change nothing,
-        # and they follow that choice.
-        px = self.px
-        played = self.var('play_with', 'app') if 'play_with' in self.app else None
-        tab = tk.StringVar(value=played.get() if played is not None and played.get() else
-                           self.app.get('controls_tab', 'keyboard'))
-        bar = tk.Frame(f, bg=PANEL)
-        bar.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(22), 0))
-        heads = {}
-        for value, text in (('controller', _('Controller settings')), ('keyboard', _('Keyboard and mouse settings'))):
-            cell = tk.Frame(bar, bg=PANEL)
-            cell.pack(side='left', padx=(0, px(26)))
-            label = tk.Label(cell, text=text, bg=PANEL, font=(theme.BODY_MEDIUM, 11), cursor='hand2', pady=px(4))
-            label.pack()
-            line = tk.Frame(cell, height=px(2), bg=PANEL)
-            line.pack(fill='x')
-            label.bind('<Button-1>', lambda _e, v=value: tab.set(v))
-            heads[value] = (label, line)
-        tk.Frame(f, bg=LINE, height=1).grid(row=self.next_row(f), column=0, columnspan=2, sticky='we',
-                                             pady=(0, px(6)))
-
-        def paint_tabs(*_a):
-            for value, (label, line) in heads.items():
-                label.configure(fg=theme.TEXT_STRONG if value == tab.get() else MUTED)
-                line.configure(bg=GOLD if value == tab.get() else PANEL)
-        tab.trace_add('write', paint_tabs)
-        paint_tabs()
-        if played is not None:
-            played.trace_add('write', lambda *_a: played.get() in heads and tab.set(played.get()))
+        # Only the settings of the device chosen in "You play with" (no switch of its own: one choice,
+        # not two that look alike). A search jump shows the other device's part without changing it.
+        played = self.var('play_with', 'app')
+        tab = tk.StringVar(value=played.get() or 'keyboard')
+        played.trace_add('write', lambda *_a: played.get() in ('controller', 'keyboard') and tab.set(played.get()))
         tabs, before = {}, set(f.grid_slaves())
         indexed = len(getattr(self, 'search_settings', []))
 
@@ -2835,7 +2810,6 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         tab_rows('keyboard')
 
         def show_tab(*_a):
-            self.app['controls_tab'] = tab.get()
             for name, widgets in tabs.items():
                 for widget in widgets:
                     widget.grid() if name == tab.get() else widget.grid_remove()
