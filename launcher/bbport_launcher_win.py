@@ -133,6 +133,7 @@ def run_command():
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bbport_lang  # noqa: E402
 import bbport_fg401  # noqa: E402
+import bbport_fsr411  # noqa: E402
 import bbport_lang_setup  # noqa: E402,F401 (the setup guide's texts)
 import bbport_lang_help  # noqa: E402,F401 (the Help page's and the game tests' texts)
 import bbport_lang_ui  # noqa: E402,F401 (the regrouped pages, the side bar, the guide)
@@ -412,7 +413,9 @@ def load_ini(legacy_settings=None):
                 '1' if old is True or old == '1' else '0'
     if migrated:
         save_ini(migrated, lines)
-        return load_ini()
+        return load_ini(legacy_settings)
+    if 'fsr411_backend' not in present:
+        values['fsr411_backend'] = bbport_fsr411.default_backend(PORT_DIR, legacy_settings)
     values['fsr411_backend'] = fsr411_backend(values)
     values['object_motion_cache'] = '1' if values.get('object_motion_cache') == '1' else '0'
     return values, lines
@@ -820,6 +823,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.controller_edits = {}
         self.pads = None  # bbport_gamepad.Pads, opened the first time a controller slot listens
         self.fg401_support = None
+        self.fsr411_support = None
+        self.fsr411_refreshers = []
+        self.fsr411_upscaler_refreshers = []
         self.fg401_refreshers = []
         self.vars = {}
         self.process = self.job = self.placer = None
@@ -881,7 +887,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     # ---- look --------------------------------------------------------------------------------
     def style(self):
         """bbport_theme's ttk style: rounded buttons and fields, switches, cards."""
-        self.theme.style(self.ttk.Style(self.root))
+        s = self.ttk.Style(self.root)
+        self.theme.style(s)
+        # FSR 4.1.1's provider menu (Graphics)
+        s.configure('Fsr411.TMenubutton', background=CARD, arrowcolor=GOLD, padding=4)
+        s.map('Fsr411.TMenubutton', foreground=[('disabled', MUTED)], background=[('active', CARD)])
+        s.configure('Unavailable.Fsr411.TMenubutton', foreground=MUTED)
 
     # ---- widget helpers ----------------------------------------------------------------------
     def var(self, key, store):
@@ -916,12 +927,21 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             var.set(values[0])
 
         def show(*_args):
+            shown = options
+            caps = getattr(self, 'fsr411_support', None)
+            if key == 'upscaler' and caps is not None and var.get() != 'fsr411' and not any(
+                    caps[m]['supported'] or caps[m]['reason'] == 'files' for m in ('vk', 'dx12')):
+                shown = [(v, t) for v, t in options if v != 'fsr411']
+            values[:] = [v for v, _t in shown]
+            box.configure(values=[_(*text) for _v, text in shown])
             current = var.get()
             box.current(values.index(current) if current in values else 0)
         show()
         box.bind('<<ComboboxSelected>>', lambda _e: var.set(values[box.current()]))
         var.trace_add('write', show)
         box.setting_key = key  # for the search (row() indexes it)
+        if key == 'upscaler' and hasattr(self, 'fsr411_upscaler_refreshers'):
+            self.fsr411_upscaler_refreshers.append(show)
         return box
 
     def fg401_choice(self, parent, width=52):
@@ -934,11 +954,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             values[:] = [v for v,t in options]
             box.configure(values=[_(*t) for v,t in options])
             if var.get()=='fsr401' and not ready:
-                if self.fg401_support is None:
-                    box.set(_('ML-FG 4.0.1: checking support…'))
-                    return
-                var.set('fsr3')
-            box.current(values.index(var.get()) if var.get() in values else values.index('off'))
+                # Display the saved choice without offering it as a new unsupported choice.
+                box.set(_('ML-FG 4.0.1: checking support…') if self.fg401_support is None else
+                        _(bbport_fg401.KEYS[0]))
+            else:
+                box.current(values.index(var.get()) if var.get() in values else values.index('off'))
+            self.refresh_fg401_status()
         box.bind('<<ComboboxSelected>>', lambda _e: var.set(values[box.current()]))
         var.trace_add('write', refresh)
         self.fg401_refreshers.append(refresh)
@@ -948,41 +969,94 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def refresh_fg401(self):
         for refresh in self.fg401_refreshers:
             refresh()
+        self.refresh_fg401_status()
+
+    def refresh_fg401_status(self):
         if hasattr(self, 'fg401_status'):
-            key = ('ML-FG 4.0.1: checking support…' if self.fg401_support is None else
-                   '' if self.fg401_support.get('supported') else
-                   'ML-FG 4.0.1 requires an RX 9000, Windows 11 and a supported AMD driver/runtime. FSR 3.1 remains available.')
-            self.fg401_status.configure(text=_(key))
-            if key:
+            text = bbport_fg401.message(self.fg401_support, _,
+                hdr=bool(self.var('hdr', 'app').get()), selected=self.var('frame_gen', 'ini').get()=='fsr401')
+            self.fg401_status.configure(text=text)
+            if text:
                 self.fg401_status.grid()
             else:
                 self.fg401_status.grid_remove()
+
+    def recheck_fg401(self):
+        self.fg401_support = None
+        self.refresh_fg401()
+        def work():
+            support = bbport_fg401.query(PORT_DIR, bbport_fsr411.environment(PORT_DIR, self.app))
+            def done():
+                self.fg401_support = support
+                self.refresh_fg401()
+            self.ui_calls.put(done)
+        threading.Thread(target=work, daemon=True).start()
 
     def fsr411_choice(self, parent, width=38):
         backend = self.var('fsr411_backend', 'ini')
         upscaler = self.var('upscaler', 'ini')
         values = [value for value, _text in FSR411_BACKENDS]
-        box = self.ttk.Combobox(parent, values=[_(*text) for _value, text in FSR411_BACKENDS],
-                               state='readonly', width=width)
+        box = self.ttk.Frame(parent)
+        # A menu can disable individual methods while keeping their names visible.
+        # Negative width is a minimum: long translated captions get their natural width.
+        box.button = self.ttk.Menubutton(box, width=-width, style='Fsr411.TMenubutton')
+        box.button.grid(row=0, column=0, sticky='w')
+        box.menu = self.tk.Menu(box.button, tearoff=False, background=CARD, foreground=TEXT,
+                               activebackground=BLOOD, activeforeground=TEXT, disabledforeground=MUTED)
+        box.button.configure(menu=box.menu)
+        # Menu clicks are provisional until the requested method is ready.
+        box.selection = self.tk.StringVar(value=backend.get())
+        def choose(method):
+            self.select_fsr411_backend(method)
+            refresh()
+        for value, text in FSR411_BACKENDS:
+            box.menu.add_radiobutton(label=_(*text), variable=box.selection, value=value,
+                command=lambda method=value: choose(method))
+        box.hint = self.ttk.Label(box, style='Muted.TLabel', wraplength=self.px(width * 9), justify='left')
+        box.hint.grid(row=1, column=0, sticky='w', pady=(3, 0))
         if backend.get() not in values:
             backend.set(values[0])
 
         def refresh(*_args):
-            if upscaler.get() == 'fsr411':
-                box.configure(state='readonly')
-                box.current(values.index(backend.get()) if backend.get() in values else 0)
+            active = upscaler.get() == 'fsr411'
+            statuses = {method: self.fsr411_status(method) for method in values}
+            selected = statuses[backend.get()]
+            downloading = getattr(self, 'fsr411_downloading', False)
+            offer = not getattr(self, 'process', None) and bbport_fsr411.can_download(
+                statuses['vk'], getattr(self, 'fsr411_support', None))
+            labels = {method: _(*text) for method, text in FSR411_BACKENDS}
+            if bbport_fsr411.needs_download(statuses['vk']):
+                labels['vk'] = _(bbport_fsr411.VULKAN_DOWNLOAD_LABEL)
+            for index, method in enumerate(values):
+                box.menu.entryconfigure(index, label=labels[method],
+                    state='normal' if active and not downloading and
+                        (statuses[method]['supported'] or method == 'vk' and offer) else 'disabled')
+            box.selection.set(backend.get())
+            box.button.configure(state='normal' if active and not downloading else 'disabled',
+                text=labels[backend.get()] if active else '—',
+                style='Unavailable.Fsr411.TMenubutton' if active and not selected['supported'] and
+                    not (backend.get() == 'vk' and offer) else 'Fsr411.TMenubutton')
+            if active and not selected['supported'] and selected['reason'] != 'download':
+                text = bbport_fsr411.hint(selected, _)
+                if bbport_fsr411.needs_download(selected):
+                    text = bbport_fsr411.message({k: v for k, v in selected.items() if k != 'files_problem'}, _)
             else:
-                # Placeholder is display-only: retain the last method for FSR 4.1.1.
-                box.set('—')
-                box.configure(state='disabled')
-
-        def choose(_event):
-            index = box.current()
-            if upscaler.get() == 'fsr411' and 0 <= index < len(values):
-                backend.set(values[index])
-        box.bind('<<ComboboxSelected>>', choose)
-        backend.trace_add('write', refresh)
-        upscaler.trace_add('write', refresh)
+                text = ''
+            box.hint.configure(text=text)
+            if text:
+                box.hint.grid()
+            else:
+                box.hint.grid_remove()
+        traces = [(var, var.trace_add('write', refresh)) for var in (backend, upscaler)]
+        if hasattr(self, 'fsr411_refreshers'):
+            self.fsr411_refreshers.append(refresh)
+        def cleanup(event):
+            if event.widget == box:
+                for var, trace in traces:
+                    var.trace_remove('write', trace)
+                if refresh in getattr(self, 'fsr411_refreshers', []):
+                    self.fsr411_refreshers.remove(refresh)
+        box.bind('<Destroy>', cleanup)
         refresh()
         return box
 
@@ -1075,6 +1149,23 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         show()
         holder.setting_key = 'output_res'
         return holder
+
+    def select_fsr411_backend(self, method):
+        if self.var('upscaler', 'ini').get() != 'fsr411' or getattr(self, 'fsr411_downloading', False):
+            return
+        backend = self.var('fsr411_backend', 'ini')
+        status = self.fsr411_status(method)
+        if status['supported']:
+            backend.set(method)
+        elif method == 'vk' and not getattr(self, 'process', None) and bbport_fsr411.can_download(
+                status, getattr(self, 'fsr411_support', None)):
+            if not self.messagebox.askyesno(bbport_fsr411.DOWNLOAD_TITLE, _(bbport_fsr411.DOWNLOAD_QUESTION), parent=self.root):
+                return
+            previous = backend.get()
+            def activate():
+                if self.var('upscaler', 'ini').get() == 'fsr411' and backend.get() == previous:
+                    backend.set('vk')
+            self.download_fsr411(on_success=activate)
 
     def next_row(self, parent):
         return parent.grid_size()[1]
@@ -1869,6 +1960,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.fg401_status = self.ttk.Label(f, wraplength=self.px(640), justify='left')
         self.fg401_status.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
         self.refresh_fg401()
+        self.var('hdr', 'app').trace_add('write', lambda *_a: self.refresh_fg401_status())
+        holder = ttk.Frame(f)
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        ttk.Button(holder, text=_('Recheck support'), command=self.recheck_fg401).pack(side='left')
         self.row(f, _('Multiplier', 'Множитель'),
                  self.choice(f, 'frame_gen_multiplier', 'ini', FRAME_GEN_MULTIPLIERS),
                  _('FSR 3.1 makes one frame (2×); DLSS on a GeForce RTX 50 up to three (4×).',
@@ -1904,6 +1999,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.fsr411_button.pack(side='left')
         self.fsr411_progress = ttk.Progressbar(holder, length=280, maximum=100)
         self.fsr411_progress.pack(side='left', padx=12)
+        self.ttk.Button(holder, text=_('Recheck support'), command=self.recheck_fsr411).pack(side='left')
         self.note(f, _('Download fsr4vk here. AMD DX12 is included.'), top=6)
         self.refresh_fsr411()
         self.vars['fsr411_backend'].trace_add('write', lambda *_a: (self.refresh_fsr411(), self.refresh_status()))
@@ -3058,11 +3154,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.check_line('saves', save, lambda: self.show('saves'))
         self.check_line('fsr4', _('• FSR 4 files missing: FSR 3.1 is used meanwhile. Click to download (30 MB)')
                         if missing and self.var('upscaler', 'ini').get() == 'fsr4' else '', self.download_fsr4)
+        fsr411_ready, status = True, None
         if self.var('upscaler', 'ini').get() == 'fsr411':
-            available = (native_fsr411_present() if self.var('fsr411_backend', 'ini').get() == 'dx12'
-                         else getattr(self, 'fsr411_verified', False))
-            self.check_line('fsr4', '' if available else
-                            _('• FSR 4.1.1 files missing (Graphics)', '• Нет файлов FSR 4.1.1 («Графика»)'),
+            status = self.fsr411_status(self.var('fsr411_backend', 'ini').get())
+            fsr411_ready = status['supported']
+            self.check_line('fsr4', '' if fsr411_ready else '• FSR 4.1.1: ' + bbport_fsr411.hint(status, _),
                             lambda: self.show('graphics'))
         online, pool = self.var('online', 'app').get(), self.var('online_pool', 'app').get()
         signed_in = (bool(self.var('thd_token', 'app').get()) if pool == 'huntersdream' else
@@ -3088,9 +3184,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             else:
                 label.grid_remove()
         if not self.process:
-            self.play_button.configure(state='normal' if info and not self.test_running() and not self.fsr411_downloading else 'disabled')
-            self.status.configure(text=self.summary() if info else _('Choose the game folder first.',
-                                                                     'Сначала выберите папку игры.'), fg=MUTED)
+            self.play_button.configure(state='normal' if info and fsr411_ready and not self.test_running()
+                                       and not self.fsr411_downloading else 'disabled')
+            self.status.configure(text=bbport_fsr411.hint(status, _) if info and not fsr411_ready else
+                                  self.summary() if info else _('Choose the game folder first.',
+                                                                'Сначала выберите папку игры.'), fg=MUTED)
 
     def poll_hunters(self):
         """Every minute: the count of The Hunter's Dream again when it is the chosen pool, the window is
@@ -3168,6 +3266,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         except (OSError, subprocess.TimeoutExpired):
             pass
         self.gpu_text = text
+        support = bbport_fsr411.query(PORT_DIR, env)
+        def fsr411_done():
+            self.fsr411_support = support
+            self.refresh_fsr411()
+            self.refresh_status()
+        self.ui_calls.put(fsr411_done)
         self.fg401_support = bbport_fg401.query(PORT_DIR, env)
         self.gpu_line = hardware.best_gpu_line(names)  # 'Name, discrete, 16304 MiB' for the hardware check
         try:
@@ -3187,25 +3291,52 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 missing, total, PORT_DIR / 'fsr4_shaders'))
         self.fsr4_button.configure(state='normal' if missing and not self.downloading else 'disabled')
 
+    def fsr411_status(self, method):
+        return bbport_fsr411.method_status(PORT_DIR, DATA_DIR, method,
+            getattr(self, 'fsr411_support', None), fetch_fsr4vk,
+            bbport_fsr411.environment(PORT_DIR, self.app))
+
+    def fsr411_folder(self):
+        env = bbport_fsr411.environment(PORT_DIR, self.app)
+        return bbport_fsr411.vulkan_folder(PORT_DIR, DATA_DIR, env)
+
+    def recheck_fsr411(self):
+        self.fsr411_support = None
+        self.refresh_fsr411()
+        def work():
+            support = bbport_fsr411.query(PORT_DIR, bbport_fsr411.environment(PORT_DIR, self.app), refresh=True)
+            def done():
+                self.fsr411_support = support
+                self.refresh_fsr411()
+                self.refresh_status()
+            self.ui_calls.put(done)
+        threading.Thread(target=work, daemon=True).start()
+
     def refresh_fsr411(self):
-        folder = fetch_fsr4vk.default_dir(DATA_DIR)
+        folder = self.fsr411_folder()
         installed = fetch_fsr4vk.files_ok(folder)
         self.fsr411_verified = installed
-        self.fsr411_label.configure(text=(_('Vulkan (fsr4vk): installed.') if installed else
-                                         _('Vulkan (fsr4vk): files missing or need updating.')))
-        self.fsr411_native_label.configure(text=(_('AMD DX12: installed.') if native_fsr411_present() else
-                                                _('AMD DX12: files missing.')))
-        self.fsr411_button.configure(state='normal' if not installed and not self.fsr411_downloading and not self.process else 'disabled')
+        self.fsr411_label.configure(text=_('Vulkan (fsr4vk)') + ': ' +
+            bbport_fsr411.hint(self.fsr411_status('vk'), _))
+        self.fsr411_native_label.configure(text=_('AMD DX12') + ': ' +
+            bbport_fsr411.message(self.fsr411_status('dx12'), _))
+        for refresh in getattr(self, 'fsr411_refreshers', []):
+            refresh()
+        for refresh in getattr(self, 'fsr411_upscaler_refreshers', []):
+            refresh()
+        caps = getattr(self, 'fsr411_support', None)
+        hardware_ok = caps is None or caps['vk']['supported'] or caps['vk']['reason'] == 'check'
+        self.fsr411_button.configure(state='normal' if hardware_ok and not installed and not self.fsr411_downloading and not self.process else 'disabled')
         if installed:
             self.fsr411_progress.configure(value=100)
 
-    def download_fsr411(self):
+    def download_fsr411(self, on_success=None):
         if self.process or self.fsr411_downloading:
             return
         self.fsr411_downloading = True
         self.play_button.configure(state='disabled')
         self.refresh_fsr411()
-        folder = fetch_fsr4vk.default_dir(DATA_DIR)
+        folder = self.fsr411_folder()
 
         def progress(done, total):
             percent = min(100, done * 100 // max(total, 1))
@@ -3215,11 +3346,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             error = None
             try:
                 fetch_fsr4vk.fetch(folder, progress)
+                if not fetch_fsr4vk.files_ok(folder):
+                    raise fetch_fsr4vk.FetchError(_('Vulkan (fsr4vk): files missing or need updating.'))
             except (OSError, fetch_fsr4vk.FetchError) as failure:
                 error = str(failure)
 
             def done():
                 self.fsr411_downloading = False
+                if not error and on_success and self.fsr411_status('vk')['supported']:
+                    on_success()
                 self.refresh_fsr411()
                 self.refresh_status()
                 if error:
@@ -3470,6 +3605,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if self.var('output_display', 'app').get():
             self.var('output_res', 'ini').set(display.size_text(self.game_monitor_size()))
         self.collect()
+        if self.ini.get('upscaler') == 'fsr411':
+            self.fsr411_support = bbport_fsr411.query(PORT_DIR, bbport_fsr411.environment(PORT_DIR, self.app), refresh=True)
+            status = self.fsr411_status(self.ini['fsr411_backend'])
+            if not status['supported']:
+                self.show('graphics')
+                self.refresh_fsr411()
+                self.refresh_status()
+                return
         if not game_info(self.app['game_dir']):
             self.messagebox.showerror('Bloodborne', _('Choose the game folder with eboot.bin (CUSA03173).',
                                                       'Выберите папку игры с eboot.bin (CUSA03173).'))
@@ -4067,7 +4210,8 @@ def play_without_window(settings):
     """--play: the game with the saved settings (shortcuts, Steam). Output goes to the console
     when there is one and to <saves folder>/last_run.log."""
     attach_stdio()
-    values, lines = load_ini()
+    values, lines = load_ini(settings)
+    graphics = values
     if settings.get('output_display'):  # the game monitor's own size, as the launcher's Play does
         m = display.monitor(settings.get('game_monitor', ''))
         if m and values.get('output_res') != display.size_text(m.size):
@@ -4079,11 +4223,20 @@ def play_without_window(settings):
         except OSError:
             pass  # never in the way of a start
     placer = display.Placer(settings, display.parse_size(values.get('output_res')) or (1920, 1080)).start()
+    if graphics.get('upscaler') == 'fsr411':
+        env = bbport_fsr411.environment(PORT_DIR, settings)
+        support = bbport_fsr411.query(PORT_DIR, env, refresh=True)
+        status = bbport_fsr411.method_status(PORT_DIR, DATA_DIR, graphics['fsr411_backend'],
+            support, fetch_fsr4vk, env)
+        if not status['supported']:
+            text = bbport_fsr411.message(status, _)
+            print('FSR 4.1.1: ' + text)
+            return None  # Show the launcher controls instead of a popup.
     log_dir = Path(settings.get('user_dir') or DATA_DIR / 'user')
     log_dir.mkdir(parents=True, exist_ok=True)
     tracker = trophies.Tracker(log_dir)
     with open(log_dir / 'last_run.log', 'w', encoding='utf-8', buffering=1) as log:
-        process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(settings),
+        process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(settings, graphics),
                                    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, creationflags=NO_WINDOW)
         for raw in iter(process.stdout.readline, b''):
@@ -4220,8 +4373,12 @@ def main():
     if FROZEN and UPDATE_DIR not in PORT_DIR.parents:
         shutil.rmtree(UPDATE_DIR, ignore_errors=True)  # what a finished update left behind
     # Without a usable game folder there is nothing to play yet: open the launcher instead.
+    page = 'play'
     if '--play' in args and (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file() and CONFIG_FILE.exists():
-        sys.exit(play_without_window(settings))
+        result = play_without_window(settings)
+        if result is not None:
+            sys.exit(result)
+        page = 'graphics'
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # sharp text on scaled displays
     except (AttributeError, OSError):
@@ -4229,7 +4386,9 @@ def main():
     import tkinter as tk
     from tkinter import filedialog, messagebox, ttk
     root = tk.Tk()
-    Launcher(root, tk, ttk, filedialog, messagebox)
+    launcher = Launcher(root, tk, ttk, filedialog, messagebox)
+    if page != 'play':
+        launcher.show(page)
     root.mainloop()
 
 

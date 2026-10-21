@@ -3,7 +3,8 @@
 # with PyInstaller so players need no Python), bb-probe.exe with the MSYS2 CLANG64 DLLs it needs,
 # the preparation scripts and run.py. Run from an MSYS2 CLANG64 shell after `bash build.sh`.
 # Freezing uses a Windows Python 3.10+ (python.org; WINPYTHON overrides) and a private venv in
-# out/pyenv with PyInstaller. FSR 4 assets in fsr4_shaders/ are included when present.
+# out/pyenv with PyInstaller. Includes the pinned fsr4vk provider and licenses, plus a
+# corresponding-source ZIP beside the Windows ZIP. FSR 4 assets in fsr4_shaders/ are included when present.
 set -euo pipefail
 cd -- "$(dirname -- "$0")/../.."
 source ./msys2-env.sh
@@ -68,6 +69,9 @@ cp out/fsr411-dx12/amd_fidelityfx_upscaler_dx12.dll "$dest/bin/"
 out/pyenv/Scripts/python.exe packaging/windows/fetch_fg401_dx12.py
 cp out/fsr411-dx12/amd_fidelityfx_framegeneration_dx12.dll \
    out/fsr411-dx12/amd_fidelityfx_loader_dx12.dll out/fsr411-dx12/D3D12Core.dll "$dest/bin/"
+# Vulkan FSR 4.1.1: share the launcher's pinned provider and file checks. Cache the
+# provider and its corresponding source so subsequent package builds work offline.
+out/pyenv/Scripts/python.exe packaging/windows/prepare_fsr4vk.py --stage "$dest/fsr4vk"
 # Legacy CPU (Intel 3rd generation and older): the translation plan scripts/cpu_compat.py applies.
 mkdir -p "$dest/tools" && cp tools/legacy-cpu-plan.json "$dest/tools/"
 cp run.py LICENSE README.md packaging/windows/README-Windows.txt "$dest/"
@@ -108,6 +112,9 @@ for package in protobuf abseil-cpp openssl miniupnpc zlib; do
 done
 find "$dest" -name __pycache__ -prune -exec rm -r {} +
 mkdir -p dist
+# Publish this source archive alongside the Windows ZIP; SOURCE.txt names both the
+# companion archive and its original download. Keep it outside the playable folder.
+cp out/fsr4vk/fsr4vk-v0.4.3-amdfix-src.zip dist/
 rm -f dist/bbport-windows.zip
 # Use the same Python as the frozen launcher build; no PowerShell Archive module
 # dependency (and no Compress-Archive 2 GiB per-file limit).

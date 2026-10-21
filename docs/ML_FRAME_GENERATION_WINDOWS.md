@@ -15,7 +15,9 @@ The launcher offers ML-FG after checking the selected Vulkan adapter, its DXGI
 LUID, RX 9000 identity, Windows 11, D3D12 support, Win32 memory/fence sharing,
 two graphics queues and the exact AMD 4.0.1 provider. The renderer checks support
 again. An unsupported saved ML-FG selection or a failed provider initialization
-falls back to Vulkan FSR 3.1. The in-game menu disables ML-FG on unsupported hardware.
+uses Vulkan FSR 3.1 for that session and retains `frame_gen=fsr401` in the saved
+settings. If the fallback also fails, FG pauses while retaining that preference.
+An explicit user selection replaces the preference. The in-game menu disables ML-FG on unsupported hardware.
 The labels and support hints cover all 13 launcher languages. A successful check
 is represented by the available selection.
 
@@ -24,6 +26,13 @@ existing presenter skips frame generation and continues showing rendered game
 frames. HDR FG requires additional color-format, transfer-function and composition
 work. Changing providers during play may pause while GPU work is drained and
 the provider context is rebuilt.
+
+Short diagnostics distinguish RX 9000, Windows 11, missing files, DLL loading,
+adapter matching, sharing/queue support and the AMD provider. **Recheck support**
+repeats the launcher's probe without changing its saved selection. The launcher
+shows a conditional HDR hint when HDR is allowed and ML-FG is selected; the
+overlay reports when the output actually is HDR. The overlay and log identify
+the active session fallback separately from the saved preference.
 
 ## Rendering and presentation
 

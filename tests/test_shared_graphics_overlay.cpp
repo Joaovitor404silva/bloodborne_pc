@@ -108,6 +108,20 @@ int main() {
     assert(!BbSettings::FsrSettingsNeedRestart());
     text = Frame();
     assert(text.find("Apply and restart") == std::string::npos);
+    // Saved ML-FG selection remains visible while the session runs its FSR 3.1 fallback.
+    BbSettings::SelectFrameGen(BbSettings::FrameGenFsr401);
+    BbSettings::FrameGenFailure(BbSettings::FrameGenFsr401, "ML-FG file missing: test.dll");
+    text = Frame();
+    assert(text.find("ML-FG file missing: test.dll") != std::string::npos);
+    assert(text.find("FSR 3.1 FG active") != std::string::npos);
+    assert(s.frame_gen == BbSettings::FrameGenFsr401);
+    s.frame_gen_hdr = true;
+    text = Frame();
+    assert(text.find("ML-FG paused: HDR output.") != std::string::npos);
+    assert(text.find("FSR 3.1 FG active") == std::string::npos);
+    BbSettings::Save();
+    BbSettings::Load();
+    assert(s.frame_gen == BbSettings::FrameGenFsr401 && !s.frame_gen_hdr);
     BbOverlay::SetOpen(false);
     ImGui::DestroyContext();
     std::remove(path.c_str());

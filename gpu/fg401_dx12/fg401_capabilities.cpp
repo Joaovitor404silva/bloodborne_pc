@@ -2,6 +2,7 @@
 #include "fg401_support.h"
 #define NOMINMAX
 #include <algorithm>
+#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -49,21 +50,24 @@ int main() {
                     vkDestroyInstance(value, nullptr);
             }
         } instance;
-        if (vkCreateInstance(&c, nullptr, &instance.value) != VK_SUCCESS)
-            return {false, "vulkan"};
+        const auto created = vkCreateInstance(&c, nullptr, &instance.value);
+        if (created != VK_SUCCESS)
+            return {false, created == VK_ERROR_INCOMPATIBLE_DRIVER ? "vulkan" : "check"};
         uint32_t count{};
         if (vkEnumeratePhysicalDevices(instance.value, &count, nullptr) != VK_SUCCESS || !count)
-            return {false, "vulkan"};
+            return {false, "check"};
         std::vector<VkPhysicalDevice> devices(count);
         if (vkEnumeratePhysicalDevices(instance.value, &count, devices.data()) != VK_SUCCESS)
-            return {false, "vulkan"};
+            return {false, "check"};
         auto selected = devices[0];
         if (const char *index = std::getenv("BB_GPU_ID")) {
             char *end{};
-            auto i = std::strtoul(index, &end, 10);
-            if (*end || i >= count)
+            errno = 0;
+            auto i = std::strtol(index, &end, 10);
+            if (end == index || *end || errno == ERANGE || (i >= 0 && static_cast<unsigned long>(i) >= count))
                 return {false, "adapter"};
-            selected = devices[i];
+            if (i >= 0) selected = devices[i];
+            else for (auto p : devices) if (Better(p, selected)) selected = p;
         } else
             for (auto p : devices)
                 if (Better(p, selected))
@@ -73,6 +77,8 @@ int main() {
         vkGetPhysicalDeviceProperties2(selected, &props);
         if (!IsRx9000(props.properties.vendorID, props.properties.deviceName))
             return {false, "rx9000"};
+        if (props.properties.apiVersion < VK_API_VERSION_1_3)
+            return {false, "vulkan"};
         if (!id.deviceLUIDValid)
             return {false, "adapter"};
         uint32_t queues{};
@@ -81,14 +87,16 @@ int main() {
         vkGetPhysicalDeviceQueueFamilyProperties(selected, &queues, families.data());
         bool two = false;
         for (auto f : families)
-            if ((f.queueFlags & VK_QUEUE_GRAPHICS_BIT) && f.queueCount >= 2)
-                two = true;
+            if (f.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                two = f.queueCount >= 2; // Match the renderer's last graphics queue family.
         if (!two)
             return {false, "interop"};
         uint32_t ne{};
-        vkEnumerateDeviceExtensionProperties(selected, nullptr, &ne, nullptr);
+        if (vkEnumerateDeviceExtensionProperties(selected, nullptr, &ne, nullptr) != VK_SUCCESS)
+            return {false, "check"};
         std::vector<VkExtensionProperties> extensions(ne);
-        vkEnumerateDeviceExtensionProperties(selected, nullptr, &ne, extensions.data());
+        if (vkEnumerateDeviceExtensionProperties(selected, nullptr, &ne, extensions.data()) != VK_SUCCESS)
+            return {false, "check"};
         for (auto name : {"VK_KHR_external_memory_win32", "VK_KHR_external_semaphore_win32"})
             if (std::none_of(extensions.begin(), extensions.end(),
                              [&](auto &e) { return !std::strcmp(e.extensionName, name); }))
@@ -104,7 +112,7 @@ int main() {
             return {false, "interop"};
         return ProbeFg401(id.deviceLUID);
     }();
-    std::printf("{\"supported\":%s,\"reason\":\"%s\",\"provider\":\"4.0.1\"}\n",
-                result.supported ? "true" : "false", result.reason.c_str());
+    std::printf("{\"supported\":%s,\"reason\":\"%s\",\"detail\":\"%s\",\"provider\":\"4.0.1\"}\n",
+                result.supported ? "true" : "false", result.reason.c_str(), result.detail.c_str());
     return 0;
 }

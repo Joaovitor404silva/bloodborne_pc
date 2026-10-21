@@ -24,6 +24,8 @@
 #include "native_fsr411.h"
 #include "native_fg401.h"
 #include "fg401_support.h"
+#include "fsr411_support.h"
+#include "fsr411_vulkan_support.h"
 #endif
 
 namespace Vulkan {
@@ -432,8 +434,22 @@ bool Instance::CreateDevice() {
     const char* fsr411_backend = std::getenv("BB_FSR411_BACKEND");
     const bool native_requested = (native_setting && native_setting[0] == '1') ||
         (fsr411_backend && std::string_view{fsr411_backend} == "dx12");
-    native_fsr411 = GetVendorID() == 0x1002 && native_requested &&
-        NativeFsr411::Available() && add_extension("VK_KHR_external_memory_win32");
+    if (native_requested) {
+        const auto id = physical_device.getProperties2<vk::PhysicalDeviceProperties2,
+            vk::PhysicalDeviceIDProperties>().get<vk::PhysicalDeviceIDProperties>();
+        const auto support = GetVendorID() != 0x1002
+            ? Fsr411Support{false, "hardware", "AMD GPU required"}
+            : ProbeFsr411Dx12(id.deviceLUID.data());
+        native_fsr411 = support.supported && id.deviceLUIDValid &&
+            add_extension("VK_KHR_external_memory_win32");
+        if (!support.supported) {
+            const auto category = std::string_view{support.reason} == "files" ? "missing provider file" :
+                std::string_view{support.reason} == "runtime" ? "runtime load failure" :
+                "GPU/driver/provider requirement";
+            fsr411_problem = std::string("AMD DX12: ") + category + " - " + support.detail;
+        } else if (!native_fsr411)
+            fsr411_problem = "AMD DX12: GPU/driver lacks Vulkan/DX12 shared-memory support";
+    }
     fg401_interop = IsRx9000(GetVendorID(),physical_device.getProperties().deviceName.data()) &&
         Fg401WindowsSupported() && NativeFg401::Available() && add_extension("VK_KHR_external_memory_win32");
     native_fsr411_async = (native_fsr411 || fg401_interop) && add_extension("VK_KHR_external_semaphore_win32");
@@ -445,6 +461,8 @@ bool Instance::CreateDevice() {
         native_fsr411_async = bool(support.externalSemaphoreFeatures & vk::ExternalSemaphoreFeatureFlagBits::eImportable);
     }
     fg401_interop = fg401_interop && native_fsr411_async;
+    if (native_fsr411 && !native_fsr411_async)
+        fsr411_problem = "AMD DX12: GPU/driver lacks shared GPU-fence support";
     std::printf("FSR411 GPU fence interop: %s\n", native_fsr411_async ? "available" : "unavailable");
     if (native_fsr411) std::printf("FSR 4.1.1: native Windows DX12 backend available\n");
 #endif
@@ -498,24 +516,26 @@ bool Instance::CreateDevice() {
     // (provider/INTEGRATION-CONTRACT.md) are standard features and two extensions; they are
     // requested only when the DLL is installed and the device has all of them, so nothing changes
     // for other paths.
-    const auto extension_available = [&](std::string_view extension) {
-        return std::find(available_extensions.begin(), available_extensions.end(), extension) !=
-               available_extensions.end();
-    };
-    fsr4vk = Fsr4Vk::FilesPresent() && features.shaderInt16 &&
-             features.shaderStorageImageReadWithoutFormat &&
-             features.shaderStorageImageWriteWithoutFormat && vk12_features.shaderFloat16 &&
-             vk12_features.shaderInt8 && vk12_features.storageBuffer8BitAccess &&
-             vk12_features.runtimeDescriptorArray &&
-             vk12_features.descriptorBindingVariableDescriptorCount &&
-             vk12_features.bufferDeviceAddress && vk13_features.synchronization2 &&
-             vk13_features.shaderIntegerDotProduct && compute_shader_derivatives &&
-             compute_shader_derivatives_features.computeDerivativeGroupLinear &&
-             feature_chain.get<vk::PhysicalDeviceMutableDescriptorTypeFeaturesEXT>()
-                 .mutableDescriptorType &&
-             feature_chain.get<vk::PhysicalDeviceDescriptorBufferFeaturesEXT>().descriptorBuffer &&
-             extension_available(VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME) &&
-             extension_available(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
+#ifdef _WIN32
+    const char* missing_fsr4vk_feature = Fsr411VulkanRequirement(physical_device,
+        VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceProperties,
+        VULKAN_HPP_DEFAULT_DISPATCHER.vkEnumerateDeviceExtensionProperties,
+        VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceFeatures2);
+    const bool fsr4vk_files = Fsr4Vk::FilesPresent();
+    fsr4vk = fsr4vk_files && !missing_fsr4vk_feature;
+    if (!native_requested && !fsr4vk) {
+        if (const char* enabled = std::getenv("BB_FSR4VK"); enabled && enabled[0] == '0')
+            fsr411_problem = "Vulkan (fsr4vk): disabled by BB_FSR4VK=0";
+        else if (!fsr4vk_files)
+            fsr411_problem = "Vulkan (fsr4vk): missing amd_fidelityfx_upscaler_vk.dll; download fsr4vk in Graphics";
+        else if (std::string_view{missing_fsr4vk_feature} == "Vulkan extension query")
+            fsr411_problem = "Vulkan (fsr4vk): device capability query failed";
+        else
+            fsr411_problem = std::string("Vulkan (fsr4vk): GPU/driver lacks ") + missing_fsr4vk_feature;
+    }
+#else
+    fsr4vk = false; // The original Vulkan implementation is used on Linux.
+#endif
     if (fsr4vk) {
         add_extension(VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME);
         add_extension(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);

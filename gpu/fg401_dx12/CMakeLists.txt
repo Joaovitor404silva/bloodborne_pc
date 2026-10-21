@@ -21,6 +21,7 @@ target_include_directories(bbgpu PRIVATE "${FG401_DIR}" "${FG401_HEADERS}")
 set_source_files_properties(fg401_dx12/native_fg401.cpp fg401_dx12/fg401_support.cpp
     PROPERTIES COMPILE_DEFINITIONS _WINDOWS)
 target_sources(bb-probe PRIVATE "${FG401_DIR}/agility.cpp")
+target_sources(bb-gpu-capabilities PRIVATE "${FG401_DIR}/agility.cpp")
 
 add_executable(bb-fg401-capabilities "${FG401_DIR}/fg401_capabilities.cpp"
     "${FG401_DIR}/fg401_support.cpp" "${FG401_DIR}/agility.cpp")
@@ -40,3 +41,6 @@ endforeach()
 add_executable(fg401-support-test EXCLUDE_FROM_ALL ../tests/test_fg401_support.cpp)
 target_include_directories(fg401-support-test PRIVATE "${FG401_DIR}")
 target_compile_options(fg401-support-test PRIVATE -UNDEBUG)
+add_executable(fg401-preferences-test EXCLUDE_FROM_ALL ../tests/test_fg401_preferences.cpp shim/bbport_settings.cpp)
+target_include_directories(fg401-preferences-test PRIVATE shim)
+target_compile_options(fg401-preferences-test PRIVATE -UNDEBUG)

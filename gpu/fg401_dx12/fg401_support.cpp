@@ -44,7 +44,7 @@ Fg401Support ProbeFg401(const uint8_t bytes[8]) {
     if (!Fg401WindowsSupported())
         return {false, "windows11"};
     if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(&r.factory))))
-        return {false, "dx12"};
+        return {false, "check", "DXGI"};
     LUID luid{};
     std::memcpy(&luid, bytes, 8);
     if (!(luid.LowPart || luid.HighPart) ||
@@ -57,25 +57,31 @@ Fg401Support ProbeFg401(const uint8_t bytes[8]) {
     WideCharToMultiByte(CP_UTF8, 0, desc.Description, -1, name, sizeof(name), nullptr, nullptr);
     if (!IsRx9000(desc.VendorId, name) || (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE))
         return {false, "rx9000"};
-    if (FAILED(D3D12CreateDevice(r.adapter, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&r.device))))
-        return {false, "dx12"};
-    D3D12_FEATURE_DATA_SHADER_MODEL sm{D3D_SHADER_MODEL_6_6};
-    if (FAILED(r.device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &sm, sizeof(sm))) ||
-        sm.HighestShaderModel < D3D_SHADER_MODEL_6_6)
-        return {false, "dx12"};
     std::wstring path(32768, L'\0');
     auto n = GetModuleFileNameW(nullptr, path.data(), DWORD(path.size()));
     path.resize(n);
-    const auto dll =
-        std::filesystem::path(path).parent_path() / L"amd_fidelityfx_framegeneration_dx12.dll";
+    const auto directory = std::filesystem::path(path).parent_path();
+    const auto dll = directory / L"amd_fidelityfx_framegeneration_dx12.dll";
+    std::error_code error;
+    if (!std::filesystem::is_regular_file(dll, error))
+        return {false, "files", "amd_fidelityfx_framegeneration_dx12.dll"};
+    if (GetProcAddress(GetModuleHandleW(nullptr), "D3D12SDKVersion") &&
+        !std::filesystem::is_regular_file(directory / L"D3D12Core.dll", error))
+        return {false, "files", "D3D12Core.dll"};
+    if (FAILED(D3D12CreateDevice(r.adapter, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&r.device))))
+        return {false, "check", "D3D12CreateDevice"};
+    D3D12_FEATURE_DATA_SHADER_MODEL sm{D3D_SHADER_MODEL_6_6};
+    if (FAILED(r.device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &sm, sizeof(sm))) ||
+        sm.HighestShaderModel < D3D_SHADER_MODEL_6_6)
+        return {false, "dx12", "Shader Model 6.6"};
     r.module = LoadLibraryExW(dll.c_str(), nullptr,
                               LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
     if (!r.module)
-        return {false, "runtime"};
+        return {false, "runtime", "Windows error " + std::to_string(GetLastError())};
     ffxFunctions ffx{};
     ffxLoadFunctions(&ffx, r.module);
     if (!ffx.Query || !ffx.CreateContext || !ffx.DestroyContext || !ffx.Dispatch || !ffx.Configure)
-        return {false, "runtime"};
+        return {false, "runtime", "FidelityFX API"};
     uint64_t count{};
     ffxQueryDescGetVersions q{};
     q.header.type = FFX_API_QUERY_DESC_TYPE_GET_VERSIONS;

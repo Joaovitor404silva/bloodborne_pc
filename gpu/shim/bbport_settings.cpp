@@ -110,6 +110,10 @@ Values& Get() {
 
 void Load() {
     auto& v = Get();
+    v.fg401_fallback = -1;
+    v.frame_gen_hdr = false;
+    v.frame_gen_problem = nullptr;
+    v.fg401_problem = nullptr;
     v.fsr411_backend = Fsr411Vulkan;
     v.object_motion_cache = false;
     for (int e = 0; e < EffectCount; ++e) {
@@ -178,17 +182,58 @@ void Load() {
     v.startup_live_resolution = v.live_resolution;
 }
 
-void ConfigureUpscalerSupport(bool fsr4, bool fsr411) {
+void ConfigureUpscalerSupport(bool fsr4, bool fsr411, const char* fsr411_problem) {
     auto& v = Get();
     v.fsr4_supported = fsr4;
     v.fsr411_supported = fsr411;
+    static std::string method_problem;
+    method_problem = fsr411 ? "" : fsr411_problem ? fsr411_problem :
+        "GPU/driver does not support the selected FSR 4.1.1 method";
+    v.fsr411_problem = method_problem.empty() ? nullptr : method_problem.c_str();
     const int requested = v.upscaler;
     if ((requested == UpscalerFsr4 && !v.fsr4_supported) ||
         (requested == UpscalerFsr411 && !v.fsr411_supported)) {
-        v.fsr4_problem = "GPU does not support the selected FSR 4 shaders; using FSR 3.1";
-        std::printf("Upscaler: %s unsupported on this GPU; falling back to FSR 3.1 before the first frame\n",
-                    UpscalerName(requested));
+        static std::string kept;
+        kept = requested == UpscalerFsr411 && fsr411_problem ? fsr411_problem :
+            "GPU/driver does not support the selected FSR 4 shaders";
+        std::printf("Upscaler: %s unavailable: %s; falling back to FSR 3.1 before the first frame\n",
+                    UpscalerName(requested), kept.c_str());
+        kept += "; using FSR 3.1";
+        v.fsr4_problem = kept.c_str();
         v.upscaler = UpscalerFsr3;
+    }
+}
+
+void ConfigureFg401Support(bool available, const char* problem) {
+    auto& v = Get();
+    v.fg401_supported = available;
+    static std::string kept;
+    kept = problem ? problem : "";
+    v.fg401_problem = available || kept.empty() ? nullptr : kept.c_str();
+}
+
+void SelectFrameGen(int provider) {
+    auto& v = Get();
+    v.frame_gen = provider;
+    v.fg401_fallback = -1;
+    v.frame_gen_problem = nullptr;
+}
+
+void FrameGenFailure(int provider, const char* problem) {
+    auto& v = Get();
+    if (provider == FrameGenFsr401) {
+        ConfigureFg401Support(false, problem);
+        v.fg401_fallback = FrameGenFsr3;
+        v.frame_gen_problem = "ML-FG failed; FSR 3.1 FG active.";
+    } else if (v.frame_gen == FrameGenFsr401) {
+        v.fg401_fallback = FrameGenOff;
+        v.frame_gen_problem = "Frame generation unavailable; FG off.";
+    } else {
+        // Existing DLSS / FSR 3.1 fallback policy.
+        static std::string kept;
+        kept = problem ? problem : "Frame generation failed.";
+        v.frame_gen_problem = kept.c_str();
+        v.frame_gen = provider == FrameGenDlss ? FrameGenFsr3 : FrameGenOff;
     }
 }
 

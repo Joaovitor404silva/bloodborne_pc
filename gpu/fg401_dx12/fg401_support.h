@@ -6,6 +6,7 @@
 struct Fg401Support {
     bool supported{};
     std::string reason;
+    std::string detail{};
 };
 inline bool IsRx9000(uint32_t vendor, std::string_view name) {
     if (vendor != 0x1002)
@@ -20,3 +21,15 @@ inline bool IsRx9000(uint32_t vendor, std::string_view name) {
 }
 bool Fg401WindowsSupported();
 Fg401Support ProbeFg401(const uint8_t luid[8]);
+inline std::string Fg401SupportMessage(const Fg401Support& s) {
+    if (s.reason == "windows11") return "ML-FG requires Windows 11.";
+    if (s.reason == "rx9000") return "ML-FG requires a Radeon RX 9000.";
+    if (s.reason == "files") return "ML-FG file missing: " + s.detail;
+    if (s.reason == "runtime") return "ML-FG runtime load failed: " + s.detail;
+    if (s.reason == "vulkan") return "ML-FG requires Vulkan 1.3.";
+    if (s.reason == "adapter") return "ML-FG GPU matching failed.";
+    if (s.reason == "interop") return "ML-FG sharing/queue support missing.";
+    if (s.reason == "dx12") return "ML-FG driver support missing: " + s.detail;
+    if (s.reason == "provider") return "ML-FG 4.0.1 provider unavailable.";
+    return "ML-FG support check failed.";
+}

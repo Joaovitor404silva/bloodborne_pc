@@ -17,12 +17,14 @@ shared selection, including changes saved by the overlay while the launcher is o
 | Method | Provider | Installation |
 |---|---|---|
 | AMD DX12 | AMD's original FSR 4.1.1 runtime through a Vulkan/DX12 shared-texture bridge (buffer fallback) | Included in the Windows package |
-| Vulkan (fsr4vk) | fsr4vk's INT8 FSR 4.1.1 implementation/model | Press **Download fsr4vk** in Graphics |
+| Vulkan (fsr4vk) | fsr4vk's INT8 FSR 4.1.1 implementation/model | Included in the Windows package; **Download fsr4vk** in Graphics repairs missing or changed files |
 
 The launcher remembers the method independently of the upscaler. When another
 upscaler is selected, both method controls show a disabled dash; returning to
 FSR 4.1.1 restores the saved method. The controls stay synchronized. Existing
-profiles created before `fsr411_backend` keep Vulkan (`vk`). All new controls and
+profiles keep their explicit method, including legacy launcher settings. When no
+method has been saved, the launcher selects AMD DX12 on the selected AMD adapter
+and Vulkan on other adapters. All new controls and
 status messages cover the 13 launcher
 languages; `vk` and `dx12` are language-independent stored values.
 
@@ -30,12 +32,42 @@ Both methods use the normal Windows launcher.
 The pre-existing **FSR 4 assets** controls and `fsr4_shaders/` are for the older
 FSR 4 v07 path, independent of these two providers.
 
+## Availability and diagnostics
+
+The launcher checks the selected Vulkan adapter, including `BB_GPU_ID`, rather
+than a GPU-series allowlist. AMD DX12 requires an AMD adapter, Vulkan/DX12 shared
+memory and GPU fences, and an FSR 4.1.1 provider reported by the installed AMD
+runtime on that adapter. Vulkan checks the same device features and extensions
+as the renderer. These capability checks run in an isolated helper process;
+context creation is still checked by the renderer at the actual render size.
+
+The fsr4vk DLL and bundled license files are verified separately. Missing or
+changed files show **Vulkan (fsr4vk – download required)**. On a supported
+adapter, selecting it asks **Download Vulkan files for FSR 4.1.1. now?** Both selectors use the
+Graphics download function. Success verifies the files and selects Vulkan;
+declining or a download failure retains the previous method. The existing
+Graphics download button installs the files and retains the method preference.
+An unsupported adapter keeps the Vulkan entry disabled. Captions expand
+to fit their translation in both Graphics and Play quick settings.
+Logs retain the affected file names.
+A missing DX12 DLL produces a Windows-package reinstall instruction. Driver
+feature, provider and DLL-loading failures have separate messages. **Recheck
+support** refreshes the check after installation or a driver change.
+
+Unsupported backend entries are disabled in both launcher selectors. A saved
+selection remains visible, and PLAY stays disabled with an inline hint until
+that method is available or another is selected. Startup rechecks files;
+shortcuts open Graphics when the saved method is unavailable.
+The in-game overlay also distinguishes an unavailable FSR 4.1.1 method from a
+GPU limitation. Direct renderer starts retain the safe FSR 3.1 fallback and log
+the actual cause, including missing provider files.
+
 ## Windows 1.9.2 integration
 
 The PR incorporates the Windows 1.9.2 branch through
 [`de2e38a`](https://github.com/Supermedo/bloodborne_pc/commit/de2e38af055f09f819946951075c6bb119e62ae6).
-The selectable providers, shared overlay settings and optional motion-vector
-cache retain their behavior and defaults. The original Vulkan FSR 3.1 frame-
+The Windows merge preserves saved provider and motion-vector cache preferences.
+The original Vulkan FSR 3.1 frame-
 generation path includes upstream's per-frame bridge-allocation retirement fix.
 Build and package checks cover both providers and the original frame-generation
 method; shader caches rebuild for upstream's updated shader format.
@@ -78,9 +110,10 @@ python packaging/windows/fetch_fsr411_dx12.py
 cp out/fsr411-dx12/amd_fidelityfx_upscaler_dx12.dll out/
 ```
 
-## Vulkan: download and lifetime
+## Vulkan: packaging and repair
 
-The optional provider is installed into `<data>/fsr4vk` (the port folder by
+The provider is included in the Windows package under `fsr4vk/`. The launcher
+download repairs missing or changed files in `<data>/fsr4vk` (the port folder by
 default). `run.py` passes this folder as `BB_FSR4VK_DIR`. Both the launcher
 updater and package refresh preserve it. Downloading and replacement are
 disabled while the game runs.
@@ -100,8 +133,17 @@ supports interrupted downloads, and replaces files atomically:
 
 The download includes provider licenses and a source/patch provenance note.
 fsr4vk is GPLv3, its AMD-derived data MIT licensed, and zstd BSD licensed.
-The standard package offers it as a verified launcher download; the fork's test
-ZIPs include it.
+`packaging/windows/prepare_fsr4vk.py` prepares the same verified provider and
+licenses in `out/fsr4vk/provider/`. It also fetches and verifies the exact patched
+source archive (SHA-256
+`23a05d16ca6116760bff4cd6dbf667bf38319eb20d0107c781e9d65a9b065c90`).
+Subsequent builds reuse the verified cache. A failed provider or source check
+stops packaging.
+
+Standard packaging writes `dist/bbport-windows.zip` and the companion
+`dist/fsr4vk-v0.4.3-amdfix-src.zip`. Publish both files together; the provider's
+`SOURCE.txt` records the source archive name, original source URL and patch
+provenance. The Windows ZIP includes the runtime, license texts and patch note.
 
 ### Coalesced output stores
 

@@ -112,17 +112,27 @@ struct Values {
     /// Why FSR 4 cannot run (assets, device features), or null. Set by the renderer.
     std::atomic<const char*> fsr4_problem{nullptr};
     std::atomic<bool> fsr4_supported{false}, fsr411_supported{false};
+    std::atomic<const char*> fsr411_problem{nullptr};
     /// DLSS (bbport_dlss.dll, NVIDIA RTX) is ready, or why not (null before the device exists).
     std::atomic<bool> dlss_supported{false};
     std::atomic<const char*> dlss_problem{nullptr};
     /// Frame generation and the frames per game frame (2x with FSR 3.1, up to 4x with DLSS on
     /// RTX 50). dlssg_max_multiplier: 1 without DLSS Frame Generation.
     std::atomic<int> frame_gen{FrameGenOff};
+    /// Session fallback is separate from the saved ML-FG selection.
+    std::atomic<int> fg401_fallback{-1};
+    int ActiveFrameGen() const {
+        const int selected = frame_gen.load();
+        const int fallback = fg401_fallback.load();
+        return selected == FrameGenFsr401 && fallback >= 0 ? fallback : selected;
+    }
     std::atomic<int> frame_gen_multiplier{2};
     /// At most the frames the display shows between two of the game's (an uncapped game then
     /// gets fewer generated frames); off: the multiplier as chosen.
     std::atomic<bool> frame_gen_fit_display{false};
     std::atomic<bool> fg401_supported{false};
+    std::atomic<const char*> fg401_problem{nullptr};
+    std::atomic<bool> frame_gen_hdr{false};
     std::atomic<int> dlssg_max_multiplier{1};
     std::atomic<const char*> frame_gen_problem{nullptr};
     /// Generated frames per game frame the display has room for now (0: paused), and its
@@ -156,9 +166,12 @@ Values& Get();
 /// Reads the file, then the environment overrides. Called once at start.
 void Load();
 /// Checks the loaded choice before the first frame; unsupported FSR 4 uses FSR 3.1.
-void ConfigureUpscalerSupport(bool fsr4, bool fsr411);
+void ConfigureUpscalerSupport(bool fsr4, bool fsr411, const char* fsr411_problem = nullptr);
 /// After device creation: DLSS availability; a DLSS setting falls back to FSR 3.1 without it.
 void ConfigureDlssSupport(bool available, const char* problem);
+void ConfigureFg401Support(bool available, const char* problem);
+void SelectFrameGen(int provider);
+void FrameGenFailure(int provider, const char* problem);
 /// Startup-patched scene dimensions cannot change until run.sh prepares a new image.
 bool FixedRenderSession();
 int RenderPreset();

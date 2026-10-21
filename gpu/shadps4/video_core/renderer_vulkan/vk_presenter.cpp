@@ -575,6 +575,7 @@ Frame* Presenter::PrepareFrame(const Libraries::VideoOut::BufferAttributeGroup& 
     // bbport: frame generation: the frames between the previous frame and this one.
     frame->generated_count = 0;
     frame->detached_output = false;
+    BbSettings::Get().frame_gen_hdr = frame->is_hdr;
     // bbport: also for the upscaled display (outputs other than 1080p): composed the same way.
     if (!frame_generator->Wanted() || frame->is_hdr) {
         ReleaseFrameGen(frame);

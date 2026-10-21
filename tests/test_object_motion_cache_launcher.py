@@ -55,6 +55,9 @@ class CacheEnvironmentTest(unittest.TestCase):
             with patch.dict('os.environ', {'BB_CONFIG': str(ini)}), \
                     patch.object(launcher, 'attach_stdio'), \
                     patch.object(launcher.trophies, 'Tracker'), \
+                    patch.object(launcher.bbport_fsr411, 'default_backend', return_value='vk'), \
+                    patch.object(launcher.bbport_fsr411, 'query', return_value={}), \
+                    patch.object(launcher.bbport_fsr411, 'method_status', return_value={'supported': True}), \
                     patch.object(launcher.subprocess, 'Popen', return_value=process) as start:
                 for upscaler, expected in (('fsr411', '1'), ('taa', '0'), ('fsr3', '1')):
                     ini.write_text(f'upscaler={upscaler}\nobject_motion=1\n')
