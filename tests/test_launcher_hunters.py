@@ -61,5 +61,46 @@ class PoolTests(unittest.TestCase):
         self.assertNotIn("value='supermedo'", source)
 
 
+class GameServerTests(unittest.TestCase):
+    """The game server field counts only where the Online page shows it (shadNet with "Use my own servers").
+    A co-op tool wrote its own address into it, and The Hunter's Dream's sign-in went there: "has no
+    account service"."""
+    OTHER = 'http://play.seamlesshunt.com'
+
+    def environment(self, **changes):
+        settings = {**L.APP_DEFAULTS, 'online': True, 'thd_online_id': 'Hunter', 'thd_token': 't',
+                    'online_community': self.OTHER, **changes}
+        with mock.patch.object(L, 'HUNTERS_DREAM_POOL', True):
+            return L.game_environment(settings)
+
+    def test_the_hunters_dream_plays_on_its_own_server(self):
+        for custom in (False, True):
+            env = self.environment(online_pool='huntersdream', online_custom_servers=custom)
+            self.assertEqual(env['BB_COMMUNITY_SERVER'], L.COMMUNITY_SERVER)
+
+    def test_shadnet_uses_the_field_only_with_own_servers(self):
+        self.assertEqual(self.environment(online_pool='shadnet')['BB_COMMUNITY_SERVER'], L.COMMUNITY_SERVER)
+        self.assertEqual(self.environment(online_pool='shadnet', online_custom_servers=True)['BB_COMMUNITY_SERVER'],
+                         self.OTHER)
+
+    def test_the_sign_in_asks_the_hunters_dream(self):
+        asked = []
+
+        def call(url, body):
+            asked.append(url)
+            return {'DeviceCode': 'd', 'UserCode': 'U', 'Interval': 1} if url.endswith('/start') else \
+                {'Status': 'approved', 'OnlineId': 'Hunter', 'Token': 't'}
+        with mock.patch.object(L, 'thd_call', call), mock.patch.object(L.time, 'sleep'):
+            self.assertEqual(L.thd_sign_in(lambda page, code: None), ('Hunter', 't'))
+        self.assertTrue(asked and all(url.startswith(L.COMMUNITY_SERVER + '/auth/') for url in asked))
+
+    def test_own_servers_on_for_settings_from_before_the_box(self):
+        """Saved before "Use my own servers" existed, with a private server: the box starts on."""
+        self.assertTrue(L.has_own_servers({**L.APP_DEFAULTS, 'online_server': 'friend.example:31313'}))
+        self.assertTrue(L.has_own_servers({**L.APP_DEFAULTS, 'online_community': self.OTHER}))
+        self.assertFalse(L.has_own_servers(L.APP_DEFAULTS))
+        self.assertFalse(L.has_own_servers({**L.APP_DEFAULTS, 'online_server': ' '}))
+
+
 if __name__ == '__main__':
     unittest.main()
