@@ -99,6 +99,11 @@ private:
     /// (MOU-004, MOU-005) so no stale motion or held button survives into the next capture.
     void UpdateMouseCapture();
     bool mouse_captured_last{false};
+    /// Window thread, every PollEvents: hides the cursor when the controller was used (button,
+    /// or a stick or trigger past half) and shows it again on mouse movement, a click or the
+    /// wheel; while the mouse is captured, relative mode hides it already.
+    void UpdateCursor(bool pad_used, bool mouse_used);
+    bool cursor_hidden{false};
     /// Window thread, every PollEvents: installs/removes the direct camera hook
     /// (bloodborne_cam.h) to match input.ini and the F7 toggle, and gates the BbMouse sampler.
     void UpdateMouseCamera();
