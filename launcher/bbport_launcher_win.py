@@ -607,6 +607,16 @@ def game_server(s):
     return COMMUNITY_SERVER
 
 
+def shadnet_servers(s):
+    """(server, WebAPI) of shadNet the game uses: the address fields only with "Use my own servers" (the Online
+    page shows them only then), the public server otherwise. A field another tool or an earlier setup left behind
+    (a WebAPI with https://, where shadNet speaks http) then cannot break the public one."""
+    if s.get('online_custom_servers'):
+        return str(s.get('online_server', '')).strip() or APP_DEFAULTS['online_server'], webapi_setting(s)
+    server = APP_DEFAULTS['online_server']
+    return server, webapi_address(server)
+
+
 def has_own_servers(s):
     """For settings saved before "Use my own servers" existed: on when they hold other addresses (a
     private server, a friend's), which the game used then."""
@@ -849,10 +859,10 @@ def game_environment(s, graphics=None):
     cache = graphics.get('object_motion_cache', '0') == '1' and motion_cache_available(graphics)
     env['BB_OBJECT_MOTION_CACHE'] = '1' if cache else '0'
     if s.get('online'):
-        server = str(s['online_server']).strip() or APP_DEFAULTS['online_server']
+        server, webapi = shadnet_servers(s)
         env['BB_ONLINE'] = '1'
         env['BB_SHADNET_SERVER'] = server
-        env['BB_SHADNET_WEBAPI'] = webapi_setting(s)
+        env['BB_SHADNET_WEBAPI'] = webapi
         env['BB_SHADNET_NPID'] = str(s['online_npid']).strip()
         env['BB_SHADNET_PASSWORD'] = str(s['online_password'])
         env['BB_UPNP'] = '1' if s['online_upnp'] else '0'
@@ -2562,11 +2572,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         def check():
             values = {key: self.var(key, 'app').get()
                       for key in ('online_server', 'online_webapi', 'online_community')}
-            address = values['online_server'].strip() or APP_DEFAULTS['online_server']
             online_on = self.var('online', 'app').get()
             pool_name = pool.get()
-            webapi = webapi_setting(values)
-            game = game_server({**values, 'online_pool': pool_name, 'online_custom_servers': custom.get()})
+            own = custom.get()
+            address, webapi = shadnet_servers({**values, 'online_custom_servers': own})
+            game = game_server({**values, 'online_pool': pool_name, 'online_custom_servers': own})
             hunters_dream = pool_name == 'huntersdream'
             signed_in = thd_id.get() if thd_token.get() else ''
             result.configure(text=_('Checking…'))
@@ -2578,7 +2588,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                     _('Not signed in: use "Sign in with Discord" above.'))
                 else:
                     text = server_check(address, webapi, game)
-                if pool_name == 'shadnet' and values['online_webapi'].strip() and values['online_webapi'].strip() != webapi:
+                if pool_name == 'shadnet' and own and values['online_webapi'].strip() \
+                        and values['online_webapi'].strip() != webapi:
                     text += '\n' + _('The WebAPI box holds the game server address; it is ignored.')
                 if not online_on:
                     text += '\n' + _('"Play online" is off: the game starts offline.')
