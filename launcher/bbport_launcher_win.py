@@ -4679,9 +4679,19 @@ def latest_release():
     with urllib.request.urlopen(request, timeout=15) as response:
         release = json.load(response)
     version = '.'.join(re.findall(r'\d+', release['tag_name']))
-    url = next((asset['browser_download_url'] for asset in release.get('assets', [])
-                if asset.get('name', '').lower().endswith('.zip')), None)
-    return version, url, release.get('html_url') or RELEASES_PAGE
+    return version, game_zip(release), release.get('html_url') or RELEASES_PAGE
+
+
+def game_zip(release):
+    """The download URL of a release's game package: Bloodborne-Windows.zip, else its one .zip that
+    is not a source archive. None when it cannot tell (the release page opens instead). Up to 1.9.5
+    beta 2 the launcher took the first .zip: with the FSR 4 source archive uploaded first, an update
+    downloaded that and stopped ("Bloodborne.exe is missing from the download")."""
+    zips = [asset for asset in release.get('assets', []) if asset.get('name', '').lower().endswith('.zip')]
+    named = [asset for asset in zips if asset['name'].lower() == 'bloodborne-windows.zip']
+    games = named or [asset for asset in zips
+                      if not re.search(r'(^|[-_.])(src|source|sources)([-_.]|$)', asset['name'].lower())]
+    return games[0]['browser_download_url'] if len(games) == 1 else None
 
 
 def installable_releases():
@@ -4699,8 +4709,7 @@ def installable_releases():
         version = '.'.join(re.findall(r'\d+', tag))
         if not version or version_tuple(version) < version_tuple(OLDEST_INSTALLABLE):
             continue
-        url = next((asset['browser_download_url'] for asset in release.get('assets', [])
-                    if asset.get('name', '').lower().endswith('.zip')), None)
+        url = game_zip(release)
         if url and version not in found:
             found[version] = (version, url, release.get('html_url') or RELEASES_PAGE)
     return sorted(found.values(), key=lambda item: version_tuple(item[0]), reverse=True)
