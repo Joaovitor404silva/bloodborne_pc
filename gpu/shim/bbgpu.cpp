@@ -234,7 +234,14 @@ extern "C" int bbgpu_init(const BbGpuConfig* config) {
 #endif
     Core::Emulator::FillElfInfo(*config);
     const std::string title = config->title ? config->title : "Bloodborne";
-    const s32 width = config->width, height = config->height;
+    // A window (not fullscreen) opens at the chosen output size: at the game's 1920x1080 it
+    // showed a 1440p or 4K output shrunk into 1080p, every other pixel skipped (blocky UI,
+    // shimmering edges). WindowSDL fits it to the screen.
+    const auto& settings = BbSettings::Get();
+    const int output = settings.output_res.load();
+    const bool known = output >= 0 && output < int(std::size(BbSettings::OutputWidths));
+    const s32 width = known ? BbSettings::OutputWidths[output] : config->width;
+    const s32 height = known ? BbSettings::OutputHeights[output] : config->height;
     g_window_thread = std::thread([title, width, height] {
         Common::SetCurrentThreadName("bb:window");
         auto* window = new Frontend::WindowSDL(width, height, title.c_str());
