@@ -410,8 +410,9 @@ VOICE_LANGUAGES = [('auto', ('As in the game',)), ('eng', ('English',)),
                    ('frf', ('Français',)), ('iti', ('Italiano',)), ('jaj', ('日本語',))]
 DRAW_PIPE = [('', ('Auto (8+ threads)', 'Авто (8+ потоков)')), ('1', ('On', 'Включён')),
              ('0', ('Off (more stable)', 'Выключен (стабильнее)'))]
-READBACKS = [('', ('Relaxed (default)', 'Relaxed (по умолчанию)')), ('0', ('Off', 'Выключены')),
-             ('2', ('Precise',))]
+# Off (0) skipped the copy FaceGen needs and exploded the hunter's face (PR #99): the game treats
+# it as Relaxed, and a saved Off becomes the default (Launcher.__init__).
+READBACKS = [('', ('Relaxed (default)', 'Relaxed (по умолчанию)')), ('2', ('Precise',))]
 # What the launcher does when the game starts (close_on_play of earlier launchers: 'close').
 ON_PLAY = [('stay', ('Keep it open',)), ('minimize', ('Minimize it',)), ('close', ('Close it',))]
 # BB_LOW_VRAM (run.py's low-VRAM profile): '' leaves it to the card's memory.
@@ -948,6 +949,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.app = {**APP_DEFAULTS, **saved}
         if 'online_custom_servers' not in saved:
             self.app['online_custom_servers'] = has_own_servers(self.app)
+        if self.app.get('readbacks') == '0':  # Off left the launcher (READBACKS)
+            self.app['readbacks'] = ''
         if self.app.get('online_pool') not in ('huntersdream', 'shadnet'):  # SuperMedo Server left the launcher
             self.app['online_pool'] = 'huntersdream'
         for key in ('supermedo_user', 'supermedo_password'):  # its account, the password in plain text
