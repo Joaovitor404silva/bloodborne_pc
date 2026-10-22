@@ -805,6 +805,9 @@ static void record_sample(const PadData *d) {
             record_start=now_us();
             memset(&record_last,0xff,sizeof(record_last));
             printf("Runtime: pad recording started (%s, F9 stops)\n",path);
+        } else {
+            /* e.g. C:\ itself, which needs administrator rights: said, not silently nothing. */
+            printf("Runtime: pad recording cannot write %s: %s\n",path,strerror(errno));
         }
     }
     f9_was_down=f9;
