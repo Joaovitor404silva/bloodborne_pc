@@ -69,6 +69,18 @@ class TalkScriptTests(unittest.TestCase):
 
 
 
+@unittest.skipUnless((GAME / 'dvdroot_ps4/msg/engus').is_dir(), 'needs the game (BB_GAME_DIR)')
+class TextTests(unittest.TestCase):
+    def test_every_game_language_has_its_own_texts(self):
+        folders = {p.name for p in (GAME / 'dvdroot_ps4/msg').iterdir() if (p / 'menu.msgbnd.dcx').is_file()}
+        folders.discard('japanese')  # a second Japanese folder some dumps carry: English there
+        self.assertEqual(folders - set(rebirth.TEXTS), set())
+        for language in folders:
+            option, question, short, nothing = rebirth.doll_texts(language)
+            self.assertIn(str(rebirth.REBIRTH_INSIGHT), question + short, language)
+            self.assertNotIn('{', question + short, language)
+
+
 @unittest.skipUnless((GAME / rebirth.GAME_PARAMS).is_file(), 'needs the game (BB_GAME_DIR)')
 class WeaponTests(unittest.TestCase):
     def test_requirements_are_the_games(self):

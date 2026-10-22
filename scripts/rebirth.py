@@ -60,14 +60,146 @@ ORIGINAL = {
     SHOWN_RED: 'c4e1fa2cc0',
 }
 
+# The Doll's Rebirth texts in each of the game's languages (msg/<folder>): the option, the Yes/No
+# question, short of Insight, nothing to reset. {n} is REBIRTH_INSIGHT. The game's own words are
+# used for Insight, Blood Echoes, Channel Blood Echoes and the origin (menu FMGs 2, 30 and 200).
 TEXTS = {
     'engus': ('Rebirth',
-              f'Be reborn for {REBIRTH_INSIGHT} Insight? Your attributes and level return to those of '
-              f'your origin. Your levels can then be regained without Blood Echoes, now or later '
-              f'with Channel Blood Echoes. Leaving without regaining a level cancels the rebirth.',
-              f'Rebirth requires {REBIRTH_INSIGHT} Insight.',
+              "Be reborn for {n} Insight? Your attributes and level return to your origin's, keeping what "
+              'your equipped weapons need. Regain your levels without Blood Echoes, now or later with '
+              'Channel Blood Echoes. Leaving without regaining a level cancels the rebirth.',
+              'Rebirth requires {n} Insight.',
               'Your attributes are already those of your origin.'),
+    'dandk': ('Genfødsel',
+              'Bliv genfødt for {n} Indsigt? Dine attributter og dit niveau vender tilbage til din '
+              'oprindelses, men det, dine udrustede våben kræver, bevares. Genvind dine niveauer uden '
+              'blodekkoer, nu eller senere med Kanalisér blodekkoer. Går du uden at genvinde et niveau, '
+              'annulleres genfødslen.',
+              'Genfødsel kræver {n} Indsigt.',
+              'Dine attributter er allerede din oprindelses.'),
+    'deude': ('Wiedergeburt',
+              'Für {n} Einsicht wiedergeboren werden? Deine Attribute und deine Stufe kehren zu denen '
+              'deiner Herkunft zurück, was deine ausgerüsteten Waffen erfordern, bleibt erhalten. Gewinne '
+              'deine Stufen ohne Blutechos zurück, jetzt oder später mit Blutechos kanalisieren. Gehst du, '
+              'ohne eine Stufe zurückzugewinnen, wird die Wiedergeburt abgebrochen.',
+              'Die Wiedergeburt erfordert {n} Einsicht.',
+              'Deine Attribute entsprechen bereits deiner Herkunft.'),
+    'finfi': ('Uudelleensyntyminen',
+              'Synnytäänkö uudelleen {n} Oivalluksella? Ominaisuutesi ja tasosi palaavat taustasi '
+              'mukaisiksi, mutta varustettujen aseidesi vaatimukset säilyvät. Saat tasosi takaisin ilman '
+              'verihäiveitä nyt tai myöhemmin valinnalla Kanavoi verihäiveitä. Jos poistut saamatta tasoa '
+              'takaisin, uudelleensyntyminen perutaan.',
+              'Uudelleensyntyminen vaatii {n} Oivallusta.',
+              'Ominaisuutesi ovat jo taustasi mukaiset.'),
+    'frafr': ('Renaissance',
+              'Renaître pour {n} points de Lucidité ? Vos attributs et votre niveau reviennent à ceux de '
+              "votre origine, en gardant ce qu'exigent vos armes équipées. Regagnez vos niveaux sans "
+              'échos de sang, maintenant ou plus tard avec Canaliser les échos du sang. Partir sans '
+              'regagner de niveau annule la renaissance.',
+              'La renaissance nécessite {n} points de Lucidité.',
+              'Vos attributs sont déjà ceux de votre origine.'),
+    'itait': ('Rinascita',
+              'Rinascere per {n} Intuizione? Attributi e livello tornano a quelli della tua origine, '
+              'mantenendo ciò che richiedono le armi equipaggiate. Recupera i livelli senza echi del '
+              'sangue, ora o più tardi con Incanala echi del sangue. Uscire senza recuperare un livello '
+              'annulla la rinascita.',
+              'La rinascita richiede {n} Intuizione.',
+              'I tuoi attributi sono già quelli della tua origine.'),
+    'jpnjp': ('生まれ直す',
+              '啓蒙を{n}消費して生まれ直しますか？能力とレベルが過去の値に戻ります（装備中の武器に必要な'
+              '能力はそのまま残ります）。レベルは今または後で「血の遺志を力とする」から血の遺志なしで取り戻せ'
+              'ます。レベルを取り戻さずに立ち去ると、生まれ直しは取り消されます。',
+              '生まれ直すには啓蒙が{n}必要です。',
+              '能力はすでに過去の値です。'),
+    'korkr': ('다시 태어나기',
+              '계몽을 {n} 소비해 다시 태어나겠습니까? 능력치와 레벨이 과거의 값으로 돌아갑니다(장비한 '
+              '무기에 필요한 능력치는 유지됩니다). 레벨은 지금 또는 나중에 「피의 유지를 깃들인다」에서 피의 '
+              '유지 없이 되찾을 수 있습니다. 레벨을 되찾지 않고 떠나면 다시 태어나기가 취소됩니다.',
+              '다시 태어나려면 계몽이 {n} 필요합니다.',
+              '능력치가 이미 과거의 값입니다.'),
+    'nldnl': ('Wedergeboorte',
+              'Herboren worden voor {n} Inzicht? Je attributen en niveau keren terug naar die van je '
+              'herkomst, maar wat je uitgeruste wapens vereisen blijft. Win je niveaus terug zonder '
+              'bloedsporen, nu of later met Bloedsporen kanaliseren. Weggaan zonder een niveau terug te '
+              'winnen annuleert de wedergeboorte.',
+              'Wedergeboorte vereist {n} Inzicht.',
+              'Je attributen zijn al die van je herkomst.'),
+    'norno': ('Gjenfødsel',
+              'Bli gjenfødt for {n} Innsikt? Egenskapene og nivået ditt går tilbake til opphavets, men det '
+              'de utrustede våpnene dine krever, beholdes. Vinn tilbake nivåene uten blodekko, nå eller '
+              'senere med Kanaliser blodekko. Drar du uten å vinne tilbake et nivå, avbrytes gjenfødselen.',
+              'Gjenfødsel krever {n} Innsikt.',
+              'Egenskapene dine er allerede opphavets.'),
+    'polpl': ('Odrodzenie',
+              'Odrodzić się za {n} Wglądu? Atrybuty i poziom wrócą do wartości z pochodzenia, z '
+              'zachowaniem wymagań wyposażonej broni. Odzyskaj poziomy bez tętnień krwi, teraz lub później '
+              'przez Przepływ tętnień krwi. Wyjście bez odzyskania poziomu anuluje odrodzenie.',
+              'Odrodzenie wymaga {n} Wglądu.',
+              'Twoje atrybuty są już takie jak z pochodzenia.'),
+    'porbr': ('Renascimento',
+              'Renascer por {n} de discernimento? Seus atributos e nível voltam aos da sua origem, '
+              'mantendo o que suas armas equipadas exigem. Recupere seus níveis sem ecos de sangue, agora '
+              'ou depois com Canalizar ecos de sangue. Sair sem recuperar um nível cancela o renascimento.',
+              'O renascimento requer {n} de discernimento.',
+              'Seus atributos já são os da sua origem.'),
+    'porpt': ('Renascimento',
+              'Renascer por {n} de Iluminismo? Os teus atributos e nível voltam aos da tua origem, '
+              'mantendo o que as tuas armas equipadas exigem. Recupera os teus níveis sem ecos de sangue, '
+              'agora ou mais tarde com Canalizar ecos de sangue. Sair sem recuperar um nível cancela o '
+              'renascimento.',
+              'O renascimento requer {n} de Iluminismo.',
+              'Os teus atributos já são os da tua origem.'),
+    'rusru': ('Перерождение',
+              'Переродиться за {n} озарения? Характеристики и уровень вернутся к значениям вашего '
+              'происхождения, но требования экипированного оружия сохранятся. Уровни можно вернуть без '
+              'отголосков крови сейчас или позже через Распределить отголоски крови. Если уйти, не вернув '
+              'ни одного уровня, перерождение отменяется.',
+              'Для перерождения нужно {n} озарения.',
+              'Ваши характеристики уже соответствуют происхождению.'),
+    'spaar': ('Renacimiento',
+              '¿Renacer por {n} de Conocimiento? Tus atributos y nivel vuelven a los de tu origen, '
+              'conservando lo que exigen tus armas equipadas. Recupera tus niveles sin ecos de sangre, '
+              'ahora o más tarde con Canalizar ecos de sangre. Irte sin recuperar un nivel cancela el '
+              'renacimiento.',
+              'El renacimiento requiere {n} de Conocimiento.',
+              'Tus atributos ya son los de tu origen.'),
+    'spaes': ('Renacimiento',
+              '¿Renacer por {n} de Lucidez? Tus atributos y nivel vuelven a los de tu origen, conservando '
+              'lo que exigen tus armas equipadas. Recupera tus niveles sin ecos de sangre, ahora o más '
+              'tarde con Canalizar ecos de sangre. Marcharte sin recuperar un nivel cancela el renacimiento.',
+              'El renacimiento requiere {n} de Lucidez.',
+              'Tus atributos ya son los de tu origen.'),
+    'swese': ('Pånyttfödelse',
+              'Bli pånyttfödd för {n} Insikt? Dina egenskaper och din nivå återgår till ditt ursprungs, '
+              'men det dina utrustade vapen kräver behålls. Vinn tillbaka nivåerna utan blodekon, nu eller '
+              'senare med Kanalisera blodekon. Lämnar du utan att vinna tillbaka en nivå avbryts '
+              'pånyttfödelsen.',
+              'Pånyttfödelse kräver {n} Insikt.',
+              'Dina egenskaper är redan ditt ursprungs.'),
+    'turtr': ('Yeniden Doğuş',
+              '{n} Sezgi karşılığında yeniden doğmak ister misin? Özelliklerin ve seviyen kökenindeki '
+              'değerlere döner, kuşandığın silahların gerektirdikleri korunur. Seviyelerini Kan Yankısı '
+              "harcamadan şimdi ya da daha sonra Kan Yankıları'nı Aktar ile geri kazan. Hiç seviye geri "
+              'kazanmadan ayrılırsan yeniden doğuş iptal edilir.',
+              'Yeniden doğuş {n} Sezgi gerektirir.',
+              'Özelliklerin zaten kökenindeki değerlerde.'),
+    'zhocn': ('重生',
+              '要消耗{n}点洞察力重生吗？属性与等级将恢复为背景的初始值，但保留已装备武器所需的属性。之后可'
+              '通过“传导血之回响”，现在或以后无需血之回响即可恢复等级。若未恢复任何等级就离开，重生将被取消。',
+              '重生需要{n}点洞察力。',
+              '你的属性已是背景的初始值。'),
+    'zhotw': ('重生',
+              '要消耗{n}點靈視重生嗎？屬性與等級將恢復為背景的初始值，但保留已裝備武器所需的屬性。之後可'
+              '透過「導引血之迴響」，現在或以後無需血之迴響即可恢復等級。若未恢復任何等級就離開，重生將被取消。',
+              '重生需要{n}點靈視。',
+              '你的屬性已是背景的初始值。'),
 }
+TEXTS['enggb'] = TEXTS['engus']
+
+
+def doll_texts(language):
+    """The four texts for msg/<language>, English for a folder without its own."""
+    return tuple(t.format(n=REBIRTH_INSIGHT) for t in TEXTS.get(language.casefold(), TEXTS['engus']))
 
 
 def code_writes():
@@ -290,7 +422,7 @@ def write_layer(game, out, source=None):
         path = layered if layered and layered.is_file() else folder / 'menu.msgbnd.dcx'
         if not path.is_file():
             continue
-        option, question, short, nothing = TEXTS.get(name.casefold(), TEXTS['engus'])
+        option, question, short, nothing = doll_texts(name)
         archive = path.read_bytes()
         bnd = quit_menu.unpack_dcx(archive)
         texts = {file_id: bnd[o:o + n] for _e, o, n, file_id in quit_menu.bnd4_files(bnd)}
