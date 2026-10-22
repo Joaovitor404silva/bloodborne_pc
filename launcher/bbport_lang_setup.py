@@ -288,6 +288,9 @@ SETUP = {'de': {
         'Neue Installation: Die Grafikeinstellungen wurden für diesen PC gewählt.',
     'New hardware detected: the graphics settings were adjusted to it.':
         'Neue Hardware erkannt: Die Grafikeinstellungen wurden angepasst.',
+    'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+        'Neue Hardware erkannt. Deine eigenen Grafikeinstellungen bleiben; die passenden dafür findest du unter '
+        'Bild & Leistung.',
     'Settings: made for your PC': 'Einstellungen: passend für deinen PC',
     'Settings: adjusted to your new hardware (Undo on System & performance)':
         'Einstellungen: an deine neue Hardware angepasst (Rückgängig unter System & Leistung)',
