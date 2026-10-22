@@ -67,11 +67,10 @@ class MemoryTests(unittest.TestCase):
 
 
 class GraphicsCardTests(unittest.TestCase):
-    """The check before PLAY: a graphics card the port cannot run on (a GeForce 820M started and closed)."""
+    """The check before PLAY: what the game's renderer needs, as the graphics driver answers it
+    (scripts/vulkan_check.py); a GeForce 820M started and closed without a word."""
 
-    def window(self, gpu=None, missing=False, line='Card, discrete, 2048 MiB', answer=True):
-        import bbport_hardware as hardware
-
+    def window(self, vulkan=None, answer=True):
         class Box:
             def __init__(self):
                 self.asked = []
@@ -84,33 +83,37 @@ class GraphicsCardTests(unittest.TestCase):
             def var(self, key, store):
                 return type('Var', (), {'get': lambda _self: '1920x1080'})()
         window = Window()
-        window.app, window.messagebox, window.gpu_missing, window.gpu_line = {}, Box(), missing, line
-        window.rating = hardware.assess(gpu, hardware.Cpu('', None), 32) if gpu else None
+        window.app, window.messagebox, window.vulkan = {}, Box(), vulkan
         return window
 
-    def test_none_found(self):
-        window = self.window(missing=True, line='')
-        self.assertIn('Vulkan 1.3', window.gpu_problem())
+    @staticmethod
+    def verdict(problem, name='GeForce 820M', missing=(), **more):
+        return {'ok': problem is None, 'problem': problem, 'loader': '1.2.170',
+                'device': {'name': name, 'missing': list(missing)} if problem in (None, 'device') else None, **more}
 
-    def test_a_card_rated_not_supported(self):
-        import bbport_hardware as hardware
-        old = hardware.Gpu('nvidia', 'NVIDIA GeForce', 'GT 820M', 2, 10, 'laptop no-vulkan13')
-        self.assertEqual(hardware.gpu_tier(old), 0)
-        self.assertTrue(self.window(old).gpu_problem().startswith('GT 820M: '))
-        good = hardware.Gpu('nvidia', 'NVIDIA GeForce', 'RTX 4060', 8, 120)
-        self.assertIsNone(self.window(good).gpu_problem())
-        self.assertIsNone(self.window().gpu_problem())  # not checked yet: nothing to say
+    def test_each_answer_says_what_to_do(self):
+        self.assertIn('vulkan-1.dll', self.window(self.verdict('loader')).gpu_problem())
+        self.assertIn('1.2.170', self.window(self.verdict('loader_version')).gpu_problem())
+        self.assertIn('Vulkan 1.3', self.window(self.verdict('devices')).gpu_problem())
+        text = self.window(self.verdict('device', missing=['Vulkan 1.3 (1.2.0)', 'VK_EXT_robustness2'])).gpu_problem()
+        self.assertTrue(text.startswith('GeForce 820M cannot run the port'))
+        self.assertIn('Vulkan 1.3 (1.2.0), VK_EXT_robustness2', text)
+        self.assertIn('0xC0000005', self.window(self.verdict('crashed', code='0xC0000005')).gpu_problem())
+
+    def test_nothing_to_say(self):
+        self.assertIsNone(self.window(self.verdict(None, 'RX 9070 XT')).gpu_problem())
+        self.assertIsNone(self.window(None).gpu_problem())  # not asked yet, or the check could not run
 
     def test_asked_once_per_card(self):
-        window = self.window(missing=True)
+        window = self.window(self.verdict('device', missing=['VK_EXT_robustness2']))
         with mock.patch.object(help_, 'memory_problem', lambda *_a: None):
             self.assertTrue(window.preflight())
             self.assertTrue(window.preflight())
             self.assertEqual(len(window.messagebox.asked), 1)
-            window.gpu_line = 'Other card, discrete, 4096 MiB'
+            window.vulkan = self.verdict('device', 'Other card', missing=['nullDescriptor'])
             self.assertTrue(window.preflight())
             self.assertEqual(len(window.messagebox.asked), 2)
-            no = self.window(missing=True, answer=False)
+            no = self.window(self.verdict('loader'), answer=False)
             self.assertFalse(no.preflight())
             self.assertFalse(no.preflight())  # asked again until the player says start
 

@@ -19,6 +19,22 @@ HELP = {'de': {
     'current driver.':
         'Es wurde keine Grafikkarte mit Vulkan 1.3 gefunden. Der Port braucht eine (GTX 1050 Ti, GTX 1650, RX 570 '
         'oder neuer) mit aktuellem Treiber.',
+    'No working Vulkan driver was found (vulkan-1.dll is missing or broken). Install the current driver for your '
+    'graphics card.':
+        'Es wurde kein funktionierender Vulkan-Treiber gefunden (vulkan-1.dll fehlt oder ist defekt). Installiere '
+        'den aktuellen Treiber deiner Grafikkarte.',
+    'The Vulkan files of the graphics driver are too old ({} of the 1.3 the port needs). Install the current driver '
+    'for your graphics card.':
+        'Die Vulkan-Dateien des Grafiktreibers sind zu alt ({} statt der 1.3, die der Port braucht). Installiere den '
+        'aktuellen Treiber deiner Grafikkarte.',
+    '{0} cannot run the port: its driver lacks {1}. Update the graphics driver; if that does not help, the card is '
+    'too old for the port.':
+        '{0} kann den Port nicht ausführen: Ihrem Treiber fehlt {1}. Aktualisiere den Grafiktreiber; hilft das '
+        'nicht, ist die Karte zu alt für den Port.',
+    'The graphics driver stopped while the launcher asked it about the card (code {}). Install the current driver '
+    'for your graphics card.':
+        'Der Grafiktreiber ist abgestürzt, als der Launcher ihn nach der Karte gefragt hat (Code {}). Installiere '
+        'den aktuellen Treiber deiner Grafikkarte.',
     'The game will likely not start, or close right away.':
         'Das Spiel startet dann wahrscheinlich nicht oder schließt sich sofort.',
     'Show the fix?': 'Lösung anzeigen?',

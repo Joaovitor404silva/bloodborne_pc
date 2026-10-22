@@ -571,21 +571,34 @@ class HelpMixin:
                 'unreadable': '✗ ' + _('eboot.bin cannot be read (Help)')}.get(state)
 
     def gpu_problem(self):
-        """Why the graphics card cannot run the port, or None: no card with Vulkan 1.3 found, or the one
-        the hardware check rates "Not supported" (no Vulkan 1.3 driver, under 4 GB, too slow)."""
-        if getattr(self, 'gpu_missing', False):
+        """Why the game's renderer would not start on this PC, or None: scripts/vulkan_check.py asks the
+        graphics driver for what the renderer needs (a Vulkan 1.3 loader and card, its extensions and
+        features) on the card the game would use. No list of card names: the driver's own answer."""
+        verdict = getattr(self, 'vulkan', None) or {}
+        problem, device = verdict.get('problem'), verdict.get('device') or {}
+        if problem == 'loader':
+            return _('No working Vulkan driver was found (vulkan-1.dll is missing or broken). Install the current '
+                     'driver for your graphics card.')
+        if problem == 'loader_version':
+            return _('The Vulkan files of the graphics driver are too old ({} of the 1.3 the port needs). Install '
+                     'the current driver for your graphics card.').format(verdict.get('loader'))
+        if problem == 'devices':
             return _('No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 '
                      'or newer) with a current driver.')
-        rating = getattr(self, 'rating', None)
-        if rating and rating.tiers['gpu'] == 0:
-            why = next((text for _state, part, text in rating.checks if part == 'gpu'), '')
-            return f'{rating.gpu.name}: {why}'
+        if problem == 'device':
+            lacks = ', '.join(device.get('missing', []))  # its names in Vulkan's words: what to search for
+            return _('{0} cannot run the port: its driver lacks {1}. Update the graphics driver; if that does not '
+                     'help, the card is too old for the port.').format(device.get('name', '?'), lacks)
+        if problem == 'crashed':
+            return _('The graphics driver stopped while the launcher asked it about the card (code {}). Install the '
+                     'current driver for your graphics card.').format(verdict.get('code'))
         return None
 
     def preflight(self):
         """Before PLAY: False when the start would fail for a reason the player can fix first."""
         # A graphics card the port cannot run on: asked once per card (some play on one anyway).
-        problem, card = self.gpu_problem(), getattr(self, 'gpu_line', '') or 'none'
+        verdict = getattr(self, 'vulkan', None) or {}
+        problem, card = self.gpu_problem(), (verdict.get('device') or {}).get('name') or verdict.get('problem')
         if problem and self.app.get('gpu_warned') != card:
             text = (problem + '\n\n' + _('The game will likely not start, or close right away.') + '\n\n' +
                     _('Start anyway?'))

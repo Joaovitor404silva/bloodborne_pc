@@ -650,6 +650,29 @@ def server_check_hunters_dream():
     return '\n'.join(lines)
 
 
+def vulkan_verdict(env):
+    """scripts/vulkan_check.py's answer for this PC: what the game's renderer needs, asked of the graphics
+    driver, in a process of its own (a broken driver ends that one, not the launcher). A process the driver
+    took down: {'problem': 'crashed', 'code': its exit code}. None when it could not ask."""
+    script = PORT_DIR / 'scripts' / 'vulkan_check.py'
+    if not script.is_file():
+        return None
+    command = [sys.executable, '--script', str(script)] if FROZEN else [sys.executable, str(script)]
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=30, env=env,
+                                creationflags=NO_WINDOW)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    try:
+        return json.loads(result.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        # Ended by Windows (an exception code such as 0xC0000005) inside the driver: worth saying. Any other
+        # end without an answer is the check's own failure, not the PC's.
+        crashed = result.returncode < 0 or result.returncode >= 0xC0000000
+        return {'ok': False, 'problem': 'crashed', 'code': f'0x{result.returncode & 0xffffffff:08X}'} \
+            if crashed else None
+
+
 def motion_cache_available(graphics):
     return graphics.get('upscaler', INI_DEFAULTS['upscaler']) in ('fsr3', 'fsr4', 'fsr411') and \
         graphics.get('object_motion', INI_DEFAULTS['object_motion']) in ('1', True)
@@ -857,7 +880,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.fsr411_downloading = False
         self.output = queue.Queue()
         self.gpu_text = _('• Checking the graphics card…', '• Проверка видеокарты…')
-        self.gpu_missing = False  # the check found no graphics card with Vulkan 1.3 (asked before PLAY)
+        self.vulkan = None  # scripts/vulkan_check.py's answer for this PC (asked before PLAY)
         self.banner_image = None
         self.ui_calls = queue.Queue()  # work for the Tk thread from helper threads
         self.mod_order, self.mod_vars, self.patch_vars = [], {}, {}
@@ -3574,7 +3597,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             clang64 = Path(os.environ.get('MSYS2_ROOT', r'C:\msys64')) / 'clang64' / 'bin'
             env['PATH'] = f'{clang64}{os.pathsep}{env.get("PATH", "")}'
         text = _('• Graphics card: not checked', '• Видеокарта: не проверена')
-        names, missing = [], False
+        names = []
         try:
             result = subprocess.run([str(exe), '--live-resolution'], capture_output=True, text=True, timeout=30,
                                     env=env, creationflags=NO_WINDOW)
@@ -3584,10 +3607,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             elif result.returncode:
                 text = _('✗ No Vulkan 1.3 graphics card found (update the driver)',
                          '✗ Не найдена видеокарта с Vulkan 1.3 (обновите драйвер)')
-                missing = True
         except (OSError, subprocess.TimeoutExpired):
             pass
-        self.gpu_text, self.gpu_missing = text, missing
+        self.gpu_text = text
+        self.vulkan = vulkan_verdict(env)
         support = bbport_fsr411.query(PORT_DIR, env)
         def fsr411_done():
             self.fsr411_support = support
