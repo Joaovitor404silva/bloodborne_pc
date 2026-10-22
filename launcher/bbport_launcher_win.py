@@ -2236,12 +2236,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.ttk.Button(holder, text=_('Respec a character…', 'Перераспределить характеристики…'),
                         command=self.open_respec).pack(side='left')
         self.row(f, '', holder,
-                 _('Spread a character\'s attribute points again: same level, same Blood Echoes. '
-                   'Changes the save while the game is closed; a copy of the saves is kept in '
-                   'respec-backups beside them.',
-                   'Заново распределить очки характеристик персонажа: тот же уровень и Отголоски '
-                   'крови. Меняет сохранение, пока игра закрыта; копия сохранений остаётся в '
-                   'respec-backups рядом с ними.'))
+                 _("Spread a character's attribute points again: same level, same Blood Echoes. Changes the save "
+                   'while the game is closed; the saves from before go into your backups (Saves).',
+                   'Заново распределить очки характеристик персонажа: тот же уровень и Отголоски крови. Меняет '
+                   'сохранение, пока игра закрыта; прежние сохранения попадают в ваши резервные копии (Сохранения).'))
 
     def open_respec(self):
         """The respec dialog (bbport_respec): a character, its six attributes, Apply."""
