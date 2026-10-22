@@ -6,7 +6,9 @@ card, per processor generation and the memory size give a tier from "Not support
 "4K-ready", the expected frame rate at 1080p, 1440p and 4K, and the suggested upscaler. The
 launcher fills them in by itself: the graphics card from bb-gpu-capabilities.exe (Vulkan), the
 processor from the registry and CPUID, the memory from Windows. It is a rough guide from the
-requirements and the developer's measurements (RX 7800 XT), not a benchmark.
+requirements and the developer's measurements (RX 7800 XT), not a benchmark. "Not supported" is
+kept for what stops the port: no Vulkan 1.3, a card far too slow, a processor without AVX. Too
+little RAM or video memory is "Below minimum": players run the game with 8 GB and on 3 GB cards.
 
 Texts are English; `tr` translates a template before it is formatted.
 """
@@ -464,10 +466,13 @@ RESOLUTIONS = ('1080p', '1440p', '4K')
 
 
 def gpu_tier(g):
-    if not g.vulkan13 or (not g.igpu and g.vram < 4) or g.score < 25:
+    if not g.vulkan13 or g.score < 25:
         return 0
-    return 1 if g.score < 35 else 2 if g.score < 70 else 3 if g.score < 112 else \
-        4 if g.score < 170 or g.vram < 12 else 5
+    # Under 4 GB of video memory is below the minimum, not a stop: a player's GTX 1060 3 GB played up
+    # to the Blood-Starved Beast. The launcher gives such a card the settings for 4 GB cards.
+    if (not g.igpu and g.vram < 4) or g.score < 35:
+        return 1
+    return 2 if g.score < 70 else 3 if g.score < 112 else 4 if g.score < 170 or g.vram < 12 else 5
 
 
 def resolution_levels(g, tier):
@@ -496,7 +501,9 @@ def cpu_tier(cpu):
 
 
 def ram_tier(gb):
-    return 0 if gb < 12 else 1 if gb < 16 else 5
+    # The game needs memory for its start from the RAM and the page file together (Help: code 3), so
+    # less than 16 GB is below the minimum, not a stop: a player's laptop with 8 GB runs it smoothly.
+    return 1 if gb < 16 else 5
 
 
 def upscaler_name(g):
@@ -533,7 +540,9 @@ def assess(g, cpu, ram, tr=str):
     tiers = {'gpu': gpu_tier(g), 'cpu': cpu_tier(cpu), 'ram': ram_tier(ram)}
     capped = {'gpu': tiers['gpu'], 'cpu': 5 if tiers['cpu'] == 4 else tiers['cpu'], 'ram': tiers['ram']}
     tier = min(capped.values())
-    cap = min((0, 1, 3, 4, 5)[tiers['cpu']], 0 if tiers['ram'] == 0 else 5)
+    # A slow processor caps the frame rate whatever the card can do (below the minimum: under 30 FPS,
+    # the minimum: 30–60 FPS). Too little RAM sets no cap: it shows in the tier and the memory check.
+    cap = (0, 1, 3, 4, 5)[tiers['cpu']]
     rating = Rating()
     rating.gpu, rating.cpu, rating.ram = g, cpu, ram
     rating.tier, rating.tiers = tier, tiers
@@ -544,9 +553,8 @@ def assess(g, cpu, ram, tr=str):
     # picture would not add frames).
     rating.cap, rating.levels, rating.picture_levels = cap, {}, {}
     rating.rows = []
-    for res, level in zip(RESOLUTIONS, resolution_levels(g, tiers['gpu'])):
-        picture = min(level, 0 if tiers['ram'] == 0 else 5)
-        level = min(level, cap)
+    for res, picture in zip(RESOLUTIONS, resolution_levels(g, tiers['gpu'])):
+        level = min(picture, cap)
         rating.levels[res], rating.picture_levels[res] = level, picture
         rating.rows.append((res, level, tr(LEVELS[level]), settings_text(g, picture if level else 0, res, tr)))
 
@@ -570,9 +578,7 @@ def assess(g, cpu, ram, tr=str):
         checks.append((('bad', 'warn', 'ok', 'ok', 'ok')[tiers['cpu']], 'cpu', text))
     if not g.vulkan13:
         checks.append(('bad', 'gpu', tr('Not supported: no Vulkan 1.3 driver for this card.')))
-    elif not g.igpu and g.vram < 4:
-        checks.append(('bad', 'gpu', tr('Not supported: {} GB of video memory, the port needs at least 4 GB.').format(g.vram)))
-    else:
+    else:  # under 4 GB of video memory reads "Below the minimum" like a slow card (gpu_tier)
         text = tr(('Too slow for the port.', 'Below the minimum (GTX 1050 Ti / GTX 1650 / RX 570).',
                    'Meets the minimum (GTX 1050 Ti / GTX 1650 / RX 570 / RX 6500 XT).', 'Above the minimum.',
                    'Meets the recommendation (RTX 3060 Ti / RTX 4060 / RX 6700 XT / RX 7600).',
@@ -580,9 +586,7 @@ def assess(g, cpu, ram, tr=str):
         if g.igpu:
             text += ' ' + tr('Integrated graphics use your RAM as video memory.')
         checks.append((('bad', 'warn', 'ok', 'ok', 'ok', 'ok')[tiers['gpu']], 'gpu', text))
-    if ram < 12:
-        checks.append(('bad', 'ram', tr('{} GB is not enough: the game will likely close right after PLAY (code 3).').format(ram)))
-    elif ram < 16:
+    if ram < 16:  # a warning even at 8 GB: with a large enough page file the game can start (ram_tier)
         checks.append(('warn', 'ram', tr('{} GB is below the minimum of 16 GB: the game may close right after PLAY (code 3).').format(ram)))
     elif ram < 32:
         checks.append(('ok', 'ram', tr('{} GB meets the minimum (32 GB recommended). Keep the page file on "System managed".').format(ram)))
@@ -592,7 +596,7 @@ def assess(g, cpu, ram, tr=str):
 
     notes = []
     if tier > 0:
-        if not g.igpu and g.vram == 4:
+        if not g.igpu and g.vram <= 4:  # profile() sets these for 3 GB cards as well
             notes.append(tr('Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", '
                             'Object motion vectors off, frame generation off, a 60 FPS cap.'))
         if g.vendor == 'intel':
