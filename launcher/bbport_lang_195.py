@@ -24,6 +24,14 @@ KEYS = [
     # the Discord status (Launcher customization)
     "Show what I'm playing on Discord",
     'Your area, the boss you fight and your level on your Discord profile, while the Discord app runs.',
+    # the in-game menu's key and controller combination (Controls)
+    'In-game menu key',
+    'In-game menu on the controller',
+    'Opens the settings menu during play. No key: the menu only opens with the controller, or not at all; the launcher has every setting either way. A key you move the menu off can be bound to the game.',
+    'Off if pressing both sticks or Select + Start opens it by accident.',
+    'No key',
+    'L3 + R3 (press both sticks)',
+    'Select + Start (View + Menu)',
 ]
 
 TEXTS = {
@@ -45,6 +53,13 @@ TEXTS = {
         'В этот раз ввод контроллера удваивался. Журнал называет причину:',
         'Показывать в Discord, во что я играю',
         'Ваша локация, босс, с которым вы сражаетесь, и ваш уровень в профиле Discord, пока запущено приложение Discord.',
+        'Клавиша игрового меню',
+        'Игровое меню на геймпаде',
+        'Открывает меню настроек во время игры. Без клавиши меню открывается только с геймпада или не открывается вовсе; все настройки есть в лаунчере. Клавишу, с которой меню убрано, можно назначить в игре.',
+        'Выключите, если нажатие обоих стиков или Select + Start открывает его случайно.',
+        'Без клавиши',
+        'L3 + R3 (нажать оба стика)',
+        'Select + Start (View + Menu)',
     ],
     'ar': [
         "خادم shadNet العام من shadPS4 لا يقبل إصدار هذا المنفذ حاليًا، لذا يفشل اللعب عبر الإنترنت عليه. اختر "
@@ -63,6 +78,13 @@ TEXTS = {
         'تضاعف إدخال وحدة التحكم هذه المرة. يذكر السجل السبب:',
         'إظهار ما ألعبه على Discord',
         'منطقتك والزعيم الذي تقاتله ومستواك في ملفك على Discord، طالما تطبيق Discord يعمل.',
+        'مفتاح قائمة اللعبة',
+        'قائمة اللعبة على وحدة التحكم',
+        'يفتح قائمة الإعدادات أثناء اللعب. بلا مفتاح تفتح القائمة من وحدة التحكم فقط أو لا تفتح أبدًا؛ وكل الإعدادات موجودة في المشغّل على أي حال. المفتاح الذي تنقل القائمة عنه يمكن ربطه باللعبة.',
+        'أوقفه إذا كان الضغط على العصوين معًا أو Select + Start يفتحها عن غير قصد.',
+        'بلا مفتاح',
+        'L3 + R3 (اضغط العصوين معًا)',
+        'Select + Start (View + Menu)',
     ],
     'es': [
         "El servidor público de shadNet de shadPS4 no acepta por ahora la versión de este port, así que el juego en "
@@ -83,6 +105,13 @@ TEXTS = {
         'Esta vez la entrada del mando se duplicó. Su registro indica la causa:',
         'Mostrar en Discord a qué juego',
         'Tu zona, el jefe contra el que luchas y tu nivel en tu perfil de Discord, mientras la aplicación de Discord esté abierta.',
+        'Tecla del menú del juego',
+        'Menú del juego en el mando',
+        'Abre el menú de ajustes durante la partida. Sin tecla, el menú solo se abre con el mando o no se abre; el launcher tiene todos los ajustes igualmente. La tecla de la que quites el menú se puede asignar al juego.',
+        'Desactívalo si pulsar ambos sticks o Select + Start lo abre sin querer.',
+        'Sin tecla',
+        'L3 + R3 (pulsar ambos sticks)',
+        'Select + Start (View + Menu)',
     ],
     'pt': [
         "O servidor público shadNet do shadPS4 não aceita no momento a versão deste port, então o jogo online nele "
@@ -103,6 +132,13 @@ TEXTS = {
         'Desta vez a entrada do controle foi duplicada. O registro dele aponta a causa:',
         'Mostrar no Discord o que estou jogando',
         'Sua área, o chefe que você enfrenta e seu nível no seu perfil do Discord, enquanto o aplicativo do Discord estiver aberto.',
+        'Tecla do menu do jogo',
+        'Menu do jogo no controle',
+        'Abre o menu de configurações durante o jogo. Sem tecla, o menu só abre pelo controle ou não abre; o launcher tem todas as configurações de qualquer forma. A tecla da qual você tira o menu pode ser atribuída ao jogo.',
+        'Desligue se apertar os dois analógicos ou Select + Start o abre sem querer.',
+        'Sem tecla',
+        'L3 + R3 (apertar os dois analógicos)',
+        'Select + Start (View + Menu)',
     ],
     'fr': [
         "Le serveur shadNet public de shadPS4 n'accepte pas pour l'instant la version de ce port : le jeu en ligne y "
@@ -123,6 +159,13 @@ TEXTS = {
         "L'entrée de la manette a été doublée cette fois. Son journal en donne la cause :",
         'Afficher sur Discord à quoi je joue',
         'Votre zone, le boss que vous affrontez et votre niveau sur votre profil Discord, tant que l’application Discord est ouverte.',
+        'Touche du menu en jeu',
+        'Menu en jeu à la manette',
+        "Ouvre le menu des réglages pendant la partie. Sans touche, le menu ne s'ouvre qu'à la manette, ou pas du tout ; le lanceur a de toute façon tous les réglages. Une touche dont vous retirez le menu peut être assignée au jeu.",
+        "Désactivez-le si appuyer sur les deux sticks ou sur Select + Start l'ouvre par erreur.",
+        'Aucune touche',
+        'L3 + R3 (appuyer sur les deux sticks)',
+        'Select + Start (View + Menu)',
     ],
     'de': [
         "Der öffentliche shadNet-Server von shadPS4 nimmt die Version dieses Ports derzeit nicht an, online spielen "
@@ -144,6 +187,13 @@ TEXTS = {
         'Die Eingabe des Controllers kam diesmal doppelt an. Sein Protokoll nennt den Grund:',
         'Auf Discord zeigen, was ich spiele',
         'Dein Gebiet, der Boss, gegen den du kämpfst, und deine Stufe in deinem Discord-Profil, solange die Discord-App läuft.',
+        'Taste für das Spielmenü',
+        'Spielmenü am Controller',
+        'Öffnet das Einstellungsmenü während des Spiels. Ohne Taste öffnet es sich nur am Controller oder gar nicht; der Launcher hat ohnehin alle Einstellungen. Eine Taste, von der du das Menü wegnimmst, kann im Spiel belegt werden.',
+        'Aus, wenn beide Sticks drücken oder Select + Start es aus Versehen öffnet.',
+        'Keine Taste',
+        'L3 + R3 (beide Sticks drücken)',
+        'Select + Start (View + Menu)',
     ],
     'it': [
         "Il server shadNet pubblico di shadPS4 al momento non accetta la versione di questo port, quindi il gioco "
@@ -163,6 +213,13 @@ TEXTS = {
         "Questa volta l'input del controller è arrivato doppio. Il suo registro indica la causa:",
         'Mostra su Discord a cosa sto giocando',
         'La tua zona, il boss che affronti e il tuo livello nel profilo Discord, mentre l’app di Discord è aperta.',
+        'Tasto del menu di gioco',
+        'Menu di gioco sul controller',
+        'Apre il menu delle impostazioni durante il gioco. Senza tasto il menu si apre solo dal controller, o per niente; il launcher ha comunque tutte le impostazioni. Il tasto da cui togli il menu può essere assegnato al gioco.',
+        'Disattivalo se premere entrambi gli stick o Select + Start lo apre per sbaglio.',
+        'Nessun tasto',
+        'L3 + R3 (premi entrambi gli stick)',
+        'Select + Start (View + Menu)',
     ],
     'pl': [
         "Publiczny serwer shadNet od shadPS4 obecnie nie przyjmuje wersji tego portu, więc gra online na nim nie "
@@ -183,6 +240,13 @@ TEXTS = {
         'Tym razem sygnały kontrolera docierały podwójnie. Jego dziennik podaje przyczynę:',
         'Pokazuj na Discordzie, w co gram',
         'Twój obszar, boss, z którym walczysz, i twój poziom w profilu Discord, gdy działa aplikacja Discord.',
+        'Klawisz menu w grze',
+        'Menu w grze na kontrolerze',
+        'Otwiera menu ustawień podczas gry. Bez klawisza menu otwiera się tylko z kontrolera albo wcale; launcher i tak ma wszystkie ustawienia. Klawisz, z którego zdejmiesz menu, można przypisać w grze.',
+        'Wyłącz, jeśli wciśnięcie obu gałek lub Select + Start otwiera je przypadkiem.',
+        'Bez klawisza',
+        'L3 + R3 (wciśnij obie gałki)',
+        'Select + Start (View + Menu)',
     ],
     'tr': [
         "shadPS4'ün herkese açık shadNet sunucusu şu anda bu portun sürümünü kabul etmiyor, bu yüzden orada çevrim "
@@ -202,6 +266,13 @@ TEXTS = {
         'Bu sefer kontrolcünün girdisi iki kez geldi. Günlüğü nedenini söylüyor:',
         "Discord'da ne oynadığımı göster",
         'Bölgen, savaştığın boss ve seviyen, Discord uygulaması açıkken Discord profilinde görünür.',
+        'Oyun içi menü tuşu',
+        'Kontrolcüde oyun içi menü',
+        'Oynarken ayarlar menüsünü açar. Tuş yoksa menü yalnızca kontrolcüyle açılır ya da hiç açılmaz; tüm ayarlar zaten başlatıcıda. Menüyü kaldırdığın tuş oyunda atanabilir.',
+        'İki çubuğa basmak ya da Select + Start onu yanlışlıkla açıyorsa kapat.',
+        'Tuş yok',
+        'L3 + R3 (iki çubuğa bas)',
+        'Select + Start (View + Menu)',
     ],
     'zh': [
         "shadPS4 的公共 shadNet 服务器目前不接受本移植版的版本，因此在其上在线游玩会失败。请在“游玩设备”中选择 "
@@ -219,6 +290,13 @@ TEXTS = {
         '这次控制器的输入被重复了。日志指出了原因：',
         '在 Discord 上显示我在玩什么',
         '在 Discord 应用运行时，你的区域、正在挑战的首领和等级会显示在你的 Discord 个人资料上。',
+        '游戏内菜单按键',
+        '控制器上的游戏内菜单',
+        '游戏中打开设置菜单。不设按键时，菜单只能用控制器打开，或完全不打开；所有设置在启动器中都有。菜单移走后原来的按键可以在游戏中绑定。',
+        '如果同时按下两个摇杆或 Select + Start 会误开菜单，请关闭。',
+        '无按键',
+        'L3 + R3（同时按下两个摇杆）',
+        'Select + Start（View + Menu）',
     ],
     'ja': [
         "shadPS4 の公開 shadNet サーバーは現在このポートのバージョンを受け付けないため、そこでのオンラインプレイは"
@@ -238,6 +316,13 @@ TEXTS = {
         '今回はコントローラーの入力が二重になっていました。ログに原因があります：',
         'Discord にプレイ中の内容を表示',
         'Discord アプリの起動中、エリア・戦っているボス・レベルが Discord のプロフィールに表示されます。',
+        'ゲーム内メニューのキー',
+        'コントローラーでのゲーム内メニュー',
+        'プレイ中に設定メニューを開きます。キーなしの場合、メニューはコントローラーでのみ開くか、まったく開きません。すべての設定はランチャーにあります。メニューを外したキーはゲームに割り当てられます。',
+        '両スティック押し込みや Select + Start で誤って開く場合はオフに。',
+        'キーなし',
+        'L3 + R3（両スティック押し込み）',
+        'Select + Start（View + Menu）',
     ],
     'ko': [
         "shadPS4의 공개 shadNet 서버가 현재 이 포트의 버전을 받지 않아 그 서버에서는 온라인 플레이가 실패합니다. "
@@ -256,6 +341,13 @@ TEXTS = {
         '이번에는 컨트롤러 입력이 두 번 들어왔습니다. 로그에 원인이 있습니다:',
         'Discord에 플레이 중인 내용 표시',
         'Discord 앱이 실행 중이면 지역, 싸우는 보스, 레벨이 Discord 프로필에 표시됩니다.',
+        '게임 내 메뉴 키',
+        '컨트롤러의 게임 내 메뉴',
+        '플레이 중 설정 메뉴를 엽니다. 키가 없으면 메뉴는 컨트롤러로만 열리거나 아예 열리지 않습니다. 모든 설정은 런처에 있습니다. 메뉴를 뺀 키는 게임에 할당할 수 있습니다.',
+        '두 스틱 누르기나 Select + Start로 실수로 열리면 끄세요.',
+        '키 없음',
+        'L3 + R3 (두 스틱 누르기)',
+        'Select + Start (View + Menu)',
     ],
 }
 

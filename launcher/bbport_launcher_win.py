@@ -308,6 +308,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'frames_ahead': '', 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'extra_env': '', 'close_on_play': False,
                 'on_play': 'stay', 'reopen_after_game': False, 'minimize_to_tray': False, 'discord_status': True,
+                'menu_key': 'Insert', 'menu_pad': 'l3+r3',
                 'check_updates': True, 'save_backups': False, 'online': False, 'online_server': 'srv.shadps4.net:31313',
                 'online_webapi': '', 'online_npid': '', 'online_password': '', 'online_upnp': True,
                 'online_custom_servers': False,
@@ -413,6 +414,14 @@ DRAW_PIPE = [('', ('Auto (8+ threads)', 'Авто (8+ потоков)')), ('1', 
 # Off (0) skipped the copy FaceGen needs and exploded the hunter's face (PR #99): the game treats
 # it as Relaxed, and a saved Off becomes the default (Launcher.__init__).
 READBACKS = [('', ('Relaxed (default)', 'Relaxed (по умолчанию)')), ('2', ('Precise',))]
+# What opens the in-game menu (BB_MENU_KEY / BB_MENU_PAD, gpu/shim/bbport_overlay.cpp): a key's name as
+# SDL knows it (not F7, F8 or F9: input.ini's mouse and reload keys, pad recording), or none; a
+# controller combination, or off. The launcher has every setting either way.
+MENU_KEYS = [('Insert', ('Insert',)), ('Home', ('Home',)), ('End', ('End',)), ('Delete', ('Delete',)),
+             ('PageUp', ('Page Up',)), ('PageDown', ('Page Down',))] + \
+            [(f'F{n}', (f'F{n}',)) for n in range(1, 13) if n not in (7, 8, 9)] + [('none', ('No key',))]
+MENU_PADS = [('l3+r3', ('L3 + R3 (press both sticks)',)), ('back+start', ('Select + Start (View + Menu)',)),
+             ('off', ('Off',))]
 # What the launcher does when the game starts (close_on_play of earlier launchers: 'close').
 ON_PLAY = [('stay', ('Keep it open',)), ('minimize', ('Minimize it',)), ('close', ('Close it',))]
 # BB_LOW_VRAM (run.py's low-VRAM profile): '' leaves it to the card's memory.
@@ -850,6 +859,8 @@ def game_environment(s, graphics=None):
     env['BB_PATCHES_CONFIG'] = str(DATA_DIR / 'patches.json')
     env['BB_LANGUAGE'] = s['language']
     env['BB_DISCORD'] = '1' if s.get('discord_status', True) else '0'  # src/runtime_discord.c
+    env['BB_MENU_KEY'] = str(s.get('menu_key') or 'Insert')  # the in-game menu's key and combination
+    env['BB_MENU_PAD'] = str(s.get('menu_pad') or 'l3+r3')
     env['BB_VOICE_LANGUAGE'] = s['voice_language']
     if str(s['player_name']).strip():
         env['BB_USER_NAME'] = str(s['player_name']).strip()
@@ -2874,6 +2885,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    "the controller's (PlayStation, Xbox or Switch) while you use it.",
                    'Значки кнопок в игре: ваши клавиши и мышь, пока вы играете ими, и кнопки '
                    'геймпада (PlayStation, Xbox или Switch), пока вы используете его.'))
+        self.row(f, _('In-game menu key'), self.choice(f, 'menu_key', 'app', MENU_KEYS, 16),
+                 _('Opens the settings menu during play. No key: the menu only opens with the controller, or '
+                   'not at all; the launcher has every setting either way. A key you move the menu off can be '
+                   'bound to the game.'))
+        self.row(f, _('In-game menu on the controller'), self.choice(f, 'menu_pad', 'app', MENU_PADS, 28),
+                 _("Off if pressing both sticks or Select + Start opens it by accident."))
         # Only the settings of the device chosen in "You play with" (no switch of its own: one choice,
         # not two that look alike). A search jump shows the other device's part without changing it.
         played = self.var('play_with', 'app')

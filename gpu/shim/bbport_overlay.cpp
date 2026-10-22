@@ -52,7 +52,40 @@ namespace {
 std::mutex imgui_mutex; // the ImGui context: window thread (input) and present thread
 bool initialized = false;
 std::atomic<bool> menu_open{false};
-bool l3_down = false, r3_down = false;
+bool l3_down = false, r3_down = false, back_down = false, start_down = false;
+
+// What opens the menu (the launcher's Controls page): BB_MENU_KEY, a key's name ("Insert", the
+// default, "F10", ...) or "none"; BB_MENU_PAD, "l3+r3" (the default), "back+start" or "off".
+SDL_Keycode MenuKey() {
+    static const SDL_Keycode key = [] {
+        const char* name = std::getenv("BB_MENU_KEY");
+        if (!name || !*name) return SDLK_INSERT;
+        if (!SDL_strcasecmp(name, "none")) return SDLK_UNKNOWN;
+        const SDL_Keycode found = SDL_GetKeyFromName(name);
+        return found != SDLK_UNKNOWN ? found : SDLK_INSERT;
+    }();
+    return key;
+}
+enum class MenuPad { Off, L3R3, BackStart };
+MenuPad MenuPadCombo() {
+    static const MenuPad combo = [] {
+        const char* name = std::getenv("BB_MENU_PAD");
+        if (name && !SDL_strcasecmp(name, "off")) return MenuPad::Off;
+        if (name && !SDL_strcasecmp(name, "back+start")) return MenuPad::BackStart;
+        return MenuPad::L3R3;
+    }();
+    return combo;
+}
+// "Insert / L3+R3", as the window title and the log name it.
+std::string MenuOpeners() {
+    std::string text = MenuKey() != SDLK_UNKNOWN ? SDL_GetKeyName(MenuKey()) : "";
+    const MenuPad pad = MenuPadCombo();
+    if (pad != MenuPad::Off) {
+        text += text.empty() ? "" : " / ";
+        text += pad == MenuPad::L3R3 ? "L3+R3" : "Select+Start";
+    }
+    return text.empty() ? "the launcher only" : text;
+}
 bool dirty = false; // settings changed while open: saved on close
 // The game's text dialog (SetTextEntry), guarded by imgui_mutex.
 bool text_entry_active = false;
@@ -187,8 +220,8 @@ void Menu() {
         ImVec2(0.0f, 0.0f),
         ImVec2(FLT_MAX, std::max(viewport->WorkSize.y - 60.0f * base_scale, 200.0f * base_scale)));
     bool keep_open = true;
-    if (!ImGui::Begin("Bloodborne - Settings (Insert / L3+R3)", &keep_open,
-                      ImGuiWindowFlags_NoCollapse)) {
+    static const std::string title = "Bloodborne - Settings (" + MenuOpeners() + ")###settings";
+    if (!ImGui::Begin(title.c_str(), &keep_open, ImGuiWindowFlags_NoCollapse)) {
         ImGui::End();
         return;
     }
@@ -649,7 +682,7 @@ void Init(const Vulkan::Instance& instance, vk::Format format, u32 image_count) 
         return;
     }
     initialized = true;
-    std::printf("Overlay: menu ready (Insert or L3+R3)\n");
+    std::printf("Overlay: menu ready (%s)\n", MenuOpeners().c_str());
 }
 
 void UpdateTextInput(SDL_Window* window) {
@@ -678,9 +711,9 @@ bool HandleEvent(const SDL_Event& event) {
     case SDL_EVENT_KEY_DOWN:
     case SDL_EVENT_KEY_UP: {
         const bool down = event.type == SDL_EVENT_KEY_DOWN;
-        if (down && !event.key.repeat &&
-            (event.key.key == SDLK_INSERT || (is_open && event.key.key == SDLK_ESCAPE))) {
-            SetOpen(event.key.key == SDLK_INSERT ? !is_open : false);
+        const bool menu_key = MenuKey() != SDLK_UNKNOWN && event.key.key == MenuKey();
+        if (down && !event.key.repeat && (menu_key || (is_open && event.key.key == SDLK_ESCAPE))) {
+            SetOpen(menu_key ? !is_open : false);
             return true;
         }
         if (!is_open) {
@@ -702,8 +735,14 @@ bool HandleEvent(const SDL_Event& event) {
             l3_down = down;
         } else if (button == SDL_GAMEPAD_BUTTON_RIGHT_STICK) {
             r3_down = down;
+        } else if (button == SDL_GAMEPAD_BUTTON_BACK) {
+            back_down = down;
+        } else if (button == SDL_GAMEPAD_BUTTON_START) {
+            start_down = down;
         }
-        if (down && l3_down && r3_down) {
+        const MenuPad pad = MenuPadCombo();
+        if (down && ((pad == MenuPad::L3R3 && l3_down && r3_down) ||
+                     (pad == MenuPad::BackStart && back_down && start_down))) {
             SetOpen(!is_open);
             return true;
         }
