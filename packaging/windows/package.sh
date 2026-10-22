@@ -56,9 +56,11 @@ cp launcher/bloodborne.ico launcher/bloodborne.png "$dest/launcher/"
 for exe in bb-probe.exe bb-gpu-capabilities.exe bb-fg401-capabilities.exe; do
     llvm-strip --strip-debug -o "$dest/bin/$exe" "out/$exe"
 done
-# Every DLL the executables load from the CLANG64 tree (SDL3, FFmpeg, Vulkan loader, ...).
+# Every DLL the executables load from the CLANG64 tree (SDL3, FFmpeg, ...). Not the Vulkan loader:
+# the game uses the one the graphics driver installs in System32, as every release so far. On a PC
+# with a graphics driver ldd finds that one; a build machine without one (CI) would ship CLANG64's.
 ldd "$dest/bin/bb-probe.exe" "$dest/bin/bb-gpu-capabilities.exe" "$dest/bin/bb-fg401-capabilities.exe" |
-    awk '/\/clang64\/bin\// {print $3}' | sort -u | while read -r dll; do
+    awk '/\/clang64\/bin\// && !/vulkan-1\.dll/ {print $3}' | sort -u | while read -r dll; do
         cp -u "$dll" "$dest/bin/"
     done
 cp -r scripts patches "$dest/"
