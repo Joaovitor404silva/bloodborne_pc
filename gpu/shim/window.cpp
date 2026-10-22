@@ -129,6 +129,10 @@ bool WindowSDL::PollEvents() {
     }
     SDL_Event event;
     bool pad_used = false, mouse_used = false; // the cursor follows them too (UpdateCursor)
+    // Mouse input counts once the batch is read, and only when no controller was in use during it:
+    // a mapping program moves the mouse while a stick is pushed, and its events can come before
+    // the controller's in the same batch.
+    bool mouse_seen = false, pad_busy = PadInUse();
     while (SDL_PollEvent(&event)) {
         // Button prompts follow the device that was used last: a key, a click, the wheel or a
         // real mouse movement, or a controller button or a stick or trigger pushed past half.
@@ -138,18 +142,24 @@ bool WindowSDL::PollEvents() {
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         case SDL_EVENT_MOUSE_WHEEL:
-            BbPrompts::OnInput(BbPrompts::Keyboard);
-            mouse_used = true;
+            mouse_seen = true;
             break;
         case SDL_EVENT_MOUSE_MOTION:
             if (std::abs(event.motion.xrel) + std::abs(event.motion.yrel) >= 3.0f) {
-                BbPrompts::OnInput(BbPrompts::Keyboard);
-                mouse_used = true;
+                mouse_seen = true;
             }
             break;
         case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
             BbPrompts::OnInput(PadDevice(event.gbutton.which));
             pad_used = true;
+            if (PadUse* pad = PadSlot(event.gbutton.which)) pad->buttons |= 1u << (event.gbutton.button & 31);
+            pad_busy = true;
+            break;
+        case SDL_EVENT_GAMEPAD_BUTTON_UP:
+            if (PadUse* pad = PadSlot(event.gbutton.which)) pad->buttons &= ~(1u << (event.gbutton.button & 31));
+            break;
+        case SDL_EVENT_GAMEPAD_REMOVED:
+            if (PadUse* pad = PadSlot(event.gdevice.which)) *pad = PadUse{};
             break;
         case SDL_EVENT_GAMEPAD_ADDED:
             // The game starts with the controller's prompts.
@@ -162,6 +172,10 @@ bool WindowSDL::PollEvents() {
                 BbPrompts::OnInput(PadDevice(event.gaxis.which));
                 pad_used = true;
             }
+            if (PadUse* pad = PadSlot(event.gaxis.which); pad && event.gaxis.axis < 6) {
+                pad->axes[event.gaxis.axis] = event.gaxis.value;
+            }
+            pad_busy = pad_busy || PadInUse();
             break;
         default:
             break;
@@ -264,6 +278,10 @@ bool WindowSDL::PollEvents() {
             break;
         }
     }
+    if (mouse_seen && !pad_busy) { // a real mouse, not one a mapping program moves with the stick
+        BbPrompts::OnInput(BbPrompts::Keyboard);
+        mouse_used = true;
+    }
     // MOU-004: re-evaluated every PollEvents (not only on the events that could change it),
     // because the menu can also close from the render thread (bbport_overlay.cpp's "Close"
     // button sets menu_open there, not through an SDL event here).
@@ -338,6 +356,42 @@ void WindowSDL::UpdateCursor(bool pad_used, bool mouse_used) {
         SDL_HideCursor();
         cursor_hidden = true;
     }
+}
+
+WindowSDL::PadUse* WindowSDL::PadSlot(u32 id) {
+    PadUse* free = nullptr;
+    for (PadUse& pad : pad_use) {
+        if (pad.id == id) {
+            return &pad;
+        }
+        if (!free && pad.id == 0) {
+            free = &pad;
+        }
+    }
+    if (free) {
+        free->id = id;
+    }
+    return free; // a fifth controller is not followed
+}
+
+bool WindowSDL::PadInUse() const {
+    // A stick or trigger past about an eighth of its way: below the dead zone of mapping programs
+    // (they move the mouse only beyond theirs) and above a worn stick's drift at rest.
+    constexpr int OffRest = 4000;
+    for (const PadUse& pad : pad_use) {
+        if (pad.id == 0) {
+            continue;
+        }
+        if (pad.buttons) {
+            return true;
+        }
+        for (const s16 axis : pad.axes) {
+            if (std::abs(int(axis)) > OffRest) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 void WindowSDL::TakeMouseInput(MouseInput& out) {
