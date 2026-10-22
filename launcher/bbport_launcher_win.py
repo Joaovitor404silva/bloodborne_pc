@@ -2345,8 +2345,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def build_online(self):
         ttk = self.ttk
         f = self.scrolled_page('online', _('Online co-op'),
-                               _("Messages, bloodstains and ghosts come from The Hunter's Dream; bells and summons "
-                                 'go through a shadNet server.'))
+                               _("Co-op with other hunters on The Hunter's Dream (with bbhost players) or a shadNet "
+                                 "server; messages, bloodstains and ghosts come from The Hunter's Dream."))
         self.check(f, 'online', 'app', _('Play online'),
                    _('Off: the game stays offline, as before.'))
         self.var('online', 'app').trace_add('write', lambda *_a: self.refresh_status())
