@@ -186,6 +186,13 @@ TOPICS = {
          'Nothing lights up: connect the controller again (a cable is the surest), and close tools that take it '
          'over, like DS4Windows.',
          'Started from Steam: in the game\'s Steam properties, try Steam Input on or off.']),
+    'shadnet_rejected': (
+        'The shadNet server turned this port away',
+        "shadPS4's public shadNet server checks which program connects and doesn't accept this port's version at the "
+        'moment. The game then plays offline. Your account and your settings are fine.',
+        ["Online play: Play with The Hunter's Dream, then Sign in with Discord.",
+         'Or a shadNet server that accepts the port: Use my own servers, with the addresses from the person who runs '
+         'it.']),
     'smartscreen': (
         '"Windows protected your PC"',
         'Windows shows this for programs it does not know yet.',
@@ -204,7 +211,8 @@ TOPIC_ACTIONS = {'black_screen': [('Clear the shader cache', 'clear_cache')],
                  'eboot_truncated': [('Open the game folder', 'open_game_folder')],
                  'update_only': [('Choose the game folder', 'choose_game_page')],
                  'save_lost': [('Open the backups', 'open_backups')],
-                 'controller': [('Open the controller test', 'open_controller_test')]}
+                 'controller': [('Open the controller test', 'open_controller_test')],
+                 'shadnet_rejected': [('Open Online play', 'open_online_page')]}
 TOPIC_ORDER += [key for key in TOPICS if key not in TOPIC_ORDER]  # topics added later: at the end
 
 # The game's and run.py's messages that name the cause of a failed start or crash.
@@ -219,6 +227,7 @@ LOG_HINTS = [
     (r'is not the original file', 'program_files'),
     (r'ErrorOutOfDeviceMemory|Texture cache: memory pressure', 'vram'),
     (r'ErrorDeviceLost|device lost', 'driver'),
+    (r"Server rejected this client|doesn't accept your shadPS4 build", 'shadnet_rejected'),
     (r'Fault: .* at (?:amdvlk|amdxc|nvoglv|nvvk|nvwgf|igvk|igxe|igd)\w*\.dll', 'driver'),
 ]
 
@@ -569,6 +578,9 @@ class HelpMixin:
         card.toggle = toggle
         return card
 
+    def open_online_page(self):
+        self.show('online')
+
     def open_topic(self, key):
         """The Help page with that problem's steps open, scrolled to it."""
         self.show('help')
@@ -751,6 +763,13 @@ class HelpMixin:
         """After the game ended with an error: the known causes its log names, with the fix. always: also
         when it names none (the game started without the launcher's window, which has its output)."""
         if not code:
+            # Ended normally, but online was off all along: a server that turned the port away.
+            if getattr(self, 'online_refused', False):
+                self.online_refused = False
+                title, why, _steps = TOPICS['shadnet_rejected']
+                if self.messagebox.askyesno('Bloodborne', _('Online play was off this time. Its log names the cause:') +
+                                            '\n\n' + _(title) + '\n' + _(why) + '\n\n' + _('Show the fix?')):
+                    self.open_topic('shadnet_rejected')
             return
         # A Windows exception code the way helpers know it: 0xC0000005, not 3221225477.
         shown = f'0x{code & 0xffffffff:08X}' if code < 0 or code > 255 else code

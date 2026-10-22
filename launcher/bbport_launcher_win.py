@@ -194,6 +194,7 @@ import bbport_lang_help  # noqa: E402,F401 (the Help page's and the game tests' 
 import bbport_lang_ui  # noqa: E402,F401 (the regrouped pages, the side bar, the guide)
 import bbport_lang_world  # noqa: E402,F401 (the new texts in the other eleven languages)
 import bbport_lang_port  # noqa: E402,F401 (the 1.9.3 texts and the Controls page's key names)
+import bbport_lang_195  # noqa: E402,F401 (the 1.9.5 texts: the shadNet server that turns the port away)
 import bbport_hardware as hardware  # noqa: E402
 import bbport_frame  # noqa: E402
 import bbport_display as display  # noqa: E402
@@ -2552,6 +2553,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         credit.bind('<Button-1>', lambda _e: webbrowser.open('https://github.com/Awakenchan/BloodBorneButPc'))
         group('huntersdream')
         self.section(f, _('Account'))
+        self.note(f, _("shadPS4's public shadNet server doesn't accept this port's version at the moment, so online "
+                       "play there fails. Play with The Hunter's Dream, or a shadNet server that accepts the port "
+                       'under Use my own servers.'), top=0)
         self.row(f, _('Online ID (NPID)'), ttk.Entry(f, textvariable=self.var('online_npid', 'app'), width=40),
                  _('Your shadNet account name, not your email. Register one at shadnet.shadps4.net, or ask the '
                    'owner of a private server.'))
@@ -4232,6 +4236,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                         self.status.configure(text=_('The game is running.', 'Игра запущена.'), fg=GOLD)
                     elif 'restarting through run.py' in item:
                         self.status.configure(text=_('Restarting with the new settings…', 'Перезапуск с новыми настройками…'), fg=GOLD)
+                    elif "doesn't accept your shadPS4 build" in item:
+                        self.online_refused = True  # said once the game closes (after_exit)
                     elif 'Runtime: trophy ' in item:
                         self.trophies_changed(self.tracker.observe(item))
                     self.append(item)
