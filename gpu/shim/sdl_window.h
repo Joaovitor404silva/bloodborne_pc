@@ -4,6 +4,7 @@
 #include <atomic>
 #include <mutex>
 #include <string>
+#include "bbport_pad_use.h"
 #include "common/types.h"
 
 struct SDL_Window;
@@ -104,18 +105,11 @@ private:
     /// wheel; while the mouse is captured, relative mode hides it already.
     void UpdateCursor(bool pad_used, bool mouse_used);
     bool cursor_hidden{false};
-    /// Window thread: each controller's sticks, triggers and held buttons as its events left them
-    /// (by SDL joystick id). Mouse input while one is in use comes from the controller through a
-    /// mapping program (Steam's desktop layout, reWASD, JoyToKey...): it neither brings the cursor
-    /// back nor switches the button prompts.
-    struct PadUse {
-        u32 id = 0;      // 0: a free slot
-        s16 axes[6] = {}; // SDL_GamepadAxis order: the sticks, then the triggers
-        u32 buttons = 0; // held, a bit per SDL_GamepadButton
-    };
-    PadUse pad_use[4]{};
-    PadUse* PadSlot(u32 id);
-    bool PadInUse() const;
+    /// Window thread: each controller's sticks, triggers and held buttons as its events left them.
+    /// Mouse input while one is in use comes from the controller through a mapping program (Steam's
+    /// desktop layout, reWASD, JoyToKey...): it neither brings the cursor back, nor switches the
+    /// button prompts, nor turns the camera.
+    BbPadUse::Pads pads;
     /// Window thread, every PollEvents: installs/removes the direct camera hook
     /// (bloodborne_cam.h) to match input.ini and the F7 toggle, and gates the BbMouse sampler.
     void UpdateMouseCamera();

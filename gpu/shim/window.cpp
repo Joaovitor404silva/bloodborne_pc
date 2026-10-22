@@ -132,7 +132,7 @@ bool WindowSDL::PollEvents() {
     // Mouse input counts once the batch is read, and only when no controller was in use during it:
     // a mapping program moves the mouse while a stick is pushed, and its events can come before
     // the controller's in the same batch.
-    bool mouse_seen = false, pad_busy = PadInUse();
+    bool mouse_seen = false, pad_busy = pads.InUse(), pad_turning = pads.SticksPushed(BbPadUse::Turning);
     while (SDL_PollEvent(&event)) {
         // Button prompts follow the device that was used last: a key, a click, the wheel or a
         // real mouse movement, or a controller button or a stick or trigger pushed past half.
@@ -152,14 +152,14 @@ bool WindowSDL::PollEvents() {
         case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
             BbPrompts::OnInput(PadDevice(event.gbutton.which));
             pad_used = true;
-            if (PadUse* pad = PadSlot(event.gbutton.which)) pad->buttons |= 1u << (event.gbutton.button & 31);
+            pads.Button(event.gbutton.which, event.gbutton.button, true);
             pad_busy = true;
             break;
         case SDL_EVENT_GAMEPAD_BUTTON_UP:
-            if (PadUse* pad = PadSlot(event.gbutton.which)) pad->buttons &= ~(1u << (event.gbutton.button & 31));
+            pads.Button(event.gbutton.which, event.gbutton.button, false);
             break;
         case SDL_EVENT_GAMEPAD_REMOVED:
-            if (PadUse* pad = PadSlot(event.gdevice.which)) *pad = PadUse{};
+            pads.Removed(event.gdevice.which);
             break;
         case SDL_EVENT_GAMEPAD_ADDED:
             // The game starts with the controller's prompts.
@@ -172,10 +172,9 @@ bool WindowSDL::PollEvents() {
                 BbPrompts::OnInput(PadDevice(event.gaxis.which));
                 pad_used = true;
             }
-            if (PadUse* pad = PadSlot(event.gaxis.which); pad && event.gaxis.axis < 6) {
-                pad->axes[event.gaxis.axis] = event.gaxis.value;
-            }
-            pad_busy = pad_busy || PadInUse();
+            pads.Axis(event.gaxis.which, event.gaxis.axis, event.gaxis.value);
+            pad_busy = pad_busy || pads.InUse();
+            pad_turning = pad_turning || pads.SticksPushed(BbPadUse::Turning);
             break;
         default:
             break;
@@ -214,16 +213,19 @@ bool WindowSDL::PollEvents() {
             // also reach the stick -- except while locked on, where a flick switches targets.
             const Core::BloodborneCam& cam = Core::BloodborneCam::Instance();
             const bool motion_to_stick = !cam.IsEnabled() || cam.IsLockedOn();
-            if (event.type == SDL_EVENT_MOUSE_MOTION && motion_to_stick) {
+            // A mapping program's movement and clicks while the controller is in use are the
+            // controller's: they would turn the camera a second time and press its buttons twice.
+            if (event.type == SDL_EVENT_MOUSE_MOTION && motion_to_stick && !pad_turning) {
                 std::scoped_lock lock{mouse_mutex};
                 mouse.dx += event.motion.xrel;
                 mouse.dy += event.motion.yrel;
-            } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+            } else if ((event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && !pad_busy) ||
+                       event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
                 std::scoped_lock lock{mouse_mutex};
                 const uint32_t mask = SDL_BUTTON_MASK(event.button.button);
                 if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) mouse.buttons |= mask;
                 else mouse.buttons &= ~mask;
-            } else if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+            } else if (event.type == SDL_EVENT_MOUSE_WHEEL && !pad_busy) {
                 const uint64_t expiry = SDL_GetTicks() + kWheelPulseMs;
                 if (event.wheel.y > 0) g_wheel_expiry_ms[0] = expiry; // WHEEL_UP
                 else if (event.wheel.y < 0) g_wheel_expiry_ms[1] = expiry; // WHEEL_DOWN
@@ -278,6 +280,7 @@ bool WindowSDL::PollEvents() {
             break;
         }
     }
+    BbMouse::SetPadInUse(pad_turning || pads.SticksPushed(BbPadUse::Turning));
     if (mouse_seen && !pad_busy) { // a real mouse, not one a mapping program moves with the stick
         BbPrompts::OnInput(BbPrompts::Keyboard);
         mouse_used = true;
@@ -356,42 +359,6 @@ void WindowSDL::UpdateCursor(bool pad_used, bool mouse_used) {
         SDL_HideCursor();
         cursor_hidden = true;
     }
-}
-
-WindowSDL::PadUse* WindowSDL::PadSlot(u32 id) {
-    PadUse* free = nullptr;
-    for (PadUse& pad : pad_use) {
-        if (pad.id == id) {
-            return &pad;
-        }
-        if (!free && pad.id == 0) {
-            free = &pad;
-        }
-    }
-    if (free) {
-        free->id = id;
-    }
-    return free; // a fifth controller is not followed
-}
-
-bool WindowSDL::PadInUse() const {
-    // A stick or trigger past about an eighth of its way: below the dead zone of mapping programs
-    // (they move the mouse only beyond theirs) and above a worn stick's drift at rest.
-    constexpr int OffRest = 4000;
-    for (const PadUse& pad : pad_use) {
-        if (pad.id == 0) {
-            continue;
-        }
-        if (pad.buttons) {
-            return true;
-        }
-        for (const s16 axis : pad.axes) {
-            if (std::abs(int(axis)) > OffRest) {
-                return true;
-            }
-        }
-    }
-    return false;
 }
 
 void WindowSDL::TakeMouseInput(MouseInput& out) {
