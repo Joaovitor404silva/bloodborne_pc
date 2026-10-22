@@ -812,8 +812,22 @@ def cache_folder(s):
     return DATA_DIR / 'user' if synced_folder(saves) else saves
 
 
+# What BBSC's script hands the launcher it opens (game_environment).
+BBSC_SCRIPT_VARIABLES = ('BB_PROBE', 'BBSC_EMULATOR', 'BB_ONLINE', 'BB_SHADNET_SERVER', 'BB_SHADNET_WEBAPI',
+                         'BB_SHADNET_NPID', 'BB_SHADNET_PASSWORD', 'BB_COMMUNITY_SERVER', 'BB_USER_NAME')
+
+
 def game_environment(s, graphics=None):
     env = {k: v for k, v in os.environ.items() if not k.startswith(('BB_FG_', 'BB_FG401_'))}
+    # BBSC's own "OPEN BBPORT LAUNCHER + BBSC" (tools/play-bbport.ps1) opens this launcher with
+    # BBSC as the game program and its server: kept for a start on that server only (the shadNet
+    # choice it points there). Offline, The Hunter's Dream or another server start without BBSC.
+    if Path(env.get('BB_PROBE', '')).name.lower() == 'bbsc-launch.exe':
+        theirs = env.get('BB_SHADNET_SERVER', '').strip().partition(':')[0].lower()
+        ours = str(s.get('online_server', '')).strip().partition(':')[0].lower()
+        if not (s.get('online') and s.get('online_pool') == 'shadnet' and theirs and theirs == ours):
+            for key in BBSC_SCRIPT_VARIABLES:
+                env.pop(key, None)
     graphics = graphics if graphics is not None else load_ini(s)[0]
     env['BB_GAME_DIR'] = s['game_dir']
     if s['user_dir']:

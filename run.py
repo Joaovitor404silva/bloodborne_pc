@@ -28,11 +28,33 @@ GAME_SERVER = 'https://ss4.scej-network.jp:20443'
 COMMUNITY_API_PORT = 18671
 
 
+def seamless_coop(env):
+    """BBSC (seamless co-op) starts the game: its bbsc-launch.exe is the game program, from this
+    launcher's co-op choice or from BBSC's own scripts."""
+    return Path(env.get('BB_PROBE', '')).name.lower() == 'bbsc-launch.exe'
+
+
+def bbsc_overrides(path):
+    """user/host_overrides.custom.json as BBSC's play-bbport.ps1 writes it (and leaves behind):
+    the summon messenger on BBSC's WebAPI port."""
+    try:
+        entries = json.loads(path.read_text(encoding='utf-8-sig'))
+    except (OSError, ValueError):
+        return False
+    return isinstance(entries, dict) and any('summon_messenger' in key and str(value).rstrip('/').endswith(':31315')
+                                             for key, value in entries.items())
+
+
 def online_overrides(env, user_dir):
     """Writes user/host_overrides.json for this launch. A player who needs other addresses
     puts them in user/host_overrides.custom.json, which is then used as it is."""
     custom = user_dir / 'host_overrides.custom.json'
-    path = custom if custom.exists() else user_dir / 'host_overrides.json'
+    if custom.exists() and not seamless_coop(env) and bbsc_overrides(custom):
+        # BBSC's scripts leave it pointing the game server at BBSC's: online without BBSC stays
+        # on the player's own server.
+        print("Co-op: user/host_overrides.custom.json is BBSC's (seamless co-op), not used without BBSC")
+        custom = None
+    path = custom if custom and custom.exists() else user_dir / 'host_overrides.json'
     if path != custom:
         community = (env.get('BB_COMMUNITY_SERVER') or COMMUNITY_SERVER).rstrip('/')
         if '://' not in community:
@@ -325,6 +347,36 @@ def thermal_watch(stop):
 SAVE_BACKUPS_KEPT = 10
 
 
+# Seamless co-op's own saves: <user>/seamless-coop is the game's user folder while BBSC plays
+# (its saves, its rebirth targets), so co-op never writes the player's normal characters.
+COOP_SAVES = 'seamless-coop'
+
+
+def coop_user_dir(env, user_dir, game):
+    """The user folder for a BBSC start. The GPU caches stay in the normal one, the DLC the normal
+    one has is reported installed here too, and BBSC is told where the character's save is (it
+    otherwise looks in <working folder>/user, the normal saves)."""
+    coop = user_dir / COOP_SAVES
+    coop.mkdir(parents=True, exist_ok=True)
+    if not env.get('BB_DLC_DIR'):
+        titles = sorted(p for p in (user_dir / 'addcont').glob('*') if p.is_dir() and any(p.iterdir()))
+        if titles:
+            env['BB_DLC_DIR'] = str(titles[0])  # its <label> folders, as the launcher's DLC folder
+    title = 'CUSA00207'
+    try:
+        sys.path.insert(0, str(PORT / 'scripts'))
+        from prepare import sfo
+        values = sfo((Path(game) / 'sce_sys' / 'param.sfo').read_bytes())
+        found = str(values.get('INSTALL_DIR_SAVEDATA') or values.get('TITLE_ID') or '').strip()
+        if re.fullmatch(r'[A-Z]{4}\d{5}', found):
+            title = found
+    except (OSError, ValueError, ImportError, TypeError):
+        pass
+    env.setdefault('BBSC_SAVE_DIR', str(coop / 'savedata' / '1' / title / 'SPRJ0005'))
+    print(f'Seamless co-op: its own saves in {coop} (the normal saves are not used)')
+    return coop
+
+
 def backup_saves(user_dir, keep=SAVE_BACKUPS_KEPT, now=None):
     """BB_SAVE_BACKUPS=1 (launcher: Play page, "Back up saves at start"): a copy of the saves
     in <user>/save-backups/<time>/savedata before the game starts, the newest `keep` kept.
@@ -575,8 +627,9 @@ def main():
         user_dir = Path(env.get('BB_USER_DIR', data / 'user')).resolve()
         user_dir.mkdir(parents=True, exist_ok=True)
         env.setdefault('BB_GPU_USER_DIR', str(user_dir))
+        saves_dir = coop_user_dir(env, user_dir, original_game) if seamless_coop(env) else user_dir
         if env.get('BB_SAVE_BACKUPS') == '1' and not restarted:  # not again for an in-game restart
-            backup_saves(user_dir)
+            backup_saves(saves_dir)
         if env.get('BB_ONLINE') == '1' and env.get('BB_NET_BACKEND') == 'thd':
             hunters_dream(env, user_dir)
         elif env.get('BB_ONLINE') == '1':
@@ -586,7 +639,7 @@ def main():
         env['BB_RESTART_COMMAND'] = subprocess.list2cmdline(restart)
         command = [str(probe), str(out / 'boot-linked.bin'), '--content-profile', str(out / 'content.bin'),
                    '--patches', str(out / 'patches.bin'), '--app0', str(game),
-                   '--user', str(user_dir),
+                   '--user', str(saves_dir),
                    '--timeout', env.get('BB_TIMEOUT', '0'), *args]
         game_over = None
         if env.get('BB_THERMAL_LOG') == '1':
