@@ -54,6 +54,8 @@ RELEASES_PAGE = 'https://github.com/Supermedo/bloodborne_pc/releases/latest'
 # The community site (install guide, FAQ, forum), linked from the side bar.
 COMMUNITY_SITE = 'https://bbport.de/'
 RELEASES_LIST_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases?per_page=100'
+# The betas (pre-releases v<VERSION>-beta.<N>): a beta asks here too, for the next one (update_to_offer).
+BETAS_API = 'https://api.github.com/repos/nick24051998/bloodborne_pc/releases?per_page=30'
 # The oldest version Advanced > Other versions offers: older ones cannot install themselves the
 # same way (--install-update) or read today's settings.
 OLDEST_INSTALLABLE = '1.8.2'
@@ -4264,9 +4266,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     # ---- updates -------------------------------------------------------------------------------
     def check_update(self, manual=False):
-        """Helper thread: asks GitHub for the newest release and offers it when it is newer."""
+        """Helper thread: asks GitHub for the newest release (and a beta for the next beta) and offers it."""
         try:
-            version, url, page = latest_release()
+            offer = update_to_offer()
         except (OSError, ValueError, KeyError) as failure:
             if manual:
                 self.ui_calls.put(lambda error=failure: self.messagebox.showerror(
@@ -4274,10 +4276,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             return
 
         def show():
-            # A beta's own release is its update.
-            newer = version_tuple(version) > version_tuple(VERSION)
-            if newer or (BETA and version_tuple(version) == version_tuple(VERSION)):
-                self.offer_update(version, url, page)
+            if offer:
+                self.offer_update(*offer)
             elif manual:
                 self.messagebox.showinfo('Bloodborne', _('You have the latest version ({}).',
                                                          'У вас последняя версия ({}).').format(VERSION_TEXT))
@@ -4680,6 +4680,50 @@ def latest_release():
         release = json.load(response)
     version = '.'.join(re.findall(r'\d+', release['tag_name']))
     return version, game_zip(release), release.get('html_url') or RELEASES_PAGE
+
+
+def newer_beta():
+    """(label, zip URL, page URL) of the newest published beta after this one: a later beta of this
+    version or a beta of a later one. None for a release build, and when there is none."""
+    if not BETA:
+        return None
+    request = urllib.request.Request(BETAS_API, headers={'Accept': 'application/vnd.github+json',
+                                                         'User-Agent': 'bbport-launcher'})
+    with urllib.request.urlopen(request, timeout=15) as response:
+        releases = json.load(response)
+    best = None
+    for release in releases:
+        found = re.fullmatch(r'v(\d+(?:\.\d+)*)-beta\.(\d+)', release.get('tag_name', ''))
+        if release.get('draft') or not found:
+            continue
+        key = (version_tuple(found[1]), int(found[2]))
+        url = game_zip(release)
+        if url and key > (version_tuple(VERSION), BETA) and (best is None or key > best[0]):
+            best = (key, f'{found[1]} beta {found[2]}', url, release.get('html_url') or BETA_PAGE)
+    return best[1:] if best else None
+
+
+def update_to_offer():
+    """(version, zip URL, page URL) the launcher offers, or None. A newer release; for a beta also its
+    own version's release (the beta's goal), else the next beta, so testers move from beta to beta
+    and on to the release without downloading by hand. Raises OSError/ValueError/KeyError when no
+    check answered."""
+    failure = None
+    try:
+        version, url, page = latest_release()
+        newer = version_tuple(version) > version_tuple(VERSION)
+        if newer or (BETA and version_tuple(version) == version_tuple(VERSION)):
+            return version, url, page
+    except (OSError, ValueError, KeyError) as error:
+        failure = error
+    if BETA:
+        try:
+            return newer_beta()
+        except (OSError, ValueError, KeyError) as error:
+            failure = failure or error
+    if failure:
+        raise failure
+    return None
 
 
 def game_zip(release):
