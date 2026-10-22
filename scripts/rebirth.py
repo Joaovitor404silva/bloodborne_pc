@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-or-later
 """Rebirth at the Doll (bbport.ini rebirth, game version 01.09): a new choice in the Doll's menu
-puts the character back to its origin's attributes and level for REBIRTH_INSIGHT Insight, then
-opens the level-up screen, where the levels it had are bought again for free. No Blood Echoes
+puts the character back to its origin's attributes and level for REBIRTH_INSIGHT Insight (never
+below what the equipped weapons need: `weapons`), then opens the level-up screen, where the levels it had are bought again for free. No Blood Echoes
 come back: levels cost nothing only up to the level the character had (src/runtime_rebirth.c
 keeps that target per character).
 
@@ -288,13 +288,57 @@ def write_layer(game, out, source=None):
     print(f'Rebirth: the Doll\'s menu and texts for {written} languages')
 
 
+# EquipParamWeapon (param/gameparam/gameparam.parambnd.dcx): each weapon's requirements, one byte
+# each from +0xED: Strength, Skill, Bloodtinge, Arcane (the Saw Cleaver 8 7 0 0, the Holy
+# Moonlight Sword 16 12 0 14). A weapon used below them breaks the game's attack animations (a
+# T-pose on a hit): the game never lets that happen, but a rebirth lowers the attributes.
+GAME_PARAMS = Path('dvdroot_ps4') / 'param' / 'gameparam' / 'gameparam.parambnd.dcx'
+WEAPON_PARAMS = 'EquipParamWeapon.param'
+REQUIREMENTS = 0xED
+
+
+def weapons(game):
+    """{weapon id: (Strength, Skill, Bloodtinge, Arcane)} of the weapons that need any."""
+    from fov import bnd4_name
+    bnd = quit_menu.unpack_dcx((Path(game) / GAME_PARAMS).read_bytes())
+    for entry, offset, length, _file_id in quit_menu.bnd4_files(bnd):
+        if bnd4_name(bnd, entry) != WEAPON_PARAMS:
+            continue
+        param = bnd[offset:offset + length]
+        if param[0x0C:0x0C + 21] != b'EQUIP_PARAM_WEAPON_ST':
+            raise ValueError('EquipParamWeapon is not an EQUIP_PARAM_WEAPON_ST table')
+        count, = struct.unpack_from('<H', param, 0x0A)
+        found = {}
+        for i in range(count):
+            row, data, _name = struct.unpack_from('<QQQ', param, 0x40 + i * 24)
+            needs = tuple(param[data + REQUIREMENTS:data + REQUIREMENTS + 4])
+            if any(needs):
+                found[row & 0xFFFFFFFF] = needs
+        return found
+    raise ValueError(f'{WEAPON_PARAMS} not found')
+
+
+def write_weapons(game, path):
+    """The table src/runtime_rebirth.c reads (BB_REBIRTH_WEAPONS): "id str skill blood arcane"."""
+    table = weapons(game)
+    Path(path).write_text(''.join(f'{row} {" ".join(map(str, needs))}\n' for row, needs in sorted(table.items())),
+                          encoding='ascii')
+    print(f'Rebirth: requirements of {len(table)} weapons')
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('game', type=Path, help='game folder (with dvdroot_ps4)')
     p.add_argument('--out', type=Path, required=True, help='mod layer folder to write')
     p.add_argument('--source', type=Path, help='a layer whose menu texts to build on')
+    p.add_argument('--weapons', type=Path, help="file for the weapons' requirements (src/runtime_rebirth.c)")
     a = p.parse_args()
     write_layer(a.game, a.out, a.source)
+    if a.weapons:
+        try:
+            write_weapons(a.game, a.weapons)
+        except (OSError, ValueError) as error:  # the rebirth then keeps no attribute for a weapon
+            print(f"Rebirth: the weapons' requirements could not be read ({error})")
 
 
 if __name__ == '__main__':

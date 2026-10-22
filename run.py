@@ -434,7 +434,10 @@ def main():
     rebirth_layer = out / 'rebirth'
     shutil.rmtree(rebirth_layer, ignore_errors=True)
     if ini_value(config, 'rebirth') != '0' and (game_app_version(game) in (None, '01.09') or env.get('BB_FORCE_PATCHES')):
-        if not run_script('rebirth.py', game, '--out', rebirth_layer, '--source', text_layer, optional=True):
+        weapons = out / 'rebirth-weapons.txt'  # what the equipped weapons need: kept by a rebirth
+        env['BB_REBIRTH_WEAPONS'] = str(weapons)
+        if not run_script('rebirth.py', game, '--out', rebirth_layer, '--source', text_layer, '--weapons', weapons,
+                          optional=True):
             shutil.rmtree(rebirth_layer, ignore_errors=True)
             env['BB_REBIRTH'] = '0'  # patches.py: no eboot hooks without the Doll's script
             print("Rebirth: the Doll's script could not be written; the game starts without it")

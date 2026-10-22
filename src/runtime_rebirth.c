@@ -1,6 +1,9 @@
 /* Rebirth at the Doll (scripts/rebirth.py, game 1.09): the Doll's new "Rebirth" choice puts a
  * character back to its origin's attributes and level for REBIRTH_INSIGHT Insight, and the levels
  * it had are then bought again for free in the level-up screen, as in Dark Souls III's rebirth.
+ * An attribute stays at what the equipped weapons need (BB_REBIRTH_WEAPONS, from rebirth.py):
+ * the game never lets a weapon be used below its requirements, and doing it broke its attack
+ * animations (a T-pose on a hit, Chikage below its Strength). Those points stay spent.
  * No Blood Echoes are given back: a level costs nothing only below the level the character had
  * (its target), and no further.
  *
@@ -19,6 +22,8 @@
 
 #define GAME_DATA_MAN 0x553B130u
 enum { VITALITY = 0x40, INSIGHT = 0x84, LEVEL = 0x90, NAME = 0xA8, NAME_CHARS = 16, ORIGIN = 0xCE };
+/* The equipped weapons' ids: left 1, right 1, left 2, right 2 (empty hands: 1000000, Unarmed). */
+enum { WEAPONS = 0x2A4, WEAPON_SLOTS = 4 };
 #define REBIRTH_INSIGHT 5
 /* Each attribute's offset, in CharaInitParam's order: Vitality, Endurance, Strength, Skill,
  * Bloodtinge, Arcane (the slot at 0x50 is unused). */
@@ -38,6 +43,36 @@ static const uint8_t ORIGINS[9][7] = {
 
 static unsigned char *image;
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+/* Each weapon's requirements (Strength, Skill, Bloodtinge, Arcane) by id, read once. */
+#define MAX_WEAPONS 2048
+static struct { uint32_t id; uint8_t needs[4]; } weapons[MAX_WEAPONS];
+static int weapon_count = -1;
+
+static void load_weapons(void) {
+    weapon_count = 0;
+    const char *path = getenv("BB_REBIRTH_WEAPONS");
+    FILE *f = path && *path ? fopen(path, "r") : NULL;
+    if (!f) return;
+    unsigned id, a, b, c, d;
+    while (weapon_count < MAX_WEAPONS && fscanf(f, "%u %u %u %u %u", &id, &a, &b, &c, &d) == 5) {
+        weapons[weapon_count].id = id;
+        weapons[weapon_count].needs[0] = (uint8_t)a; weapons[weapon_count].needs[1] = (uint8_t)b;
+        weapons[weapon_count].needs[2] = (uint8_t)c; weapons[weapon_count].needs[3] = (uint8_t)d;
+        ++weapon_count;
+    }
+    fclose(f);
+}
+
+/* The requirements of weapon `id`: its own row, else its base weapon's (an id's last four digits
+ * are its upgrade and variant). NULL: none. */
+static const uint8_t *weapon_needs(uint32_t id) {
+    if (weapon_count < 0) load_weapons();
+    for (int pass = 0; pass < 2; ++pass, id -= id % 10000)
+        for (int i = 0; i < weapon_count; ++i)
+            if (weapons[i].id == id) return weapons[i].needs;
+    return NULL;
+}
 
 void runtime_rebirth_set_image(unsigned char *base) { image = base; }
 
@@ -116,19 +151,35 @@ int runtime_rebirth(void) {
         if (level < target) {
             printf("Runtime: rebirth: levels %" PRIu32 " to %u still free to regain\n", level, target);
             result = 1;
-        } else if (level <= origin[0]) {
-            printf("Runtime: rebirth: already the origin's level %u\n", origin[0]);
-            result = 2;
-        } else if (insight >= REBIRTH_INSIGHT) {
-            write_target(key, target > level ? target : level);
-            for (int i = 0; i < 6; ++i) put32(p, ATTRIBUTE[i], origin[i + 1]);
-            put32(p, LEVEL, origin[0]);
-            put32(p, INSIGHT, insight - REBIRTH_INSIGHT);
-            printf("Runtime: rebirth: level %" PRIu32 " -> %u, levels up to %u free, Insight %" PRIu32 " -> %" PRIu32 "\n",
-                   level, origin[0], target > level ? target : level, insight, insight - REBIRTH_INSIGHT);
-            result = 1;
         } else {
-            printf("Runtime: rebirth refused: Insight %" PRIu32 " (needs %d)\n", insight, REBIRTH_INSIGHT);
+            /* The origin's attributes, but Strength..Arcane not below the equipped weapons' needs
+             * (nor above what the character has). Each point kept is a level kept. */
+            uint32_t reborn[6], new_level = origin[0];
+            for (int i = 0; i < 6; ++i) {
+                reborn[i] = origin[i + 1];
+                const uint32_t had = get32(p, ATTRIBUTE[i]);
+                for (int slot = 0; i >= 2 && slot < WEAPON_SLOTS; ++slot) {
+                    const uint8_t *needs = weapon_needs(get32(p, WEAPONS + slot * 4));
+                    if (needs && needs[i - 2] > reborn[i]) reborn[i] = needs[i - 2] < had ? needs[i - 2] : had;
+                }
+                if (reborn[i] < origin[i + 1]) reborn[i] = origin[i + 1];
+                new_level += reborn[i] - origin[i + 1];
+            }
+            if (level <= new_level) {
+                printf("Runtime: rebirth: already the origin's level %u (with the weapons' needs)\n", new_level);
+                result = 2;
+            } else if (insight >= REBIRTH_INSIGHT) {
+                write_target(key, target > level ? target : level);
+                for (int i = 0; i < 6; ++i) put32(p, ATTRIBUTE[i], reborn[i]);
+                put32(p, LEVEL, new_level);
+                put32(p, INSIGHT, insight - REBIRTH_INSIGHT);
+                printf("Runtime: rebirth: level %" PRIu32 " -> %" PRIu32 " (origin %u, the rest for the equipped weapons), "
+                       "levels up to %u free, Insight %" PRIu32 " -> %" PRIu32 "\n", level, new_level, origin[0],
+                       target > level ? target : level, insight, insight - REBIRTH_INSIGHT);
+                result = 1;
+            } else {
+                printf("Runtime: rebirth refused: Insight %" PRIu32 " (needs %d)\n", insight, REBIRTH_INSIGHT);
+            }
         }
     }
     pthread_mutex_unlock(&lock);

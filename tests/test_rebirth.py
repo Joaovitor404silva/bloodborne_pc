@@ -68,5 +68,15 @@ class TalkScriptTests(unittest.TestCase):
                 self.assertEqual(evaluators[read + 1], f'(reg0 == {rebirth.OPTION})')
 
 
+
+@unittest.skipUnless((GAME / rebirth.GAME_PARAMS).is_file(), 'needs the game (BB_GAME_DIR)')
+class WeaponTests(unittest.TestCase):
+    def test_requirements_are_the_games(self):
+        weapons = rebirth.weapons(GAME)
+        self.assertEqual(weapons[7000000], (8, 7, 0, 0))      # Saw Cleaver: Strength, Skill
+        self.assertEqual(weapons[26000000], (16, 12, 0, 14))  # Holy Moonlight Sword: Arcane last
+        self.assertNotIn(1000000, weapons)                    # Unarmed needs nothing
+        self.assertTrue(all(len(n) == 4 and max(n) <= 99 for n in weapons.values()))
+
 if __name__ == '__main__':
     unittest.main()
