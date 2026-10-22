@@ -26,7 +26,7 @@ class ReportTests(unittest.TestCase):
         root = Path(self.tmp.name)
         (root / 'BB-Report-Tool.bat').write_text('<# tool #>')
         launcher = types.SimpleNamespace(PORT_DIR=root, DATA_DIR=root, CONFIG_FILE=root / 'settings.json',
-                                         VERSION='1.9.4', NO_WINDOW=0, _=lambda *texts: texts[0],
+                                         VERSION='1.9.4', VERSION_TEXT='1.9.4', NO_WINDOW=0, _=lambda *texts: texts[0],
                                          renamed=lambda text: text)
         saved, help_.L = help_.L, launcher
         self.addCleanup(setattr, help_, 'L', saved)

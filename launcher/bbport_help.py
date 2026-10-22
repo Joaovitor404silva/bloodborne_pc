@@ -691,7 +691,7 @@ class HelpMixin:
         self.report_note.configure(text=_('Collecting the report… (up to a minute)'), fg=theme.MUTED)
         # BBTOOL_*: the port, its settings and version, and the folder for the zip; it asks nothing then.
         env = {**os.environ, 'BBTOOL': str(tool), 'BBTOOL_PORT': str(L.PORT_DIR),
-               'BBTOOL_SETTINGS': str(L.CONFIG_FILE), 'BBTOOL_VERSION': L.VERSION, 'BBTOOL_OUT': str(folder)}
+               'BBTOOL_SETTINGS': str(L.CONFIG_FILE), 'BBTOOL_VERSION': L.VERSION_TEXT, 'BBTOOL_OUT': str(folder)}
         started = time.time()
 
         def work():

@@ -41,7 +41,12 @@ PATCH_VERSION = '01.09'
 MAX_LOG_LINES = 6000
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 # This build; GitHub release tags are windows-v<VERSION>.
-VERSION = '1.9.4'
+VERSION = '1.9.5'
+# A beta of VERSION (its number), or 0: shown as 'v1.9.5 beta 1', and the release of VERSION itself is
+# offered as its update.
+BETA = 1
+VERSION_TEXT = f'{VERSION} beta {BETA}' if BETA else VERSION
+BETA_PAGE = 'https://github.com/nick24051998/bloodborne_pc/releases/tag/v1.9.5-beta.1'
 # Co-op: the community server that answers the game's own server requests.
 COMMUNITY_SERVER = 'https://thehuntersdream.com'
 RELEASES_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases/latest'
@@ -1411,7 +1416,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         words.pack(side='left', fill='x')
         tk.Label(words, text='BLOODBORNE', bg=BG, fg=theme.TEXT_STRONG, font=(theme.HEAD_BOLD, 14)).pack(anchor='w')
         tk.Label(words, text='PC PORT', bg=BG, fg=GOLD, font=(theme.HEAD, 8)).pack(anchor='w')
-        tk.Label(side, text=_('by Super Medo') + f'  ·  v{VERSION}' + ('\n' + _('co-op test build') if COOP_TEST else ''),
+        tk.Label(side, text=_('by Super Medo') + f'  ·  v{VERSION_TEXT}' + ('\n' + _('co-op test build') if COOP_TEST else ''),
                  bg=BG, fg=MUTED, justify='left', font=(theme.BODY, 9)).pack(anchor='w', padx=px(22), pady=(px(2), px(8)))
         self.build_search(side)  # bbport_search: settings and help by the player's own words
         self.nav, self.current_page = {}, None
@@ -1986,7 +1991,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         font = (theme.BODY_MEDIUM, 9)
         measure = tkfont.Font(root=self.root, font=font).measure
         chips, left, chip_h, chip_y = [], x, px(28), y + px(92)
-        for text, fg, line, tags in (first, (f'v{VERSION}', theme.TEXT_SOFT, theme.BORDER_STRONG, ())):
+        for text, fg, line, tags in (first, (f'v{VERSION_TEXT}', theme.TEXT_SOFT, theme.BORDER_STRONG, ())):
             chip_w = measure(text) + px(26)
             chips.append((left, chip_w, text, fg, line, tags))
             left += chip_w + px(8)
@@ -3327,7 +3332,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.index_entry(self.updates_button, _('Check for updates', 'Проверить обновления'), key='button:updates')
         ttk.Button(holder, text=_('Other versions…', 'Другие версии…'), command=self.choose_version).pack(
             side='left', padx=(6, 0))
-        ttk.Label(holder, text=f'v{VERSION}', style='Muted.TLabel').pack(side='left', padx=10)
+        ttk.Label(holder, text=f'v{VERSION_TEXT}', style='Muted.TLabel').pack(side='left', padx=10)
         self.section(f, _('Appearance'))  # the translucent window: Launcher customization > Launcher
         self.check(f, 'windows_title_bar', 'app', _("Windows' title bar instead of the launcher's own"),
                    _('Applies when the launcher opens again.', 'Применится при следующем открытии лаунчера.'))
@@ -3399,7 +3404,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         import platform
         import time as clock
         w, h = self.display_size()
-        info = {'Launcher': f'v{VERSION}', 'Graphics card': self.gpu_line or '?',
+        info = {'Launcher': f'v{VERSION_TEXT}', 'Graphics card': self.gpu_line or '?',
                 'Processor': self.cpu.name if self.cpu else '?', 'Memory': f'{self.ram} GB', 'Display': f'{w} × {h}',
                 'Windows': platform.version(), 'Game': ' '.join(game_info(self.var('game_dir', 'app').get()) or ())}
         folder = self.tests_dir() / (clock.strftime('%Y-%m-%d_%H%M%S') + '_benchmark')
@@ -3547,7 +3552,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.check_line('cheats', ('⚠ ' + _('Cheats on: {}').format(', '.join(t.split(' (')[0] for t in cheats))
                                    if cheats else ''), lambda: self.show('cheats'))
         news = self.var('setup_done', 'app').get() and self.app.get('seen_version') != VERSION
-        self.check_line('news', '• ' + _('New in version {}: what has changed').format(VERSION) if news else '',
+        self.check_line('news', '• ' + _('New in version {}: what has changed').format(VERSION_TEXT) if news else '',
                         self.open_news)
         for label in getattr(self, 'warnings', []):
             if info and info[1] != PATCH_VERSION:
@@ -3595,7 +3600,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def open_news(self):
         self.app['seen_version'] = VERSION
-        webbrowser.open(RELEASES_PAGE)
+        webbrowser.open(BETA_PAGE if BETA else RELEASES_PAGE)
         self.refresh_status()
 
     def summary(self):
@@ -4191,11 +4196,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             return
 
         def show():
-            if version_tuple(version) > version_tuple(VERSION):
+            # A beta's own release is its update.
+            newer = version_tuple(version) > version_tuple(VERSION)
+            if newer or (BETA and version_tuple(version) == version_tuple(VERSION)):
                 self.offer_update(version, url, page)
             elif manual:
                 self.messagebox.showinfo('Bloodborne', _('You have the latest version ({}).',
-                                                         'У вас последняя версия ({}).').format(VERSION))
+                                                         'У вас последняя версия ({}).').format(VERSION_TEXT))
         self.ui_calls.put(show)
 
     def offer_update(self, version, url, page):
