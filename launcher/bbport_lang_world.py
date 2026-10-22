@@ -855,6 +855,10 @@ WORLD = {
         'driver for your graphics card.':
             'Драйвер видеокарты аварийно завершился, когда лаунчер запрашивал данные о карте (код {}). Установите '
             'актуальный драйвер видеокарты.',
+        'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+            'Видеокарта {0}: Vulkan {1} и всё остальное, что нужно порту.',
+        '✗ The graphics card cannot run the port: see Help':
+            '✗ Видеокарта не может запустить порт: см. «Помощь»',
         'The game will likely not start, or close right away.':
             'Игра, скорее всего, не запустится или сразу закроется.',
         'Start anyway?':
@@ -2412,6 +2416,10 @@ WORLD = {
         'driver for your graphics card.':
             'توقف تعريف بطاقة الرسومات بينما كان المشغّل يستعلم عن البطاقة (الرمز {}). ثبّت أحدث تعريف لبطاقة '
             'الرسومات.',
+        'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+            'بطاقة الرسومات {0}: \u200fVulkan {1} وكل ما يحتاجه المنفذ.',
+        '✗ The graphics card cannot run the port: see Help':
+            '✗ لا تستطيع بطاقة الرسومات تشغيل المنفذ: راجع المساعدة',
         'The game will likely not start, or close right away.':
             'على الأرجح لن تبدأ اللعبة، أو ستُغلق فورًا.',
         'Start anyway?':
@@ -4021,6 +4029,10 @@ WORLD = {
         'driver for your graphics card.':
             'El controlador gráfico se detuvo mientras el launcher le preguntaba por la tarjeta (código {}). Instala '
             'el controlador actual de tu tarjeta gráfica.',
+        'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+            'Tarjeta gráfica {0}: Vulkan {1} y todo lo demás que necesita el port.',
+        '✗ The graphics card cannot run the port: see Help':
+            '✗ La tarjeta gráfica no puede ejecutar el port: consulta la Ayuda',
         'The game will likely not start, or close right away.':
             'Lo más probable es que el juego no arranque o se cierre enseguida.',
         'Start anyway?':
@@ -5633,6 +5645,10 @@ WORLD = {
         'driver for your graphics card.':
             'O driver de vídeo parou enquanto o launcher consultava a placa (código {}). Instale o driver atual da '
             'sua placa de vídeo.',
+        'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+            'Placa de vídeo {0}: Vulkan {1} e tudo o mais de que o port precisa.',
+        '✗ The graphics card cannot run the port: see Help':
+            '✗ A placa de vídeo não consegue rodar o port: veja a Ajuda',
         'The game will likely not start, or close right away.':
             'O jogo provavelmente não vai iniciar ou vai fechar logo em seguida.',
         'Start anyway?':
@@ -7243,6 +7259,10 @@ WORLD = {
         'driver for your graphics card.':
             "Le pilote graphique s'est arrêté pendant que le launcher l'interrogeait sur la carte (code {}). "
             'Installez le pilote actuel de votre carte graphique.',
+        'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+            'Carte graphique {0} : Vulkan {1} et tout ce dont le port a besoin.',
+        '✗ The graphics card cannot run the port: see Help':
+            "✗ La carte graphique ne peut pas faire tourner le port : voir l'Aide",
         'The game will likely not start, or close right away.':
             'Le jeu ne démarrera probablement pas, ou se fermera aussitôt.',
         'Start anyway?':
@@ -8858,6 +8878,10 @@ WORLD = {
         'driver for your graphics card.':
             'Il driver video si è arrestato mentre il launcher lo interrogava sulla scheda (codice {}). Installa il '
             'driver aggiornato della tua scheda video.',
+        'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+            'Scheda video {0}: Vulkan {1} e tutto il resto che serve al port.',
+        '✗ The graphics card cannot run the port: see Help':
+            '✗ La scheda video non può eseguire il port: vedi Aiuto',
         'The game will likely not start, or close right away.':
             'Probabilmente il gioco non si avvierà o si chiuderà subito.',
         'Start anyway?':
@@ -10470,6 +10494,10 @@ WORLD = {
         'driver for your graphics card.':
             'Sterownik graficzny przestał działać, gdy launcher pytał go o kartę (kod {}). Zainstaluj aktualny '
             'sterownik karty graficznej.',
+        'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+            'Karta graficzna {0}: Vulkan {1} i wszystko inne, czego potrzebuje port.',
+        '✗ The graphics card cannot run the port: see Help':
+            '✗ Karta graficzna nie uruchomi portu: zobacz Pomoc',
         'The game will likely not start, or close right away.':
             'Gra najpewniej się nie uruchomi albo od razu się zamknie.',
         'Start anyway?':
@@ -12081,6 +12109,10 @@ WORLD = {
         'driver for your graphics card.':
             'Başlatıcı karta dair bilgi isterken ekran kartı sürücüsü durdu (kod {}). Ekran kartınızın güncel '
             'sürücüsünü yükleyin.',
+        'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+            'Ekran kartı {0}: Vulkan {1} ve portun ihtiyaç duyduğu diğer her şey.',
+        '✗ The graphics card cannot run the port: see Help':
+            "✗ Ekran kartı portu çalıştıramaz: Yardım'a bakın",
         'The game will likely not start, or close right away.':
             'Oyun büyük olasılıkla başlamaz ya da hemen kapanır.',
         'Start anyway?':
@@ -13685,6 +13717,10 @@ WORLD = {
         'The graphics driver stopped while the launcher asked it about the card (code {}). Install the current '
         'driver for your graphics card.':
             '启动器查询显卡信息时，显卡驱动停止了响应（代码 {}）。请安装显卡的最新驱动。',
+        'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+            '显卡 {0}：Vulkan {1}，以及移植版所需的其他一切。',
+        '✗ The graphics card cannot run the port: see Help':
+            '✗ 这块显卡无法运行移植版：请查看“帮助”',
         'The game will likely not start, or close right away.':
             '游戏很可能无法启动，或会立即关闭。',
         'Start anyway?':
@@ -15284,6 +15320,10 @@ WORLD = {
         'The graphics driver stopped while the launcher asked it about the card (code {}). Install the current '
         'driver for your graphics card.':
             'ランチャーがカードの情報を問い合わせている間にグラフィックドライバーが停止しました（コード {}）。グラフィックカードの最新ドライバーをインストールしてください。',
+        'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+            'グラフィックカード {0}：Vulkan {1} と、移植版に必要なその他すべて。',
+        '✗ The graphics card cannot run the port: see Help':
+            '✗ このグラフィックカードでは移植版を実行できません：ヘルプを参照',
         'The game will likely not start, or close right away.':
             'ゲームはおそらく起動しないか、すぐに終了します。',
         'Start anyway?':
@@ -16885,6 +16925,10 @@ WORLD = {
         'The graphics driver stopped while the launcher asked it about the card (code {}). Install the current '
         'driver for your graphics card.':
             '런처가 카드 정보를 조회하는 동안 그래픽 드라이버가 중지되었습니다(코드 {}). 그래픽 카드의 최신 드라이버를 설치하세요.',
+        'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+            '그래픽 카드 {0}: Vulkan {1} 및 포트에 필요한 나머지 전부.',
+        '✗ The graphics card cannot run the port: see Help':
+            '✗ 이 그래픽 카드로는 포트를 실행할 수 없습니다: 도움말 참조',
         'The game will likely not start, or close right away.':
             '게임이 시작되지 않거나 바로 종료될 가능성이 높습니다.',
         'Start anyway?':

@@ -29,12 +29,16 @@ HELP = {'de': {
         'aktuellen Treiber deiner Grafikkarte.',
     '{0} cannot run the port: its driver lacks {1}. Update the graphics driver; if that does not help, the card is '
     'too old for the port.':
-        '{0} kann den Port nicht ausführen: Ihrem Treiber fehlt {1}. Aktualisiere den Grafiktreiber; hilft das '
-        'nicht, ist die Karte zu alt für den Port.',
+        '{0} kann den Port nicht ausführen: Dem Grafiktreiber fehlt {1}. Aktualisiere ihn; hilft das nicht, ist '
+        'die Karte zu alt für den Port.',
     'The graphics driver stopped while the launcher asked it about the card (code {}). Install the current driver '
     'for your graphics card.':
         'Der Grafiktreiber ist abgestürzt, als der Launcher ihn nach der Karte gefragt hat (Code {}). Installiere '
         'den aktuellen Treiber deiner Grafikkarte.',
+    'Graphics card {0}: Vulkan {1} and everything else the port needs.':
+        'Grafikkarte {0}: Vulkan {1} und alles andere, was der Port braucht.',
+    '✗ The graphics card cannot run the port: see Help':
+        '✗ Die Grafikkarte kann den Port nicht ausführen: siehe Hilfe',
     'The game will likely not start, or close right away.':
         'Das Spiel startet dann wahrscheinlich nicht oder schließt sich sofort.',
     'Show the fix?': 'Lösung anzeigen?',

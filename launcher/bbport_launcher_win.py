@@ -1835,7 +1835,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         ttk.Label(info, text=_('Ready check', 'Проверка'), style='Card.Section.TLabel').pack(anchor='w', pady=(0, px(8)))
         # One line per thing that matters; a line that is not fine leads to its fix with a click.
         self.checks, self.check_lines, self.check_targets = {}, {}, {}
-        for key in ('news', 'system', 'settings', 'game', 'saves', 'online', 'cheats', 'fsr4'):
+        for key in ('news', 'system', 'gpu', 'settings', 'game', 'saves', 'online', 'cheats', 'fsr4'):
             line = ttk.Frame(info, style='Inner.TFrame')
             line.pack(fill='x', pady=px(4))
             icon = tk.Label(line, text='', bg=CARD, fg=MUTED, font=(theme.ICONS, 11))
@@ -3496,6 +3496,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.check_line('game', eboot or game, (lambda: self.open_topic('eboot_modified')) if eboot and problem else
                         (lambda: self.show('game')) if not info or info[1] != PATCH_VERSION else None)
         self.check_line('saves', save, lambda: self.show('saves'))
+        # The start check (scripts/vulkan_check.py): only when the port cannot start on the card; Help says why.
+        self.check_line('gpu', _('✗ The graphics card cannot run the port: see Help') if self.gpu_problem() else '',
+                        lambda: self.show('help'))
         self.check_line('fsr4', _('• FSR 4 files missing: FSR 3.1 is used meanwhile. Click to download (30 MB)')
                         if missing and self.var('upscaler', 'ini').get() == 'fsr4' else '', self.download_fsr4)
         fsr411_ready, status = True, None

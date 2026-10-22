@@ -100,6 +100,20 @@ class GraphicsCardTests(unittest.TestCase):
         self.assertIn('Vulkan 1.3 (1.2.0), VK_EXT_robustness2', text)
         self.assertIn('0xC0000005', self.window(self.verdict('crashed', code='0xC0000005')).gpu_problem())
 
+    def test_helps_line(self):
+        ok = {'ok': True, 'problem': None, 'device': {'name': 'AMD Radeon RX 9070 XT', 'api': '1.4.359'}}
+        self.assertEqual(self.window(ok).gpu_check(), (
+            'ok', None, 'Graphics card AMD Radeon RX 9070 XT: Vulkan 1.4.359 and everything else the port needs.'))
+        state, topic, text = self.window(self.verdict('device', missing=['nullDescriptor'])).gpu_check()
+        self.assertEqual((state, topic), ('bad', 'driver'))
+        self.assertIn('nullDescriptor', text)
+        self.assertIsNone(self.window(None).gpu_check())
+
+    def test_the_play_page_shows_it_only_when_the_port_cannot_start(self):
+        source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
+        self.assertIn("self.check_line('gpu', _('✗ The graphics card cannot run the port: see Help') if "
+                      "self.gpu_problem() else ''", source)
+
     def test_nothing_to_say(self):
         self.assertIsNone(self.window(self.verdict(None, 'RX 9070 XT')).gpu_problem())
         self.assertIsNone(self.window(None).gpu_problem())  # not asked yet, or the check could not run

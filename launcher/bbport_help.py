@@ -516,6 +516,8 @@ class HelpMixin:
         self.help_button.configure(state='normal')
         if eboot:
             self.app['eboot_check'] = eboot
+        gpu = self.gpu_check()
+        checks = checks + ([gpu] if gpu else [])
         self.help_results = checks
         for child in self.help_list.winfo_children():
             child.destroy()
@@ -569,6 +571,17 @@ class HelpMixin:
                 'modified': '⚠ ' + _('eboot.bin is not the clean 1.09 one: 30 FPS, no effect options (Help)'),
                 'truncated': '✗ ' + _('eboot.bin is cut off: unpack the game again (Help)'),
                 'unreadable': '✗ ' + _('eboot.bin cannot be read (Help)')}.get(state)
+
+    def gpu_check(self):
+        """Help's line for the start check (scripts/vulkan_check.py): the card the game uses and its Vulkan,
+        or why the game would not start on it; None before it answered."""
+        verdict = getattr(self, 'vulkan', None)
+        if not verdict:
+            return None
+        if verdict.get('ok'):
+            device = verdict.get('device') or {}
+            return ('ok', None, _('Graphics card {0}: Vulkan {1} and everything else the port needs.').format(device.get('name', '?'), device.get('api', '?')))
+        return ('bad', 'driver', self.gpu_problem())
 
     def gpu_problem(self):
         """Why the game's renderer would not start on this PC, or None: scripts/vulkan_check.py asks the
