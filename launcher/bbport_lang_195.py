@@ -21,6 +21,9 @@ KEYS = [
     'Steam: Settings > Controller > Desktop Layout: turn it off, or turn Steam Input off for your type of controller.',
     'Or add Bloodborne.exe to Steam (Add a Non-Steam Game), then its Properties > Controller > Disable Steam Input.',
     "The controller's input was doubled this time. Its log names the cause:",
+    # the Discord status (Launcher customization)
+    "Show what I'm playing on Discord",
+    'Your area, the boss you fight and your level on your Discord profile, while the Discord app runs.',
 ]
 
 TEXTS = {
@@ -40,6 +43,8 @@ TEXTS = {
         'Steam: Настройки > Контроллер > Раскладка для рабочего стола: выключите её или выключите Steam Input для вашего типа контроллера.',
         'Или добавьте Bloodborne.exe в Steam («Добавить стороннюю игру»), затем Свойства > Контроллер > Отключить Steam Input.',
         'В этот раз ввод контроллера удваивался. Журнал называет причину:',
+        'Показывать в Discord, во что я играю',
+        'Ваша локация, босс, с которым вы сражаетесь, и ваш уровень в профиле Discord, пока запущено приложение Discord.',
     ],
     'ar': [
         "خادم shadNet العام من shadPS4 لا يقبل إصدار هذا المنفذ حاليًا، لذا يفشل اللعب عبر الإنترنت عليه. اختر "
@@ -56,6 +61,8 @@ TEXTS = {
         'Steam: الإعدادات > وحدة التحكم > تخطيط سطح المكتب: أوقفه، أو أوقف Steam Input لنوع وحدة التحكم لديك.',
         'أو أضف Bloodborne.exe إلى Steam (إضافة لعبة من خارج Steam)، ثم الخصائص > وحدة التحكم > تعطيل Steam Input.',
         'تضاعف إدخال وحدة التحكم هذه المرة. يذكر السجل السبب:',
+        'إظهار ما ألعبه على Discord',
+        'منطقتك والزعيم الذي تقاتله ومستواك في ملفك على Discord، طالما تطبيق Discord يعمل.',
     ],
     'es': [
         "El servidor público de shadNet de shadPS4 no acepta por ahora la versión de este port, así que el juego en "
@@ -74,6 +81,8 @@ TEXTS = {
         'Steam: Parámetros > Mando > Configuración de escritorio: desactívala, o desactiva Steam Input para tu tipo de mando.',
         'O añade Bloodborne.exe a Steam (Añadir un juego ajeno a Steam) y luego en Propiedades > Mando > Desactivar Steam Input.',
         'Esta vez la entrada del mando se duplicó. Su registro indica la causa:',
+        'Mostrar en Discord a qué juego',
+        'Tu zona, el jefe contra el que luchas y tu nivel en tu perfil de Discord, mientras la aplicación de Discord esté abierta.',
     ],
     'pt': [
         "O servidor público shadNet do shadPS4 não aceita no momento a versão deste port, então o jogo online nele "
@@ -92,6 +101,8 @@ TEXTS = {
         'Steam: Configurações > Controle > Layout da área de trabalho: desligue-o, ou desligue o Steam Input para o seu tipo de controle.',
         'Ou adicione o Bloodborne.exe ao Steam (Adicionar jogo não Steam) e depois em Propriedades > Controle > Desativar Steam Input.',
         'Desta vez a entrada do controle foi duplicada. O registro dele aponta a causa:',
+        'Mostrar no Discord o que estou jogando',
+        'Sua área, o chefe que você enfrenta e seu nível no seu perfil do Discord, enquanto o aplicativo do Discord estiver aberto.',
     ],
     'fr': [
         "Le serveur shadNet public de shadPS4 n'accepte pas pour l'instant la version de ce port : le jeu en ligne y "
@@ -110,6 +121,8 @@ TEXTS = {
         'Steam : Paramètres > Manette > Configuration du bureau : désactivez-la, ou désactivez Steam Input pour votre type de manette.',
         'Ou ajoutez Bloodborne.exe à Steam (Ajouter un jeu non-Steam), puis Propriétés > Manette > Désactiver Steam Input.',
         "L'entrée de la manette a été doublée cette fois. Son journal en donne la cause :",
+        'Afficher sur Discord à quoi je joue',
+        'Votre zone, le boss que vous affrontez et votre niveau sur votre profil Discord, tant que l’application Discord est ouverte.',
     ],
     'de': [
         "Der öffentliche shadNet-Server von shadPS4 nimmt die Version dieses Ports derzeit nicht an, online spielen "
@@ -129,6 +142,8 @@ TEXTS = {
         'Steam: Einstellungen > Controller > Desktop-Layout: ausschalten, oder Steam Input für deine Art von Controller ausschalten.',
         'Oder Bloodborne.exe zu Steam hinzufügen (Ein Nicht-Steam-Spiel hinzufügen), dann Eigenschaften > Controller > Steam Input deaktivieren.',
         'Die Eingabe des Controllers kam diesmal doppelt an. Sein Protokoll nennt den Grund:',
+        'Auf Discord zeigen, was ich spiele',
+        'Dein Gebiet, der Boss, gegen den du kämpfst, und deine Stufe in deinem Discord-Profil, solange die Discord-App läuft.',
     ],
     'it': [
         "Il server shadNet pubblico di shadPS4 al momento non accetta la versione di questo port, quindi il gioco "
@@ -146,6 +161,8 @@ TEXTS = {
         'Steam: Impostazioni > Controller > Layout desktop: disattivalo, o disattiva Steam Input per il tuo tipo di controller.',
         'Oppure aggiungi Bloodborne.exe a Steam (Aggiungi un gioco non Steam), poi Proprietà > Controller > Disattiva Steam Input.',
         "Questa volta l'input del controller è arrivato doppio. Il suo registro indica la causa:",
+        'Mostra su Discord a cosa sto giocando',
+        'La tua zona, il boss che affronti e il tuo livello nel profilo Discord, mentre l’app di Discord è aperta.',
     ],
     'pl': [
         "Publiczny serwer shadNet od shadPS4 obecnie nie przyjmuje wersji tego portu, więc gra online na nim nie "
@@ -164,6 +181,8 @@ TEXTS = {
         'Steam: Ustawienia > Kontroler > Układ pulpitu: wyłącz go albo wyłącz Steam Input dla swojego typu kontrolera.',
         'Albo dodaj Bloodborne.exe do Steam (Dodaj grę spoza Steam), potem Właściwości > Kontroler > Wyłącz Steam Input.',
         'Tym razem sygnały kontrolera docierały podwójnie. Jego dziennik podaje przyczynę:',
+        'Pokazuj na Discordzie, w co gram',
+        'Twój obszar, boss, z którym walczysz, i twój poziom w profilu Discord, gdy działa aplikacja Discord.',
     ],
     'tr': [
         "shadPS4'ün herkese açık shadNet sunucusu şu anda bu portun sürümünü kabul etmiyor, bu yüzden orada çevrim "
@@ -181,6 +200,8 @@ TEXTS = {
         "Steam: Ayarlar > Kontrolcü > Masaüstü Düzeni: kapat ya da kontrolcü türün için Steam Input'u kapat.",
         "Ya da Bloodborne.exe'yi Steam'e ekle (Steam Dışı Oyun Ekle), sonra Özellikler > Kontrolcü > Steam Input'u Devre Dışı Bırak.",
         'Bu sefer kontrolcünün girdisi iki kez geldi. Günlüğü nedenini söylüyor:',
+        "Discord'da ne oynadığımı göster",
+        'Bölgen, savaştığın boss ve seviyen, Discord uygulaması açıkken Discord profilinde görünür.',
     ],
     'zh': [
         "shadPS4 的公共 shadNet 服务器目前不接受本移植版的版本，因此在其上在线游玩会失败。请在“游玩设备”中选择 "
@@ -196,6 +217,8 @@ TEXTS = {
         'Steam：设置 > 控制器 > 桌面布局：将其关闭，或为你的控制器类型关闭 Steam 输入。',
         '或将 Bloodborne.exe 添加到 Steam（添加非 Steam 游戏），然后在 属性 > 控制器 中禁用 Steam 输入。',
         '这次控制器的输入被重复了。日志指出了原因：',
+        '在 Discord 上显示我在玩什么',
+        '在 Discord 应用运行时，你的区域、正在挑战的首领和等级会显示在你的 Discord 个人资料上。',
     ],
     'ja': [
         "shadPS4 の公開 shadNet サーバーは現在このポートのバージョンを受け付けないため、そこでのオンラインプレイは"
@@ -213,6 +236,8 @@ TEXTS = {
         'Steam：設定 > コントローラー > デスクトップレイアウト：オフにするか、お使いのコントローラーの種類で Steam Input をオフにします。',
         'または Bloodborne.exe を Steam に追加し（Steam 以外のゲームを追加）、プロパティ > コントローラー > Steam Input を無効化。',
         '今回はコントローラーの入力が二重になっていました。ログに原因があります：',
+        'Discord にプレイ中の内容を表示',
+        'Discord アプリの起動中、エリア・戦っているボス・レベルが Discord のプロフィールに表示されます。',
     ],
     'ko': [
         "shadPS4의 공개 shadNet 서버가 현재 이 포트의 버전을 받지 않아 그 서버에서는 온라인 플레이가 실패합니다. "
@@ -229,6 +254,8 @@ TEXTS = {
         'Steam: 설정 > 컨트롤러 > 데스크톱 레이아웃: 끄거나, 사용하는 컨트롤러 종류의 Steam 입력을 끕니다.',
         '또는 Bloodborne.exe를 Steam에 추가(비 Steam 게임 추가)한 뒤 속성 > 컨트롤러 > Steam 입력 비활성화.',
         '이번에는 컨트롤러 입력이 두 번 들어왔습니다. 로그에 원인이 있습니다:',
+        'Discord에 플레이 중인 내용 표시',
+        'Discord 앱이 실행 중이면 지역, 싸우는 보스, 레벨이 Discord 프로필에 표시됩니다.',
     ],
 }
 

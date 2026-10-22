@@ -648,6 +648,7 @@ int main(int argc, char **argv) {
     runtime_rebirth_set_image(image);
     if (fread(image, 1, size, f) != size || fgetc(f) != EOF) fail("incorrect memory image size");
     fclose(f);
+    runtime_discord_start(image);
     if (!cpu_only) {
         char title[128]="Bloodborne", serial[16]="UNKNOWN", sfo[4096];
         uint32_t attributes=0;

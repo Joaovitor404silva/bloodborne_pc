@@ -87,6 +87,7 @@ WORDS = {
     'on_play': 'schliessen beenden minimieren close minimize',
     'minimize_to_tray': 'tray taskleiste infobereich symbol notification area',
     'reopen_after_game': 'wieder oeffnen reopen back',
+    'discord_status': 'discord rich presence status profil profile activity aktivitaet',
     'windows_title_bar': 'titelleiste title bar caption rahmen fensterrahmen windows',
     'goal': 'ziel goal flussig ausgewogen leise smooth balanced quiet laptop akku',
     'play_with': 'spiele mit play with eingabe input gerat device controller gamepad tastatur keyboard maus mouse '

@@ -307,7 +307,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'fps_mode': 'uncap', 'frame_cap': '', 'draw_pipe': '', 'readbacks': '', 'low_vram': '',
                 'frames_ahead': '', 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'extra_env': '', 'close_on_play': False,
-                'on_play': 'stay', 'reopen_after_game': False, 'minimize_to_tray': False,
+                'on_play': 'stay', 'reopen_after_game': False, 'minimize_to_tray': False, 'discord_status': True,
                 'check_updates': True, 'save_backups': False, 'online': False, 'online_server': 'srv.shadps4.net:31313',
                 'online_webapi': '', 'online_npid': '', 'online_password': '', 'online_upnp': True,
                 'online_custom_servers': False,
@@ -843,6 +843,7 @@ def game_environment(s, graphics=None):
     env['BB_PATCHES_DIR'] = s['patches_dir'] or str(DATA_DIR / 'patches')
     env['BB_PATCHES_CONFIG'] = str(DATA_DIR / 'patches.json')
     env['BB_LANGUAGE'] = s['language']
+    env['BB_DISCORD'] = '1' if s.get('discord_status', True) else '0'  # src/runtime_discord.c
     env['BB_VOICE_LANGUAGE'] = s['voice_language']
     if str(s['player_name']).strip():
         env['BB_USER_NAME'] = str(s['player_name']).strip()
@@ -2306,6 +2307,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                  _('Closed, it ends with the game; minimized, it waits on the task bar (or in the tray).'))
         self.check(f, 'reopen_after_game', 'app', _('Open the launcher again when the game closes'),
                    _('After a crash it always comes back, with the log.'))
+        self.check(f, 'discord_status', 'app', _("Show what I'm playing on Discord"),
+                   _('Your area, the boss you fight and your level on your Discord profile, while the Discord app '
+                     'runs.'))
         self.check(f, 'minimize_to_tray', 'app', _('Minimize to the system tray'),
                    _('Minimized, the launcher leaves the task bar for an icon next to the clock: click it to '
                      'open the launcher again.'))

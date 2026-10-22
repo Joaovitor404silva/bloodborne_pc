@@ -493,6 +493,12 @@ def main():
             shutil.rmtree(rebirth_layer, ignore_errors=True)
             env['BB_REBIRTH'] = '0'  # patches.py: no eboot hooks without the Doll's script
             print("Rebirth: the Doll's script could not be written; the game starts without it")
+    # The Discord status (src/runtime_discord.c): the game's own place, boss and level texts.
+    if env.get('BB_DISCORD') != '0':
+        names = out / 'discord-names.txt'
+        if run_script('discord_names.py', game, '--out', names, '--language', env.get('BB_LANGUAGE', '1'),
+                      optional=True):
+            env['BB_DISCORD_NAMES'] = str(names)
     # Ultrawide outputs: the menu movies with full-screen backdrops widened and the HUD's corner
     # groups toward the screen edges (bbport.ini hud_position, 0 centred .. 100 edges), a layer
     # below the mods. Only with the resolution patches, which widen the camera and HUD canvas
