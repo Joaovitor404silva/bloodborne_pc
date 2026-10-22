@@ -339,6 +339,9 @@ target_link_libraries(motion-shader-test PRIVATE bbgpu)
 add_executable(ui-composition-test EXCLUDE_FROM_ALL ../tests/test_ui_composition.cpp)
 target_compile_options(ui-composition-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
 target_include_directories(ui-composition-test PRIVATE ..)
+add_executable(ui-composition-sharp-test EXCLUDE_FROM_ALL ../tests/test_ui_composition_sharp.cpp)
+target_compile_options(ui-composition-sharp-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
+target_include_directories(ui-composition-sharp-test PRIVATE ..)
 
 if (WIN32)
     add_executable(scene-resolution-test EXCLUDE_FROM_ALL ../tests/test_scene_resolution.cpp

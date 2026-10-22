@@ -1751,7 +1751,10 @@ void TemporalUpscaler::RunUiOnly(VideoCore::ImageId color_id, VideoCore::ImageId
     // with a scene (G-buffer depth this frame) fills the whole width: upscaler off, or a menu
     // over the world.
     const bool scene = !camera_motion.Enabled() || camera_motion.Depth();
-    const float side = scene ? 0.0f : 0.5f * (1.0f - 1920.0f / float(UiComposition::Canvas()[0]));
+    // (In stage units: with Sharp UI the canvas is the stage scaled up, no wider.)
+    const float side = scene ? 0.0f
+                             : 0.5f * (1.0f - 1920.0f * UiComposition::StageScale() /
+                                                  float(UiComposition::Canvas()[0]));
     const s32 src_side = s32(std::lround(source_width * side));
     const s32 dst_side = s32(std::lround(ui_width * side));
     if (dst_side > 0) {

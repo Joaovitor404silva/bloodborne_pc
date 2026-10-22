@@ -167,6 +167,10 @@ private:
     void PrepareRenderState(const GraphicsPipeline* pipeline);
     RenderState BeginRendering(const GraphicsPipeline* pipeline);
     RenderState BeginRenderingFull(const GraphicsPipeline* pipeline);
+    /// target_scale for the current draw of a pass into the upscaler's output-size images (ui_pass):
+    /// with Sharp UI recomputed for every draw, also those the render state memo continues the pass
+    /// with, since the game's UI pass sets a viewport per picture.
+    void UpdateUiTransform();
     /// bbport: a draw continuing the open render pass with the same inputs gets the same render
     /// state (RenderStateMemo); nothing can have broken the pass in between (barriers, copies and
     /// dispatches end it).
@@ -336,6 +340,12 @@ private:
     std::unique_ptr<TemporalUpscaler> upscaler; // bbport: FSR (docs/upscaler.md)
     std::array<float, 2> draw_jitter{};         ///< viewport offset of the current draw, pixels
     std::array<float, 2> target_scale{1.0f, 1.0f}; ///< pass drawn into the upscaler's output-size images
+    struct UiPass {
+        bool active = false;    ///< the current pass is redirected into the output-size images
+        bool native_ui = false; ///< the upscaler's redirect draws the native UI
+        std::pair<u32, u32> guest{1, 1};
+        std::pair<u32, u32> output{1, 1};
+    } ui_pass; ///< what UpdateUiTransform scales from
     const bool host_markers_enabled;
     const bool guest_markers_enabled;
 

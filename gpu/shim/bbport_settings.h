@@ -104,6 +104,9 @@ struct Values {
     /// Ultrawide outputs: the HUD's corner groups, 0 centred in 16:9 .. 100 at the screen edges
     /// (hud_layout.py at start).
     std::atomic<int> hud_position{100};
+    /// Sharp UI: menus and HUD drawn at the output's size (patches.py ui_viewport at start). Set in
+    /// the launcher; kept here so the menu's Save does not drop it.
+    std::atomic<bool> sharp_ui{false};
     /// Vertical field of view in degrees, 43 the game's (run.py, fov.py at start).
     std::atomic<int> fov{FovDefault};
     /// Live resolution and preset changes (run.sh): 0 off by default (startup patch, fastest

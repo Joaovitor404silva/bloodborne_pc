@@ -159,8 +159,10 @@ def scaled_sizes(settings):
     # A scene of exactly the UI coordinate space's size (1920x1080 at 4K Performance, the
     # ultrawide HUD canvas at 2560x1080 or 3840x1080 native) is indistinguishable from it: the
     # port's UI composition recognizes UI draws by that size (HUD gauges came out too long).
-    canvas=hud_canvas(out)
-    if render==canvas: render=(canvas[0]-4,canvas[1]-2)
+    # With Sharp UI the UI viewport (the output's size) and the 1920x1080 stage inside it count as
+    # UI too: Native AA (scene at the output size) and 4K Performance (1920x1080) keep clear of them.
+    for size in sorted({hud_canvas(out),ui_viewport(out,settings)}):
+        if render==size: render=(size[0]-4,size[1]-2)
     return render,out
 
 
@@ -192,6 +194,20 @@ def hud_canvas(output):
     w,h=output
     if w*OUTPUT_SIZE[1]<=h*OUTPUT_SIZE[0]: return OUTPUT_SIZE
     return (round(OUTPUT_SIZE[1]*w/h/2)*2,OUTPUT_SIZE[1])
+
+
+def ui_viewport(output,settings=None):
+    """The game's UI movie viewport for an output, in pixels: the HUD canvas (hud_canvas), or with
+    Sharp UI (bbport.ini sharp_ui=1) the output's own size, so Scaleform draws its text, shapes and
+    pictures for the output's pixels instead of for 1080 lines stretched afterwards (from Awaken's
+    Lantern Engine, BB_SHARP_UI). The 1920x1080 stage is shown whole inside it, scaled up. Up to 16:9
+    and taller screens: an ultrawide output keeps its widened 1080-high canvas. Even sizes, at most
+    8192; never below 1920x1080. The port gets it as BB_UI_RES (run.py, UiComposition)."""
+    canvas=hud_canvas(output)
+    if (settings or {}).get('sharp_ui','0')!='1' or canvas!=OUTPUT_SIZE: return canvas
+    k=min(output[0]/canvas[0],output[1]/canvas[1])
+    if k<=1: return canvas
+    return (min(8192,round(canvas[0]*k/2)*2),min(8192,round(canvas[1]*k/2)*2))
 
 
 def ultrawide_writes(xml,output,app_version,segments):
@@ -499,12 +515,14 @@ def main():
     # (UiComposition::NativeViewport), so it is rasterized at the output resolution. Ultrawide
     # outputs widen those coordinates (hud_canvas; run.py passes the same size as BB_UI_RES).
     output=tuple(int(v) for v in a.output_res.lower().split('x')) if a.output_res else OUTPUT_SIZE
-    ui=hud_canvas(output)
+    ui=ui_viewport(output,read_settings(a.settings))
     if size:
         writes+=resolution_writes(a.xml,size,a.app_version,segments,ui)
-        if ui!=OUTPUT_SIZE:
+        if hud_canvas(output)!=OUTPUT_SIZE:
             writes+=ultrawide_writes(a.xml,output,a.app_version,segments)
             names.append(f'ultrawide {output[0]}x{output[1]} (HUD {ui[0]}x{ui[1]})')
+        elif ui!=OUTPUT_SIZE:
+            names.append(f'Sharp UI {ui[0]}x{ui[1]}')
         if size[0]*size[1]>OUTPUT_SIZE[0]*OUTPUT_SIZE[1]:
             writes+=compile_patches(a.xml,[HEAP_PATCH],a.app_version,segments)
             names.append(HEAP_PATCH)

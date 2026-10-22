@@ -293,11 +293,12 @@ TWEAKS = [
 # Effects that are taste, not performance: on Picture & performance (the others on All graphics).
 TASTE_EFFECTS = ('effect_chromatic_aberration', 'effect_dof', 'effect_motion_blur')
 INI_FLAGS = {'sharpen', 'object_motion', 'object_motion_cache', 'show_fps', 'mute_unfocused', 'frame_gen_fit_display',
+             'sharp_ui',
              *(k for k, _t, _o in EFFECTS + EXTRAS + CHEATS + TWEAKS)}
 INI_DEFAULTS = {'upscaler': 'fsr4', 'preset': '1', 'sharpen': '1', 'sharpness': '0.50',
                 'object_motion': '1', 'show_fps': '1', 'output_res': '1920x1080', 'model_lod': '0',
                 'fsr411_backend': 'vk', 'object_motion_cache': '0',
-                'live_resolution': 'auto', 'hud_position': '100', 'fov': '43', 'mute_unfocused': '0',
+                'live_resolution': 'auto', 'hud_position': '100', 'sharp_ui': '0', 'fov': '43', 'mute_unfocused': '0',
                 'button_prompts': 'auto',
                 'frame_gen': 'off', 'frame_gen_multiplier': '2', 'frame_gen_fit_display': '0',
                 **{key: '1' if on else '0' for key, _t, on in EFFECTS + EXTRAS + CHEATS + TWEAKS}}
@@ -2121,6 +2122,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    '16:9 area as on a 16:9 screen.',
                    'Для 21:9: здоровье, предметы и Отголоски крови у краёв экрана или в центральной '
                    'области 16:9, как на обычном экране.'))
+        # Sharp UI: Awaken's idea from the Lantern Engine (patches.py ui_viewport, UiComposition).
+        self.check(f, 'sharp_ui', 'ini', _('Sharp UI', 'Чёткий интерфейс'),
+                   _('Menus, HUD and text drawn at the output resolution instead of 1080p stretched up: much '
+                     'sharper at 1440p and 4K. From the next start, with live resolution changes off; not on '
+                     'ultrawide screens yet. An idea from Awaken\'s Lantern Engine.',
+                     'Меню, интерфейс и текст рисуются в разрешении вывода, а не растягиваются из 1080p: '
+                     'намного чётче в 1440p и 4K. Со следующего запуска, при выключенной смене разрешения '
+                     'на лету; пока не на сверхшироких экранах. Идея из Lantern Engine от Awaken.'))
         self.row(f, _('Live resolution changes', 'Смена разрешения на лету'), self.choice(f, 'live_resolution', 'ini', LIVE),
                  _('Off: outputs other than 1080p are set by a patch at start (fastest; changing them in the '
                    'game restarts it). On: change output and preset in the game without a restart, at a cost.',

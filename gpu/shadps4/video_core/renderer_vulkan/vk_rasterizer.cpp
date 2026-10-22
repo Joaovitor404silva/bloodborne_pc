@@ -2661,6 +2661,9 @@ RenderState Rasterizer::BeginRendering(const GraphicsPipeline* pipeline) {
             attachment_feedback_loop = false;
             push_data.scene_size = begin_memo.scene_size;
             target_scale = begin_memo.target_scale;
+            if (ui_pass.active && UiComposition::SharpUi()) {
+                UpdateUiTransform();
+            }
             return begin_memo.state;
         }
         ++begin_memo_misses;
@@ -2681,6 +2684,20 @@ RenderState Rasterizer::BeginRendering(const GraphicsPipeline* pipeline) {
         }
     }
     return state;
+}
+
+void Rasterizer::UpdateUiTransform() {
+    // The UI movie viewport is now 1920x1080 even when the scene is 960x540.
+    // A native viewport (or native window-space UI vertices) must not be doubled
+    // again. The final display copy still uses the guest render-size coordinates.
+    // With Sharp UI the draws of one pass use several viewports (UiComposition::DrawScale).
+    const auto& regs = Regs();
+    const auto& viewport = regs.viewports[0];
+    const bool window_space = regs.IsClipDisabled() && !regs.viewport_control.xscale_enable &&
+                              !regs.viewport_control.yscale_enable;
+    target_scale = UiComposition::DrawScale(viewport.xscale * 2, viewport.yscale * 2, window_space,
+                                            ui_pass.native_ui, ui_pass.guest.first, ui_pass.guest.second,
+                                            ui_pass.output.first, ui_pass.output.second);
 }
 
 RenderState Rasterizer::BeginRenderingFull(const GraphicsPipeline* pipeline) {
@@ -2915,6 +2932,7 @@ RenderState Rasterizer::BeginRenderingFull(const GraphicsPipeline* pipeline) {
     // bbport: a pass drawn into the upscaler's output-size images (UI, display pass): every
     // attachment must be redirected, viewports and scissors are scaled.
     target_scale = {1.0f, 1.0f};
+    ui_pass.active = false;
     if (color_redirected || depth_redirected) {
         u32 color_targets = 0;
         for (u32 cb = 0; cb < state.num_color_attachments; ++cb) {
@@ -2953,17 +2971,8 @@ RenderState Rasterizer::BeginRenderingFull(const GraphicsPipeline* pipeline) {
         } else {
             state.width = redirect.width;
             state.height = redirect.height;
-            // The UI movie viewport is now 1920x1080 even when the scene is 960x540.
-            // A native viewport (or native window-space UI vertices) must not be doubled
-            // again. The final display copy still uses the guest render-size coordinates.
-            const auto& viewport = regs.viewports[0];
-            const bool native_coordinates = redirect.native_ui &&
-                (UiComposition::NativeViewport(viewport.xscale * 2, viewport.yscale * 2) ||
-                 (regs.IsClipDisabled() && !regs.viewport_control.xscale_enable &&
-                  !regs.viewport_control.yscale_enable));
-            target_scale = UiComposition::Scale(guest_extent.first, guest_extent.second,
-                                                redirect.width, redirect.height,
-                                                native_coordinates);
+            ui_pass = {true, redirect.native_ui, guest_extent, {redirect.width, redirect.height}};
+            UpdateUiTransform();
         }
     }
 
@@ -2978,6 +2987,7 @@ RenderState Rasterizer::BeginRenderingFull(const GraphicsPipeline* pipeline) {
         state.width = proxy.width;
         state.height = proxy.height;
         target_scale = {float(size.width) / 1920.0f, float(size.height) / 1080.0f};
+        ui_pass.active = false;
     }
     if (FrameCapture::Active()) {
         std::array<const VideoCore::ImageInfo*, AmdGpu::NUM_COLOR_BUFFERS> colors{};
