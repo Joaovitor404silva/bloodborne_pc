@@ -139,6 +139,24 @@ WORLD = {
             'Пробуждение',
         'Back up automatically before every start':
             'Автоматически создавать копию перед каждым запуском',
+        'The {0} is in another installation of the port: {1}.':
+            '{0} находится в другой установке порта: {1}.',
+        'A folder of another installation is in use':
+            'Используется папка другой установки',
+        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
+        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
+        'mods apply here too.':
+            'Папка сохранений, модов или кэша из настроек лаунчера находится в другой папке порта (более старой '
+            'версии или тестовой сборки): обе установки делят её. Кэш шейдеров другой версии может приводить к '
+            'вылетам, а её моды действуют и здесь.',
+        'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
+        "installation's user folder.":
+            'Сначала перенесите персонажей: «Сохранения», «Из других версий» или «Выбрать папку…» с папкой user '
+            'другой установки.',
+        'Then click the button below: this installation uses its own folders again.':
+            'Затем нажмите кнопку ниже: эта установка снова будет использовать свои папки.',
+        "Use this installation's own folders":
+            'Использовать папки этой установки',
         'Back up now':
             'Создать копию сейчас',
         "Backup put back. Your characters are in the game's Load Game menu.":
@@ -1493,6 +1511,23 @@ WORLD = {
             'رجوع',
         'Back up automatically before every start':
             'انسخ احتياطيًا تلقائيًا قبل كل تشغيل',
+        'The {0} is in another installation of the port: {1}.':
+            '{0} موجود في تثبيت آخر للمنفذ: {1}.',
+        'A folder of another installation is in use':
+            'يُستخدم مجلد من تثبيت آخر',
+        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
+        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
+        'mods apply here too.':
+            'مجلد الحفظ أو التعديلات أو الذاكرة المؤقتة في إعدادات المشغّل موجود في مجلد منفذ آخر (إصدار أقدم أو '
+            'نسخة تجريبية): يتشاركه التثبيتان. قد تتسبب ذاكرة الظلال المؤقتة لإصدار آخر في تعطل اللعبة، وتُطبَّق '
+            'تعديلاته هنا أيضًا.',
+        'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
+        "installation's user folder.":
+            'انقل شخصياتك أولًا: ملفات الحفظ، «من إصدارات أخرى»، أو «اختر مجلدًا…» مع مجلد user للتثبيت الآخر.',
+        'Then click the button below: this installation uses its own folders again.':
+            'ثم انقر الزر أدناه: يعود هذا التثبيت لاستخدام مجلداته الخاصة.',
+        "Use this installation's own folders":
+            'استخدام مجلدات هذا التثبيت',
         'Back up now':
             'انسخ الآن',
         "Backup put back. Your characters are in the game's Load Game menu.":
@@ -3077,6 +3112,24 @@ WORLD = {
             'Atrás',
         'Back up automatically before every start':
             'Hacer una copia automática antes de cada inicio',
+        'The {0} is in another installation of the port: {1}.':
+            'La {0} está en otra instalación del port: {1}.',
+        'A folder of another installation is in use':
+            'Se usa una carpeta de otra instalación',
+        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
+        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
+        'mods apply here too.':
+            'La carpeta de partidas, mods o caché de los ajustes del launcher está en otra carpeta del port (una '
+            'versión anterior o de prueba): ambas instalaciones la comparten. La caché de shaders de otra versión '
+            'puede cerrar el juego, y sus mods se aplican aquí también.',
+        'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
+        "installation's user folder.":
+            'Trae primero tus personajes: Partidas, «De otras versiones», o «Elegir una carpeta…» con la carpeta '
+            'user de la otra instalación.',
+        'Then click the button below: this installation uses its own folders again.':
+            'Luego pulsa el botón de abajo: esta instalación vuelve a usar sus propias carpetas.',
+        "Use this installation's own folders":
+            'Usar las carpetas de esta instalación',
         'Back up now':
             'Hacer copia ahora',
         "Backup put back. Your characters are in the game's Load Game menu.":
@@ -4668,6 +4721,24 @@ WORLD = {
             'Voltar',
         'Back up automatically before every start':
             'Fazer backup automático antes de cada início',
+        'The {0} is in another installation of the port: {1}.':
+            'A {0} está em outra instalação do port: {1}.',
+        'A folder of another installation is in use':
+            'Uma pasta de outra instalação está em uso',
+        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
+        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
+        'mods apply here too.':
+            'A pasta de saves, mods ou cache das configurações do launcher fica em outra pasta do port (uma versão '
+            'mais antiga ou de teste): as duas instalações a compartilham. O cache de shaders de outra versão pode '
+            'derrubar o jogo, e os mods dela valem aqui também.',
+        'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
+        "installation's user folder.":
+            'Traga seus personagens primeiro: Saves, "De outras versões", ou "Escolher uma pasta…" com a pasta user '
+            'da outra instalação.',
+        'Then click the button below: this installation uses its own folders again.':
+            'Depois clique no botão abaixo: esta instalação volta a usar as próprias pastas.',
+        "Use this installation's own folders":
+            'Usar as pastas desta instalação',
         'Back up now':
             'Fazer backup agora',
         "Backup put back. Your characters are in the game's Load Game menu.":
@@ -6255,6 +6326,24 @@ WORLD = {
             'Retour',
         'Back up automatically before every start':
             'Faire une copie automatique avant chaque lancement',
+        'The {0} is in another installation of the port: {1}.':
+            'Le {0} se trouve dans une autre installation du port : {1}.',
+        'A folder of another installation is in use':
+            "Un dossier d'une autre installation est utilisé",
+        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
+        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
+        'mods apply here too.':
+            'Le dossier de sauvegardes, de mods ou de cache des réglages du launcher se trouve dans un autre '
+            'dossier du port (une version plus ancienne ou de test) : les deux installations le partagent. Le cache '
+            "de shaders d'une autre version peut faire planter le jeu, et ses mods s'appliquent aussi ici.",
+        'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
+        "installation's user folder.":
+            "Ramenez d'abord vos personnages : Sauvegardes, « D'autres versions », ou « Choisir un dossier… » avec "
+            "le dossier user de l'autre installation.",
+        'Then click the button below: this installation uses its own folders again.':
+            'Cliquez ensuite sur le bouton ci-dessous : cette installation utilise de nouveau ses propres dossiers.',
+        "Use this installation's own folders":
+            'Utiliser les dossiers de cette installation',
         'Back up now':
             'Copier maintenant',
         "Backup put back. Your characters are in the game's Load Game menu.":
@@ -7848,6 +7937,24 @@ WORLD = {
             'Indietro',
         'Back up automatically before every start':
             'Backup automatico prima di ogni avvio',
+        'The {0} is in another installation of the port: {1}.':
+            "La {0} si trova in un'altra installazione del port: {1}.",
+        'A folder of another installation is in use':
+            "È in uso una cartella di un'altra installazione",
+        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
+        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
+        'mods apply here too.':
+            'La cartella dei salvataggi, delle mod o della cache nelle impostazioni del launcher si trova in '
+            "un'altra cartella del port (una versione precedente o di prova): le due installazioni la condividono. "
+            "La cache degli shader di un'altra versione può far crashare il gioco, e le sue mod valgono anche qui.",
+        'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
+        "installation's user folder.":
+            'Porta prima i tuoi personaggi: Salvataggi, "Da altre versioni", oppure "Scegli una cartella…" con la '
+            "cartella user dell'altra installazione.",
+        'Then click the button below: this installation uses its own folders again.':
+            'Poi fai clic sul pulsante qui sotto: questa installazione torna a usare le sue cartelle.',
+        "Use this installation's own folders":
+            'Usa le cartelle di questa installazione',
         'Back up now':
             'Fai un backup ora',
         "Backup put back. Your characters are in the game's Load Game menu.":
@@ -9440,6 +9547,24 @@ WORLD = {
             'Wstecz',
         'Back up automatically before every start':
             'Twórz kopię automatycznie przed każdym uruchomieniem',
+        'The {0} is in another installation of the port: {1}.':
+            '{0} jest w innej instalacji portu: {1}.',
+        'A folder of another installation is in use':
+            'Używany jest folder innej instalacji',
+        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
+        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
+        'mods apply here too.':
+            'Folder zapisów, modów lub pamięci podręcznej z ustawień launchera leży w innym folderze portu '
+            '(starszej wersji lub wersji testowej): obie instalacje go współdzielą. Pamięć shaderów innej wersji '
+            'może powodować awarie gry, a jej mody działają też tutaj.',
+        'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
+        "installation's user folder.":
+            'Najpierw przenieś postacie: Zapisy, „Z innych wersji” albo „Wybierz folder…” z folderem user drugiej '
+            'instalacji.',
+        'Then click the button below: this installation uses its own folders again.':
+            'Potem kliknij przycisk poniżej: ta instalacja znów używa własnych folderów.',
+        "Use this installation's own folders":
+            'Używaj folderów tej instalacji',
         'Back up now':
             'Utwórz kopię teraz',
         "Backup put back. Your characters are in the game's Load Game menu.":
@@ -11028,6 +11153,24 @@ WORLD = {
             'Geri',
         'Back up automatically before every start':
             'Her başlatmadan önce otomatik yedekle',
+        'The {0} is in another installation of the port: {1}.':
+            '{0}, portun başka bir kurulumunda: {1}.',
+        'A folder of another installation is in use':
+            'Başka bir kurulumun klasörü kullanılıyor',
+        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
+        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
+        'mods apply here too.':
+            'Başlatıcı ayarlarındaki kayıt, mod veya önbellek klasörü başka bir port klasöründe (daha eski bir '
+            'sürüm veya test sürümü): iki kurulum onu paylaşır. Başka bir sürümün gölgelendirici önbelleği oyunu '
+            'çökertebilir ve onun modları burada da geçerli olur.',
+        'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
+        "installation's user folder.":
+            'Önce karakterlerinizi taşıyın: Kayıtlar, "Diğer sürümlerden" veya diğer kurulumun user klasörüyle "Bir '
+            'klasör seç…".',
+        'Then click the button below: this installation uses its own folders again.':
+            'Ardından aşağıdaki düğmeye tıklayın: bu kurulum yeniden kendi klasörlerini kullanır.',
+        "Use this installation's own folders":
+            'Bu kurulumun klasörlerini kullan',
         'Back up now':
             'Şimdi yedekle',
         "Backup put back. Your characters are in the game's Load Game menu.":
@@ -12618,6 +12761,21 @@ WORLD = {
             '返回',
         'Back up automatically before every start':
             '每次启动前自动备份',
+        'The {0} is in another installation of the port: {1}.':
+            '{0}位于移植版的另一个安装中：{1}。',
+        'A folder of another installation is in use':
+            '正在使用另一个安装的文件夹',
+        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
+        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
+        'mods apply here too.':
+            '启动器设置中的存档、模组或缓存文件夹位于另一个移植版文件夹（旧版本或测试版）中：两个安装共用它。另一版本的着色器缓存可能导致游戏崩溃，它的模组在这里也会生效。',
+        'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
+        "installation's user folder.":
+            '先把角色带过来：存档，“来自其他版本”，或用“选择文件夹…”选另一个安装的 user 文件夹。',
+        'Then click the button below: this installation uses its own folders again.':
+            '然后点击下面的按钮：此安装重新使用它自己的文件夹。',
+        "Use this installation's own folders":
+            '使用此安装自己的文件夹',
         'Back up now':
             '立即备份',
         "Backup put back. Your characters are in the game's Load Game menu.":
@@ -14200,6 +14358,21 @@ WORLD = {
             '戻る',
         'Back up automatically before every start':
             '起動のたびに自動でバックアップ',
+        'The {0} is in another installation of the port: {1}.':
+            '{0}が移植版の別のインストールにあります：{1}。',
+        'A folder of another installation is in use':
+            '別のインストールのフォルダーが使われています',
+        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
+        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
+        'mods apply here too.':
+            'ランチャー設定のセーブ・MOD・キャッシュのフォルダーが、別の移植版フォルダー（以前のバージョンやテスト版）にあります。両方のインストールで共有されます。別バージョンのシェーダーキャッシュはゲームをクラッシュさせることがあり、そのMODもここで有効になります。',
+        'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
+        "installation's user folder.":
+            'まずキャラクターを移してください：セーブデータの「他のバージョンから」、または「フォルダーを選択…」で別のインストールの user フォルダーを選びます。',
+        'Then click the button below: this installation uses its own folders again.':
+            '次に下のボタンをクリックしてください。このインストールが再び自分のフォルダーを使います。',
+        "Use this installation's own folders":
+            'このインストールのフォルダーを使う',
         'Back up now':
             '今すぐバックアップ',
         "Backup put back. Your characters are in the game's Load Game menu.":
@@ -15783,6 +15956,22 @@ WORLD = {
             '뒤로',
         'Back up automatically before every start':
             '시작할 때마다 자동 백업',
+        'The {0} is in another installation of the port: {1}.':
+            '{0}가 포트의 다른 설치에 있습니다: {1}.',
+        'A folder of another installation is in use':
+            '다른 설치의 폴더를 사용 중입니다',
+        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
+        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
+        'mods apply here too.':
+            '런처 설정의 세이브, 모드 또는 캐시 폴더가 다른 포트 폴더(이전 버전이나 테스트 빌드)에 있어 두 설치가 함께 씁니다. 다른 버전의 셰이더 캐시는 게임을 충돌시킬 수 있고, 그 '
+            '모드도 여기에 적용됩니다.',
+        'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
+        "installation's user folder.":
+            '먼저 캐릭터를 가져오세요: 세이브의 "다른 버전에서" 또는 "폴더 선택…"으로 다른 설치의 user 폴더를 고르세요.',
+        'Then click the button below: this installation uses its own folders again.':
+            '그런 다음 아래 버튼을 누르세요. 이 설치가 다시 자체 폴더를 사용합니다.',
+        "Use this installation's own folders":
+            '이 설치의 폴더 사용',
         'Back up now':
             '지금 백업',
         "Backup put back. Your characters are in the game's Load Game menu.":
