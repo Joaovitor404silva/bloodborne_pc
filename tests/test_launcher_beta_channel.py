@@ -48,7 +48,7 @@ class Answers:
 def offer(version, beta, latest, betas):
     answers = Answers(latest, betas)
     with mock.patch.object(L, 'VERSION', version), mock.patch.object(L, 'BETA', beta), \
-            mock.patch.object(L.urllib.request, 'urlopen', answers):
+            mock.patch.object(L.bbport_tls, 'urlopen', answers):
         return L.update_to_offer(), answers.asked
 
 
@@ -82,13 +82,13 @@ class BetaChannelTests(unittest.TestCase):
     def test_the_betas_still_answer_when_the_release_check_fails(self):
         answers = Answers(None, BETAS)  # the release address raises
         with mock.patch.object(L, 'VERSION', '1.9.5'), mock.patch.object(L, 'BETA', 1), \
-                mock.patch.object(L.urllib.request, 'urlopen', answers):
+                mock.patch.object(L.bbport_tls, 'urlopen', answers):
             self.assertEqual(L.update_to_offer()[0], '1.9.5 beta 3')
 
     def test_nothing_answered_is_an_error_for_the_manual_check(self):
         answers = Answers(None, None)
         with mock.patch.object(L, 'VERSION', '1.9.5'), mock.patch.object(L, 'BETA', 2), \
-                mock.patch.object(L.urllib.request, 'urlopen', answers):
+                mock.patch.object(L.bbport_tls, 'urlopen', answers):
             with self.assertRaises(OSError):
                 L.update_to_offer()
 

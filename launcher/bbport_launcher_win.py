@@ -206,6 +206,7 @@ import bbport_search  # noqa: E402
 import bbport_setup  # noqa: E402
 import bbport_trophies as trophies  # noqa: E402
 import bbport_theme as theme  # noqa: E402
+import bbport_tls  # noqa: E402 (every HTTPS request: no expired certificates of the stores, Windows' trust)
 from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SLOTS, keysym_to_name,
                                   button_num_to_name, input_ini_path, load_input_ini, reserved_keys,
                                   save_input_ini, save_mouse_settings, wheel_to_name, MAX_COMBO,
@@ -643,7 +644,7 @@ def server_check(server, webapi, community):
     import socket
     lines = []
     try:
-        with urllib.request.urlopen(community + ':20443/bb-eu/ss.info', timeout=6) as reply:
+        with bbport_tls.urlopen(community + ':20443/bb-eu/ss.info', timeout=6) as reply:
             reply.read(64)
         lines.append(_('Game server {0}: reachable').format(community))
     except (OSError, ValueError) as error:
@@ -655,7 +656,7 @@ def server_check(server, webapi, community):
     except (OSError, ValueError) as error:
         lines.append(_('Server {0}: not reachable ({1})').format(server, error))
     try:
-        with urllib.request.urlopen(webapi.rstrip('/') + '/status', timeout=4) as reply:
+        with bbport_tls.urlopen(webapi.rstrip('/') + '/status', timeout=4) as reply:
             ok = b'"ok":true' in reply.read(512).replace(b' ', b'')
         lines.append(_('WebAPI {0}: reachable').format(webapi) if ok else
                      _('WebAPI {0}: answered, but it is not a shadNet server').format(webapi))
@@ -675,7 +676,7 @@ def thd_call(url, body):
     request = urllib.request.Request(url, data=json.dumps(body).encode(), method='POST',
                                      headers={'Content-Type': 'application/json'})
     try:
-        with urllib.request.urlopen(request, timeout=10) as response:
+        with bbport_tls.urlopen(request, timeout=10) as response:
             text = response.read()
     except urllib.error.HTTPError as error:
         text = error.read()
@@ -725,7 +726,7 @@ def server_check_hunters_dream():
                        (_('Co-op service {0}'), COMMUNITY_SERVER + ':18671/')):
         name = title.format(url.split('://', 1)[1].split('/')[0])
         try:
-            urllib.request.urlopen(url, timeout=6).close()
+            bbport_tls.urlopen(url, timeout=6).close()
             lines.append(_('{0}: reachable').format(name))
         except urllib.error.HTTPError:
             lines.append(_('{0}: reachable').format(name))   # it answered
@@ -770,7 +771,7 @@ def hunters_online():
     start page shows (thehuntersdream.com/api/stats, active_sessions); None when it does not answer."""
     request = urllib.request.Request(COMMUNITY_SERVER + '/api/stats', headers={'User-Agent': f'bbport-launcher/{VERSION}'})
     try:
-        with urllib.request.urlopen(request, timeout=8) as response:
+        with bbport_tls.urlopen(request, timeout=8) as response:
             sessions = json.load(response).get('active_sessions') or {}
         if not sessions.get('server_online'):
             return None
@@ -3843,7 +3844,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 folder.mkdir(parents=True, exist_ok=True)
                 for name in fsr4_missing():
                     part = folder / (name + '.part')
-                    with urllib.request.urlopen(f'{FSR4_BASE}/{name}', timeout=60) as response:
+                    with bbport_tls.urlopen(f'{FSR4_BASE}/{name}', timeout=60) as response:
                         part.write_bytes(response.read())
                     part.replace(folder / name)
                     self.ui_calls.put(self.refresh_fsr4)
@@ -4350,7 +4351,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 UPDATE_DIR.mkdir(parents=True, exist_ok=True)
                 archive = UPDATE_DIR / 'update.zip'
                 request = urllib.request.Request(url, headers={'User-Agent': 'bbport-launcher'})
-                with urllib.request.urlopen(request, timeout=60) as response, open(archive, 'wb') as out:
+                with bbport_tls.urlopen(request, timeout=60) as response, open(archive, 'wb') as out:
                     total, done, shown = int(response.headers.get('Content-Length') or 0), 0, -1
                     while chunk := response.read(1 << 20):
                         out.write(chunk)
@@ -4678,7 +4679,7 @@ def latest_release():
     """(version, zip URL, page URL) of the newest GitHub release."""
     request = urllib.request.Request(RELEASES_API, headers={'Accept': 'application/vnd.github+json',
                                                             'User-Agent': 'bbport-launcher'})
-    with urllib.request.urlopen(request, timeout=15) as response:
+    with bbport_tls.urlopen(request, timeout=15) as response:
         release = json.load(response)
     version = '.'.join(re.findall(r'\d+', release['tag_name']))
     return version, game_zip(release), release.get('html_url') or RELEASES_PAGE
@@ -4691,7 +4692,7 @@ def newer_beta():
         return None
     request = urllib.request.Request(BETAS_API, headers={'Accept': 'application/vnd.github+json',
                                                          'User-Agent': 'bbport-launcher'})
-    with urllib.request.urlopen(request, timeout=15) as response:
+    with bbport_tls.urlopen(request, timeout=15) as response:
         releases = json.load(response)
     best = None
     for release in releases:
@@ -4745,7 +4746,7 @@ def installable_releases():
     first (drafts, pre-releases and releases without a zip left out)."""
     request = urllib.request.Request(RELEASES_LIST_API, headers={'Accept': 'application/vnd.github+json',
                                                                  'User-Agent': 'bbport-launcher'})
-    with urllib.request.urlopen(request, timeout=15) as response:
+    with bbport_tls.urlopen(request, timeout=15) as response:
         releases = json.load(response)
     found = {}
     for release in releases:
@@ -4803,6 +4804,7 @@ bbport_setup.bind(_ThisModule())
 bbport_help.bind(_ThisModule())
 bbport_search.bind(_ThisModule())
 bbport_pad.bind(_ThisModule())
+bbport_tls.bind(_ThisModule())
 
 
 def main():

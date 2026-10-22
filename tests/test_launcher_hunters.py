@@ -16,7 +16,7 @@ def answer(data):
     response = io.BytesIO(json.dumps(data).encode())
     response.__enter__ = lambda *a: response
     response.__exit__ = lambda *a: None
-    return mock.patch.object(L.urllib.request, 'urlopen', return_value=response)
+    return mock.patch.object(L.bbport_tls, 'urlopen', return_value=response)
 
 
 class HuntersOnlineTests(unittest.TestCase):
@@ -29,13 +29,34 @@ class HuntersOnlineTests(unittest.TestCase):
     def test_nothing_when_the_game_server_is_down_or_unreachable(self):
         with answer({'active_sessions': {'count': 0, 'server_online': False}}):
             self.assertIsNone(L.hunters_online())
-        with mock.patch.object(L.urllib.request, 'urlopen', side_effect=OSError('offline')):
+        with mock.patch.object(L.bbport_tls, 'urlopen', side_effect=OSError('offline')):
             self.assertIsNone(L.hunters_online())
         with answer(['not', 'what', 'it', 'sends']):
             self.assertIsNone(L.hunters_online())
 
     def test_asked_rarely(self):
         self.assertGreaterEqual(L.HUNTERS_ONLINE_EVERY, 600)  # its answer is about 140 KB
+
+
+class SignInTests(unittest.TestCase):
+    """The Discord sign-in's calls go through the launcher's HTTPS (bbport_tls: expired copies in the
+    Windows stores left out, Windows' trust when OpenSSL refuses), like every request of the launcher.
+    Nothing is sent: the real device/start would make a sign-in code on the server."""
+
+    def test_the_account_service_is_asked_through_it(self):
+        with answer({'ResKind': 0, 'DeviceCode': 'd', 'UserCode': 'U'}) as urlopen:
+            reply = L.thd_call(L.COMMUNITY_SERVER + '/auth/device/start', {'DeviceName': 'bbport on PC'})
+        self.assertEqual(reply['UserCode'], 'U')
+        request = urlopen.call_args.args[0]
+        self.assertEqual((request.full_url, request.get_method()),
+                         ('https://thehuntersdream.com/auth/device/start', 'POST'))
+
+    def test_a_refused_certificate_says_why(self):
+        reason = L.bbport_tls.CertificateRefused('The date or time of this PC looks wrong.', OSError())
+        with mock.patch.object(L.bbport_tls, 'urlopen', side_effect=reason):
+            with self.assertRaises(OSError) as caught:  # the sign-in shows "Sign-in failed: {}"
+                L.thd_sign_in(lambda page, code: None)
+        self.assertEqual(str(caught.exception), 'The date or time of this PC looks wrong.')
 
 
 

@@ -42,13 +42,13 @@ class GameZipTests(unittest.TestCase):
 
     def test_latest_release_offers_the_game_zip(self):
         release = {'tag_name': 'windows-v1.9.5', 'html_url': 'https://example.invalid/r', 'assets': [SOURCE, GAME]}
-        with mock.patch.object(L.urllib.request, 'urlopen', return_value=answer(release)):
+        with mock.patch.object(L.bbport_tls, 'urlopen', return_value=answer(release)):
             self.assertEqual(L.latest_release(), ('1.9.5', GAME['browser_download_url'], 'https://example.invalid/r'))
 
     def test_other_versions_list_the_game_zips(self):
         releases = [{'tag_name': 'windows-v1.9.5', 'html_url': 'a', 'assets': [SOURCE, GAME]},
                     {'tag_name': 'windows-v1.9.4', 'html_url': 'b', 'assets': [GAME, SOURCE]}]
-        with mock.patch.object(L.urllib.request, 'urlopen', return_value=answer(releases)):
+        with mock.patch.object(L.bbport_tls, 'urlopen', return_value=answer(releases)):
             found = L.installable_releases()
         self.assertEqual([(v, u) for v, u, _p in found],
                          [('1.9.5', GAME['browser_download_url']), ('1.9.4', GAME['browser_download_url'])])
