@@ -149,6 +149,8 @@ WORLD = {
             'Баланс',
         'Before a restore':
             'Перед восстановлением',
+        'Before a respec':
+            'Перед перераспределением',
         'Before an import':
             'Перед импортом',
         'Before playing':
@@ -1533,6 +1535,8 @@ WORLD = {
             'متوازن',
         'Before a restore':
             'قبل الاسترجاع',
+        'Before a respec':
+            'قبل إعادة التوزيع',
         'Before an import':
             'قبل الاستيراد',
         'Before playing':
@@ -3147,6 +3151,8 @@ WORLD = {
             'Equilibrado',
         'Before a restore':
             'Antes de restaurar',
+        'Before a respec':
+            'Antes de una redistribución',
         'Before an import':
             'Antes de una importación',
         'Before playing':
@@ -4768,6 +4774,8 @@ WORLD = {
             'Equilibrado',
         'Before a restore':
             'Antes de restaurar',
+        'Before a respec':
+            'Antes de uma redistribuição',
         'Before an import':
             'Antes de uma importação',
         'Before playing':
@@ -6385,6 +6393,8 @@ WORLD = {
             'Équilibré',
         'Before a restore':
             'Avant une restauration',
+        'Before a respec':
+            'Avant une redistribution',
         'Before an import':
             'Avant une importation',
         'Before playing':
@@ -8008,6 +8018,8 @@ WORLD = {
             'Bilanciato',
         'Before a restore':
             'Prima di un ripristino',
+        'Before a respec':
+            'Prima di una ridistribuzione',
         'Before an import':
             'Prima di un’importazione',
         'Before playing':
@@ -9630,6 +9642,8 @@ WORLD = {
             'Wyważony',
         'Before a restore':
             'Przed przywróceniem',
+        'Before a respec':
+            'Przed przydzieleniem punktów',
         'Before an import':
             'Przed importem',
         'Before playing':
@@ -11248,6 +11262,8 @@ WORLD = {
             'Dengeli',
         'Before a restore':
             'Geri yüklemeden önce',
+        'Before a respec':
+            'Yeniden dağıtımdan önce',
         'Before an import':
             'İçe aktarmadan önce',
         'Before playing':
@@ -12868,6 +12884,8 @@ WORLD = {
             '均衡',
         'Before a restore':
             '恢复前',
+        'Before a respec':
+            '重新分配属性之前',
         'Before an import':
             '导入前',
         'Before playing':
@@ -14474,6 +14492,8 @@ WORLD = {
             'バランス',
         'Before a restore':
             '復元前',
+        'Before a respec':
+            '能力値の振り直しの前',
         'Before an import':
             'インポート前',
         'Before playing':
@@ -16081,6 +16101,8 @@ WORLD = {
             '균형',
         'Before a restore':
             '복원 전',
+        'Before a respec':
+            '능력치 재분배 전',
         'Before an import':
             '가져오기 전',
         'Before playing':
