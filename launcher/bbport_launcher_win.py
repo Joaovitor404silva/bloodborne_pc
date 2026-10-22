@@ -2303,13 +2303,20 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             folder, slot, who = current()
             try:
                 new = {a: values[a].get() for a in respec.ATTRIBUTES}
-                backup = respec.respec(folder, slot, new)
+                respec.check(who['attributes'], new)
+                # The saves from before in the backups (Saves: restorable there) when the backups cover
+                # this folder; else respec keeps a copy beside them.
+                game = self.var('game_dir', 'app').get()
+                made = saves.backup(user, game, reason='respec', detail=who.get('name', '')) \
+                    if saves.target_dir(user, game).resolve() == Path(folder).resolve() else None
+                backup = respec.respec(folder, slot, new, copy=made is None)
             except (ValueError, OSError, tk.TclError) as error:
                 self.messagebox.showerror(title, str(error), parent=win)
                 return
             who['attributes'] = new
+            self.refresh_saves()  # the new backup in the list
             self.messagebox.showinfo(title, _('Done. A copy of the saves from before is in {}.',
-                                              'Готово. Копия прежних сохранений: {}.').format(backup.parent),
+                                              'Готово. Копия прежних сохранений: {}.').format(made or backup.parent),
                                      parent=win)
             win.destroy()
 
