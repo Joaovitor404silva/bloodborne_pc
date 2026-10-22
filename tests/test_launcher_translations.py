@@ -65,6 +65,31 @@ class TranslationTests(unittest.TestCase):
                 with self.subTest(language=language, text=text[:30]):
                     self.assertTrue(bbport_lang.table(language).get(text))
 
+    def test_the_certificate_texts_are_translated_everywhere(self):
+        """bbport_tls.explain's two texts, as the player reads them (Russian is beside the English)."""
+        import bbport_lang_tls
+        import bbport_tls
+        from datetime import datetime, timezone
+        from unittest import mock
+        self.assertEqual(set(bbport_lang_tls.TEXTS) - {'en'}, set(LANGUAGES) - {'ru'})
+        now = datetime(2026, 10, 22, 12, tzinfo=timezone.utc)
+        clock = bbport_tls.Facts(datetime(2027, 1, 1, tzinfo=timezone.utc), datetime(2027, 4, 1, tzinfo=timezone.utc),
+                                 "Let's Encrypt (YE2)")
+        issuer = bbport_tls.Facts(datetime(2026, 1, 1, tzinfo=timezone.utc), datetime(2027, 1, 1, tzinfo=timezone.utc),
+                                  'Test Antivirus Web Shield Root')
+        english = {}
+        for language in ['en'] + LANGUAGES:
+            for name, facts in (('clock', clock), ('issuer', issuer)):
+                with self.subTest(language=language, text=name), mock.patch.object(L, 'LANG', language), \
+                        mock.patch.object(bbport_tls, 'certificate_facts', return_value=facts):
+                    text = bbport_tls.explain([b'leaf'], 'thehuntersdream.com', now=now)
+                    if language == 'en':
+                        english[name] = text
+                    else:
+                        self.assertNotEqual(text, english[name])
+                    self.assertIn(now.astimezone().strftime('%Y-%m-%d') if name == 'clock' else
+                                  'Test Antivirus Web Shield Root', text)
+
 
 if __name__ == '__main__':
     unittest.main()
