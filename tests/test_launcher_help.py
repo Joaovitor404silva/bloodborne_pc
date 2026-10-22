@@ -156,7 +156,7 @@ class AfterExitTests(unittest.TestCase):
             shown, opened = self.run_after(log, 3221225477, always=True)
             self.assertEqual(len(shown), 1)
             self.assertEqual(shown[0][0], 'info')
-            self.assertIn('3221225477', shown[0][1])
+            self.assertIn('code 0xC0000005', shown[0][1])  # as helpers know it, not 3221225477
             self.assertEqual(opened, [])
             self.assertEqual(self.run_after(log, 1, always=False), ([], []))
 
