@@ -3,13 +3,16 @@ import os
 from pathlib import Path
 import struct
 import sys
+import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(ROOT / 'scripts'))
 import esd  # noqa: E402
 import patches  # noqa: E402
 import quit_menu  # noqa: E402
 import rebirth  # noqa: E402
+from test_quit_menu import fmgs_of, menu_archive  # noqa: E402
 
 GAME = Path(os.environ.get('BB_GAME_DIR', ROOT.parent / 'CUSA03173'))
 TALK = GAME / 'dvdroot_ps4/script/talk' / rebirth.DOLL_SCRIPTS
@@ -42,6 +45,36 @@ class CodeTests(unittest.TestCase):
     def test_hooked_code_is_the_games(self):
         elf = ELF.read_bytes()
         rebirth.check_original(lambda start, end: patches.eboot_bytes(elf, start, end))
+
+
+class TextTests(unittest.TestCase):
+    def test_texts_build_on_the_layer_as_one_language_after_another(self):
+        with tempfile.TemporaryDirectory() as temp:
+            game, layer, out = Path(temp) / 'game', Path(temp) / 'quit_text', Path(temp) / 'rebirth'
+
+            def archive(base, name, label):
+                path = base / 'dvdroot_ps4' / 'msg' / name / 'menu.msgbnd.dcx'
+                path.parent.mkdir(parents=True)
+                path.write_bytes(menu_archive({
+                    rebirth.TALK_FMG: {rebirth.LEVEL_UP_TEXT + k: f'{label} {k}' for k in range(200)},
+                    200: {401307: label},
+                }))
+                return path
+            sources = {name: archive(game, name, f'{name} game') for name in ('deude', 'engus', 'frafr')}
+            # Quit to Desktop's layer has its own archive for two of them: Rebirth builds on those.
+            sources.update({name: archive(layer, name, f'{name} layer') for name in ('deude', 'frafr')})
+            (game / 'dvdroot_ps4' / 'msg' / 'na').mkdir()  # no menu texts there
+            with mock.patch.object(quit_menu, 'PACK_THREADS', 4):
+                self.assertEqual(rebirth.write_texts(game, out, layer), 3)
+            self.assertEqual(sorted(p.name for p in (out / 'dvdroot_ps4' / 'msg').iterdir()), sorted(sources))
+            for name, source in sources.items():
+                written = (out / 'dvdroot_ps4' / 'msg' / name / 'menu.msgbnd.dcx').read_bytes()
+                self.assertEqual(written, rebirth.menu_texts(source.read_bytes(), rebirth.TEXTS['engus']), name)
+                fmgs = fmgs_of(written)
+                self.assertEqual(fmgs[200][401307], f'{name} {"layer" if name != "engus" else "game"}')
+                self.assertEqual(fmgs[rebirth.TALK_FMG][rebirth.OPTION_TEXT], 'Rebirth')
+                self.assertEqual(fmgs[rebirth.TALK_FMG][rebirth.LEVEL_UP_TEXT], fmgs_of(source.read_bytes())[
+                    rebirth.TALK_FMG][rebirth.LEVEL_UP_TEXT])
 
 
 @unittest.skipUnless(TALK.is_file(), 'needs the game (BB_GAME_DIR)')

@@ -232,12 +232,8 @@ def prepare(game, out):
         f.write(image)
     (out / 'eboot.elf').write_bytes(elf)
     (out / 'entry.bin').write_bytes(image[:1024])
-    resources = collections.Counter()
-    total_bytes = 0
-    for path in (game / 'dvdroot_ps4').rglob('*'):
-        if path.is_file():
-            resources[path.relative_to(game / 'dvdroot_ps4').parts[0]] += 1
-            total_bytes += path.stat().st_size
+    # No count of the game's resource files here: walking dvdroot_ps4 (about 29,000 files) took
+    # 5.5 s of every game start, and nothing read the numbers.
     report = dict(source_sha256=hashlib.sha256(source).hexdigest(), source_bytes=len(source),
                   sfo=sfo((game / 'sce_sys/param.sfo').read_bytes()), entry=hex(header[4]),
                   image_bytes=size, program_headers=ph, self_segments=segments,
@@ -246,7 +242,6 @@ def prepare(game, out):
                   import_name_hints={name: known[name.split('#')[0]] for name in names if name.split('#')[0] in known},
                   libc_evidence=libc_evidence,
                   bundled_modules=sorted(p.name for p in (game / 'sce_module').iterdir()),
-                  resources=dict(resources), resource_bytes=total_bytes,
                   status='Prepared only; execution and Vulkan are tested separately.')
     (out / 'analysis.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n',
                                        encoding='utf-8')
