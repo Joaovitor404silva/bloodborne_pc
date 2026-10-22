@@ -372,6 +372,12 @@ target_compile_options(camera-motion-test PRIVATE -UNDEBUG -fPIC)
 target_link_libraries(camera-motion-test PRIVATE bbgpu)
 add_dependencies(camera-motion-test host_shaders)
 
+# bbport: which mouse input is the controller's (a mapping program's): ninja -C out/gpu pad-use-test,
+# then run it. No SDL, no GPU.
+add_executable(pad-use-test EXCLUDE_FROM_ALL ../tests/test_pad_use.cpp)
+target_include_directories(pad-use-test PRIVATE shim)
+target_compile_options(pad-use-test PRIVATE -UNDEBUG)
+
 # bbport: keyboard and mouse button prompt icons: ninja -C out/gpu prompt-icons-test, then run it
 # (with a folder argument it writes each icon drawn and encoded, for viewing).
 add_executable(prompt-icons-test EXCLUDE_FROM_ALL ../tests/test_prompt_icons.cpp shim/bbport_prompt_icons.cpp)
