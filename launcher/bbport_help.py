@@ -570,8 +570,28 @@ class HelpMixin:
                 'truncated': '✗ ' + _('eboot.bin is cut off: unpack the game again (Help)'),
                 'unreadable': '✗ ' + _('eboot.bin cannot be read (Help)')}.get(state)
 
+    def gpu_problem(self):
+        """Why the graphics card cannot run the port, or None: no card with Vulkan 1.3 found, or the one
+        the hardware check rates "Not supported" (no Vulkan 1.3 driver, under 4 GB, too slow)."""
+        if getattr(self, 'gpu_missing', False):
+            return _('No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 '
+                     'or newer) with a current driver.')
+        rating = getattr(self, 'rating', None)
+        if rating and rating.tiers['gpu'] == 0:
+            why = next((text for _state, part, text in rating.checks if part == 'gpu'), '')
+            return f'{rating.gpu.name}: {why}'
+        return None
+
     def preflight(self):
         """Before PLAY: False when the start would fail for a reason the player can fix first."""
+        # A graphics card the port cannot run on: asked once per card (some play on one anyway).
+        problem, card = self.gpu_problem(), getattr(self, 'gpu_line', '') or 'none'
+        if problem and self.app.get('gpu_warned') != card:
+            text = (problem + '\n\n' + _('The game will likely not start, or close right away.') + '\n\n' +
+                    _('Start anyway?'))
+            if not self.messagebox.askyesno('Bloodborne', text, icon='warning'):
+                return False
+            self.app['gpu_warned'] = card
         problem = memory_problem(self.var('output_res', 'ini').get())
         if problem:
             free, need, off = problem

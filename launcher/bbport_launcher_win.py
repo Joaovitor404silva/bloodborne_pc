@@ -857,6 +857,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.fsr411_downloading = False
         self.output = queue.Queue()
         self.gpu_text = _('• Checking the graphics card…', '• Проверка видеокарты…')
+        self.gpu_missing = False  # the check found no graphics card with Vulkan 1.3 (asked before PLAY)
         self.banner_image = None
         self.ui_calls = queue.Queue()  # work for the Tk thread from helper threads
         self.mod_order, self.mod_vars, self.patch_vars = [], {}, {}
@@ -3573,7 +3574,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             clang64 = Path(os.environ.get('MSYS2_ROOT', r'C:\msys64')) / 'clang64' / 'bin'
             env['PATH'] = f'{clang64}{os.pathsep}{env.get("PATH", "")}'
         text = _('• Graphics card: not checked', '• Видеокарта: не проверена')
-        names = []
+        names, missing = [], False
         try:
             result = subprocess.run([str(exe), '--live-resolution'], capture_output=True, text=True, timeout=30,
                                     env=env, creationflags=NO_WINDOW)
@@ -3583,9 +3584,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             elif result.returncode:
                 text = _('✗ No Vulkan 1.3 graphics card found (update the driver)',
                          '✗ Не найдена видеокарта с Vulkan 1.3 (обновите драйвер)')
+                missing = True
         except (OSError, subprocess.TimeoutExpired):
             pass
-        self.gpu_text = text
+        self.gpu_text, self.gpu_missing = text, missing
         support = bbport_fsr411.query(PORT_DIR, env)
         def fsr411_done():
             self.fsr411_support = support

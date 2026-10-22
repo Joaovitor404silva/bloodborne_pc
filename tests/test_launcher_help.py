@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(ROOT / 'launcher'))
 sys.path.insert(0, str(ROOT / 'scripts'))
@@ -63,6 +64,55 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual((need, off), (10, True))  # no page file: the limit is the RAM
         self.assertFalse(help_.memory_problem('1920x1080', (5.0, 24.0, 16.0))[2])
         self.assertIsNone(help_.memory_problem('1920x1080', (7.5, 24.0, 16.0)))
+
+
+class GraphicsCardTests(unittest.TestCase):
+    """The check before PLAY: a graphics card the port cannot run on (a GeForce 820M started and closed)."""
+
+    def window(self, gpu=None, missing=False, line='Card, discrete, 2048 MiB', answer=True):
+        import bbport_hardware as hardware
+
+        class Box:
+            def __init__(self):
+                self.asked = []
+
+            def askyesno(self, title, text, **_options):
+                self.asked.append(text)
+                return answer
+
+        class Window(help_.HelpMixin):
+            def var(self, key, store):
+                return type('Var', (), {'get': lambda _self: '1920x1080'})()
+        window = Window()
+        window.app, window.messagebox, window.gpu_missing, window.gpu_line = {}, Box(), missing, line
+        window.rating = hardware.assess(gpu, hardware.Cpu('', None), 32) if gpu else None
+        return window
+
+    def test_none_found(self):
+        window = self.window(missing=True, line='')
+        self.assertIn('Vulkan 1.3', window.gpu_problem())
+
+    def test_a_card_rated_not_supported(self):
+        import bbport_hardware as hardware
+        old = hardware.Gpu('nvidia', 'NVIDIA GeForce', 'GT 820M', 2, 10, 'laptop no-vulkan13')
+        self.assertEqual(hardware.gpu_tier(old), 0)
+        self.assertTrue(self.window(old).gpu_problem().startswith('GT 820M: '))
+        good = hardware.Gpu('nvidia', 'NVIDIA GeForce', 'RTX 4060', 8, 120)
+        self.assertIsNone(self.window(good).gpu_problem())
+        self.assertIsNone(self.window().gpu_problem())  # not checked yet: nothing to say
+
+    def test_asked_once_per_card(self):
+        window = self.window(missing=True)
+        with mock.patch.object(help_, 'memory_problem', lambda *_a: None):
+            self.assertTrue(window.preflight())
+            self.assertTrue(window.preflight())
+            self.assertEqual(len(window.messagebox.asked), 1)
+            window.gpu_line = 'Other card, discrete, 4096 MiB'
+            self.assertTrue(window.preflight())
+            self.assertEqual(len(window.messagebox.asked), 2)
+            no = self.window(missing=True, answer=False)
+            self.assertFalse(no.preflight())
+            self.assertFalse(no.preflight())  # asked again until the player says start
 
 
 class FileTests(unittest.TestCase):

@@ -14,7 +14,14 @@ HELP = {'de': {
     'inside (Game & language).':
         'Keine eboot.bin im Spielordner: Wähle den Ordner, in dem eboot.bin, sce_sys und dvdroot_ps4 direkt liegen '
         '(Spiel & Sprache).',
-    'Check again': 'Erneut prüfen', 'Start anyway?': 'Trotzdem starten?', 'Show the fix?': 'Lösung anzeigen?',
+    'Check again': 'Erneut prüfen', 'Start anyway?': 'Trotzdem starten?',
+    'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) with a '
+    'current driver.':
+        'Es wurde keine Grafikkarte mit Vulkan 1.3 gefunden. Der Port braucht eine (GTX 1050 Ti, GTX 1650, RX 570 '
+        'oder neuer) mit aktuellem Treiber.',
+    'The game will likely not start, or close right away.':
+        'Das Spiel startet dann wahrscheinlich nicht oder schließt sich sofort.',
+    'Show the fix?': 'Lösung anzeigen?',
     'eboot.bin cannot be read.': 'eboot.bin kann nicht gelesen werden.',
     'Checking the game files…': 'Prüfe die Spieldateien…', 'How to fix': 'So behebst du es',
     'These mods bring their own eboot.bin: {}. Turn them off or remove that file from them.':

@@ -835,6 +835,12 @@ WORLD = {
             'Тест стабильности (для бета-версий)',
         'Start and sound':
             'Запуск и звук',
+        'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) '
+        'with a current driver.':
+            'Видеокарта с Vulkan 1.3 не найдена. Порту нужна такая карта (GTX 1050 Ti, GTX 1650, RX 570 или новее) с '
+            'актуальным драйвером.',
+        'The game will likely not start, or close right away.':
+            'Игра, скорее всего, не запустится или сразу закроется.',
         'Start anyway?':
             'Всё равно запустить?',
         'Start menu > Windows Security > Virus & threat protection > Manage settings.':
@@ -2370,6 +2376,12 @@ WORLD = {
             'اختبار الثبات (للإصدارات التجريبية)',
         'Start and sound':
             'التشغيل والصوت',
+        'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) '
+        'with a current driver.':
+            'لم يتم العثور على بطاقة رسومات تدعم Vulkan 1.3. يحتاج المنفذ إلى بطاقة كهذه (GTX 1050 Ti أو GTX 1650 أو '
+            'RX 570 أو أحدث) مع تعريف حديث.',
+        'The game will likely not start, or close right away.':
+            'على الأرجح لن تبدأ اللعبة، أو ستُغلق فورًا.',
         'Start anyway?':
             'التشغيل على أي حال؟',
         'Start menu > Windows Security > Virus & threat protection > Manage settings.':
@@ -3957,6 +3969,12 @@ WORLD = {
             'Prueba de estabilidad (para versiones beta)',
         'Start and sound':
             'Inicio y sonido',
+        'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) '
+        'with a current driver.':
+            'No se encontró ninguna tarjeta gráfica con Vulkan 1.3. El port necesita una (GTX 1050 Ti, GTX 1650, RX '
+            '570 o más nueva) con un controlador actual.',
+        'The game will likely not start, or close right away.':
+            'Lo más probable es que el juego no arranque o se cierre enseguida.',
         'Start anyway?':
             '¿Iniciar de todos modos?',
         'Start menu > Windows Security > Virus & threat protection > Manage settings.':
@@ -5547,6 +5565,12 @@ WORLD = {
             'Teste de estabilidade (para versões beta)',
         'Start and sound':
             'Início e som',
+        'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) '
+        'with a current driver.':
+            'Nenhuma placa de vídeo com Vulkan 1.3 foi encontrada. O port precisa de uma (GTX 1050 Ti, GTX 1650, RX '
+            '570 ou mais nova) com um driver atual.',
+        'The game will likely not start, or close right away.':
+            'O jogo provavelmente não vai iniciar ou vai fechar logo em seguida.',
         'Start anyway?':
             'Iniciar mesmo assim?',
         'Start menu > Windows Security > Virus & threat protection > Manage settings.':
@@ -7135,6 +7159,12 @@ WORLD = {
             'Test de stabilité (pour les versions bêta)',
         'Start and sound':
             'Lancement et son',
+        'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) '
+        'with a current driver.':
+            "Aucune carte graphique compatible Vulkan 1.3 n'a été trouvée. Le port en a besoin d'une (GTX 1050 Ti, "
+            'GTX 1650, RX 570 ou plus récente) avec un pilote à jour.',
+        'The game will likely not start, or close right away.':
+            'Le jeu ne démarrera probablement pas, ou se fermera aussitôt.',
         'Start anyway?':
             'Lancer quand même ?',
         'Start menu > Windows Security > Virus & threat protection > Manage settings.':
@@ -8728,6 +8758,12 @@ WORLD = {
             'Test di stabilità (per le build beta)',
         'Start and sound':
             'Avvio e audio',
+        'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) '
+        'with a current driver.':
+            'Non è stata trovata nessuna scheda video con Vulkan 1.3. Il port ne richiede una (GTX 1050 Ti, GTX '
+            '1650, RX 570 o più recente) con un driver aggiornato.',
+        'The game will likely not start, or close right away.':
+            'Probabilmente il gioco non si avvierà o si chiuderà subito.',
         'Start anyway?':
             'Avviare comunque?',
         'Start menu > Windows Security > Virus & threat protection > Manage settings.':
@@ -10318,6 +10354,12 @@ WORLD = {
             'Test stabilności (dla wersji beta)',
         'Start and sound':
             'Uruchamianie i dźwięk',
+        'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) '
+        'with a current driver.':
+            'Nie znaleziono karty graficznej z Vulkan 1.3. Port wymaga takiej karty (GTX 1050 Ti, GTX 1650, RX 570 '
+            'lub nowszej) z aktualnym sterownikiem.',
+        'The game will likely not start, or close right away.':
+            'Gra najpewniej się nie uruchomi albo od razu się zamknie.',
         'Start anyway?':
             'Uruchomić mimo to?',
         'Start menu > Windows Security > Virus & threat protection > Manage settings.':
@@ -11907,6 +11949,12 @@ WORLD = {
             'Kararlılık testi (beta sürümler için)',
         'Start and sound':
             'Başlangıç ve ses',
+        'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) '
+        'with a current driver.':
+            'Vulkan 1.3 destekli bir ekran kartı bulunamadı. Port böyle bir karta (GTX 1050 Ti, GTX 1650, RX 570 '
+            'veya daha yenisi) ve güncel bir sürücüye ihtiyaç duyar.',
+        'The game will likely not start, or close right away.':
+            'Oyun büyük olasılıkla başlamaz ya da hemen kapanır.',
         'Start anyway?':
             'Yine de başlatılsın mı?',
         'Start menu > Windows Security > Virus & threat protection > Manage settings.':
@@ -13494,6 +13542,11 @@ WORLD = {
             '稳定性测试（用于测试版）',
         'Start and sound':
             '启动与声音',
+        'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) '
+        'with a current driver.':
+            '未找到支持 Vulkan 1.3 的显卡。移植版需要一块这样的显卡（GTX 1050 Ti、GTX 1650、RX 570 或更新），并使用最新驱动。',
+        'The game will likely not start, or close right away.':
+            '游戏很可能无法启动，或会立即关闭。',
         'Start anyway?':
             '仍要启动吗？',
         'Start menu > Windows Security > Virus & threat protection > Manage settings.':
@@ -15076,6 +15129,11 @@ WORLD = {
             '安定性テスト（ベータ版向け）',
         'Start and sound':
             '起動とサウンド',
+        'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) '
+        'with a current driver.':
+            'Vulkan 1.3 対応のグラフィックカードが見つかりません。移植版には最新ドライバーの入った対応カード（GTX 1050 Ti、GTX 1650、RX 570 以降）が必要です。',
+        'The game will likely not start, or close right away.':
+            'ゲームはおそらく起動しないか、すぐに終了します。',
         'Start anyway?':
             'このまま起動しますか？',
         'Start menu > Windows Security > Virus & threat protection > Manage settings.':
@@ -16660,6 +16718,11 @@ WORLD = {
             '안정성 테스트 (베타 빌드용)',
         'Start and sound':
             '시작 및 사운드',
+        'No graphics card with Vulkan 1.3 was found. The port needs one (GTX 1050 Ti, GTX 1650, RX 570 or newer) '
+        'with a current driver.':
+            'Vulkan 1.3을 지원하는 그래픽 카드를 찾지 못했습니다. 포트에는 최신 드라이버가 설치된 지원 카드(GTX 1050 Ti, GTX 1650, RX 570 이상)가 필요합니다.',
+        'The game will likely not start, or close right away.':
+            '게임이 시작되지 않거나 바로 종료될 가능성이 높습니다.',
         'Start anyway?':
             '그래도 시작할까요?',
         'Start menu > Windows Security > Virus & threat protection > Manage settings.':
