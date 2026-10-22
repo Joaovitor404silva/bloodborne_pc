@@ -331,7 +331,17 @@ def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):
         state = cached.get('state') if cached and cached.get('key') == key else eboot_state(game)[0]
         eboot = {'key': key, 'state': state}
         size = number(stat.st_size)
-        checks.append({
+        values = {}
+        try:
+            from prepare import sfo
+            values = sfo((game / 'sce_sys' / 'param.sfo').read_bytes())
+        except (OSError, ValueError, ImportError):
+            pass
+        version = values.get('APP_VER')
+        # Another version's eboot.bin is not 1.09's anyway (the base game 1.00): the version line below
+        # says what to do, with the update's steps.
+        other_version = state == 'modified' and version and version != '01.09'
+        checks.append(None if other_version else {
             'clean': ('ok', None, _('eboot.bin is the clean 1.09 file ({} bytes).').format(size)),
             'lance': ('bad', 'eboot_modified', _('eboot.bin has Lance McDonald\'s 60 FPS patch built in: the game '
                                                  'crashes with it. Use the clean one.')),
@@ -341,13 +351,8 @@ def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):
                           .format(size, number(EBOOT_SIZE))),
             'unreadable': ('bad', 'eboot_unreadable', _('eboot.bin cannot be read ({} bytes).').format(size)),
         }.get(state, ('bad', None, _('eboot.bin cannot be read.'))))
-        values = {}
-        try:
-            from prepare import sfo
-            values = sfo((game / 'sce_sys' / 'param.sfo').read_bytes())
-        except (OSError, ValueError, ImportError):
-            pass
-        version = values.get('APP_VER')
+        if checks[-1] is None:
+            checks.pop()
         if version and version != '01.09':
             checks.append(('warn', 'version', _('Game version {}: it needs the 1.09 update.').format(version)))
         scan = scan_game(game)
