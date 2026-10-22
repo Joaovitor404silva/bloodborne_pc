@@ -4037,7 +4037,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             except OSError:
                 pass
         while not self.ui_calls.empty():
-            self.ui_calls.get_nowait()()
+            try:
+                self.ui_calls.get_nowait()()
+            except Exception:  # reported like any Tk callback; this loop must keep running
+                self.root.report_callback_exception(*sys.exc_info())
         frame = self.custom_frame
         if frame and frame.cover and time.monotonic() - frame.cover_time > 1.5 and self.root.state() != 'iconic':
             self.uncover_window()  # a minimize that did not happen: the picture never stays over the window
