@@ -22,7 +22,7 @@ exit /b
 # ------------------------------------------------------------------------------------------
 $ErrorActionPreference = 'SilentlyContinue'
 [Threading.Thread]::CurrentThread.CurrentCulture = [Globalization.CultureInfo]::InvariantCulture
-$ToolVersion = '1.7.6'
+$ToolVersion = '1.7.7'
 Add-Type -AssemblyName System.Windows.Forms
 
 $secrets = New-Object System.Collections.ArrayList
@@ -420,9 +420,17 @@ if ($bridgeState -and (Test-Path $bridgeState)) {
 # --- Crashes Windows remembers (they survive a new start, unlike last_run.log) -------------
 # The launcher replaces last_run.log on every start, so after a restart the crash is only here.
 $since = (Get-Date).AddDays(-14)
-$crashEvents = @(Get-WinEvent -FilterHashtable @{ LogName = 'Application'; Id = 1000, 1002; StartTime = $since } -MaxEvents 300 |
-    Where-Object { "$($_.Properties[0].Value)" -match '^(bb-probe|Bloodborne|Play Bloodborne)\.exe$' })
-$gpuResets = @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Display'; Id = 4101; StartTime = $since } -MaxEvents 50)
+if ($env:BBTOOL_EVENTS) {
+    # Tests hand in the events as a JSON list instead (Id, TimeCreated, Properties[].Value, as Get-WinEvent has them).
+    $listed = Get-Content $env:BBTOOL_EVENTS -Raw -Encoding UTF8 | ConvertFrom-Json
+    $events = @($listed | ForEach-Object { $_.TimeCreated = [datetime]$_.TimeCreated; $_ } | Sort-Object TimeCreated -Descending)
+    $crashEvents = @($events | Where-Object { $_.Id -in 1000, 1002 -and "$($_.Properties[0].Value)" -match '^(bb-probe|Bloodborne|Play Bloodborne)\.exe$' })
+    $gpuResets = @($events | Where-Object { $_.Id -eq 4101 })
+} else {
+    $crashEvents = @(Get-WinEvent -FilterHashtable @{ LogName = 'Application'; Id = 1000, 1002; StartTime = $since } -MaxEvents 300 |
+        Where-Object { "$($_.Properties[0].Value)" -match '^(bb-probe|Bloodborne|Play Bloodborne)\.exe$' })
+    $gpuResets = @(Get-WinEvent -FilterHashtable @{ LogName = 'System'; ProviderName = 'Display'; Id = 4101; StartTime = $since } -MaxEvents 50)
+}
 $crashLines = foreach ($e in $crashEvents | Select-Object -First 8) {
     $p = $e.Properties
     if ($e.Id -eq 1002) { "$($e.TimeCreated.ToString('yyyy-MM-dd HH:mm'))  $($p[0].Value) stopped responding (hang)" }
@@ -578,12 +586,27 @@ if (LogHas '(cpp-httplib failed.*error=10\b|SSL server verification failed)') {
         Hint "Online: the SSL check of the server failed ('failed to get server information'). Update to 1.7.3 (launcher > Advanced > Check for updates): it fixes this, no certmgr changes needed. Never install certificate files someone sends you." 1 }
     else {
         Hint "Online: the SSL check of the server failed ('failed to get server information'), although 1.7.3 should fix it: report it with this zip. No certmgr changes needed; never install certificate files someone sends you." 1 } }
-if ($logText -and -not $endsWithError) {
-    # Freeze: the last real line is the game waiting on the GPU (statistics lines go on regardless).
+# Freeze: only Windows can tell. Every run logs a few '== Stall during rendering' lines and a normal quit
+# can come right after one, so a log that ends with one is no freeze by itself (up to 1.7.6 the tool said
+# so, and players switched the two-stage pipeline off for nothing). A hang event of the game ('stopped
+# responding') is one: Windows writes it when the frozen game is closed, after the last line of its log
+# (2 minutes of leeway, as for crashes above, for the launcher closing the log).
+$hang = if ($log) {
+    $crashEvents | Where-Object { $_.Id -eq 1002 -and "$($_.Properties[0].Value)" -eq 'bb-probe.exe' -and
+        $_.TimeCreated -ge $log.LastWriteTime.AddMinutes(-2) } | Select-Object -First 1 }
+if ($hang -and $logText -and -not $endsWithError) {
+    # The last real line says what the game waited for (statistics lines go on regardless).
     $quiet = '^(Memory:|Runtime: save data|Frame stats|Frame pacing|Texture cache:|Texture helper|GPU profile|Draw preparation|Render state|texture set|scene proxies|Object motion:|\s*[\d.]+ ms/frame)'
     $lastLine = $logText -split "`r?`n" | Where-Object { $_.Trim() -and $_ -notmatch $quiet } | Select-Object -Last 1
-    if ($lastLine -match 'Stall during rendering') {
-        Hint 'The log ends while the game waits on the GPU (a freeze, not a crash): close RivaTuner/Afterburner and other overlays, try once with online play off, then Advanced > Two-stage GPU pipeline Off and Graphics > Object motion vectors off.' 2 }
+    $text = "Windows recorded the game as not responding at the end of this log ($($hang.TimeCreated.ToString('yyyy-MM-dd HH:mm'))): a freeze, not a crash"
+    if ($lastLine -match 'Stall during rendering') { $text += '; it was waiting on the GPU' }
+    $text += '. Close RivaTuner/Afterburner and other overlays and try once with online play off.'
+    # One test, never a standing setting: the two-stage pipeline makes the game about 18 % faster.
+    if ("$(Setting 'draw_pipe')" -eq '0') {
+        $text += ' Advanced > Two-stage GPU pipeline is Off here: if that did not stop the freezes, set it back to Auto (it adds about 18 % FPS).' }
+    else {
+        $text += ' Still freezes at the same place? Test Advanced > Two-stage GPU pipeline Off once, and switch it back to Auto if it changes nothing (it adds about 18 % FPS).' }
+    Hint $text 2
 }
 
 # Graphics card and settings
