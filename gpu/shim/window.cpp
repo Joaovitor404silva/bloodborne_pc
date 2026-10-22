@@ -128,6 +128,11 @@ bool WindowSDL::PollEvents() {
         BbOverlay::UpdateTextInput(window);
     }
     SDL_Event event;
+    bool pad_used = false, mouse_used = false; // the cursor follows them too (UpdateCursor)
+    // Mouse input counts once the batch is read, and only when no controller was in use during it:
+    // a mapping program moves the mouse while a stick is pushed, and its events can come before
+    // the controller's in the same batch.
+    bool mouse_seen = false, pad_busy = PadInUse();
     while (SDL_PollEvent(&event)) {
         // Button prompts follow the device that was used last: a key, a click, the wheel or a
         // real mouse movement, or a controller button or a stick or trigger pushed past half.
@@ -137,15 +142,24 @@ bool WindowSDL::PollEvents() {
             break;
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         case SDL_EVENT_MOUSE_WHEEL:
-            BbPrompts::OnInput(BbPrompts::Keyboard);
+            mouse_seen = true;
             break;
         case SDL_EVENT_MOUSE_MOTION:
             if (std::abs(event.motion.xrel) + std::abs(event.motion.yrel) >= 3.0f) {
-                BbPrompts::OnInput(BbPrompts::Keyboard);
+                mouse_seen = true;
             }
             break;
         case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
             BbPrompts::OnInput(PadDevice(event.gbutton.which));
+            pad_used = true;
+            if (PadUse* pad = PadSlot(event.gbutton.which)) pad->buttons |= 1u << (event.gbutton.button & 31);
+            pad_busy = true;
+            break;
+        case SDL_EVENT_GAMEPAD_BUTTON_UP:
+            if (PadUse* pad = PadSlot(event.gbutton.which)) pad->buttons &= ~(1u << (event.gbutton.button & 31));
+            break;
+        case SDL_EVENT_GAMEPAD_REMOVED:
+            if (PadUse* pad = PadSlot(event.gdevice.which)) *pad = PadUse{};
             break;
         case SDL_EVENT_GAMEPAD_ADDED:
             // The game starts with the controller's prompts.
@@ -154,7 +168,14 @@ bool WindowSDL::PollEvents() {
             BbPrompts::OnControllerConnected(PadDevice(event.gdevice.which));
             break;
         case SDL_EVENT_GAMEPAD_AXIS_MOTION:
-            if (std::abs(int(event.gaxis.value)) > 16000) BbPrompts::OnInput(PadDevice(event.gaxis.which));
+            if (std::abs(int(event.gaxis.value)) > 16000) {
+                BbPrompts::OnInput(PadDevice(event.gaxis.which));
+                pad_used = true;
+            }
+            if (PadUse* pad = PadSlot(event.gaxis.which); pad && event.gaxis.axis < 6) {
+                pad->axes[event.gaxis.axis] = event.gaxis.value;
+            }
+            pad_busy = pad_busy || PadInUse();
             break;
         default:
             break;
@@ -257,10 +278,15 @@ bool WindowSDL::PollEvents() {
             break;
         }
     }
+    if (mouse_seen && !pad_busy) { // a real mouse, not one a mapping program moves with the stick
+        BbPrompts::OnInput(BbPrompts::Keyboard);
+        mouse_used = true;
+    }
     // MOU-004: re-evaluated every PollEvents (not only on the events that could change it),
     // because the menu can also close from the render thread (bbport_overlay.cpp's "Close"
     // button sets menu_open there, not through an SDL event here).
     UpdateMouseCapture();
+    UpdateCursor(pad_used, mouse_used);
     BbPrompts::Apply();
     UpdateMouseCamera();
     return is_open;
@@ -300,6 +326,7 @@ void WindowSDL::UpdateMouseCapture() {
     // it back, so that side is made explicit here (SDL_ShowCursor is a no-op if already shown).
     if (!wants) {
         SDL_ShowCursor();
+        cursor_hidden = false;
     }
     {
         // MOU-005/MOU-007: leaving capture drops whatever motion/buttons/wheel accumulated so
@@ -313,6 +340,58 @@ void WindowSDL::UpdateMouseCapture() {
     if (!wants) {
         g_wheel_expiry_ms.fill(0);
     }
+}
+
+void WindowSDL::UpdateCursor(bool pad_used, bool mouse_used) {
+    // Playing with the controller, the cursor stood in the middle of the game until it was moved
+    // away by hand (a player's request: hide it as other games do). It hides on controller input
+    // and comes back with the mouse; while the mouse is captured, relative mode hides it anyway.
+    if (mouse_captured_last) {
+        return;
+    }
+    if (mouse_used && cursor_hidden) {
+        SDL_ShowCursor();
+        cursor_hidden = false;
+    } else if (pad_used && !mouse_used && !cursor_hidden) {
+        SDL_HideCursor();
+        cursor_hidden = true;
+    }
+}
+
+WindowSDL::PadUse* WindowSDL::PadSlot(u32 id) {
+    PadUse* free = nullptr;
+    for (PadUse& pad : pad_use) {
+        if (pad.id == id) {
+            return &pad;
+        }
+        if (!free && pad.id == 0) {
+            free = &pad;
+        }
+    }
+    if (free) {
+        free->id = id;
+    }
+    return free; // a fifth controller is not followed
+}
+
+bool WindowSDL::PadInUse() const {
+    // A stick or trigger past about an eighth of its way: below the dead zone of mapping programs
+    // (they move the mouse only beyond theirs) and above a worn stick's drift at rest.
+    constexpr int OffRest = 4000;
+    for (const PadUse& pad : pad_use) {
+        if (pad.id == 0) {
+            continue;
+        }
+        if (pad.buttons) {
+            return true;
+        }
+        for (const s16 axis : pad.axes) {
+            if (std::abs(int(axis)) > OffRest) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 void WindowSDL::TakeMouseInput(MouseInput& out) {
