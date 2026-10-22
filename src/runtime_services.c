@@ -134,6 +134,7 @@ static ABI int32_t launch_browser(const char *url, intptr_t arg) {
     /* Rebirth at the Doll (runtime_rebirth.c, scripts/rebirth.py). */
     if (url && !strcmp(url,"bb:b")) return runtime_rebirth();
     if (url && !strcmp(url,"bb:f")) return runtime_rebirth_free_level((int)arg);
+    if (url && !strcmp(url,"bb:e")) { runtime_rebirth_closed(); return 0; }
     if (url && !strcmp(url,"bb:q")) { quit_game(); return 0; }
     if (url && !strcmp(url,"bb:p")) { quit_pending=1; return 0; }
     if (url && !strcmp(url,"bb:d")) {

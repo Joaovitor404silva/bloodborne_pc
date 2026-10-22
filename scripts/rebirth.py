@@ -29,8 +29,9 @@ import quit_menu  # noqa: E402
 
 REBIRTH_INSIGHT = 5          # src/runtime_rebirth.c REBIRTH_INSIGHT
 # Unused flags in the Doll's range (721000xx): the request, and the port's answer: open the
-# level-up screen (reborn now, or levels still to regain), or nothing to do.
-REQUEST, RESULT, NOTHING = 72100090, 72100091, 72100092
+# level-up screen (reborn now, or levels still to regain), or nothing to do; CLOSED: the screen
+# the rebirth opened was closed (the port undoes a rebirth no level was bought after).
+REQUEST, RESULT, NOTHING, CLOSED = 72100090, 72100091, 72100092, 72100093
 OPTION_TEXT, QUESTION_TEXT, SHORT_TEXT, NOTHING_TEXT = 15000170, 10010790, 10010791, 10010792  # free in FMG 30
 TALK_FMG = 30
 DOLL_SCRIPTS = 'm21_00_00_00.talkesdbnd.dcx'   # the Hunter's Dream: the Doll is t210304 and more
@@ -63,7 +64,7 @@ TEXTS = {
     'engus': ('Rebirth',
               f'Be reborn for {REBIRTH_INSIGHT} Insight? Your attributes and level return to those of '
               f'your origin. Your levels can then be regained without Blood Echoes, now or later '
-              f'with Channel Blood Echoes.',
+              f'with Channel Blood Echoes. Leaving without regaining a level cancels the rebirth.',
               f'Rebirth requires {REBIRTH_INSIGHT} Insight.',
               'Your attributes are already those of your origin.'),
 }
@@ -71,10 +72,15 @@ TEXTS = {
 
 def code_writes():
     cave = quit_menu.Code(CAVE)
-    # SetEventFlag: REQUEST goes to the port; RESULT is set to its answer.
+    # SetEventFlag: REQUEST goes to the port and RESULT is set to its answer; CLOSED tells the
+    # port and is then set as usual.
     hook = cave.here
     cave.raw('81fe' + struct.pack('<I', REQUEST).hex())  # cmp esi, REQUEST
-    cave.raw('740d')                                      # je rebirth
+    to_rebirth = len(cave.data)
+    cave.raw('7400')                                      # je rebirth
+    cave.raw('81fe' + struct.pack('<I', CLOSED).hex())   # cmp esi, CLOSED
+    to_closed = len(cave.data)
+    cave.raw('7400')                                      # je closed
     original = cave.here
     cave.raw('4189d0 8b4f1c 31d2'.replace(' ', ''))       # the replaced instructions
     cave.jmp(SET_FLAG_RESUME)
@@ -82,6 +88,7 @@ def code_writes():
         raise ValueError('flag hook layout')
     # The port answers in eax: bit 0 opens the level-up screen (RESULT), bit 1 says there is
     # nothing to reset (NOTHING). Both flags are set through the original function.
+    cave.data[to_rebirth + 1] = cave.here - (cave.offset + to_rebirth + 2)
     cave.raw('57')                                        # rebirth: push rdi (aligned)
     cave.browser(0)
     cave.raw('5f')                                        # pop rdi
@@ -92,6 +99,12 @@ def code_writes():
     cave.raw('4883c408 58 5f'.replace(' ', ''))           # add rsp, 8; pop rax; pop rdi
     cave.raw('89c2 d1ea 83e201'.replace(' ', ''))         # mov edx, eax; shr edx, 1; and edx, 1
     cave.raw('be' + struct.pack('<I', NOTHING).hex())     # mov esi, NOTHING
+    cave.jmp(original)
+    # closed: the port is told ("bb:e"), then the flag is set with its arguments kept.
+    cave.data[to_closed + 1] = cave.here - (cave.offset + to_closed + 2)
+    cave.raw('57 56 52'.replace(' ', ''))                 # push rdi; push rsi; push rdx (aligned)
+    cave.browser(2)
+    cave.raw('5a 5e 5f'.replace(' ', ''))                 # pop rdx; pop rsi; pop rdi
     cave.jmp(original)
     # Pricing: rax = the price; 0 when the port says the level is free. r13d is the price's
     # level + 0x51 when raising (the screen's level + 0x51), and the screen's level + 0x50 when
@@ -142,7 +155,7 @@ def code_writes():
     shown_price = screen_price('c461fa2cf0', '4531f6')                    # xor r14d, r14d
     shown_red_price = screen_price('c4e1fa2cc0', '31c0')
     strings = cave.here
-    for name in 'bf':
+    for name in 'bfe':
         cave.data += f'bb:{name}'.encode() + b'\0'
     for at, message in cave.messages:
         cave.data[at + 3:at + 7] = quit_menu.rel32(CAVE + at, 7, strings + 5 * message)
@@ -224,7 +237,7 @@ def doll_script(data):
         if str(OPTION) in used:
             raise ValueError(f'talk list entry {OPTION} already used')
         next_id = max(st.id for st in group) + 1
-        ask, reborn, level_up, short, nothing = (esd.State(next_id + i) for i in range(5))
+        ask, reborn, level_up, short, nothing, closed = (esd.State(next_id + i) for i in range(6))
         # Rebirth right after Channel Blood Echoes.
         at = next(i for i, c in enumerate(menu.entry)
                   if (c.bank, c.id) == (1, 19) and esd.disassemble(c.args[1]) == str(LEVEL_UP_TEXT))
@@ -242,12 +255,15 @@ def doll_script(data):
                              esd.Condition(short, b'\x41\xa1')]
         # The level-up screen, as Channel Blood Echoes opens it (c1_31, open while f25(23) != 0).
         level_up.entry = [command(1, 11, RESULT, 0), esd.Command(1, 31, [])]
-        level_up.conditions = [esd.Condition(menu, call_equals(25, [23], 0))]
+        level_up.conditions = [esd.Condition(closed, call_equals(25, [23], 0))]
+        # Closed: the port keeps the rebirth only if a level was bought (runtime_rebirth_closed).
+        closed.entry = [command(1, 11, CLOSED, 1)]
+        closed.conditions = [esd.Condition(menu, b'\x41\xa1')]
         short.entry = [command(1, 17, 1, SHORT_TEXT, 1, 0, 1)]
         short.conditions = [esd.Condition(menu, call_equals(21, [], 0))]
         nothing.entry = [command(1, 11, NOTHING, 0), command(1, 17, 1, NOTHING_TEXT, 1, 0, 1)]
         nothing.conditions = [esd.Condition(menu, call_equals(21, [], 0))]
-        group.extend([ask, reborn, level_up, short, nothing])
+        group.extend([ask, reborn, level_up, short, nothing, closed])
     return esd.write(script)
 
 

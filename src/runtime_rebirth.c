@@ -4,6 +4,9 @@
  * An attribute stays at what the equipped weapons need (BB_REBIRTH_WEAPONS, from rebirth.py):
  * the game never lets a weapon be used below its requirements, and doing it broke its attack
  * animations (a T-pose on a hit, Chikage below its Strength). Those points stay spent.
+ * Leaving the level-up screen the rebirth opened without buying a level undoes it, Insight
+ * included ("bb:e" when the Doll's script sees the screen closed): it is kept from the first
+ * level bought on.
  * No Blood Echoes are given back: a level costs nothing only below the level the character had
  * (its target), and no further.
  *
@@ -43,6 +46,14 @@ static const uint8_t ORIGINS[9][7] = {
 
 static unsigned char *image;
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+/* The character as it was before the rebirth whose level-up screen is open. */
+static struct {
+    int active;
+    char key[96];
+    uint32_t attributes[6], level, insight, reborn_level;
+    unsigned target;
+} before;
 
 /* Each weapon's requirements (Strength, Skill, Bloodtinge, Arcane) by id, read once. */
 #define MAX_WEAPONS 2048
@@ -169,6 +180,13 @@ int runtime_rebirth(void) {
                 printf("Runtime: rebirth: already the origin's level %u (with the weapons' needs)\n", new_level);
                 result = 2;
             } else if (insight >= REBIRTH_INSIGHT) {
+                before.active = 1;
+                snprintf(before.key, sizeof(before.key), "%s", key);
+                for (int i = 0; i < 6; ++i) before.attributes[i] = get32(p, ATTRIBUTE[i]);
+                before.level = level;
+                before.insight = insight;
+                before.reborn_level = new_level;
+                before.target = target;
                 write_target(key, target > level ? target : level);
                 for (int i = 0; i < 6; ++i) put32(p, ATTRIBUTE[i], reborn[i]);
                 put32(p, LEVEL, new_level);
@@ -185,6 +203,30 @@ int runtime_rebirth(void) {
     pthread_mutex_unlock(&lock);
     fflush(stdout);
     return result;
+}
+
+/* The level-up screen a rebirth opened was closed: no level bought means no rebirth. */
+void runtime_rebirth_closed(void) {
+    pthread_mutex_lock(&lock);
+    unsigned char *p = player();
+    if (before.active && p) {
+        char key[96];
+        character_key(p, key, sizeof(key));
+        const uint32_t level = get32(p, LEVEL);
+        if (!strcmp(key, before.key) && level == before.reborn_level) {
+            for (int i = 0; i < 6; ++i) put32(p, ATTRIBUTE[i], before.attributes[i]);
+            put32(p, LEVEL, before.level);
+            put32(p, INSIGHT, before.insight);
+            write_target(key, before.target);
+            printf("Runtime: rebirth cancelled (no level bought): level %" PRIu32 " and Insight %" PRIu32 " back\n",
+                   before.level, before.insight);
+        } else {
+            printf("Runtime: rebirth kept (level %" PRIu32 ")\n", level);
+        }
+    }
+    before.active = 0;
+    pthread_mutex_unlock(&lock);
+    fflush(stdout);
 }
 
 int runtime_rebirth_free_level(int level) {
