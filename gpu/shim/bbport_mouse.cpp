@@ -22,6 +22,7 @@ namespace {
 std::thread g_thread;
 std::atomic<bool> g_running{false};
 std::atomic<bool> g_active{false};
+std::atomic<uint64_t> g_ignore_until_ms{0}; // IgnoreMadeMotion
 
 #ifdef _WIN32
 HANDLE g_stopEvent = nullptr;
@@ -33,6 +34,9 @@ void Sample() {
         float xrel = 0.0f;
         float yrel = 0.0f;
         SDL_GetRelativeMouseState(&xrel, &yrel);
+        if (SDL_GetTicks() < g_ignore_until_ms.load(std::memory_order_relaxed)) {
+            return; // a program's motion for the controller, not the player's mouse
+        }
         if (xrel != 0.0f || yrel != 0.0f) {
             Core::BloodborneCam::Instance().OnMouseMotion(xrel, yrel);
         }
@@ -71,6 +75,10 @@ void ThreadMain() {
 #endif
 
 } // namespace
+
+void IgnoreMadeMotion() {
+    g_ignore_until_ms.store(SDL_GetTicks() + 250, std::memory_order_relaxed);
+}
 
 void Start() {
     if (g_running.exchange(true, std::memory_order_acq_rel)) {

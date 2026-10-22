@@ -193,6 +193,15 @@ TOPICS = {
         ["Online play: Play with The Hunter's Dream, then Sign in with Discord.",
          'Or a shadNet server that accepts the port: Use my own servers, with the addresses from the person who runs '
          'it.']),
+    'steam_layout': (
+        'Steam turns the controller into a mouse and keyboard',
+        "With Steam open, its Desktop Layout sends mouse movement and key presses for a controller it manages, on "
+        'top of the controller itself: the camera turns on its own and buttons do two things. The port ignores '
+        'that mouse movement while the controller is used; the key presses it cannot tell apart.',
+        ['Steam: Settings > Controller > Desktop Layout: turn it off, or turn Steam Input off for your type of '
+         'controller.',
+         'Or add Bloodborne.exe to Steam (Add a Non-Steam Game), then its Properties > Controller > Disable Steam '
+         'Input.']),
     'smartscreen': (
         '"Windows protected your PC"',
         'Windows shows this for programs it does not know yet.',
@@ -228,8 +237,17 @@ LOG_HINTS = [
     (r'ErrorOutOfDeviceMemory|Texture cache: memory pressure', 'vram'),
     (r'ErrorDeviceLost|device lost', 'driver'),
     (r"Server rejected this client|doesn't accept your shadPS4 build", 'shadnet_rejected'),
+    (r"Input: mouse motion from Steam's Desktop Layout", 'steam_layout'),
     (r'Fault: .* at (?:amdvlk|amdxc|nvoglv|nvvk|nvwgf|igvk|igxe|igd)\w*\.dll', 'driver'),
 ]
+
+
+# Lines of a game that went on but worked differently than the player expects: (text in the line,
+# Help topic). The launcher says it once the game is closed (after_exit), with NOTICE_INTROS.
+GAME_NOTICES = [("doesn't accept your shadPS4 build", 'shadnet_rejected'),
+                ("Input: mouse motion from Steam's Desktop Layout", 'steam_layout')]
+NOTICE_INTROS = {'shadnet_rejected': 'Online play was off this time. Its log names the cause:',
+                 'steam_layout': "The controller's input was doubled this time. Its log names the cause:"}
 
 
 def hints_in_log(text):
@@ -763,13 +781,13 @@ class HelpMixin:
         """After the game ended with an error: the known causes its log names, with the fix. always: also
         when it names none (the game started without the launcher's window, which has its output)."""
         if not code:
-            # Ended normally, but online was off all along: a server that turned the port away.
-            if getattr(self, 'online_refused', False):
-                self.online_refused = False
-                title, why, _steps = TOPICS['shadnet_rejected']
-                if self.messagebox.askyesno('Bloodborne', _('Online play was off this time. Its log names the cause:') +
-                                            '\n\n' + _(title) + '\n' + _(why) + '\n\n' + _('Show the fix?')):
-                    self.open_topic('shadnet_rejected')
+            # Ended normally, but the game said something went wrong all along (GAME_NOTICES).
+            notices, self.game_notices = getattr(self, 'game_notices', []), []
+            for topic in notices[:1]:
+                title, why, _steps = TOPICS[topic]
+                if self.messagebox.askyesno('Bloodborne', _(NOTICE_INTROS[topic]) + '\n\n' + _(title) + '\n' +
+                                            _(why) + '\n\n' + _('Show the fix?')):
+                    self.open_topic(topic)
             return
         # A Windows exception code the way helpers know it: 0xC0000005, not 3221225477.
         shown = f'0x{code & 0xffffffff:08X}' if code < 0 or code > 255 else code

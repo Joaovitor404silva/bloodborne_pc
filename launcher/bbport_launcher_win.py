@@ -4236,8 +4236,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                         self.status.configure(text=_('The game is running.', 'Игра запущена.'), fg=GOLD)
                     elif 'restarting through run.py' in item:
                         self.status.configure(text=_('Restarting with the new settings…', 'Перезапуск с новыми настройками…'), fg=GOLD)
-                    elif "doesn't accept your shadPS4 build" in item:
-                        self.online_refused = True  # said once the game closes (after_exit)
+                    elif any(text in item for text, _topic in bbport_help.GAME_NOTICES):
+                        # Said once the game closes (after_exit).
+                        notices = self.__dict__.setdefault('game_notices', [])
+                        notices += [topic for text, topic in bbport_help.GAME_NOTICES
+                                    if text in item and topic not in notices]
                     elif 'Runtime: trophy ' in item:
                         self.trophies_changed(self.tracker.observe(item))
                     self.append(item)

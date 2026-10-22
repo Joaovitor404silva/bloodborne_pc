@@ -17,6 +17,30 @@
 namespace Frontend {
 
 /// The buttons a controller has, for its prompts: SDL's type, by vendor and product.
+// When a controller was last used (a button, or a stick or trigger pushed past a quarter).
+static uint64_t g_pad_used_ms;
+
+// Mouse motion with no mouse device behind it (SDL's mouse id 0 while the mouse is captured: raw
+// input from SendInput) while the controller is in use: Steam's Desktop Layout turns a controller
+// it manages for a non-Steam game into mouse and keyboard input, which reached the game on top of
+// the controller (the camera moved by both, prompts flipped to the keyboard). Its motion is
+// dropped; its key and click presses cannot be told from real ones, so the log says once what to
+// turn off in Steam (the launcher shows it after the game).
+static bool MadeMotionDuringPad(const SDL_MouseMotionEvent& motion, bool captured) {
+    if (!captured || motion.which != 0 || !g_pad_used_ms || SDL_GetTicks() - g_pad_used_ms > 2000) {
+        return false;
+    }
+    static bool said;
+    if (!said) {
+        said = true;
+        std::printf("Input: mouse motion from Steam's Desktop Layout (or another program) while the controller "
+                    "is used: ignored. Its button and key presses still reach the game: turn Steam Input off "
+                    "for this game or the Desktop Layout off in Steam's controller settings\n");
+    }
+    BbMouse::IgnoreMadeMotion();
+    return true;
+}
+
 static BbPrompts::Device PadDevice(SDL_JoystickID id) {
     switch (SDL_GetGamepadTypeForID(id)) {
     case SDL_GAMEPAD_TYPE_PS3:
@@ -151,11 +175,15 @@ bool WindowSDL::PollEvents() {
             BbPrompts::OnInput(BbPrompts::Keyboard);
             break;
         case SDL_EVENT_MOUSE_MOTION:
+            if (MadeMotionDuringPad(event.motion, mouse_captured_last)) {
+                continue; // neither the camera nor the prompts
+            }
             if (std::abs(event.motion.xrel) + std::abs(event.motion.yrel) >= 3.0f) {
                 BbPrompts::OnInput(BbPrompts::Keyboard);
             }
             break;
         case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+            g_pad_used_ms = SDL_GetTicks();
             BbPrompts::OnInput(PadDevice(event.gbutton.which));
             break;
         case SDL_EVENT_GAMEPAD_ADDED:
@@ -165,6 +193,7 @@ bool WindowSDL::PollEvents() {
             BbPrompts::OnControllerConnected(PadDevice(event.gdevice.which));
             break;
         case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+            if (std::abs(int(event.gaxis.value)) > 8000) g_pad_used_ms = SDL_GetTicks();
             if (std::abs(int(event.gaxis.value)) > 16000) BbPrompts::OnInput(PadDevice(event.gaxis.which));
             break;
         default:

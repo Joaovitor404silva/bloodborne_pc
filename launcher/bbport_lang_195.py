@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
-"""The 1.9.5 texts (the shadNet server that turns the port away: Online play's note, Help's topic),
+"""The 1.9.5 texts (the shadNet server that turns the port away, Steam's Desktop Layout: notes and Help topics),
 in every language besides English, with the launcher's existing words for the pages and buttons
 they name. Keyed by the English text like bbport_lang; merged into its tables on import."""
 import bbport_lang
@@ -15,6 +15,12 @@ KEYS = [
     'it.',
     'Open Online play',
     'Online play was off this time. Its log names the cause:',
+    # Steam's Desktop Layout (Help, after the game)
+    'Steam turns the controller into a mouse and keyboard',
+    'With Steam open, its Desktop Layout sends mouse movement and key presses for a controller it manages, on top of the controller itself: the camera turns on its own and buttons do two things. The port ignores that mouse movement while the controller is used; the key presses it cannot tell apart.',
+    'Steam: Settings > Controller > Desktop Layout: turn it off, or turn Steam Input off for your type of controller.',
+    'Or add Bloodborne.exe to Steam (Add a Non-Steam Game), then its Properties > Controller > Disable Steam Input.',
+    "The controller's input was doubled this time. Its log names the cause:",
 ]
 
 TEXTS = {
@@ -29,6 +35,11 @@ TEXTS = {
         'Или сервер shadNet, который принимает порт: «Использовать свои серверы» с адресами от его владельца.',
         'Открыть «Онлайн-игру»',
         'В этот раз онлайн-игра была выключена. Журнал называет причину:',
+        'Steam превращает контроллер в мышь и клавиатуру',
+        'Когда Steam открыт, его «Раскладка для рабочего стола» посылает движения мыши и нажатия клавиш за контроллер, которым он управляет, вдобавок к самому контроллеру: камера крутится сама, а кнопки делают по два действия. Порт игнорирует эти движения мыши, пока используется контроллер; нажатия клавиш отличить нельзя.',
+        'Steam: Настройки > Контроллер > Раскладка для рабочего стола: выключите её или выключите Steam Input для вашего типа контроллера.',
+        'Или добавьте Bloodborne.exe в Steam («Добавить стороннюю игру»), затем Свойства > Контроллер > Отключить Steam Input.',
+        'В этот раз ввод контроллера удваивался. Журнал называет причину:',
     ],
     'ar': [
         "خادم shadNet العام من shadPS4 لا يقبل إصدار هذا المنفذ حاليًا، لذا يفشل اللعب عبر الإنترنت عليه. اختر "
@@ -40,6 +51,11 @@ TEXTS = {
         'أو خادم shadNet يقبل المنفذ: «استخدام خوادمي الخاصة» مع العناوين من الشخص الذي يديره.',
         'فتح «اللعب عبر الإنترنت»',
         'كان اللعب عبر الإنترنت متوقفًا هذه المرة. يذكر السجل السبب:',
+        'يحوّل Steam وحدة التحكم إلى فأرة ولوحة مفاتيح',
+        'عندما يكون Steam مفتوحًا، يرسل «تخطيط سطح المكتب» حركة فأرة وضغطات مفاتيح نيابةً عن وحدة التحكم التي يديرها، فوق إدخال وحدة التحكم نفسها: تدور الكاميرا وحدها وتؤدي الأزرار أمرين. يتجاهل المنفذ حركة الفأرة هذه أثناء استخدام وحدة التحكم؛ أما ضغطات المفاتيح فلا يمكنه تمييزها.',
+        'Steam: الإعدادات > وحدة التحكم > تخطيط سطح المكتب: أوقفه، أو أوقف Steam Input لنوع وحدة التحكم لديك.',
+        'أو أضف Bloodborne.exe إلى Steam (إضافة لعبة من خارج Steam)، ثم الخصائص > وحدة التحكم > تعطيل Steam Input.',
+        'تضاعف إدخال وحدة التحكم هذه المرة. يذكر السجل السبب:',
     ],
     'es': [
         "El servidor público de shadNet de shadPS4 no acepta por ahora la versión de este port, así que el juego en "
@@ -53,6 +69,11 @@ TEXTS = {
         'gestiona.',
         'Abrir «Juego en línea»',
         'Esta vez el juego en línea estuvo desactivado. Su registro indica la causa:',
+        'Steam convierte el mando en ratón y teclado',
+        'Con Steam abierto, su «Configuración de escritorio» envía movimientos de ratón y pulsaciones de teclas por un mando que gestiona, además del propio mando: la cámara gira sola y los botones hacen dos cosas. El port ignora ese movimiento de ratón mientras se usa el mando; las teclas no puede distinguirlas.',
+        'Steam: Parámetros > Mando > Configuración de escritorio: desactívala, o desactiva Steam Input para tu tipo de mando.',
+        'O añade Bloodborne.exe a Steam (Añadir un juego ajeno a Steam) y luego en Propiedades > Mando > Desactivar Steam Input.',
+        'Esta vez la entrada del mando se duplicó. Su registro indica la causa:',
     ],
     'pt': [
         "O servidor público shadNet do shadPS4 não aceita no momento a versão deste port, então o jogo online nele "
@@ -66,6 +87,11 @@ TEXTS = {
         'administra.',
         'Abrir «Jogo online»',
         'Desta vez o jogo online ficou desligado. O registro dele aponta a causa:',
+        'O Steam transforma o controle em mouse e teclado',
+        'Com o Steam aberto, o «Layout da área de trabalho» envia movimentos de mouse e teclas por um controle que ele gerencia, além do próprio controle: a câmera gira sozinha e os botões fazem duas coisas. O port ignora esse movimento de mouse enquanto o controle é usado; as teclas ele não consegue distinguir.',
+        'Steam: Configurações > Controle > Layout da área de trabalho: desligue-o, ou desligue o Steam Input para o seu tipo de controle.',
+        'Ou adicione o Bloodborne.exe ao Steam (Adicionar jogo não Steam) e depois em Propriedades > Controle > Desativar Steam Input.',
+        'Desta vez a entrada do controle foi duplicada. O registro dele aponta a causa:',
     ],
     'fr': [
         "Le serveur shadNet public de shadPS4 n'accepte pas pour l'instant la version de ce port : le jeu en ligne y "
@@ -79,6 +105,11 @@ TEXTS = {
         'personne qui le gère.',
         'Ouvrir « Jeu en ligne »',
         'Le jeu en ligne était désactivé cette fois. Son journal en donne la cause :',
+        'Steam transforme la manette en souris et clavier',
+        "Quand Steam est ouvert, sa « Configuration du bureau » envoie des mouvements de souris et des touches pour une manette qu'il gère, en plus de la manette elle-même : la caméra tourne toute seule et les boutons font deux choses. Le port ignore ce mouvement de souris pendant que la manette est utilisée ; les touches, il ne peut pas les distinguer.",
+        'Steam : Paramètres > Manette > Configuration du bureau : désactivez-la, ou désactivez Steam Input pour votre type de manette.',
+        'Ou ajoutez Bloodborne.exe à Steam (Ajouter un jeu non-Steam), puis Propriétés > Manette > Désactiver Steam Input.',
+        "L'entrée de la manette a été doublée cette fois. Son journal en donne la cause :",
     ],
     'de': [
         "Der öffentliche shadNet-Server von shadPS4 nimmt die Version dieses Ports derzeit nicht an, online spielen "
@@ -93,6 +124,11 @@ TEXTS = {
         'betreibt.',
         '„Online spielen“ öffnen',
         'Online spielen war diesmal aus. Sein Protokoll nennt den Grund:',
+        'Steam macht den Controller zu Maus und Tastatur',
+        'Ist Steam offen, sendet sein „Desktop-Layout“ für einen Controller, den es verwaltet, Mausbewegungen und Tastendrücke zusätzlich zum Controller selbst: Die Kamera dreht sich von allein und Tasten tun zwei Dinge. Der Port ignoriert diese Mausbewegung, solange der Controller benutzt wird; die Tastendrücke kann er nicht unterscheiden.',
+        'Steam: Einstellungen > Controller > Desktop-Layout: ausschalten, oder Steam Input für deine Art von Controller ausschalten.',
+        'Oder Bloodborne.exe zu Steam hinzufügen (Ein Nicht-Steam-Spiel hinzufügen), dann Eigenschaften > Controller > Steam Input deaktivieren.',
+        'Die Eingabe des Controllers kam diesmal doppelt an. Sein Protokoll nennt den Grund:',
     ],
     'it': [
         "Il server shadNet pubblico di shadPS4 al momento non accetta la versione di questo port, quindi il gioco "
@@ -105,6 +141,11 @@ TEXTS = {
         'Oppure un server shadNet che accetti il port: «Usa i miei server», con gli indirizzi di chi lo gestisce.',
         'Apri «Gioco online»',
         'Questa volta il gioco online era spento. Il suo registro indica la causa:',
+        'Steam trasforma il controller in mouse e tastiera',
+        'Con Steam aperto, il suo «Layout desktop» invia movimenti del mouse e tasti per un controller che gestisce, oltre al controller stesso: la telecamera gira da sola e i pulsanti fanno due cose. Il port ignora quel movimento del mouse mentre si usa il controller; i tasti non può distinguerli.',
+        'Steam: Impostazioni > Controller > Layout desktop: disattivalo, o disattiva Steam Input per il tuo tipo di controller.',
+        'Oppure aggiungi Bloodborne.exe a Steam (Aggiungi un gioco non Steam), poi Proprietà > Controller > Disattiva Steam Input.',
+        "Questa volta l'input del controller è arrivato doppio. Il suo registro indica la causa:",
     ],
     'pl': [
         "Publiczny serwer shadNet od shadPS4 obecnie nie przyjmuje wersji tego portu, więc gra online na nim nie "
@@ -118,6 +159,11 @@ TEXTS = {
         'prowadzi.',
         'Otwórz „Grę online”',
         'Tym razem gra online była wyłączona. Jej dziennik podaje przyczynę:',
+        'Steam zamienia kontroler w mysz i klawiaturę',
+        'Gdy Steam jest otwarty, jego „Układ pulpitu” wysyła ruchy myszy i naciśnięcia klawiszy za kontroler, którym zarządza, oprócz samego kontrolera: kamera obraca się sama, a przyciski robią dwie rzeczy. Port ignoruje ten ruch myszy, gdy używany jest kontroler; klawiszy nie potrafi odróżnić.',
+        'Steam: Ustawienia > Kontroler > Układ pulpitu: wyłącz go albo wyłącz Steam Input dla swojego typu kontrolera.',
+        'Albo dodaj Bloodborne.exe do Steam (Dodaj grę spoza Steam), potem Właściwości > Kontroler > Wyłącz Steam Input.',
+        'Tym razem sygnały kontrolera docierały podwójnie. Jego dziennik podaje przyczynę:',
     ],
     'tr': [
         "shadPS4'ün herkese açık shadNet sunucusu şu anda bu portun sürümünü kabul etmiyor, bu yüzden orada çevrim "
@@ -130,6 +176,11 @@ TEXTS = {
         'Ya da portu kabul eden bir shadNet sunucusu: işleten kişinin verdiği adreslerle "Kendi sunucularımı kullan".',
         '"Çevrim içi oyun"u aç',
         'Bu sefer çevrim içi oyun kapalıydı. Günlüğü nedenini söylüyor:',
+        'Steam kontrolcüyü fare ve klavyeye çeviriyor',
+        'Steam açıkken "Masaüstü Düzeni", yönettiği bir kontrolcü için kontrolcünün kendisine ek olarak fare hareketi ve tuş basışları gönderir: kamera kendi kendine döner ve düğmeler iki iş yapar. Port, kontrolcü kullanılırken bu fare hareketini yok sayar; tuş basışlarını ayırt edemez.',
+        "Steam: Ayarlar > Kontrolcü > Masaüstü Düzeni: kapat ya da kontrolcü türün için Steam Input'u kapat.",
+        "Ya da Bloodborne.exe'yi Steam'e ekle (Steam Dışı Oyun Ekle), sonra Özellikler > Kontrolcü > Steam Input'u Devre Dışı Bırak.",
+        'Bu sefer kontrolcünün girdisi iki kez geldi. Günlüğü nedenini söylüyor:',
     ],
     'zh': [
         "shadPS4 的公共 shadNet 服务器目前不接受本移植版的版本，因此在其上在线游玩会失败。请在“游玩设备”中选择 "
@@ -140,6 +191,11 @@ TEXTS = {
         '或使用接受本移植版的 shadNet 服务器：“使用我自己的服务器”，填入服务器管理者提供的地址。',
         '打开“在线游玩”',
         '这次在线游玩处于关闭状态。日志指出了原因：',
+        'Steam 把控制器变成了鼠标和键盘',
+        'Steam 打开时，它的“桌面布局”会为它管理的控制器额外发送鼠标移动和按键，叠加在控制器本身的输入上：镜头会自己转动，按钮会同时做两件事。使用控制器时，移植版会忽略这些鼠标移动；按键则无法区分。',
+        'Steam：设置 > 控制器 > 桌面布局：将其关闭，或为你的控制器类型关闭 Steam 输入。',
+        '或将 Bloodborne.exe 添加到 Steam（添加非 Steam 游戏），然后在 属性 > 控制器 中禁用 Steam 输入。',
+        '这次控制器的输入被重复了。日志指出了原因：',
     ],
     'ja': [
         "shadPS4 の公開 shadNet サーバーは現在このポートのバージョンを受け付けないため、そこでのオンラインプレイは"
@@ -152,6 +208,11 @@ TEXTS = {
         'またはこのポートを受け付ける shadNet サーバー：「自分のサーバーを使う」で、運営者から聞いたアドレスを入力。',
         '「オンラインプレイ」を開く',
         '今回はオンラインプレイがオフでした。ログに原因があります：',
+        'Steam がコントローラーをマウスとキーボードに変えています',
+        'Steam が起動していると、Steam が管理するコントローラーに対して「デスクトップレイアウト」がマウス移動とキー入力をコントローラー本体の入力に加えて送ります。カメラが勝手に回り、ボタンが二つの動作をします。コントローラー使用中、このポートはそのマウス移動を無視しますが、キー入力は区別できません。',
+        'Steam：設定 > コントローラー > デスクトップレイアウト：オフにするか、お使いのコントローラーの種類で Steam Input をオフにします。',
+        'または Bloodborne.exe を Steam に追加し（Steam 以外のゲームを追加）、プロパティ > コントローラー > Steam Input を無効化。',
+        '今回はコントローラーの入力が二重になっていました。ログに原因があります：',
     ],
     'ko': [
         "shadPS4의 공개 shadNet 서버가 현재 이 포트의 버전을 받지 않아 그 서버에서는 온라인 플레이가 실패합니다. "
@@ -163,6 +224,11 @@ TEXTS = {
         "또는 이 포트를 받는 shadNet 서버: '내 서버 사용'에 운영자에게 받은 주소를 입력.",
         "'온라인 플레이' 열기",
         '이번에는 온라인 플레이가 꺼져 있었습니다. 로그에 원인이 있습니다:',
+        'Steam이 컨트롤러를 마우스와 키보드로 바꾸고 있습니다',
+        'Steam이 열려 있으면 "데스크톱 레이아웃"이 Steam이 관리하는 컨트롤러에 대해 컨트롤러 입력 위에 마우스 움직임과 키 입력을 추가로 보냅니다. 카메라가 저절로 돌고 버튼이 두 가지 동작을 합니다. 컨트롤러를 쓰는 동안 포트는 그 마우스 움직임을 무시하지만, 키 입력은 구별할 수 없습니다.',
+        'Steam: 설정 > 컨트롤러 > 데스크톱 레이아웃: 끄거나, 사용하는 컨트롤러 종류의 Steam 입력을 끕니다.',
+        '또는 Bloodborne.exe를 Steam에 추가(비 Steam 게임 추가)한 뒤 속성 > 컨트롤러 > Steam 입력 비활성화.',
+        '이번에는 컨트롤러 입력이 두 번 들어왔습니다. 로그에 원인이 있습니다:',
     ],
 }
 
