@@ -83,6 +83,17 @@ class GameServerTests(unittest.TestCase):
         self.assertEqual(self.environment(online_pool='shadnet', online_custom_servers=True)['BB_COMMUNITY_SERVER'],
                          self.OTHER)
 
+    def test_shadnet_uses_its_fields_only_with_own_servers(self):
+        """A beta tester's hidden WebAPI field said https://srv.shadps4.net:31315; shadNet speaks http there."""
+        fields = {'online_pool': 'shadnet', 'online_server': 'old.example:31313',
+                  'online_webapi': 'https://srv.shadps4.net:31315'}
+        env = self.environment(**fields)
+        self.assertEqual(env['BB_SHADNET_SERVER'], L.APP_DEFAULTS['online_server'])
+        self.assertEqual(env['BB_SHADNET_WEBAPI'], 'http://srv.shadps4.net:31315')
+        env = self.environment(online_custom_servers=True, **fields)
+        self.assertEqual(env['BB_SHADNET_SERVER'], 'old.example:31313')
+        self.assertEqual(env['BB_SHADNET_WEBAPI'], 'https://srv.shadps4.net:31315')
+
     def test_the_sign_in_asks_the_hunters_dream(self):
         asked = []
 
