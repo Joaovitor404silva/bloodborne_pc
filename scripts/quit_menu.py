@@ -21,8 +21,10 @@ write there). `text` writes the entries' texts as a mod layer (mods.py --layer):
 text archives with those strings added.
 """
 import argparse
+import os
 import struct
 import sys
+import threading
 import zlib
 from pathlib import Path
 
@@ -304,6 +306,55 @@ def pack_dcx(template, body):
     return bytes(header) + packed
 
 
+# Level 9 is slow: the 22 language menu archives, packed one after another, took 5.5 s of every
+# game start here and as much again in rebirth.py. zlib lets the other threads run while it
+# compresses, so they are packed side by side (the same bytes on any thread). At most 8 at once:
+# each archive in work holds about 12 MB.
+PACK_THREADS = min(8, os.cpu_count() or 1)
+
+
+def in_parallel(function, items):
+    """function(item) for every item, in their order, on up to PACK_THREADS threads (for work that
+    spends its time in zlib). A result comes once it and all before it are done, so a failure
+    stops the caller at the same item as a plain loop; items not started by then are left out."""
+    items = list(items)
+    count = min(PACK_THREADS, len(items))
+    if count < 2:
+        yield from map(function, items)
+        return
+    # Plain threads, not concurrent.futures: Bloodborne.exe (PyInstaller) runs these scripts with
+    # the standard modules it bundles, and concurrent is not among them.
+    results, done = [None] * len(items), [threading.Event() for _ in items]
+    order, lock, stop = iter(range(len(items))), threading.Lock(), threading.Event()
+
+    def work():
+        while not stop.is_set():
+            with lock:
+                i = next(order, None)
+            if i is None:
+                return
+            try:
+                results[i] = (True, function(items[i]))
+            except BaseException as error:  # raised for the caller at its item
+                results[i] = (False, error)
+            done[i].set()
+    threads = [threading.Thread(target=work, daemon=True) for _ in range(count)]
+    for thread in threads:
+        thread.start()
+    try:
+        for i in range(len(items)):
+            done[i].wait()
+            ok, value = results[i]
+            results[i] = None  # the caller has it now
+            if not ok:
+                raise value
+            yield value
+    finally:
+        stop.set()
+        for thread in threads:
+            thread.join()
+
+
 def bnd4_files(data):
     """[(entry offset, data offset, size)] of a BND4 with 0x24-byte entries."""
     if data[:4] != b'BND4':
@@ -545,15 +596,16 @@ def write_row_layer(game, out):
 
 def write_text_layer(game, out):
     msg = game / 'dvdroot_ps4' / 'msg'
+    sources = [folder / 'menu.msgbnd.dcx' for folder in sorted(p for p in msg.iterdir() if p.is_dir())]
+    sources = [source for source in sources if source.is_file()]
+
+    def texts_for(source):
+        return menu_texts(source.read_bytes(), TEXTS.get(source.parent.name.casefold(), TEXTS['engus']))
     written = 0
-    for folder in sorted(p for p in msg.iterdir() if p.is_dir()):
-        source = folder / 'menu.msgbnd.dcx'
-        if not source.is_file():
-            continue
-        texts = TEXTS.get(folder.name.casefold(), TEXTS['engus'])
-        target = out / 'dvdroot_ps4' / 'msg' / folder.name / source.name
+    for archive, source in zip(in_parallel(texts_for, sources), sources):
+        target = out / 'dvdroot_ps4' / 'msg' / source.parent.name / source.name
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(menu_texts(source.read_bytes(), texts))
+        target.write_bytes(archive)
         written += 1
     print(f'Quit to Desktop: menu texts for {written} languages')
 
