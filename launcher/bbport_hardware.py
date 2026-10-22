@@ -405,10 +405,12 @@ def best_gpu_line(lines):
 
 
 def parse_gpu_line(line):
-    """bb-gpu-capabilities' 'Name, discrete, 16304 MiB' -> (name, integrated, GB)."""
+    """bb-gpu-capabilities' 'Name, discrete, 16304 MiB' -> (name, integrated, GB). The tool says
+    'integrated or other' for every card that is not discrete (integrated graphics, a virtual or
+    software device)."""
     parts = [p.strip() for p in line.split(',')]
     vram = next((int(m.group(1)) for p in parts for m in [re.match(r'(\d+) MiB', p)] if m), 0)
-    return parts[0], any(p == 'integrated' for p in parts), round(vram / 1024)
+    return parts[0], any(p.startswith('integrated') for p in parts), round(vram / 1024)
 
 
 # ---- the rating (the website's x()) --------------------------------------------------------------
@@ -731,13 +733,79 @@ def vendor_of(name):
             'intel' if 'intel' in name or ' arc' in f' {name}' else '')
 
 
-def signature(gpu_line, cpu, ram, display):
-    """What the automatic settings depend on: the hardware as detected (never a card chosen by
-    hand) and the display. A change means new hardware."""
-    if not gpu_line or not cpu:
+def signature(gpu_line, cpu, ram):
+    """The hardware the automatic settings are made for, as detected (never a card chosen by hand):
+    'NVIDIA GeForce RTX 4070 12 GB|AMD Ryzen 7 5800X 8-Core Processor|32'; '' when the graphics
+    card or the processor was not detected this time (nothing to compare). The display is no part
+    of it: 1.9.3 and 1.9.4 added it, and a TV or a second monitor switched off set the player's
+    settings back at the next start."""
+    if not gpu_line or not cpu or not cpu.name:
         return ''
     name, _integrated, vram = parse_gpu_line(gpu_line)
-    return f'{name} {vram} GB|{cpu.name}|{ram}|{display[0]}x{display[1]}'
+    return f'{name} {vram} GB|{cpu.name}|{ram}'
+
+
+def parse_card(text):
+    """(name, video memory in GB) of a signature's first part, 'NVIDIA GeForce RTX 4070 12 GB'; or None."""
+    m = re.fullmatch(r'(.+) (\d+) GB', text) if isinstance(text, str) else None
+    return (m.group(1), int(m.group(2))) if m else None
+
+
+def signature_parts(text):
+    """(card name, video memory, processor, memory in GB) of a stored signature, also one of 1.9.3
+    and 1.9.4 with the display after them (left out); None when it is empty or unreadable."""
+    parts = text.split('|') if isinstance(text, str) else []
+    card = parse_card(parts[0]) if len(parts) >= 3 else None
+    if not card:
+        return None
+    return card[0], card[1], parts[1], int(parts[2]) if parts[2].isdigit() else 0
+
+
+def stored_signature(text):
+    """A stored signature as signature() writes it now (1.9.3 and 1.9.4 had the display after the
+    hardware); '' when it is empty or unreadable."""
+    parts = signature_parts(text)
+    return f'{parts[0]} {parts[1]} GB|{parts[2]}|{parts[3]}' if parts else ''
+
+
+def same_card(a, b):
+    """Whether two (name, video memory in GB) are one graphics card model: the same name, or the same
+    entry of the table (a driver that words the name differently changes nothing). The memory may
+    differ by 1 GB: drivers report a little more or less from one version to the next."""
+    if abs(a[1] - b[1]) > 1:
+        return False
+    if _words(a[0]) == _words(b[0]):
+        return True
+    found = match_gpu(a[0], a[1])
+    return found is not None and found is match_gpu(b[0], b[1])
+
+
+def same_memory(a, b):
+    """Installed memory in whole GB, the same within rounding: 2 GB, or an eighth of large amounts
+    (Windows' fallback count leaves out what the integrated graphics reserve). 0 is unknown."""
+    return not a or not b or abs(a - b) <= max(2, max(a, b) / 8)
+
+
+def new_hardware(before, now, seen=(), integrated=False):
+    """Whether the signature `now` is other hardware than `before`, the one the settings were made
+    for: another processor, more or less memory, or a graphics card new to this PC.
+
+    Not new: anything not detected, the display, and a card that comes and goes on a PC with two.
+    A laptop shows its integrated graphics while the discrete card sleeps or is switched off (MUX,
+    eco mode), and an eGPU comes and goes with its cable; 1.9.3 and 1.9.4 set the settings back at
+    every such start. So an integrated card detected now (`integrated`) never counts, nor one this PC
+    showed before (`seen`: the cards of earlier signatures, 'Name 8 GB')."""
+    old, new = signature_parts(before), signature_parts(now)
+    if not old or not new:
+        return False
+    if old[2] and new[2] and old[2] != new[2]:
+        return True
+    if not same_memory(old[3], new[3]):
+        return True
+    card = new[:2]
+    if integrated or same_card(old[:2], card):
+        return False
+    return not any(same_card(other, card) for other in map(parse_card, seen) if other)
 
 
 # ---- the requirements (website) ---------------------------------------------------------------------
