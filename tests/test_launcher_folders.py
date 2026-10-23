@@ -1,6 +1,6 @@
-"""The saves folder apart from the caches (launcher/bbport_launcher_win.py cache_folder): a saves
-folder in a cloud folder keeps the shaders on this PC, one in another installation keeps them in this
-one; and the mods' order after a drag (moved)."""
+"""The saves folder apart from the caches (launcher/bbport_launcher_win.py cache_folder): the shaders
+stay in this installation's user folder wherever the saves are (a cloud folder, another installation,
+any folder), unless the player chose a cache folder; and the mods' order after a drag (moved)."""
 from paths import ROOT
 import os
 import sys
@@ -29,10 +29,17 @@ class CacheFolderTests(unittest.TestCase):
         for path in (r'C:\Games\BBPort\user', r'C:\Users\Hunter\OneDriveBackup', r'D:\Drop\box'):
             self.assertFalse(L.synced_folder(path), path)
 
-    def test_the_caches_beside_the_saves_as_before(self):
+    def test_saves_elsewhere_keep_the_shaders_in_this_installation(self):
         settings = {**L.APP_DEFAULTS, 'user_dir': r'D:\BB\user'}
-        self.assertEqual(L.cache_folder(settings), Path(r'D:\BB\user'))
-        self.assertNotIn('BB_GPU_USER_DIR', self.environment(settings))
+        self.assertEqual(L.cache_folder(settings), L.DATA_DIR / 'user')
+        env = self.environment(settings)
+        self.assertEqual(env['BB_USER_DIR'], r'D:\BB\user')
+        self.assertEqual(env['BB_GPU_USER_DIR'], str(L.DATA_DIR / 'user'))
+
+    def test_saves_in_this_installation_keep_the_caches_beside_them(self):
+        settings = {**L.APP_DEFAULTS, 'user_dir': ''}
+        self.assertEqual(L.cache_folder(settings), L.saves_folder(settings))
+        self.assertNotIn('BB_GPU_USER_DIR', self.environment(settings))  # run.py puts them there, as before
 
     def test_saves_in_a_cloud_folder_keep_the_shaders_on_this_pc(self):
         settings = {**L.APP_DEFAULTS, 'user_dir': r'C:\Users\Hunter\OneDrive\Bloodborne'}
@@ -85,12 +92,18 @@ class OtherInstallationCacheTests(unittest.TestCase):
         settings = {**L.APP_DEFAULTS, 'user_dir': str(self.old / 'user'), 'cache_dir': r'D:\BB cache'}
         self.assertEqual(L.cache_folder(settings), Path(r'D:\BB cache'))
 
-    def test_own_or_unrelated_saves_keep_the_caches_beside_them(self):
-        for user in ('', str(self.beta / 'user'), str(self.root / 'my saves')):
+    def test_own_saves_keep_the_caches_beside_them(self):
+        for user in ('', str(self.beta / 'user')):
             settings = {**L.APP_DEFAULTS, 'user_dir': user}
             self.assertFalse(L.saves_in_other_installation(settings), user)
-            self.assertEqual(L.cache_folder(settings), L.saves_folder(settings), user)
+            self.assertEqual(L.cache_folder(settings), self.beta / 'user', user)
             self.assertNotIn('BB_GPU_USER_DIR', CacheFolderTests.environment(settings), user)
+
+    def test_unrelated_saves_keep_the_shaders_in_this_installation(self):
+        settings = {**L.APP_DEFAULTS, 'user_dir': str(self.root / 'my saves')}
+        self.assertFalse(L.saves_in_other_installation(settings))  # no note on the Saves page
+        self.assertEqual(L.cache_folder(settings), self.beta / 'user')
+        self.assertEqual(CacheFolderTests.environment(settings)['BB_GPU_USER_DIR'], str(self.beta / 'user'))
 
     def test_for_the_old_installation_its_saves_are_its_own(self):
         settings = {**L.APP_DEFAULTS, 'user_dir': str(self.old / 'user')}
