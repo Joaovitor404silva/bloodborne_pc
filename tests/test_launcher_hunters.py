@@ -1,10 +1,13 @@
 """The players online on The Hunter's Dream (launcher/bbport_launcher_win.py hunters_online): read
 from the public statistics its start page shows, nothing when the server does not answer."""
 from paths import ROOT
+import contextlib
 import io
 import json
 import sys
+import types
 import unittest
+import urllib.error
 from unittest import mock
 
 sys.path.insert(0, str(ROOT / 'launcher'))
@@ -104,6 +107,53 @@ class GameServerTests(unittest.TestCase):
         with mock.patch.object(L, 'thd_call', call), mock.patch.object(L.time, 'sleep'):
             self.assertEqual(L.thd_sign_in(lambda page, code: None), ('Hunter', 't'))
         self.assertTrue(asked and all(url.startswith(L.COMMUNITY_SERVER + '/auth/') for url in asked))
+
+    def server(self, *answers):
+        """thd_open answering in turn: (status, body) or an exception; the calls are counted."""
+        answers, calls = list(answers), []
+
+        def open_(request):
+            calls.append(request.full_url)
+            answer = answers.pop(0)
+            if isinstance(answer, BaseException):
+                raise answer
+            status, body = answer
+            if status >= 400:
+                raise urllib.error.HTTPError(request.full_url, status, 'error', {}, io.BytesIO(body))
+            return contextlib.nullcontext(types.SimpleNamespace(status=status, read=lambda: body))
+        return calls, mock.patch.object(L, 'thd_open', open_)
+
+    def test_the_sign_in_asks_again_when_the_server_stumbles(self):
+        """A tester's "Sign-in failed: …/auth/device/start has no account service" passed after a few clicks."""
+        calls, opened = self.server((502, b'<html>Bad gateway</html>'), TimeoutError('timed out'),
+                                    (200, b'{"ResKind": 0, "DeviceCode": "d"}'))
+        with opened, mock.patch.object(L.time, 'sleep') as slept:
+            self.assertEqual(L.thd_call(L.COMMUNITY_SERVER + '/auth/device/start', {})['DeviceCode'], 'd')
+        self.assertEqual(len(calls), 3)
+        self.assertEqual([c.args[0] for c in slept.call_args_list], [1, 2])
+
+    def test_a_server_that_keeps_stumbling_says_so(self):
+        calls, opened = self.server(*[(503, b'<html>down</html>')] * 3)
+        with opened, mock.patch.object(L.time, 'sleep'), self.assertRaises(ValueError) as caught:
+            L.thd_call(L.COMMUNITY_SERVER + '/auth/device/start', {})
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(str(caught.exception), 'thehuntersdream.com did not answer properly (HTTP 503); '
+                                                'try again in a minute')
+
+    def test_the_services_own_refusal_is_not_asked_again(self):
+        calls, opened = self.server((200, b'{"ResKind": 3, "Message": "unknown device"}'))
+        with opened, mock.patch.object(L.time, 'sleep'), self.assertRaises(ValueError) as caught:
+            L.thd_call(L.COMMUNITY_SERVER + '/auth/device/poll', {})
+        self.assertEqual((len(calls), str(caught.exception)), (1, 'unknown device'))
+
+    def test_a_connection_that_keeps_failing_shows_its_reason(self):
+        """A certificate the PC cannot check keeps its own message (Help explains it)."""
+        error = urllib.error.URLError('certificate verify failed: certificate has expired')
+        calls, opened = self.server(error, error, error)
+        with opened, mock.patch.object(L.time, 'sleep'), self.assertRaises(urllib.error.URLError) as caught:
+            L.thd_call(L.COMMUNITY_SERVER + '/auth/device/start', {})
+        self.assertEqual(len(calls), 3)
+        self.assertIn('certificate has expired', str(caught.exception))
 
     def test_own_servers_on_for_settings_from_before_the_box(self):
         """Saved before "Use my own servers" existed, with a private server: the box starts on."""

@@ -612,25 +612,40 @@ def server_check(server, webapi, community):
 HUNTERS_DREAM_POOL = os.environ.get('BB_HUNTERS_DREAM', '1') != '0'
 
 
-def thd_call(url, body):
+def thd_open(request):
+    return urllib.request.urlopen(request, timeout=10)
+
+
+def thd_call(url, body, tries=3):
     """A call to The Hunter's Dream's account service (bbhost's): its reply, or ValueError with
-    the server's reason."""
+    the server's reason. What is no answer of the service (an error page, a timeout, a dropped
+    connection) is asked again, up to `tries` times: testers saw "has no account service" at the
+    sign-in, and it passed after a few clicks."""
     request = urllib.request.Request(url, data=json.dumps(body).encode(), method='POST',
                                      headers={'Content-Type': 'application/json'})
-    try:
-        with urllib.request.urlopen(request, timeout=10) as response:
-            text = response.read()
-    except urllib.error.HTTPError as error:
-        text = error.read()
-    try:
-        reply = json.loads(text)
-    except ValueError:
-        reply = None
-    if not isinstance(reply, dict) or 'ResKind' not in reply:
-        raise ValueError(f'{url} has no account service')
-    if reply['ResKind'] != 0:
-        raise ValueError(reply.get('Message') or 'refused')
-    return reply
+    status = None
+    for attempt in range(tries):
+        if attempt:
+            time.sleep(attempt)  # 1 s, then 2 s
+        try:
+            with thd_open(request) as response:
+                status, text = getattr(response, 'status', None), response.read()
+        except urllib.error.HTTPError as error:
+            status, text = error.code, error.read()
+        except OSError:  # a timeout, a dropped connection, a certificate: the last one is shown
+            if attempt == tries - 1:
+                raise
+            continue
+        try:
+            reply = json.loads(text)
+        except ValueError:
+            reply = None
+        if isinstance(reply, dict) and 'ResKind' in reply:
+            if reply['ResKind'] != 0:
+                raise ValueError(reply.get('Message') or 'refused')
+            return reply
+    host = url.split('://', 1)[-1].split('/')[0]
+    raise ValueError(f'{host} did not answer properly (HTTP {status}); try again in a minute')
 
 
 def thd_sign_in(on_code):
