@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 
 spec = importlib.util.spec_from_file_location('bbmods', ROOT / 'scripts/mods.py')
 mods = importlib.util.module_from_spec(spec)
@@ -32,6 +33,34 @@ class ModTests(unittest.TestCase):
         folder.mkdir(parents=True, exist_ok=True)
         (folder / file).write_bytes(contents)
         return root
+
+    def test_a_mod_on_another_drive_is_copied_once(self):
+        # Hard links from the mods folder fail (another drive than the view): a 1.9.4 player's
+        # texture mod was copied whole into every view, 400 GB in out. Now: copied once, then linked.
+        a = self.mod('A', b'big texture')
+        real_link = os.link
+
+        def link(source, destination):
+            if Path(source).resolve().is_relative_to(self.moddir.resolve()):
+                raise OSError(18, 'Not the same device')
+            return real_link(source, destination)
+        out = self.root / 'out'
+        with unittest.mock.patch.object(mods.os, 'link', link):
+            first = mods.build_overlay(self.game, out, [('A', a)])
+            self.assertEqual(mods.COPIES['made'], 1)
+            mods.remove_overlay(first, self.game)
+            second = mods.build_overlay(self.game, out, [('A', a)])
+            self.assertEqual(mods.COPIES['made'], 0)  # the copy is linked, not made again
+            self.assertEqual((second / 'dvdroot_ps4' / 'chr' / 'a.dcx').read_bytes(), b'big texture')
+            copies = out / mods.COPY_FOLDER
+            self.assertEqual(len(list(copies.iterdir())), 1)
+            mods.remove_overlay(second, self.game)
+            # The mod turned off and another on: the old copy goes.
+            b = self.mod('B', b'other', 'b.dcx')
+            third = mods.build_overlay(self.game, out, [('B', b)])
+            self.assertEqual([p.read_bytes() for p in copies.iterdir()], [b'other'])
+            mods.remove_overlay(third, self.game)
+        self.assertEqual((self.assets / 'a.dcx').read_bytes(), b'original')
 
     def test_merge_replacement_new_file_and_directory_listing(self):
         a = self.mod('A')

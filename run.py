@@ -156,7 +156,8 @@ def remove_stale_views(out, game):
     game left behind when it did not end through run.py (ended in the Task Manager, the PC
     turned off): removed before a new one is made, while no other game runs. They hold links
     into the game folder; mods.remove_overlay deletes the links, never what they point to."""
-    places = {Path(out).resolve(), Path(game).parent}
+    import tempfile  # mods.py's game view for a drive without links (exFAT, FAT32)
+    places = {Path(out).resolve(), Path(game).parent, Path(tempfile.gettempdir()) / 'bbport-game-view'}
     stale = [path for place in places if place.is_dir() for path in place.glob('mod-game-*')
              if path.is_dir() and not path.is_symlink() and not (hasattr(path, 'is_junction') and path.is_junction())]
     if not stale or game_running():
