@@ -62,10 +62,22 @@ class OwnFolderTests(unittest.TestCase):
         launcher = types.SimpleNamespace(PORT_DIR=self.beta, DATA_DIR=self.beta)
         with mock.patch.object(help_, 'L', launcher):
             Window().use_own_folders()
-        self.assertEqual(values['user_dir'], '')
+        # The saves folder stays: the settings are shared, so setting it back took the characters and achievements
+        # from the beta and from the old version too.
+        self.assertEqual(values['user_dir'], str(self.old / 'user'))
         self.assertEqual(values['mods_dir'], '')
         self.assertTrue(values['cache_dir'])  # not in another installation: kept
         self.assertEqual(calls, ['collect', 'status', 'check'])
+
+    def test_the_check_names_the_mods_and_cache_folders_only(self):
+        self.assertEqual(help_.SEPARATE_FOLDERS, ('mods_dir', 'cache_dir'))
+        settings = dict(self.settings, cache_dir=str(self.old / 'user'))
+        checked = {key: settings[key] for key in help_.SEPARATE_FOLDERS}
+        self.assertEqual([key for key, _name, _folder in help_.other_installations(checked, self.beta, self.beta)],
+                         ['mods_dir', 'cache_dir'])
+        steps = ' '.join(help_.TOPICS['other_install'][2])
+        self.assertNotIn('Bring your characters over', steps)
+        self.assertIn('saves folder stays', steps)
 
     def test_the_topic_has_its_button(self):
         self.assertIn('other_install', help_.TOPIC_ORDER)

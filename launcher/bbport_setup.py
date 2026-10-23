@@ -964,7 +964,10 @@ class SetupMixin:
         except OSError as error:
             self.messagebox.showerror('Bloodborne', _('Could not import the saves: {}').format(error))
             return
+        came = saves.bring_trophies(save, user)
         done = _('Saves imported. Your characters are in the game\'s Load Game menu.')
+        if came:
+            done += '\n\n' + _('Your achievements from there came along: {} new here.').format(came)
         if archive:
             done += '\n\n' + _('Your previous saves: {}').format(archive)
         self.messagebox.showinfo('Bloodborne', done)
