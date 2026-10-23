@@ -599,9 +599,9 @@ def main():
             names.append('Rebirth')
         except ValueError as error:
             print(f'Patches: {error}; Rebirth skipped')
-    if read_settings(a.settings).get('steady_cloth','0')=='1' or os.environ.get('BB_STEADY_CLOTH')=='1':
-        # Steadier cloth above 60 FPS (cloth.py, off by default: in the beta the cloth got stiff,
-        # stuck at times): unchanged at 60 and below.
+    if read_settings(a.settings).get('steady_cloth','1')!='0' and os.environ.get('BB_STEADY_CLOTH')!='0':
+        # Steadier cloth above 60 FPS (cloth.py: time-corrected Verlet and damping per second as at
+        # 60 FPS): unchanged at a steady 60 and below.
         sys.path.insert(0,str(Path(__file__).resolve().parent))
         import cloth
         elf=(a.out/'eboot.elf').read_bytes()
