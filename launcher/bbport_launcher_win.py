@@ -293,7 +293,7 @@ TWEAKS = [
                          'Пункт «Выйти на рабочий стол» в главном меню и в меню «Система»'), True),
     ('rebirth', ("Rebirth at the Doll: back to your origin's attributes for 5 Insight, levels regained free",
                  'Перерождение у Куклы: характеристики происхождения за 5 озарений, уровни возвращаются бесплатно'), True),
-    ('steady_cloth', ('Steadier cloth above 60 FPS: capes and coats no longer shiver at high frame rates',), True),
+    ('steady_cloth', ('Cloth as on PS4 at higher frame rates: capes and coats hang and move as at 30 FPS',), True),
 ]
 # Effects that are taste, not performance: on Picture & performance (the others on All graphics).
 TASTE_EFFECTS = ('effect_chromatic_aberration', 'effect_dof', 'effect_motion_blur')

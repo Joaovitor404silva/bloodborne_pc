@@ -33,7 +33,7 @@ KEYS = [
     'L3 + R3 (press both sticks)',
     'Select + Start (View + Menu)',
     # steady cloth (Gameplay)
-    'Steadier cloth above 60 FPS: capes and coats no longer shiver at high frame rates',
+    'Cloth as on PS4 at higher frame rates: capes and coats hang and move as at 30 FPS',
 ]
 
 TEXTS = {
@@ -62,7 +62,7 @@ TEXTS = {
         'Без клавиши',
         'L3 + R3 (нажать оба стика)',
         'Select + Start (View + Menu)',
-        'Устойчивая ткань выше 60 FPS: плащи и пальто больше не дрожат при высокой частоте кадров',
+        'Ткань как на PS4 при высокой частоте кадров: плащи и пальто висят и двигаются как при 30 FPS',
     ],
     'ar': [
         "خادم shadNet العام من shadPS4 لا يقبل إصدار هذا المنفذ حاليًا، لذا يفشل اللعب عبر الإنترنت عليه. اختر "
@@ -88,7 +88,7 @@ TEXTS = {
         'بلا مفتاح',
         'L3 + R3 (اضغط العصوين معًا)',
         'Select + Start (View + Menu)',
-        'قماش أكثر ثباتًا فوق 60 إطارًا: لا تعود العباءات والمعاطف ترتجف عند معدلات الإطارات العالية',
+        'قماش كما على PS4 بمعدلات إطارات أعلى: تتدلى العباءات والمعاطف وتتحرك كما عند 30 إطارًا',
     ],
     'es': [
         "El servidor público de shadNet de shadPS4 no acepta por ahora la versión de este port, así que el juego en "
@@ -116,7 +116,7 @@ TEXTS = {
         'Sin tecla',
         'L3 + R3 (pulsar ambos sticks)',
         'Select + Start (View + Menu)',
-        'Tela más estable por encima de 60 FPS: capas y abrigos ya no tiemblan a tasas de fotogramas altas',
+        'Tela como en PS4 a más FPS: capas y abrigos cuelgan y se mueven como a 30 FPS',
     ],
     'pt': [
         "O servidor público shadNet do shadPS4 não aceita no momento a versão deste port, então o jogo online nele "
@@ -144,7 +144,7 @@ TEXTS = {
         'Sem tecla',
         'L3 + R3 (apertar os dois analógicos)',
         'Select + Start (View + Menu)',
-        'Tecido mais estável acima de 60 FPS: capas e casacos não tremem mais em taxas de quadros altas',
+        'Tecido como no PS4 em taxas de quadros maiores: capas e casacos caem e se movem como a 30 FPS',
     ],
     'fr': [
         "Le serveur shadNet public de shadPS4 n'accepte pas pour l'instant la version de ce port : le jeu en ligne y "
@@ -172,7 +172,7 @@ TEXTS = {
         'Aucune touche',
         'L3 + R3 (appuyer sur les deux sticks)',
         'Select + Start (View + Menu)',
-        'Tissu plus stable au-delà de 60 FPS : capes et manteaux ne tremblent plus aux fréquences élevées',
+        'Tissu comme sur PS4 aux fréquences élevées : capes et manteaux tombent et bougent comme à 30 FPS',
     ],
     'de': [
         "Der öffentliche shadNet-Server von shadPS4 nimmt die Version dieses Ports derzeit nicht an, online spielen "
@@ -201,7 +201,7 @@ TEXTS = {
         'Keine Taste',
         'L3 + R3 (beide Sticks drücken)',
         'Select + Start (View + Menu)',
-        'Ruhigerer Stoff über 60 FPS: Umhänge und Mäntel zittern bei hohen Bildraten nicht mehr',
+        'Stoff wie auf der PS4 bei höheren Bildraten: Umhänge und Mäntel hängen und bewegen sich wie bei 30 FPS',
     ],
     'it': [
         "Il server shadNet pubblico di shadPS4 al momento non accetta la versione di questo port, quindi il gioco "
@@ -228,7 +228,7 @@ TEXTS = {
         'Nessun tasto',
         'L3 + R3 (premi entrambi gli stick)',
         'Select + Start (View + Menu)',
-        'Stoffa più stabile oltre i 60 FPS: mantelli e cappotti non tremano più ad alti frame rate',
+        'Stoffa come su PS4 a frame rate più alti: mantelli e cappotti pendono e si muovono come a 30 FPS',
     ],
     'pl': [
         "Publiczny serwer shadNet od shadPS4 obecnie nie przyjmuje wersji tego portu, więc gra online na nim nie "
@@ -256,7 +256,7 @@ TEXTS = {
         'Bez klawisza',
         'L3 + R3 (wciśnij obie gałki)',
         'Select + Start (View + Menu)',
-        'Stabilniejsza tkanina powyżej 60 FPS: peleryny i płaszcze nie drżą już przy wysokiej liczbie klatek',
+        'Tkanina jak na PS4 przy wyższej liczbie klatek: peleryny i płaszcze zwisają i ruszają się jak przy 30 FPS',
     ],
     'tr': [
         "shadPS4'ün herkese açık shadNet sunucusu şu anda bu portun sürümünü kabul etmiyor, bu yüzden orada çevrim "
@@ -283,7 +283,7 @@ TEXTS = {
         'Tuş yok',
         'L3 + R3 (iki çubuğa bas)',
         'Select + Start (View + Menu)',
-        '60 FPS üzerinde daha sakin kumaş: pelerinler ve paltolar yüksek kare hızlarında artık titremez',
+        'Yüksek kare hızlarında PS4 gibi kumaş: pelerinler ve paltolar 30 FPS’teki gibi sarkar ve hareket eder',
     ],
     'zh': [
         "shadPS4 的公共 shadNet 服务器目前不接受本移植版的版本，因此在其上在线游玩会失败。请在“游玩设备”中选择 "
@@ -308,7 +308,7 @@ TEXTS = {
         '无按键',
         'L3 + R3（同时按下两个摇杆）',
         'Select + Start（View + Menu）',
-        '60 FPS 以上布料更稳定：高帧率下披风和外套不再抖动',
+        '高帧率下布料如同 PS4：披风和外套像 30 FPS 时一样垂落和摆动',
     ],
     'ja': [
         "shadPS4 の公開 shadNet サーバーは現在このポートのバージョンを受け付けないため、そこでのオンラインプレイは"
@@ -335,7 +335,7 @@ TEXTS = {
         'キーなし',
         'L3 + R3（両スティック押し込み）',
         'Select + Start（View + Menu）',
-        '60 FPS 超でも布が安定：高フレームレートでマントやコートが震えなくなります',
+        '高フレームレートでも PS4 と同じ布：マントやコートが 30 FPS と同じように垂れて動きます',
     ],
     'ko': [
         "shadPS4의 공개 shadNet 서버가 현재 이 포트의 버전을 받지 않아 그 서버에서는 온라인 플레이가 실패합니다. "
@@ -361,7 +361,7 @@ TEXTS = {
         '키 없음',
         'L3 + R3 (두 스틱 누르기)',
         'Select + Start (View + Menu)',
-        '60 FPS 이상에서 더 안정적인 천: 높은 프레임에서 망토와 코트가 더 이상 떨리지 않습니다',
+        '높은 프레임에서도 PS4와 같은 천: 망토와 코트가 30 FPS일 때처럼 늘어지고 움직입니다',
     ],
 }
 

@@ -600,8 +600,8 @@ def main():
         except ValueError as error:
             print(f'Patches: {error}; Rebirth skipped')
     if read_settings(a.settings).get('steady_cloth','1')!='0' and os.environ.get('BB_STEADY_CLOTH')!='0':
-        # Steadier cloth above 60 FPS (cloth.py: time-corrected Verlet and damping per second as at
-        # 60 FPS): unchanged at a steady 60 and below.
+        # Cloth as at 30 FPS at any frame rate (cloth.py: time-corrected Verlet, damping and bend
+        # stiffness per second as at 30 FPS, the PS4's).
         sys.path.insert(0,str(Path(__file__).resolve().parent))
         import cloth
         elf=(a.out/'eboot.elf').read_bytes()

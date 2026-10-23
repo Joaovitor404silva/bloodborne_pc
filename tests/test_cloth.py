@@ -11,14 +11,14 @@ import quit_menu  # noqa: E402
 
 class SteadyClothTest(unittest.TestCase):
     def test_the_code_fits_its_cave(self):
-        (cave, code), (site, jump) = cloth.code_writes()
+        (cave, code), (site, jump), *bends = cloth.code_writes()
         self.assertEqual(cave, cloth.CAVE)
-        self.assertEqual(len(code), 0x200)
+        self.assertEqual(len(code), 0x400)
         self.assertLessEqual(cave + len(code), quit_menu.CAVE_END)
-        self.assertEqual(struct.unpack('<5f', code[-20:]), cloth.CONSTANTS)
+        self.assertEqual(struct.unpack(f'<{len(cloth.CONSTANTS)}f', code[-4 * len(cloth.CONSTANTS):]), cloth.CONSTANTS)
 
     def test_the_site_jumps_to_the_cave_and_keeps_its_length(self):
-        (cave, code), (site, jump) = cloth.code_writes()
+        (cave, code), (site, jump), *bends = cloth.code_writes()
         self.assertEqual(site, cloth.SITE)
         self.assertEqual(len(jump), len(cloth.SITE_BYTES))
         self.assertEqual(jump[0], 0xE9)
@@ -26,12 +26,21 @@ class SteadyClothTest(unittest.TestCase):
 
     def test_the_cave_returns_after_the_site(self):
         code = cloth.code_writes()[0][1]
-        end = code.index(b'\xcc' * 4)
+        end = code.index(cloth.BEND_BYTES)  # the bend detours follow the step's
         self.assertEqual(code[end - 5], 0xE9)
         self.assertEqual(cloth.CAVE + end + struct.unpack_from('<i', code, end - 4)[0], cloth.RETURN)
 
+    def test_the_bend_sites_jump_to_their_detours(self):
+        writes = cloth.code_writes()
+        cave, code = writes[0]
+        for (site, jump), original in zip(writes[2:], (cloth.BEND_BYTES, cloth.BATCH_BYTES)):
+            self.assertEqual(len(jump), len(original))
+            target = site + 5 + struct.unpack_from('<i', jump, 1)[0]
+            self.assertEqual(code[target - cave:target - cave + len(original)], original)
+
     def test_other_code_at_the_site_is_refused(self):
-        cloth.check_original(lambda start, end: cloth.SITE_BYTES)
+        originals = {cloth.SITE: cloth.SITE_BYTES, cloth.BEND: cloth.BEND_BYTES, cloth.BATCH: cloth.BATCH_BYTES}
+        cloth.check_original(lambda start, end: originals[start])
         with self.assertRaises(ValueError):
             cloth.check_original(lambda start, end: b'\x90' * (end - start))
 

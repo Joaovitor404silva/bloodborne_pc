@@ -1,28 +1,31 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-2.0-or-later
-"""Steadier cloth above 60 FPS (bbport.ini steady_cloth, game version 01.09).
+"""Cloth as on the PS4 at any frame rate (bbport.ini steady_cloth, game version 01.09).
 
-The game's cloth (Havok) moves each particle with Verlet integration once per step, one step per
-frame for the player's cape (0x773DF0):
+The game's cloth (Havok) was tuned at the PS4's 30 FPS; it takes a fixed number of steps a frame
+(2 for the player's cape), so above 30 FPS it takes more steps a second, and at 60 and 120 FPS
+capes float and flare out (measured in the Hunter's Dream: a cape's hem 342 px wide at 30 FPS,
+357 at 60, 398 at 120). Each step moves each particle with Verlet integration (0x773DF0):
 
     new = position + (position - previous) * D + acceleration * dt^2
 
-where D is the cloth's own damping factor, the same for every step. Two things in that line only
-hold at a steady frame rate:
+then pulls groups of 4 particles back toward the cloth's modelled shape by a fraction k of the way
+(bend constraints, 0x7386E0, batched in 0x7384F0). Three things in that only hold at 30 FPS:
 
-- (position - previous) is the motion over the previous step. When the steps differ in length,
-  as frame times do uncapped (4.5 to 5.7 ms in one second at 220 FPS), the cloth's speed is
-  wrong by that ratio every frame: capes and coats shiver. Time-corrected Verlet multiplies it
-  by dt / previous dt.
-- D is applied per step: at 240 FPS four times as often as at 60, so the cloth loses its swing
-  and looks overdamped. D^(60 x frame time) keeps the damping per second of 60 FPS.
+- Bends: gravity moves a particle g dt^2 a step and the bend takes back (1 - k) of the rest: the
+  droop of a step is (1 - k) / k x g dt^2, 16x less at 120 FPS: the cloth keeps its modelled,
+  flared shape. k' = k / (1 + (r - 1)(1 - k)), r = (frame time at 30 FPS / frame time)^2, keeps
+  the droop of 30 FPS (a rigid k = 1 stays rigid). r is held at most 16 (as at 120 FPS, the
+  highest rate supported): weaker, at 240 FPS a cape can fold up on an arm after loading.
+- D is applied per step: D^min(1, 30 x frame time) keeps the damping per second of 30 FPS.
+- (position - previous) is the motion over the previous step; when frames differ in length
+  (uncapped they differ 0.8 to 2x from one to the next) the cloth's speed jumps with them.
+  Time-corrected Verlet: x frame time / previous frame time (0.5..2), on a frame's first step.
 
-At the load of D (vbroadcastss xmm0, [r13+0x10c]; the result is the factor of the motion term in
-every loop of the function) the factor becomes D^min(1, 60 x frame time) x (frame time / previous frame
-time). The ratio is worked out once per frame (the frame timer's counter, +0x260, changes) by the
-first cloth job to see the new frame, and clamped to 0.5..2. At a steady 60 FPS and below both
-are 1: unchanged. Our own code; the per-frame timer is the game's (0x55404F8: +0x260 frames,
-+0x264 the last frame's time in seconds).
+At 30 FPS and below all three are unchanged. Measured with it: the hem 341 px at 60 FPS, 355 at
+120. The per-frame values (ratio, r - 1) are worked out once per frame (the frame timer's ring
+index, +0x260, changes) by the first cloth job to see the new frame. Our own code; the frame
+timer is the game's (0x55404F8: +0x260 frames, +0x264 the last frame's time in seconds).
 """
 import struct
 import sys
@@ -38,9 +41,14 @@ FRAME_TIMER = 0x55404F8       # the frame timer (a pointer): +0x260 frame count,
 FRAME_COUNT, FRAME_TIME = 0x260, 0x264
 CAVE = 0x50D9C00              # past Rebirth's code (rebirth.CAVE + up to 0x300) in the last code page
 STATE = 0x56D3F80             # the data segment's unused tail (past its size, in its last page):
-LAST_FRAME, LAST_TIME, RATIO = STATE, STATE + 4, STATE + 8   # u32, float, float (0 until set)
+LAST_FRAME, LAST_TIME, RATIO, SOFTEN = STATE, STATE + 4, STATE + 8, STATE + 12   # 0 until set
 CALLERS = ((0x76EC70, -0x18), (0x76EE10, -0x20))   # return address, its step number's save slot
-CONSTANTS = (0.0, 0.5, 1.0, 2.0, 60.0)
+BEND = 0x7387F4               # vbroadcastss xmm0, [rcx-0xe]; vmulps xmm0, xmm8, xmm0: a bend
+BEND_BYTES = bytes.fromhex('c4e2791841f2c5b859c0')  # constraint's stiffness x the operator's strength
+BATCH = 0x738645              # vmovss xmm6, [rcx-0xe]; vmulss xmm6, xmm6, [r8]: the same in the
+BATCH_BYTES = bytes.fromhex('c5fa1071f2c4c14a5930')  # batched solver (0x7384F0) bend operators use
+REFERENCE = 30.0             # the PS4's frame rate, the cloth's tuning
+CONSTANTS = (0.0, 0.5, 1.0, 2.0, REFERENCE, 15.0)
 
 
 def rip(code, opcode, target):
@@ -51,8 +59,8 @@ def rip(code, opcode, target):
 
 def code_writes():
     cave = quit_menu.Code(CAVE)
-    constants = CAVE + 0x200 - 4 * len(CONSTANTS)
-    zero, half, one, two, sixty = (constants + 4 * i for i in range(len(CONSTANTS)))
+    constants = CAVE + 0x400 - 4 * len(CONSTANTS)
+    zero, half, one, two, reference, most = (constants + 4 * i for i in range(len(CONSTANTS)))
     labels, jumps = {}, []
 
     def jump(opcode, name):   # the rel32 form of a short jump's opcode, fixed up at the end
@@ -71,14 +79,14 @@ def code_writes():
     rip(cave, bytes.fromhex('488b05'), FRAME_TIMER)   # mov rax, [frame timer]
     cave.raw('4885c0')                         # test rax, rax
     jump('74', 'broadcast')                    # no timer yet: unchanged
-    # Damping per second as at 60 FPS: D^k, k = min(1, 60 x frame time), for 0 < D < 1 (the frame's,
-    # not this step's: a cloth with two steps a frame keeps its damping per frame at 60 FPS).
+    # Damping per second as at 30 FPS: D^k, k = min(1, 30 x frame time), for 0 < D < 1 (the frame's,
+    # not this step's: a cloth with two steps a frame keeps its damping per frame at 30 FPS).
     rip(cave, bytes.fromhex('c5f82f05'), one)         # vcomiss xmm0, [1]
     jump('73', 'ratio')                        # D >= 1: nothing to scale
     rip(cave, bytes.fromhex('c5f82f05'), zero)        # vcomiss xmm0, [0]
     jump('76', 'ratio')                        # D <= 0
     cave.raw('c5fa1088' + struct.pack('<I', FRAME_TIME).hex())   # vmovss xmm1, [rax+0x264]
-    rip(cave, bytes.fromhex('c5f2590d'), sixty)       # vmulss xmm1, xmm1, [60]
+    rip(cave, bytes.fromhex('c5f2590d'), reference)   # vmulss xmm1, xmm1, [30]
     rip(cave, bytes.fromhex('c5f25d0d'), one)         # vminss xmm1, xmm1, [1]
     rip(cave, bytes.fromhex('c5f82f0d'), zero)        # vcomiss xmm1, [0]
     jump('76', 'ratio')                        # no frame time: unchanged
@@ -121,6 +129,17 @@ def code_writes():
     rip(cave, bytes.fromhex('c5fa100d'), one)         # vmovss xmm1, [1]
     label('store')
     rip(cave, bytes.fromhex('c5fa110d'), RATIO)       # vmovss [ratio], xmm1
+    # And SOFTEN = r - 1, r = (frame time at 30 FPS / frame time)^2: 0 at 30 FPS and below, at most 15
+    # (as at 120 FPS: weaker, the bends of a cape fold it up at the shoulders, measured at 240).
+    cave.raw('c5fa1088' + struct.pack('<I', FRAME_TIME).hex())   # vmovss xmm1, [rax+0x264]
+    rip(cave, bytes.fromhex('c5f2590d'), reference)   # vmulss xmm1, xmm1, [30]
+    cave.raw('c5f259c9')                       # vmulss xmm1, xmm1, xmm1
+    rip(cave, bytes.fromhex('c5fa1015'), one)         # vmovss xmm2, [1]
+    cave.raw('c5ea5ed1')                       # vdivss xmm2, xmm2, xmm1
+    rip(cave, bytes.fromhex('c5ea5c15'), one)         # vsubss xmm2, xmm2, [1]
+    rip(cave, bytes.fromhex('c5ea5f15'), zero)        # vmaxss xmm2, xmm2, [0]
+    rip(cave, bytes.fromhex('c5ea5d15'), most)        # vminss xmm2, xmm2, [15]
+    rip(cave, bytes.fromhex('c5fa1115'), SOFTEN)      # vmovss [soften], xmm2
     label('apply')
     # Only a frame's first step follows a step of another length: the step's callers keep their
     # step number in r13 (0x76EC6B) or r12 (0x76EE0B), saved by this function at [rbp-0x18] and
@@ -146,6 +165,34 @@ def code_writes():
     cave.raw('4883c430')                       # add rsp, 48
     cave.raw('5a59589d')                       # pop rdx; pop rcx; pop rax; popfq
     cave.jmp(RETURN)
+    # Bend constraints (0x7386E0): each step pulls its 4 particles a fraction k of the way back to
+    # the cloth's modelled shape, while gravity moves them g dt^2. More steps a second, the same k:
+    # the cloth keeps its modelled shape (capes flare out) instead of hanging as at 30 FPS. The
+    # droop of a step, (1 - k) / k x g dt^2, stays as at 30 FPS with k' = k / (1 + (r - 1)(1 - k));
+    # a rigid constraint (k = 1) stays rigid. No flags or registers but xmm9 and xmm10 (unused there).
+    bend = cave.here
+    cave.data += BEND_BYTES                    # k = stiffness x strength (the site's)
+    rip(cave, bytes.fromhex('c46279180d'), one)       # vbroadcastss xmm9, [1]
+    cave.raw('c5305cc8')                       # vsubps xmm9, xmm9, xmm0         1 - k
+    cave.raw('c4412857d2')                     # vxorps xmm10, xmm10, xmm10
+    cave.raw('c441305fca')                     # vmaxps xmm9, xmm9, xmm10        (not below 0)
+    rip(cave, bytes.fromhex('c462791815'), SOFTEN)    # vbroadcastss xmm10, [soften]
+    cave.raw('c4413059ca')                     # vmulps xmm9, xmm9, xmm10        (r - 1)(1 - k)
+    rip(cave, bytes.fromhex('c462791815'), one)       # vbroadcastss xmm10, [1]
+    cave.raw('c4413058ca')                     # vaddps xmm9, xmm9, xmm10
+    cave.raw('c4c1785ec1')                     # vdivps xmm0, xmm0, xmm9         k'
+    cave.jmp(BEND + len(BEND_BYTES))
+    # The same for the batched bend solver (0x7384F0; scalar k in xmm6, xmm14 and xmm15 unused there).
+    batch = cave.here
+    cave.data += BATCH_BYTES                   # k = stiffness x strength (the site's)
+    rip(cave, bytes.fromhex('c57a1035'), one)         # vmovss xmm14, [1]
+    cave.raw('c50a5cf6')                       # vsubss xmm14, xmm14, xmm6       1 - k
+    cave.raw('c4410057ff')                     # vxorps xmm15, xmm15, xmm15
+    cave.raw('c4410a5ff7')                     # vmaxss xmm14, xmm14, xmm15      (not below 0)
+    rip(cave, bytes.fromhex('c50a5935'), SOFTEN)      # vmulss xmm14, xmm14, [soften]
+    rip(cave, bytes.fromhex('c50a5835'), one)         # vaddss xmm14, xmm14, [1]
+    cave.raw('c4c14a5ef6')                     # vdivss xmm6, xmm6, xmm14        k'
+    cave.jmp(BATCH + len(BATCH_BYTES))
     for at, name in jumps:
         cave.data[at:at + 4] = struct.pack('<i', labels[name] - (at + 4))
     if cave.here > constants:
@@ -153,12 +200,16 @@ def code_writes():
     cave.data += b'\xcc' * (constants - cave.here) + struct.pack(f'<{len(CONSTANTS)}f', *CONSTANTS)
     if cave.here > quit_menu.CAVE_END:
         raise ValueError('steady cloth code runs past the code segment')
-    site = quit_menu.Code(SITE)
-    site.jmp(CAVE)
-    site.data += b'\x90' * (len(SITE_BYTES) - len(site.data))
-    return [(cave.offset, bytes(cave.data)), (site.offset, bytes(site.data))]
+    writes = [(cave.offset, bytes(cave.data))]
+    for at, original, target in ((SITE, SITE_BYTES, CAVE), (BEND, BEND_BYTES, bend), (BATCH, BATCH_BYTES, batch)):
+        site = quit_menu.Code(at)
+        site.jmp(target)
+        site.data += b'\x90' * (len(original) - len(site.data))
+        writes.append((site.offset, bytes(site.data)))
+    return writes
 
 
 def check_original(image_bytes):
-    if image_bytes(SITE, RETURN) != SITE_BYTES:
-        raise ValueError(f'Steady cloth: unexpected code at {SITE + quit_menu.EBOOT_BASE:#x}')
+    for at, original in ((SITE, SITE_BYTES), (BEND, BEND_BYTES), (BATCH, BATCH_BYTES)):
+        if image_bytes(at, at + len(original)) != original:
+            raise ValueError(f'Steady cloth: unexpected code at {at + quit_menu.EBOOT_BASE:#x}')
