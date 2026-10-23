@@ -133,12 +133,11 @@ TOPICS = {
         ['Move the whole port folder to a plain folder like C:\\Games\\BBPort and start Bloodborne.exe from there.']),
     'other_install': (
         'A folder of another installation is in use',
-        "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version "
-        "or a test build): both installations share it. Another version's shader cache can crash the game, and its "
-        'mods apply here too.',
-        ['Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
-         "installation's user folder.",
-         'Then click the button below: this installation uses its own folders again.']),
+        "The mods or cache folder in the launcher's settings lies in another port folder (an earlier version or a "
+        "test build): both installations share it. Another version's shader cache can crash the game, and its mods "
+        'apply here too.',
+        ['Click the button below: this installation uses its own mods and cache folders again. The saves folder '
+         'stays, and with it your characters and achievements.']),
     'vram': (
         'The graphics card\'s memory runs full',
         'Cards with 6 GB or less, or the log says ErrorOutOfDeviceMemory or "memory pressure": textures no '
@@ -231,6 +230,10 @@ def hints_in_log(text):
 # The folders of the launcher's settings that belong to an installation: (setting, its name on its page).
 OWN_FOLDERS = (('user_dir', ('Saves folder', 'Папка сохранений')), ('mods_dir', ('Mods folder', 'Папка модов')),
                ('cache_dir', ('Cache folder',)))
+# The ones an installation must not share with another (Help's check and button): another version's mods apply here
+# too, and its shaders can break the picture. A shared saves folder is fine (the characters in every version, backed
+# up before every start): testers who set it back found their characters and achievements gone in both versions.
+SEPARATE_FOLDERS = ('mods_dir', 'cache_dir')
 
 
 def installation_of(path):
@@ -593,7 +596,7 @@ class HelpMixin:
             child.destroy()
         self.state_line(self.help_list, 'info', _('Checking the game files…'), theme.CARD).pack(fill='x')
         get = lambda key, store: self.var(key, store).get()
-        settings = {key: get(key, 'app') for key, _name in OWN_FOLDERS}
+        settings = {key: get(key, 'app') for key in SEPARATE_FOLDERS}
         args = (get('game_dir', 'app'), get('mods_dir', 'app') or str(L.DATA_DIR / 'mods'), L.PORT_DIR,
                 get('output_res', 'ini'), self.app.get('eboot_check') or {})
 
@@ -632,9 +635,9 @@ class HelpMixin:
         subprocess.Popen(['SystemPropertiesAdvanced.exe'])  # Advanced > Performance > Virtual memory
 
     def use_own_folders(self):
-        """Help's button: the saves, mods and cache folders that lie in another installation set back to this
-        installation's own (empty: the default)."""
-        settings = {key: self.var(key, 'app').get() for key, _name in OWN_FOLDERS}
+        """Help's button: the mods and cache folders that lie in another installation set back to this
+        installation's own (empty: the default). The saves folder stays (SEPARATE_FOLDERS)."""
+        settings = {key: self.var(key, 'app').get() for key in SEPARATE_FOLDERS}
         for key, _name, _folder in other_installations(settings, L.PORT_DIR, L.DATA_DIR):
             self.var(key, 'app').set('')
         self.collect()

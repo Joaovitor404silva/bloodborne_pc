@@ -97,6 +97,26 @@ class SaveTests(unittest.TestCase):
         saves.restore(archive, self.user)
         self.assertEqual(saves.SaveSet('', mine).names, ['Old'])
 
+    def test_achievements_come_along_from_another_installation(self):
+        """Testers brought their characters into a beta's own folder; the achievements stayed behind."""
+        old_user = self.root / 'BB.Other' / 'user'
+        other = saves.SaveSet('bbport (BB.Other)', make_save(old_user / 'savedata' / '1' / 'CUSA00207' / 'SPRJ0005'))
+        (old_user / 'trophies.log').write_text('14 100\n15 200\n', encoding='utf-8')
+        saves.import_set(other, self.user)
+        self.assertEqual(saves.bring_trophies(other, self.user), 2)
+        self.assertEqual((self.user / 'trophies.log').read_text(encoding='utf-8'), '14 100\n15 200\n')
+        self.assertEqual(saves.bring_trophies(other, self.user), 0)  # imported again: nothing twice
+        self.assertEqual((old_user / 'trophies.log').read_text(encoding='utf-8'), '14 100\n15 200\n')  # source as it was
+
+    def test_no_achievements_from_elsewhere_or_from_this_folder(self):
+        bbhost = saves.SaveSet('bbhost', make_save(self.root / 'data' / 'saves' / 'SPRJ0005'))
+        (self.root / 'data' / 'trophies.log').write_text('14 100\n', encoding='utf-8')
+        self.assertEqual(saves.bring_trophies(bbhost, self.user), 0)
+        mine = saves.SaveSet('', make_save(saves.target_dir(self.user)))
+        (self.user / 'trophies.log').write_text('14 100\n', encoding='utf-8')
+        self.assertEqual(saves.bring_trophies(mine, self.user), 0)
+        self.assertEqual((self.user / 'trophies.log').read_text(encoding='utf-8'), '14 100\n')
+
     def test_backups_never_overwrite_each_other(self):
         make_save(saves.target_dir(self.user))
         first, second = saves.backup(self.user), saves.backup(self.user)

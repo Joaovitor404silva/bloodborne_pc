@@ -463,18 +463,16 @@ UI = {'de': {
         'Der {0} liegt in einer anderen Installation des Ports: {1}.',
     'A folder of another installation is in use':
         'Ein Ordner einer anderen Installation wird benutzt',
-    "The saves, mods or cache folder in the launcher's settings lies in another port folder (an earlier version or "
-    "a test build): both installations share it. Another version's shader cache can crash the game, and its mods "
-    'apply here too.':
-        'Der Spielstand-, Mod- oder Cache-Ordner aus den Launcher-Einstellungen liegt in einem anderen Port-Ordner '
-        '(einer älteren Version oder einer Testversion): Beide Installationen teilen ihn. Der Shader-Cache einer '
-        'anderen Version kann das Spiel abstürzen lassen, und ihre Mods gelten auch hier.',
-    'Bring your characters over first: Saves, "From other versions", or "Choose a folder…" with the other '
-    "installation's user folder.":
-        'Hol zuerst deine Charaktere herüber: Spielstände, „Aus anderen Versionen“, oder „Ordner wählen…“ mit dem '
-        'user-Ordner der anderen Installation.',
-    'Then click the button below: this installation uses its own folders again.':
-        'Klick dann auf den Button unten: Diese Installation benutzt wieder ihre eigenen Ordner.',
+    "The mods or cache folder in the launcher's settings lies in another port folder (an earlier version or a test "
+    "build): both installations share it. Another version's shader cache can crash the game, and its mods apply "
+    'here too.':
+        'Der Mod- oder Cache-Ordner aus den Launcher-Einstellungen liegt in einem anderen Port-Ordner (einer '
+        'älteren Version oder einer Testversion): Beide Installationen teilen ihn. Der Shader-Cache einer anderen '
+        'Version kann das Spiel abstürzen lassen, und ihre Mods gelten auch hier.',
+    'Click the button below: this installation uses its own mods and cache folders again. The saves folder stays, '
+    'and with it your characters and achievements.':
+        'Klick auf den Button unten: Diese Installation benutzt wieder ihren eigenen Mod- und Cache-Ordner. Der '
+        'Spielstandordner bleibt, und mit ihm deine Charaktere und Erfolge.',
     "Use this installation's own folders":
         'Eigene Ordner dieser Installation verwenden',
     'Back up now':
