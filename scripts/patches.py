@@ -565,9 +565,19 @@ def main():
         # After the built-in ones: an external patch of the same bytes wins.
         selected=external_selection(external_patches(a.patches_dir,a.app_version,a.xml),a.patches_config)
         fps_ranges=[(offset,offset+len(data)) for offset,data in writes[:fps_count]]
+        # The resolution code (the template's sites, whatever size): the port sets it from the output
+        # resolution and lays out its UI and upscaler for that size. An external resolution patch
+        # over it mixed two sizes (a 21:9 2560x1080 patch on a 1440p output: the picture cut off).
+        res_ranges=[(offset,offset+len(data)) for offset,data in
+                    resolution_writes(a.xml,OUTPUT_SIZE,a.app_version,segments)] if 'resolution' in groups else []
         external=[]
         for item in selected:
             ours=compile_external([item],segments)
+            if res_ranges and any(start<offset+len(data) and offset<end
+                                  for offset,data in ours for start,end in res_ranges):
+                print(f'Patches: external {item[0]} skipped: the port sets the resolution itself '
+                      "(the launcher's Output resolution, ultrawide sizes included)")
+                continue
             # An FPS patch of its own (e.g. "60FPS (no deltatime)", at 60 FPS++'s addresses with
             # other values) replaces the built-in preset whole: applied over it, the two mixed.
             if fps_count and any(start<offset+len(data) and offset<end

@@ -315,6 +315,31 @@ class PatchGroupTests(unittest.TestCase):
         self.assertIn('ultrawide 5120x1440', result.stdout)
         blob = (self.dir / 'patches.bin').read_bytes()
         self.assertGreater(struct.unpack_from('<Q', blob, 16)[0], 0)
+
+    def test_an_external_resolution_patch_does_not_mix_with_the_ports(self):
+        # A player's shadPS4 Bloodborne.xml with Kyo's 21:9 2560x1080 patch on, output 2560x1440:
+        # both were applied over the same code and the picture was cut off (reported on 1.9.5 beta 2).
+        (self.dir / 'eboot.elf').write_bytes(self.clean)
+        text = XML.read_text(encoding='utf-8')
+        start = text.index('<Metadata Title="Bloodborne" Name="Resolution Patch 2560x1080 (21:9)"')
+        block = text[start:text.index('</Metadata>', start) + len('</Metadata>')]
+        patches = self.dir / 'patches'
+        patches.mkdir()
+        (patches / 'Bloodborne.xml').write_text(f'<?xml version="1.0"?>\n<Patch>\n{block}\n</Patch>\n', encoding='utf-8')
+        config = self.dir / 'patches.json'
+        config.write_text('{"enabled": ["Bloodborne.xml/Resolution Patch 2560x1080 (21:9)"], "disabled": []}')
+        settings = self.dir / 'bbport.ini'
+        settings.write_text('output_res=2560x1440\nupscaler=fsr4\npreset=1\nquit_to_desktop=0\nrebirth=0\n')
+        result = subprocess.run([sys.executable, str(ROOT / 'scripts/patches.py'), '--out', str(self.dir),
+                                 '--fps', '60', '--settings', str(settings), '--game-dir', str(self.dir),
+                                 '--render-res', '1706x960', '--output-res', '2560x1440',
+                                 '--patches-dir', str(patches), '--patches-config', str(config)],
+                                capture_output=True, text=True, env={**os.environ, 'BB_FORCE_PATCHES': ''})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Resolution Patch 2560x1080 (21:9) skipped: the port sets the resolution', result.stdout)
+        self.assertIn('Patches: scene 1706x960', result.stdout)
+
+
 def param_sfo(app_ver):
     """param.sfo with the single string entry APP_VER."""
     key, value = b'APP_VER\0', app_ver.encode() + b'\0'
