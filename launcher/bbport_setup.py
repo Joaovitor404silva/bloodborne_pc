@@ -965,6 +965,9 @@ class SetupMixin:
             self.messagebox.showerror('Bloodborne', _('Could not import the saves: {}').format(error))
             return
         came = saves.bring_trophies(save, user)
+        if came and self.tracker.user_dir == user:
+            # earned before, not just now: shown on the Achievements page without the "You've earned a trophy" notice
+            self.trophies_changed(self.tracker.refresh_log() + self.tracker.award_platinum(), announce=False)
         done = _('Saves imported. Your characters are in the game\'s Load Game menu.')
         if came:
             done += '\n\n' + _('Your achievements from there came along: {} new here.').format(came)
