@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "core/libraries/libs.h"
+#include "core/net/p2p_transport.h"
 
 extern "C" void runtime_voice_net_start(void);
 extern "C" void runtime_voice_receive(const std::uint8_t* data, std::size_t size, std::uint64_t key);
@@ -1281,24 +1282,24 @@ void RegisterNet(Core::Loader::SymbolsResolver* sym) {
 } // namespace BbThd
 
 extern "C" int bbgpu_voice_peers(void) {
-    return static_cast<int>(BbThd::voice_active_peers().size());
+    return static_cast<int>(BbThd::voice_active_peers().size()) + Core::Net::P2P::VoicePeerCount();
 }
 
 extern "C" int bbgpu_voice_send(const std::uint8_t* data, std::size_t size) {
     using namespace BbThd;
     if (!data || !size || size + 2 > 1200) return 0;
+    int sent = Core::Net::P2P::SendVoice({data, size});
     sockfd_t fd = kBadSock;
     {
         std::lock_guard lk(g_net_mu);
         if (!g_p2p_ports.empty()) fd = g_p2p_ports.begin()->second->fd;
     }
-    if (!sock_ok(fd)) return 0;
+    if (!sock_ok(fd)) return sent;
     std::uint8_t frame[kRelayHeader + 2 + 1200];
     std::uint8_t* pkt = frame + kRelayHeader;
     pkt[0] = kVoiceMagic;
     pkt[1] = kVoiceTag;
     std::memcpy(pkt + 2, data, size);
-    int sent = 0;
     for (const std::uint64_t key : voice_active_peers()) {
         const auto addr = static_cast<std::uint32_t>(key);
         const auto port = static_cast<std::uint16_t>(key >> 32);
