@@ -47,6 +47,9 @@ VERSION = '1.9.5'
 BETA = 3
 VERSION_TEXT = f'{VERSION} beta {BETA}' if BETA else VERSION
 BETA_PAGE = 'https://github.com/emurphy04/bloodborne_pc/releases/tag/v1.9.5-beta.3'
+# The port's Discord application (discord.com/developers: its Application ID; an art asset named
+# "bloodborne" is the picture). Empty: no Discord status, and its setting is not shown.
+DISCORD_APPLICATION_ID = ''
 # Co-op: the community server that answers the game's own server requests.
 COMMUNITY_SERVER = 'https://thehuntersdream.com'
 RELEASES_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases/latest'
@@ -858,7 +861,9 @@ def game_environment(s, graphics=None):
     env['BB_PATCHES_DIR'] = s['patches_dir'] or str(DATA_DIR / 'patches')
     env['BB_PATCHES_CONFIG'] = str(DATA_DIR / 'patches.json')
     env['BB_LANGUAGE'] = s['language']
-    env['BB_DISCORD'] = '1' if s.get('discord_status', True) else '0'  # src/runtime_discord.c
+    env['BB_DISCORD'] = '1' if DISCORD_APPLICATION_ID and s.get('discord_status', True) else '0'  # src/runtime_discord.c
+    if DISCORD_APPLICATION_ID:
+        env['BB_DISCORD_APP_ID'] = DISCORD_APPLICATION_ID
     env['BB_MENU_KEY'] = str(s.get('menu_key') or 'Insert')  # the in-game menu's key and combination
     env['BB_MENU_PAD'] = str(s.get('menu_pad') or 'l3+r3')
     env['BB_VOICE_LANGUAGE'] = s['voice_language']
@@ -2334,9 +2339,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                  _('Closed, it ends with the game; minimized, it waits on the task bar (or in the tray).'))
         self.check(f, 'reopen_after_game', 'app', _('Open the launcher again when the game closes'),
                    _('After a crash it always comes back, with the log.'))
-        self.check(f, 'discord_status', 'app', _("Show what I'm playing on Discord"),
-                   _('Your area, the boss you fight and your level on your Discord profile, while the Discord app '
-                     'runs.'))
+        if DISCORD_APPLICATION_ID:  # without the port's Discord application there is nothing to show
+            self.check(f, 'discord_status', 'app', _("Show what I'm playing on Discord"),
+                       _('Your area, the boss you fight and your level on your Discord profile, while the Discord '
+                         'app runs.'))
         self.check(f, 'minimize_to_tray', 'app', _('Minimize to the system tray'),
                    _('Minimized, the launcher leaves the task bar for an icon next to the clock: click it to '
                      'open the launcher again.'))
