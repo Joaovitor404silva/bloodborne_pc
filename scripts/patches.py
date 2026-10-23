@@ -396,6 +396,22 @@ BLOODBORNE_IDS={'CUSA00900','CUSA00207','CUSA00208','CUSA00299','CUSA01363',
                 'CUSA03179','CUSA03173','CUSA03014','CUSA03023'}
 
 
+# Patches only the port's own file has (patches/Bloodborne.xml of any version since 1.8).
+PORT_ONLY_PATCHES={"Live map (The Hunter's Dream)",'Larger Frame Heaps'}
+
+
+def port_patch_file(path, root):
+    """A copy of the port's own Bloodborne.xml: one with patches only the port has, or one in another
+    installation's patches folder (beside its run.py or bin/bb-probe.exe). Its isEnabled flags are the
+    port's templates and defaults (the ultrawide template among them), not the player's choice: read
+    as an external file, all of them were applied over the port's own patches (a 1440p output got
+    the 21:9 template, the picture cut off)."""
+    if any(meta.get('Name') in PORT_ONLY_PATCHES for meta in root.iter('Metadata')):
+        return True
+    port=Path(path).resolve().parent.parent
+    return Path(path).name.lower()=='bloodborne.xml' and ((port/'run.py').is_file() or (port/'bin'/'bb-probe.exe').is_file())
+
+
 def external_patches(directory, app_version='01.09', exclude=Path(__file__).resolve().parent.parent/'patches/Bloodborne.xml'):
     """[(key, file, metadata)] of eboot patches for this version in directory/*.xml.
     key is "<file name>/<patch name>" (the launcher's selection, patches.json)."""
@@ -409,6 +425,10 @@ def external_patches(directory, app_version='01.09', exclude=Path(__file__).reso
             root=ET.parse(path).getroot()
         except ET.ParseError as error:
             print(f'Patches: {path.name}: {error}',file=sys.stderr)
+            continue
+        if port_patch_file(path,root):
+            print(f"Patches: {path} is a copy of the port's own patch file (another installation's "
+                  'patches folder?): not used as external patches')
             continue
         ids={e.text.strip() for e in root.iter('ID') if e.text}
         if ids and not ids&BLOODBORNE_IDS: continue

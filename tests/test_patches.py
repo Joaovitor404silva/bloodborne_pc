@@ -1,5 +1,6 @@
 from paths import ROOT
 import os
+import shutil
 import struct
 import subprocess
 import sys
@@ -186,6 +187,24 @@ class ExternalPatchTests(unittest.TestCase):
 
     def test_built_in_file_is_not_external(self):
         self.assertEqual(external_patches(XML.parent), [])
+
+    def test_a_copy_of_the_ports_file_is_not_external(self):
+        # Another installation's patches folder (the launcher's settings are shared): its
+        # Bloodborne.xml's isEnabled flags (the ultrawide template among them) were all applied.
+        with tempfile.TemporaryDirectory() as directory:
+            copy = Path(directory) / 'patches'
+            copy.mkdir()
+            shutil.copy(XML, copy / 'Bloodborne.xml')
+            self.assertEqual(external_patches(copy), [])
+            # Also beside another installation's program, by its name alone.
+            plain = Path(directory) / 'old-port'
+            (plain / 'patches').mkdir(parents=True)
+            (plain / 'run.py').write_text('')
+            (plain / 'patches' / 'Bloodborne.xml').write_text(EXTERNAL)
+            self.assertEqual(external_patches(plain / 'patches'), [])
+            # A player's file of patches stays external.
+            (copy / 'extra.xml').write_text(EXTERNAL)
+            self.assertEqual(len(external_patches(copy)), 3)
 
 
 FINGERPRINTED = """<?xml version="1.0"?>
