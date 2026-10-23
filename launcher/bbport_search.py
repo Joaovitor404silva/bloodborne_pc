@@ -45,6 +45,7 @@ WORDS = {
     'show_fps': 'fps zahler counter anzeige overlay',
     'frame_gen': 'framegen frame generation zwischenbilder dlss fsr fg',
     'hud_position': 'hud ultrawide 21:9 32:9 interface',
+    'sharp_ui': 'sharp ui interface hud menu text blurry crisp 1440p 4k scaleform',
     'live_resolution': 'auflosung neustart restart',
     'effect_motion_blur': 'unscharfe motion blur bewegungsunscharfe',
     'effect_dof': 'tiefenscharfe depth of field unscharf hintergrund',

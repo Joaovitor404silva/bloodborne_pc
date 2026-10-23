@@ -84,6 +84,8 @@ void Set(Values& v, const std::string& key, const std::string& value) {
         v.live_resolution = value == "auto" ? -1 : std::clamp(i, 0, 1);
     } else if (key == "hud_position") {
         v.hud_position = std::clamp(i, 0, 100);
+    } else if (key == "sharp_ui") {
+        v.sharp_ui = i != 0;
     } else if (key == "fov") {
         v.fov = std::clamp(i, FovMin, FovMax);
     } else if (key == "output_res") {
@@ -318,6 +320,8 @@ void Save() {
     std::fprintf(file, "button_prompts=%s\n", prompts[std::clamp(v.button_prompts.load(), 0, PromptsCount - 1)]);
     // Read by run.py at start (hud_layout.py).
     std::fprintf(file, "hud_position=%d\n", v.hud_position.load());
+    // Read by run.py and patches.py at start (ui_viewport).
+    std::fprintf(file, "sharp_ui=%d\n", int(v.sharp_ui.load()));
     // Read by run.py at start (fov.py).
     std::fprintf(file, "fov=%d\n", v.fov.load());
     // Read by run.sh at start.

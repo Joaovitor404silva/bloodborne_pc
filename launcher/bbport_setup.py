@@ -59,6 +59,17 @@ def level_color(level):
     return (theme.BLOOD_LIGHT, theme.BLOOD_LIGHT, theme.AMBER, theme.TEXT, theme.GOLD_LIGHT, theme.GOLD_LIGHT)[level]
 
 
+def same_setting(a, b):
+    """A setting's value against another (b) the way the launcher shows them: numbers to two
+    decimals, flags on or off, the rest as text."""
+    if isinstance(b, float):
+        try:
+            return abs(float(a) - b) < 0.005
+        except (TypeError, ValueError):
+            return False
+    return bool(a) == b if isinstance(b, bool) else str(a) == str(b)
+
+
 class SetupMixin:
     """Hardware rating, the System page and the setup guide, mixed into the Launcher."""
 
@@ -196,17 +207,18 @@ class SetupMixin:
         if not chosen:
             return []
         now = self.current_settings()
-        same = lambda a, b: (abs(float(a) - float(b)) < 0.005 if isinstance(b, float) else
-                             bool(a) == b if isinstance(b, bool) else str(a) == str(b))
         return [(key, now.get(key), value, why) for _store, key, value, why in chosen[2]
-                if not same(now.get(key), value)]
+                if not same_setting(now.get(key), value)]
 
     def apply_profile(self, entries, remember_undo=True):
         if remember_undo:
             now = self.current_settings()
             self.app['auto_undo'] = {key: now.get(key) for _s, key, _v, _w in entries}
         self.apply_settings({(store, key): value for store, key, value, _why in entries})
-        self.app['auto_hw'] = hardware.signature(self.gpu_line, self.cpu, self.ram, self.display_size())
+        # The settings as the profile left them: one that differs at a later start was changed by
+        # hand (here or in the game's menu, which writes bbport.ini), and automatic settings keep it.
+        self.app['auto_applied'] = self.current_settings()
+        self.remember_hardware(hardware.signature(self.gpu_line, self.cpu, self.ram))
         for view in list(self.rating_views):
             try:
                 view()
@@ -220,6 +232,7 @@ class SetupMixin:
             if value is not None:
                 self.var(key, store).set(value)
         self.app['auto_undo'] = {}
+        self.app['auto_applied'] = {}  # the player's own settings again, not a profile's
         self.refresh_status()
         for view in list(self.rating_views):
             try:
@@ -227,27 +240,74 @@ class SetupMixin:
             except self.tk.TclError:
                 self.rating_views.remove(view)
 
+    def remember_hardware(self, signature):
+        """The hardware the graphics settings are for now (auto_hw), its graphics card added to those
+        this PC has shown (auto_gpus): a laptop or a PC with two cards can show either one at a
+        start, and a card seen before is no new hardware (hardware.new_hardware)."""
+        if not signature:
+            return  # not detected this time: the hardware remembered before stays
+        self.app['auto_hw'] = signature
+        card = signature.split('|')[0]
+        cards = [c for c in self.app.get('auto_gpus') or [] if c != card]
+        self.app['auto_gpus'] = (cards + [card])[-6:]
+
+    def own_changes(self, entries):
+        """The keys of a profile's entries that the player changed since a profile was last applied (in
+        the launcher or in the game's menu). All of them when nothing says what was applied: a profile
+        of an earlier version, one taken back with Undo, or none yet."""
+        applied, now = self.app.get('auto_applied') or {}, self.current_settings()
+        return [key for _store, key, _value, _why in entries
+                if key not in applied or not same_setting(now.get(key), applied[key])]
+
     def auto_settings(self):
-        """At start, once the PC is rated: new hardware (or display) with automatic settings on →
-        the settings for it, with an Undo on System & performance. The first time (an installation
-        set up before this existed, or the guide skipped) only remembers the hardware. A new
-        bbport.ini (a new folder) always gets them: its values are only the defaults, FSR 4 and every
-        effect, which freeze Intel graphics and slow small cards down."""
+        """At start, once the PC is rated: new hardware with automatic settings on → the settings for
+        it, with an Undo on Picture & performance. The first time (an installation set up before this
+        existed, or the guide skipped) only remembers the hardware.
+
+        Only real new hardware counts (hardware.new_hardware): 1.9.3 and 1.9.4 also counted the
+        display and whichever card a laptop showed, and set the player's settings back at every start
+        where those differed. And never over the player's own settings: when one of the profile's
+        settings was changed by hand since it was applied, all of them stay; the status line says so
+        once, and the Play page shows what differs from the settings for the new hardware, with Apply
+        on Picture & performance. A new bbport.ini (a new folder) always gets them: its values are only
+        the defaults, FSR 4 and every effect, which freeze Intel graphics and slow small cards down."""
         if not self.rating or not self.var('setup_done', 'app').get():
             return
-        now = hardware.signature(self.gpu_line, self.cpu, self.ram, self.display_size())
-        before = self.app.get('auto_hw', '')
         new_ini, self.ini_new = getattr(self, 'ini_new', False), False
-        if not before and not new_ini:
-            self.app['auto_hw'] = now
-            return
-        if new_ini or (now != before and self.var('auto_graphics', 'app').get()):
+        if new_ini:
             chosen = self.recommended()
             if chosen:
-                self.apply_profile(chosen[2])
-                self.auto_note = _('New installation: the graphics settings were made for this PC.') if new_ini else \
-                    _('New hardware detected: the graphics settings were adjusted to it.')
+                self.apply_profile(chosen[2])  # remembers the hardware as well
+                self.auto_note = _('New installation: the graphics settings were made for this PC.')
                 self.status.configure(text=self.auto_note, fg=theme.GOLD_LIGHT)
+            return
+        now = hardware.signature(self.gpu_line, self.cpu, self.ram)
+        if not now:
+            return  # the card or the processor was not detected this time: nothing to compare
+        before = hardware.stored_signature(self.app.get('auto_hw', ''))
+        if not before:
+            self.remember_hardware(now)
+            return
+        self.remember_hardware(before)  # 1.9.3's and 1.9.4's had the display: written without it
+        integrated = hardware.parse_gpu_line(self.gpu_line)[1]
+        if not hardware.new_hardware(before, now, self.app['auto_gpus'], integrated):
+            return
+        if not self.var('auto_graphics', 'app').get():
+            return
+        chosen = self.recommended()
+        if not chosen:
+            return
+        if self.own_changes(chosen[2]):
+            self.remember_hardware(now)  # said once; what differs stays on the Play page
+            self.status.configure(text=_('New hardware detected. Your own graphics settings were kept; the '
+                                         'ones for it are on Picture & performance.',
+                                         'Обнаружено новое оборудование. Ваши собственные настройки графики '
+                                         'сохранены; подходящие для него — на странице «Изображение и FPS».'),
+                                  fg=theme.GOLD_LIGHT)
+            return
+        self.apply_profile(chosen[2])
+        self.auto_note = _('New hardware detected: the graphics settings were adjusted to it.')
+        self.status.configure(text=self.auto_note, fg=theme.GOLD_LIGHT)
 
     def profile_card(self, parent):
         """System & performance: the settings for this PC next to the current ones, Apply, Undo and
@@ -2215,7 +2275,7 @@ class SetupGuide:
             app.expert_var.set(self.mode.get() == 'expert')
             app.apply_mode()
         if app.rating and not app.app.get('auto_hw'):  # skipped: the hardware as it is now, nothing changed
-            app.app['auto_hw'] = hardware.signature(app.gpu_line, app.cpu, app.ram, app.display_size())
+            app.remember_hardware(hardware.signature(app.gpu_line, app.cpu, app.ram))
         try:
             app.collect()
         except Exception:  # the launcher must never stay hidden behind the guide

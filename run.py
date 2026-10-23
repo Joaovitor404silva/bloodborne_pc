@@ -445,7 +445,7 @@ def main():
                  'BB_SKIP_GAME_CHECK=1 starts it anyway.')
     sys.path.insert(0, str(PORT / 'scripts'))
     from patches import (OUTPUT_SIZE, PATCH_GROUPS, game_app_version, group_list, hud_canvas,
-                         image_groups, output_size, read_settings)
+                         image_groups, output_size, read_settings, ui_viewport)
     remove_stale_views(out, original_game)
     # Patches exist for game version 01.09 only (patches.py applies none to others): other
     # versions keep the game's 30 FPS timing and change resolutions live. Of a 01.09 eboot.bin,
@@ -581,13 +581,17 @@ def main():
                                         text=True, creationflags=no_console())
                 live = result.stdout.strip() if result.returncode == 0 else '0'
             live = '1' if live == '1' or not patched else '0'
-            # Ultrawide: the camera and HUD need the startup patch (patches.py hud_canvas).
-            from patches import OUTPUT_SIZE, hud_canvas
-            canvas = hud_canvas(tuple(int(v) for v in scaled_output.split('x')))
+            # Ultrawide and Sharp UI: the camera, HUD and UI viewport need the startup patch
+            # (patches.py hud_canvas, ui_viewport).
+            output = tuple(int(v) for v in scaled_output.split('x'))
+            canvas = ui_viewport(output, read_settings(Path(config)))
             if patched and canvas != OUTPUT_SIZE:
                 live = '0'
                 env['BB_UI_RES'] = f'{canvas[0]}x{canvas[1]}'
-                print(f'Output {scaled_output}: ultrawide, HUD {env["BB_UI_RES"]}')
+                if hud_canvas(output) != OUTPUT_SIZE:
+                    print(f'Output {scaled_output}: ultrawide, HUD {env["BB_UI_RES"]}')
+                else:
+                    print(f'Output {scaled_output}: Sharp UI, menus and HUD drawn at {env["BB_UI_RES"]}')
         if live == '1' or not scaled_output:
             env.pop('BB_UI_RES', None)
         if live == '1':

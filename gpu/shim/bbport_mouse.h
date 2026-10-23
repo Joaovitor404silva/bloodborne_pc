@@ -10,8 +10,7 @@ void Start();
 void Stop();
 // Gate snapshot published by the window thread once per pump.
 void SetActive(bool active);
-// Window thread: mouse motion a program made (no mouse device: Steam's Desktop Layout turning the
-// controller's stick into mouse motion) arrived while the controller is in use. The camera
-// ignores mouse motion for the next 250 ms.
-void IgnoreMadeMotion();
+// Window thread, once per pump: a controller is in use, so the mouse moves only through a mapping
+// program turning its stick into mouse movement; that motion is dropped, not turned into the camera.
+void SetPadInUse(bool in_use);
 } // namespace BbMouse

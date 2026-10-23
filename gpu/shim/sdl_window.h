@@ -4,6 +4,7 @@
 #include <atomic>
 #include <mutex>
 #include <string>
+#include "bbport_pad_use.h"
 #include "common/types.h"
 
 struct SDL_Window;
@@ -99,6 +100,16 @@ private:
     /// (MOU-004, MOU-005) so no stale motion or held button survives into the next capture.
     void UpdateMouseCapture();
     bool mouse_captured_last{false};
+    /// Window thread, every PollEvents: hides the cursor when the controller was used (button,
+    /// or a stick or trigger past half) and shows it again on mouse movement, a click or the
+    /// wheel; while the mouse is captured, relative mode hides it already.
+    void UpdateCursor(bool pad_used, bool mouse_used);
+    bool cursor_hidden{false};
+    /// Window thread: each controller's sticks, triggers and held buttons as its events left them.
+    /// Mouse input while one is in use comes from the controller through a mapping program (Steam's
+    /// desktop layout, reWASD, JoyToKey...): it neither brings the cursor back, nor switches the
+    /// button prompts, nor turns the camera.
+    BbPadUse::Pads pads;
     /// Window thread, every PollEvents: installs/removes the direct camera hook
     /// (bloodborne_cam.h) to match input.ini and the F7 toggle, and gates the BbMouse sampler.
     void UpdateMouseCamera();

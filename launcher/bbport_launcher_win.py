@@ -44,9 +44,9 @@ NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 VERSION = '1.9.5'
 # A beta of VERSION (its number), or 0: shown as 'v1.9.5 beta 1', and the release of VERSION itself is
 # offered as its update.
-BETA = 3
+BETA = 5
 VERSION_TEXT = f'{VERSION} beta {BETA}' if BETA else VERSION
-BETA_PAGE = 'https://github.com/emurphy04/bloodborne_pc/releases/tag/v1.9.5-beta.3'
+BETA_PAGE = 'https://github.com/emurphy04/bloodborne_pc/releases/tag/v1.9.5-beta.5'
 # The port's Discord application (discord.com/developers: its Application ID; an art asset named
 # "bloodborne" is the picture). Empty: no Discord status, and its setting is not shown.
 DISCORD_APPLICATION_ID = ''
@@ -57,6 +57,8 @@ RELEASES_PAGE = 'https://github.com/Supermedo/bloodborne_pc/releases/latest'
 # The community site (install guide, FAQ, forum), linked from the side bar.
 COMMUNITY_SITE = 'https://bbport.de/'
 RELEASES_LIST_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases?per_page=100'
+# The betas (pre-releases v<VERSION>-beta.<N>): a beta asks here too, for the next one (update_to_offer).
+BETAS_API = 'https://api.github.com/repos/nick24051998/bloodborne_pc/releases?per_page=30'
 # The oldest version Advanced > Other versions offers: older ones cannot install themselves the
 # same way (--install-update) or read today's settings.
 OLDEST_INSTALLABLE = '1.8.2'
@@ -208,6 +210,7 @@ import bbport_search  # noqa: E402
 import bbport_setup  # noqa: E402
 import bbport_trophies as trophies  # noqa: E402
 import bbport_theme as theme  # noqa: E402
+import bbport_tls  # noqa: E402 (every HTTPS request: no expired certificates of the stores, Windows' trust)
 from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SLOTS, keysym_to_name,
                                   button_num_to_name, input_ini_path, load_input_ini, reserved_keys,
                                   save_input_ini, save_mouse_settings, wheel_to_name, MAX_COMBO,
@@ -294,11 +297,12 @@ TWEAKS = [
 # Effects that are taste, not performance: on Picture & performance (the others on All graphics).
 TASTE_EFFECTS = ('effect_chromatic_aberration', 'effect_dof', 'effect_motion_blur')
 INI_FLAGS = {'sharpen', 'object_motion', 'object_motion_cache', 'show_fps', 'mute_unfocused', 'frame_gen_fit_display',
+             'sharp_ui',
              *(k for k, _t, _o in EFFECTS + EXTRAS + CHEATS + TWEAKS)}
 INI_DEFAULTS = {'upscaler': 'fsr4', 'preset': '1', 'sharpen': '1', 'sharpness': '0.50',
                 'object_motion': '1', 'show_fps': '1', 'output_res': '1920x1080', 'model_lod': '0',
                 'fsr411_backend': 'vk', 'object_motion_cache': '0',
-                'live_resolution': 'auto', 'hud_position': '100', 'fov': '43', 'mute_unfocused': '0',
+                'live_resolution': 'auto', 'hud_position': '100', 'sharp_ui': '0', 'fov': '43', 'mute_unfocused': '0',
                 'button_prompts': 'auto',
                 'frame_gen': 'off', 'frame_gen_multiplier': '2', 'frame_gen_fit_display': '0',
                 **{key: '1' if on else '0' for key, _t, on in EFFECTS + EXTRAS + CHEATS + TWEAKS}}
@@ -321,8 +325,10 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 # chosen by hand when the detected one is not in the hardware check's list.
                 'setup_done': False, 'gpu_override': '',
                 # Graphics settings made for the hardware (bbport_setup.auto_settings): on/off, the
-                # hardware they were made for, and what they replaced (Undo).
-                'auto_graphics': True, 'auto_hw': '', 'auto_undo': {},
+                # hardware they were made for, and what they replaced (Undo); the settings right
+                # after they were applied (a later difference is the player's own) and the graphics
+                # cards this PC has shown (a laptop's two are no new hardware when they take turns).
+                'auto_graphics': True, 'auto_hw': '', 'auto_undo': {}, 'auto_applied': {}, 'auto_gpus': [],
                 'bench_goal': '60',  # the performance test's frame rate goal
                 'eboot_check': {},
                 # The launcher's view: simple (the pages a player needs) or expert (every page); empty
@@ -658,7 +664,7 @@ def server_check(server, webapi, community):
     import socket
     lines = []
     try:
-        with urllib.request.urlopen(community + ':20443/bb-eu/ss.info', timeout=6) as reply:
+        with bbport_tls.urlopen(community + ':20443/bb-eu/ss.info', timeout=6) as reply:
             reply.read(64)
         lines.append(_('Game server {0}: reachable').format(community))
     except (OSError, ValueError) as error:
@@ -670,7 +676,7 @@ def server_check(server, webapi, community):
     except (OSError, ValueError) as error:
         lines.append(_('Server {0}: not reachable ({1})').format(server, error))
     try:
-        with urllib.request.urlopen(webapi.rstrip('/') + '/status', timeout=4) as reply:
+        with bbport_tls.urlopen(webapi.rstrip('/') + '/status', timeout=4) as reply:
             ok = b'"ok":true' in reply.read(512).replace(b' ', b'')
         lines.append(_('WebAPI {0}: reachable').format(webapi) if ok else
                      _('WebAPI {0}: answered, but it is not a shadNet server').format(webapi))
@@ -690,7 +696,7 @@ def thd_call(url, body):
     request = urllib.request.Request(url, data=json.dumps(body).encode(), method='POST',
                                      headers={'Content-Type': 'application/json'})
     try:
-        with urllib.request.urlopen(request, timeout=10) as response:
+        with bbport_tls.urlopen(request, timeout=10) as response:
             text = response.read()
     except urllib.error.HTTPError as error:
         text = error.read()
@@ -740,7 +746,7 @@ def server_check_hunters_dream():
                        (_('Co-op service {0}'), COMMUNITY_SERVER + ':18671/')):
         name = title.format(url.split('://', 1)[1].split('/')[0])
         try:
-            urllib.request.urlopen(url, timeout=6).close()
+            bbport_tls.urlopen(url, timeout=6).close()
             lines.append(_('{0}: reachable').format(name))
         except urllib.error.HTTPError:
             lines.append(_('{0}: reachable').format(name))   # it answered
@@ -785,7 +791,7 @@ def hunters_online():
     start page shows (thehuntersdream.com/api/stats, active_sessions); None when it does not answer."""
     request = urllib.request.Request(COMMUNITY_SERVER + '/api/stats', headers={'User-Agent': f'bbport-launcher/{VERSION}'})
     try:
-        with urllib.request.urlopen(request, timeout=8) as response:
+        with bbport_tls.urlopen(request, timeout=8) as response:
             sessions = json.load(response).get('active_sessions') or {}
         if not sessions.get('server_online'):
             return None
@@ -2164,6 +2170,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    '16:9 area as on a 16:9 screen.',
                    'Для 21:9: здоровье, предметы и Отголоски крови у краёв экрана или в центральной '
                    'области 16:9, как на обычном экране.'))
+        # Sharp UI: Awaken's idea from the Lantern Engine (patches.py ui_viewport, UiComposition).
+        self.check(f, 'sharp_ui', 'ini', _('Sharp UI', 'Чёткий интерфейс'),
+                   _('Menus, HUD and text drawn at the output resolution instead of 1080p stretched up: much '
+                     'sharper at 1440p and 4K. From the next start, with live resolution changes off; not on '
+                     'ultrawide screens yet. An idea from Awaken\'s Lantern Engine.',
+                     'Меню, интерфейс и текст рисуются в разрешении вывода, а не растягиваются из 1080p: '
+                     'намного чётче в 1440p и 4K. Со следующего запуска, при выключенной смене разрешения '
+                     'на лету; пока не на сверхшироких экранах. Идея из Lantern Engine от Awaken.'))
         self.row(f, _('Live resolution changes', 'Смена разрешения на лету'), self.choice(f, 'live_resolution', 'ini', LIVE),
                  _('Off: outputs other than 1080p are set by a patch at start (fastest; changing them in the '
                    'game restarts it). On: change output and preset in the game without a restart, at a cost.',
@@ -3900,7 +3914,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 folder.mkdir(parents=True, exist_ok=True)
                 for name in fsr4_missing():
                     part = folder / (name + '.part')
-                    with urllib.request.urlopen(f'{FSR4_BASE}/{name}', timeout=60) as response:
+                    with bbport_tls.urlopen(f'{FSR4_BASE}/{name}', timeout=60) as response:
                         part.write_bytes(response.read())
                     part.replace(folder / name)
                     self.ui_calls.put(self.refresh_fsr4)
@@ -4330,9 +4344,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     # ---- updates -------------------------------------------------------------------------------
     def check_update(self, manual=False):
-        """Helper thread: asks GitHub for the newest release and offers it when it is newer."""
+        """Helper thread: asks GitHub for the newest release (and a beta for the next beta) and offers it."""
         try:
-            version, url, page = latest_release()
+            offer = update_to_offer()
         except (OSError, ValueError, KeyError) as failure:
             if manual:
                 self.ui_calls.put(lambda error=failure: self.messagebox.showerror(
@@ -4340,10 +4354,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             return
 
         def show():
-            # A beta's own release is its update.
-            newer = version_tuple(version) > version_tuple(VERSION)
-            if newer or (BETA and version_tuple(version) == version_tuple(VERSION)):
-                self.offer_update(version, url, page)
+            if offer:
+                self.offer_update(*offer)
             elif manual:
                 self.messagebox.showinfo('Bloodborne', _('You have the latest version ({}).',
                                                          'У вас последняя версия ({}).').format(VERSION_TEXT))
@@ -4414,7 +4426,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 UPDATE_DIR.mkdir(parents=True, exist_ok=True)
                 archive = UPDATE_DIR / 'update.zip'
                 request = urllib.request.Request(url, headers={'User-Agent': 'bbport-launcher'})
-                with urllib.request.urlopen(request, timeout=60) as response, open(archive, 'wb') as out:
+                with bbport_tls.urlopen(request, timeout=60) as response, open(archive, 'wb') as out:
                     total, done, shown = int(response.headers.get('Content-Length') or 0), 0, -1
                     while chunk := response.read(1 << 20):
                         out.write(chunk)
@@ -4742,12 +4754,66 @@ def latest_release():
     """(version, zip URL, page URL) of the newest GitHub release."""
     request = urllib.request.Request(RELEASES_API, headers={'Accept': 'application/vnd.github+json',
                                                             'User-Agent': 'bbport-launcher'})
-    with urllib.request.urlopen(request, timeout=15) as response:
+    with bbport_tls.urlopen(request, timeout=15) as response:
         release = json.load(response)
     version = '.'.join(re.findall(r'\d+', release['tag_name']))
-    url = next((asset['browser_download_url'] for asset in release.get('assets', [])
-                if asset.get('name', '').lower().endswith('.zip')), None)
-    return version, url, release.get('html_url') or RELEASES_PAGE
+    return version, game_zip(release), release.get('html_url') or RELEASES_PAGE
+
+
+def newer_beta():
+    """(label, zip URL, page URL) of the newest published beta after this one: a later beta of this
+    version or a beta of a later one. None for a release build, and when there is none."""
+    if not BETA:
+        return None
+    request = urllib.request.Request(BETAS_API, headers={'Accept': 'application/vnd.github+json',
+                                                         'User-Agent': 'bbport-launcher'})
+    with bbport_tls.urlopen(request, timeout=15) as response:
+        releases = json.load(response)
+    best = None
+    for release in releases:
+        found = re.fullmatch(r'v(\d+(?:\.\d+)*)-beta\.(\d+)', release.get('tag_name', ''))
+        if release.get('draft') or not found:
+            continue
+        key = (version_tuple(found[1]), int(found[2]))
+        url = game_zip(release)
+        if url and key > (version_tuple(VERSION), BETA) and (best is None or key > best[0]):
+            best = (key, f'{found[1]} beta {found[2]}', url, release.get('html_url') or BETA_PAGE)
+    return best[1:] if best else None
+
+
+def update_to_offer():
+    """(version, zip URL, page URL) the launcher offers, or None. A newer release; for a beta also its
+    own version's release (the beta's goal), else the next beta, so testers move from beta to beta
+    and on to the release without downloading by hand. Raises OSError/ValueError/KeyError when no
+    check answered."""
+    failure = None
+    try:
+        version, url, page = latest_release()
+        newer = version_tuple(version) > version_tuple(VERSION)
+        if newer or (BETA and version_tuple(version) == version_tuple(VERSION)):
+            return version, url, page
+    except (OSError, ValueError, KeyError) as error:
+        failure = error
+    if BETA:
+        try:
+            return newer_beta()
+        except (OSError, ValueError, KeyError) as error:
+            failure = failure or error
+    if failure:
+        raise failure
+    return None
+
+
+def game_zip(release):
+    """The download URL of a release's game package: Bloodborne-Windows.zip, else its one .zip that
+    is not a source archive. None when it cannot tell (the release page opens instead). Up to 1.9.5
+    beta 2 the launcher took the first .zip: with the FSR 4 source archive uploaded first, an update
+    downloaded that and stopped ("Bloodborne.exe is missing from the download")."""
+    zips = [asset for asset in release.get('assets', []) if asset.get('name', '').lower().endswith('.zip')]
+    named = [asset for asset in zips if asset['name'].lower() == 'bloodborne-windows.zip']
+    games = named or [asset for asset in zips
+                      if not re.search(r'(^|[-_.])(src|source|sources)([-_.]|$)', asset['name'].lower())]
+    return games[0]['browser_download_url'] if len(games) == 1 else None
 
 
 def installable_releases():
@@ -4755,7 +4821,7 @@ def installable_releases():
     first (drafts, pre-releases and releases without a zip left out)."""
     request = urllib.request.Request(RELEASES_LIST_API, headers={'Accept': 'application/vnd.github+json',
                                                                  'User-Agent': 'bbport-launcher'})
-    with urllib.request.urlopen(request, timeout=15) as response:
+    with bbport_tls.urlopen(request, timeout=15) as response:
         releases = json.load(response)
     found = {}
     for release in releases:
@@ -4765,8 +4831,7 @@ def installable_releases():
         version = '.'.join(re.findall(r'\d+', tag))
         if not version or version_tuple(version) < version_tuple(OLDEST_INSTALLABLE):
             continue
-        url = next((asset['browser_download_url'] for asset in release.get('assets', [])
-                    if asset.get('name', '').lower().endswith('.zip')), None)
+        url = game_zip(release)
         if url and version not in found:
             found[version] = (version, url, release.get('html_url') or RELEASES_PAGE)
     return sorted(found.values(), key=lambda item: version_tuple(item[0]), reverse=True)
@@ -4814,6 +4879,7 @@ bbport_setup.bind(_ThisModule())
 bbport_help.bind(_ThisModule())
 bbport_search.bind(_ThisModule())
 bbport_pad.bind(_ThisModule())
+bbport_tls.bind(_ThisModule())
 
 
 def main():

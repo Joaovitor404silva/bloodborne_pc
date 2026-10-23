@@ -540,6 +540,8 @@ WORLD = {
             'Новая установка: настройки графики подобраны для этого ПК.',
         'New hardware detected: the graphics settings were adjusted to it.':
             'Обнаружено новое оборудование: настройки графики подстроены под него.',
+        'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+            'Обнаружено новое оборудование. Ваши собственные настройки графики сохранены; подходящие для него — на странице «Изображение и FPS».',
         'New in version {}: what has changed':
             'Новое в версии {}: что изменилось',
         'Next is possible once the game files are right: without that the game would not start or would crash.':
@@ -2235,6 +2237,8 @@ WORLD = {
             'تثبيت جديد: تم اختيار إعدادات الرسومات لهذا الحاسوب.',
         'New hardware detected: the graphics settings were adjusted to it.':
             'تم اكتشاف عتاد جديد: ضُبطت إعدادات الرسومات وفقًا له.',
+        'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+            'تم اكتشاف عتاد جديد. احتُفظ بإعدادات الرسومات الخاصة بك؛ الإعدادات المناسبة له في صفحة الصورة والأداء.',
         'New in version {}: what has changed':
             'الجديد في الإصدار {}: ما الذي تغيّر',
         'Next':
@@ -3900,6 +3904,8 @@ WORLD = {
             'Instalación nueva: los ajustes gráficos se eligieron para este PC.',
         'New hardware detected: the graphics settings were adjusted to it.':
             'Nuevo hardware detectado: los ajustes gráficos se han adaptado a él.',
+        'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+            'Nuevo hardware detectado. Se han mantenido tus propios ajustes gráficos; los adecuados para él están en Imagen y rendimiento.',
         'New in version {}: what has changed':
             'Novedades de la versión {}: qué ha cambiado',
         'Next':
@@ -5570,6 +5576,8 @@ WORLD = {
             'Instalação nova: as configurações gráficas foram escolhidas para este PC.',
         'New hardware detected: the graphics settings were adjusted to it.':
             'Novo hardware detectado: as configurações de gráficos foram ajustadas a ele.',
+        'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+            'Novo hardware detectado. Suas próprias configurações de gráficos foram mantidas; as adequadas para ele estão em Imagem e desempenho.',
         'New in version {}: what has changed':
             'Novidades da versão {}: o que mudou',
         'Next':
@@ -7236,6 +7244,8 @@ WORLD = {
             'Nouvelle installation : les réglages graphiques ont été choisis pour ce PC.',
         'New hardware detected: the graphics settings were adjusted to it.':
             'Nouveau matériel détecté : les réglages graphiques ont été adaptés.',
+        'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+            'Nouveau matériel détecté. Vos propres réglages graphiques ont été conservés ; ceux qui lui conviennent sont dans Image et performances.',
         'New in version {}: what has changed':
             'Nouveautés de la version {} : ce qui a changé',
         'Next':
@@ -8910,6 +8920,8 @@ WORLD = {
             'Nuova installazione: le impostazioni grafiche sono state scelte per questo PC.',
         'New hardware detected: the graphics settings were adjusted to it.':
             'Nuovo hardware rilevato: le impostazioni grafiche sono state adattate.',
+        'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+            'Nuovo hardware rilevato. Le tue impostazioni grafiche sono state mantenute; quelle adatte sono in Immagine e prestazioni.',
         'New in version {}: what has changed':
             'Novità della versione {}: cosa è cambiato',
         'Next':
@@ -10580,6 +10592,8 @@ WORLD = {
             'Nowa instalacja: ustawienia grafiki dobrano do tego komputera.',
         'New hardware detected: the graphics settings were adjusted to it.':
             'Wykryto nowy sprzęt: ustawienia grafiki zostały do niego dostosowane.',
+        'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+            'Wykryto nowy sprzęt. Twoje własne ustawienia grafiki zostały zachowane; te dla niego są w zakładce Obraz i wydajność.',
         'New in version {}: what has changed':
             'Nowości w wersji {}: co się zmieniło',
         'Next':
@@ -12248,6 +12262,8 @@ WORLD = {
             'Yeni kurulum: grafik ayarları bu bilgisayara göre seçildi.',
         'New hardware detected: the graphics settings were adjusted to it.':
             'Yeni donanım algılandı: grafik ayarları buna göre uyarlandı.',
+        'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+            'Yeni donanım algılandı. Kendi grafik ayarlarınız korundu; ona uygun olanlar Görüntü ve performans sayfasında.',
         'New in version {}: what has changed':
             '{} sürümündeki yenilikler: neler değişti',
         'Next':
@@ -13910,6 +13926,8 @@ WORLD = {
             '新安装：已按此电脑选择图形设置。',
         'New hardware detected: the graphics settings were adjusted to it.':
             '检测到新硬件：图形设置已相应调整。',
+        'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+            '检测到新硬件。已保留你自己的图形设置；适合它的设置在“画面与性能”中。',
         'New in version {}: what has changed':
             '版本 {} 新内容：有哪些变化',
         'Next':
@@ -15559,6 +15577,8 @@ WORLD = {
             '新しいインストール：グラフィック設定をこのPC向けにしました。',
         'New hardware detected: the graphics settings were adjusted to it.':
             '新しいハードウェアを検出しました：グラフィック設定をそれに合わせて調整しました。',
+        'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+            '新しいハードウェアを検出しました。ご自身のグラフィック設定はそのまま残しました。それに合った設定は「画質とパフォーマンス」にあります。',
         'New in version {}: what has changed':
             'バージョン {} の新機能：変更内容',
         'Next':
@@ -17212,6 +17232,8 @@ WORLD = {
             '새 설치: 그래픽 설정을 이 PC에 맞게 정했습니다.',
         'New hardware detected: the graphics settings were adjusted to it.':
             '새 하드웨어 감지됨: 그래픽 설정을 그에 맞게 조정했습니다.',
+        'New hardware detected. Your own graphics settings were kept; the ones for it are on Picture & performance.':
+            '새 하드웨어 감지됨. 직접 정한 그래픽 설정은 그대로 두었습니다. 그에 맞는 설정은 화면 및 성능에 있습니다.',
         'New in version {}: what has changed':
             '버전 {}의 새로운 기능: 변경 사항',
         'Next':

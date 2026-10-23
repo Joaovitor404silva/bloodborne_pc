@@ -415,25 +415,42 @@ def write_layer(game, out, source=None):
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(quit_menu.pack_dcx(archive, quit_menu.rebuild_bnd4(bnd, edited)))
     print(f'Rebirth: Doll menus in {len(edited)} talk scripts')
-    written = 0
-    for folder in sorted(p for p in (dvd / 'msg').iterdir() if p.is_dir()):
+    written = write_texts(game, out, source)
+    print(f'Rebirth: the Doll\'s menu and texts for {written} languages')
+
+
+def menu_texts(archive, texts):
+    """menu.msgbnd.dcx with the Rebirth strings (texts: a TEXTS entry)."""
+    option, question, short, nothing = texts
+    bnd = quit_menu.unpack_dcx(archive)
+    texts = {file_id: bnd[o:o + n] for _e, o, n, file_id in quit_menu.bnd4_files(bnd)}
+    strings = quit_menu.read_fmg(texts[TALK_FMG])
+    strings.update({OPTION_TEXT: option, QUESTION_TEXT: question, SHORT_TEXT: short, NOTHING_TEXT: nothing})
+    replaced = quit_menu.rebuild_bnd4(bnd, {TALK_FMG: quit_menu.write_fmg(texts[TALK_FMG], strings)})
+    return quit_menu.pack_dcx(archive, replaced)
+
+
+def write_texts(game, out, source=None):
+    """Every language's menu texts (those of the layer `source` where it has them) with Rebirth's
+    strings; returns how many languages. They are packed side by side (quit_menu.in_parallel)."""
+    languages = []
+    for folder in sorted(p for p in (Path(game) / 'dvdroot_ps4' / 'msg').iterdir() if p.is_dir()):
         name = folder.name
         layered = Path(source) / 'dvdroot_ps4' / 'msg' / name / 'menu.msgbnd.dcx' if source else None
         path = layered if layered and layered.is_file() else folder / 'menu.msgbnd.dcx'
-        if not path.is_file():
-            continue
-        option, question, short, nothing = doll_texts(name)
-        archive = path.read_bytes()
-        bnd = quit_menu.unpack_dcx(archive)
-        texts = {file_id: bnd[o:o + n] for _e, o, n, file_id in quit_menu.bnd4_files(bnd)}
-        strings = quit_menu.read_fmg(texts[TALK_FMG])
-        strings.update({OPTION_TEXT: option, QUESTION_TEXT: question, SHORT_TEXT: short, NOTHING_TEXT: nothing})
-        replaced = quit_menu.rebuild_bnd4(bnd, {TALK_FMG: quit_menu.write_fmg(texts[TALK_FMG], strings)})
+        if path.is_file():
+            languages.append((name, path))
+
+    def texts_for(language):
+        name, path = language
+        return menu_texts(path.read_bytes(), doll_texts(name))
+    written = 0
+    for archive, (name, _path) in zip(quit_menu.in_parallel(texts_for, languages), languages):
         target = Path(out) / 'dvdroot_ps4' / 'msg' / name / 'menu.msgbnd.dcx'
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(quit_menu.pack_dcx(archive, replaced))
+        target.write_bytes(archive)
         written += 1
-    print(f'Rebirth: the Doll\'s menu and texts for {written} languages')
+    return written
 
 
 # EquipParamWeapon (param/gameparam/gameparam.parambnd.dcx): each weapon's requirements, one byte
