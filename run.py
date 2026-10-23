@@ -201,8 +201,10 @@ def files_note(port):
     return f'Files: {len(differ)} differ from the package {version}: {", ".join(differ[:5])}'
 
 
-def run_script(name, *args, capture=False, optional=False):
-    """Runs scripts/<name>. optional: a failure returns False instead of stopping the launch."""
+def run_script(name, *args, capture=False, optional=False, timeout=None):
+    """Runs scripts/<name>. optional: a failure returns False instead of stopping the launch.
+    timeout (seconds, with capture and optional): a script still running then is stopped, and that
+    counts as a failure."""
     # Inside the packaged Bloodborne.exe (PyInstaller) the executable runs scripts itself.
     script = ['--script'] if getattr(sys, 'frozen', False) else []
     command = [sys.executable, *script, str(PORT / 'scripts' / name), *map(str, args)]
@@ -212,8 +214,12 @@ def run_script(name, *args, capture=False, optional=False):
         except OSError:
             return False
     if capture:
-        result = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, text=True,
-                                creationflags=no_console())
+        try:
+            result = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, text=True,
+                                    creationflags=no_console(), timeout=timeout if optional else None)
+        except subprocess.TimeoutExpired:
+            print(f'{name}: still running after {timeout} s; stopped')
+            return None
         if result.returncode:
             if optional:
                 return None
@@ -537,10 +543,12 @@ def main():
                 '--config', env.get('BB_MODS_CONFIG', data / 'mods.json'),
                 '--enabled', env.get('BB_MODS_ENABLED', '1')]
     view = run_script('mods.py', *mod_args, '--layer', text_layer, '--layer', rebirth_layer, '--layer', hud_layer,
-                      '--layer', fov_layer, capture=True, optional=True)
+                      '--layer', fov_layer, capture=True, optional=True, timeout=60)
     if view is None:
         # The game view could not be made with the port's own layers (Quit to Desktop's texts,
         # the HUD layout); without them the game still starts, as it did before they existed.
+        # Also when making it hangs (a player's game drive where it never finished, 1.9.4: the
+        # view takes about a second); the half-made view is removed at the next start.
         print('Mods: the game view could not be made; starting without Quit to Desktop and the '
               'HUD layout')
         env['BB_QUIT_TO_DESKTOP'] = '0'
