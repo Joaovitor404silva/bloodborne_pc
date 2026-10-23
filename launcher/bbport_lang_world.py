@@ -199,6 +199,10 @@ WORLD = {
             'CUSA03173: издание Game of the Year Edition с The Old Hunters.',
         'Cache folder':
             'Папка кэша',
+        'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
+        "because another version's shaders can break the picture.":
+            'Папка сохранений находится в другой установке порта: эта установка хранит шейдеры в своей папке, '
+            'потому что шейдеры другой версии могут испортить изображение.',
         'Caches now: {}':
             'Кэш сейчас: {}',
         'Cancel':
@@ -1760,6 +1764,10 @@ WORLD = {
             'CUSA03173: إصدار Game of the Year Edition، مع The Old Hunters.',
         'Cache folder':
             'مجلد الكاش',
+        'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
+        "because another version's shaders can break the picture.":
+            'مجلد الحفظ موجود في تثبيت آخر للمنفذ: هذا التثبيت يحفظ المظللات في مجلده الخاص، لأن مظللات إصدار آخر '
+            'قد تفسد الصورة.',
         'Caches now: {}':
             'الكاش الآن: {}',
         'Camera':
@@ -3424,6 +3432,10 @@ WORLD = {
             'CUSA03173: la Game of the Year Edition, con The Old Hunters.',
         'Cache folder':
             'Carpeta de caché',
+        'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
+        "because another version's shaders can break the picture.":
+            'Tu carpeta de partidas está en otra instalación del port: esta guarda sus shaders en su propia '
+            'carpeta, porque los shaders de otra versión pueden estropear la imagen.',
         'Caches now: {}':
             'Cachés ahora: {}',
         'Camera':
@@ -5096,6 +5108,10 @@ WORLD = {
             'CUSA03173: a Game of the Year Edition, com The Old Hunters.',
         'Cache folder':
             'Pasta de cache',
+        'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
+        "because another version's shaders can break the picture.":
+            'A sua pasta de saves está noutra instalação do port: esta guarda os shaders na sua própria pasta, '
+            'porque shaders de outra versão podem estragar a imagem.',
         'Caches now: {}':
             'Caches agora: {}',
         'Camera':
@@ -6764,6 +6780,10 @@ WORLD = {
             'CUSA03173 : la Game of the Year Edition, avec The Old Hunters.',
         'Cache folder':
             'Dossier du cache',
+        'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
+        "because another version's shaders can break the picture.":
+            'Ton dossier de sauvegardes se trouve dans une autre installation du port : celle-ci garde ses shaders '
+            "dans son propre dossier, car les shaders d'une autre version peuvent abîmer l'image.",
         'Caches now: {}':
             'Caches actuellement : {}',
         'Camera':
@@ -8440,6 +8460,10 @@ WORLD = {
             'CUSA03173: la Game of the Year Edition, con The Old Hunters.',
         'Cache folder':
             'Cartella della cache',
+        'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
+        "because another version's shaders can break the picture.":
+            "La cartella dei salvataggi è in un'altra installazione del port: questa tiene i suoi shader in una "
+            "cartella propria, perché gli shader di un'altra versione possono rovinare l'immagine.",
         'Caches now: {}':
             'Cache ora: {}',
         'Camera':
@@ -10113,6 +10137,10 @@ WORLD = {
             'CUSA03173: Game of the Year Edition, z The Old Hunters.',
         'Cache folder':
             'Folder pamięci podręcznej',
+        'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
+        "because another version's shaders can break the picture.":
+            'Folder zapisów leży w innej instalacji portu: ta instalacja trzyma shadery we własnym folderze, bo '
+            'shadery innej wersji mogą zepsuć obraz.',
         'Caches now: {}':
             'Pamięć podręczna teraz: {}',
         'Camera':
@@ -11782,6 +11810,10 @@ WORLD = {
             'CUSA03173: The Old Hunters’ı içeren Game of the Year Edition.',
         'Cache folder':
             'Önbellek klasörü',
+        'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
+        "because another version's shaders can break the picture.":
+            'Kayıt klasörün portun başka bir kurulumunda: bu kurulum gölgelendiricilerini kendi klasöründe tutar, '
+            'çünkü başka bir sürümün gölgelendiricileri görüntüyü bozabilir.',
         'Caches now: {}':
             'Önbellekler şu an: {}',
         'Camera':
@@ -13450,6 +13482,9 @@ WORLD = {
             'CUSA03173：年度版，含“老猎人”DLC。',
         'Cache folder':
             '缓存文件夹',
+        'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
+        "because another version's shaders can break the picture.":
+            '你的存档文件夹位于端口的另一个安装中：此安装将着色器保存在自己的文件夹中，因为其他版本的着色器可能会破坏画面。',
         'Caches now: {}':
             '当前缓存位置：{}',
         'Camera':
@@ -15101,6 +15136,9 @@ WORLD = {
             'CUSA03173：The Old Hunters を収録した Game of the Year Edition。',
         'Cache folder':
             'キャッシュフォルダー',
+        'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
+        "because another version's shaders can break the picture.":
+            'セーブフォルダーはポートの別のインストール内にあります。このインストールはシェーダーを自分のフォルダーに保存します。別バージョンのシェーダーは画面を壊すことがあるためです。',
         'Caches now: {}':
             '現在のキャッシュ：{}',
         'Camera':
@@ -16755,6 +16793,9 @@ WORLD = {
             'CUSA03173: The Old Hunters가 포함된 Game of the Year Edition.',
         'Cache folder':
             '캐시 폴더',
+        'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
+        "because another version's shaders can break the picture.":
+            '저장 폴더가 포트의 다른 설치 안에 있습니다. 이 설치는 셰이더를 자체 폴더에 보관합니다. 다른 버전의 셰이더가 화면을 망가뜨릴 수 있기 때문입니다.',
         'Caches now: {}':
             '현재 캐시: {}',
         'Camera':
