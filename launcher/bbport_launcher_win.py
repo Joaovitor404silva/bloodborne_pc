@@ -12,6 +12,7 @@ game without the window (`--play`), run.py (`--run`) and the preparation scripts
 so a packaged port needs no Python installation.
 """
 import ctypes
+import gc
 import json
 import os
 from pathlib import Path
@@ -1054,6 +1055,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.vulkan = None  # scripts/vulkan_check.py's answer for this PC (asked before PLAY)
         self.banner_image = None
         self.ui_calls = queue.Queue()  # work for the Tk thread from helper threads
+        # Tk objects in reference cycles (a picker's watched variables, a hint's window) may only be
+        # freed on the Tk thread: Python's collector runs on whichever thread allocates, and from a
+        # helper thread it aborts Tcl ("Tcl_AsyncDelete: async handler deleted by the wrong thread").
+        # drain_output collects instead, every 2 s.
+        gc.disable()
+        self._collected = time.monotonic()
         self.mod_order, self.mod_vars, self.patch_vars = [], {}, {}
         self.tracker = trophies.Tracker(self.trophy_dir())
         self.init_hardware()
@@ -4232,6 +4239,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.ui_calls.get_nowait()()
             except Exception:  # reported like any Tk callback; this loop must keep running
                 self.root.report_callback_exception(*sys.exc_info())
+        if time.monotonic() - self._collected > 2:
+            gc.collect()
+            self._collected = time.monotonic()
         frame = self.custom_frame
         if frame and frame.cover and time.monotonic() - frame.cover_time > 1.5 and self.root.state() != 'iconic':
             self.uncover_window()  # a minimize that did not happen: the picture never stays over the window
