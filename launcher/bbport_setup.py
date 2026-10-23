@@ -1789,6 +1789,9 @@ class SetupMixin:
                 text += '\n' + _('Your saves folder is in a cloud folder: the saves go with you, the shaders stay on '
                                   'this PC. Play on one PC at a time and let it finish syncing before you start on '
                                   'another one; in OneDrive, set the folder to "Always keep on this device".')
+            elif not settings['cache_dir'] and L.saves_in_other_installation(settings):
+                text += '\n' + _('Your saves folder is in another installation of the port: this one keeps its shaders '
+                                  'in its own folder, because another version\'s shaders can break the picture.')
             where.configure(text=text, wraplength=self.px(560))
         for key in ('user_dir', 'cache_dir'):
             self.var(key, 'app').trace_add('write', lambda *_a: self.root.after_idle(show_where))
