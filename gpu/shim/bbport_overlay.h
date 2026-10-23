@@ -47,4 +47,8 @@ void SetTextEntry(bool active, const std::string& prompt, const std::string& tex
 /// banner still showing.
 void Warn(const std::string& headline, const std::string& detail);
 
+/// Any thread: video memory in use and the limit it is compared against (0: no limit known),
+/// shown in the FPS counter. The collector calls it once per pass.
+void SetVramUsage(u64 used_bytes, u64 limit_bytes);
+
 } // namespace BbOverlay

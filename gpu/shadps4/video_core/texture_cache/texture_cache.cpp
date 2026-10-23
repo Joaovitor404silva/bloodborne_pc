@@ -1148,8 +1148,12 @@ void TextureCache::GarbageCollectImages() {
             const char* env = std::getenv("BB_VRAM_WARN_MB");
             return env ? std::strtoull(env, nullptr, 10) : 1536;
         }();
+        // bbport: the FPS counter's readout: in use, and the limit the collector holds itself
+        // to. The same numbers the warning below is based on. On an integrated GPU the limit is
+        // the system-memory heap the GPU allocates from, which is the right number there too.
+        const u64 limit = forced_budget ? forced_budget : instance.GetTotalMemoryBudget();
+        BbOverlay::SetVramUsage(total_used_memory, limit);
         if (warn_mb != 0 && !instance.IsIntegrated()) {
-            const u64 limit = forced_budget ? forced_budget : instance.GetTotalMemoryBudget();
             const u64 free = limit > total_used_memory ? limit - total_used_memory : 0;
             constexpr u64 warn_step = 256_MB;
             const u64 warn_at = warn_mb << 20;

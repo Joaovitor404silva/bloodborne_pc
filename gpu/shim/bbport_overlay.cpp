@@ -62,6 +62,11 @@ std::mutex warn_mutex;
 std::string warn_headline;
 std::string warn_detail;
 std::chrono::steady_clock::time_point warn_until{};
+
+// Video memory readout (SetVramUsage): written by the GPU thread's collector, read by the present
+// thread.
+std::atomic<u64> vram_used{0};
+std::atomic<u64> vram_limit{0};
 float base_scale = 1.0f;
 
 // Present rate for the FPS counter.
@@ -592,6 +597,18 @@ void FpsCounter() {
                 : s.upscaler == BbSettings::UpscalerTaa ? "TAA"
                 : s.upscaler == BbSettings::UpscalerDlss ? "DLSS"
                                                          : "");
+    // Video memory in use, against the limit the collector holds itself to: the same numbers the
+    // low-memory warning reports. 0, so nothing shown, until the first collector pass.
+    const u64 used = vram_used.load(std::memory_order_relaxed);
+    if (used != 0) {
+        constexpr double gb = 1024.0 * 1024.0 * 1024.0;
+        const u64 limit = vram_limit.load(std::memory_order_relaxed);
+        if (limit != 0) {
+            ImGui::Text("VRAM %.1f / %.1f GB", double(used) / gb, double(limit) / gb);
+        } else {
+            ImGui::Text("VRAM %.1f GB", double(used) / gb);
+        }
+    }
     ImGui::End();
 }
 
@@ -824,6 +841,11 @@ void Warn(const std::string& headline, const std::string& detail) {
     warn_headline = headline;
     warn_detail = detail;
     warn_until = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+}
+
+void SetVramUsage(u64 used_bytes, u64 limit_bytes) {
+    vram_used.store(used_bytes, std::memory_order_relaxed);
+    vram_limit.store(limit_bytes, std::memory_order_relaxed);
 }
 
 // Called for every presented image: the interval for the FPS readout and BB_FPS_LOG.
