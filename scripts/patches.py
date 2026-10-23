@@ -599,6 +599,17 @@ def main():
             names.append('Rebirth')
         except ValueError as error:
             print(f'Patches: {error}; Rebirth skipped')
+    if read_settings(a.settings).get('steady_cloth','1')!='0' and os.environ.get('BB_STEADY_CLOTH')!='0':
+        # Steadier cloth above 60 FPS (cloth.py): unchanged at 60 and below.
+        sys.path.insert(0,str(Path(__file__).resolve().parent))
+        import cloth
+        elf=(a.out/'eboot.elf').read_bytes()
+        try:
+            cloth.check_original(lambda start,end: eboot_bytes(elf,start,end))
+            writes+=cloth.code_writes()
+            names.append('Steady cloth')
+        except ValueError as error:
+            print(f'Patches: {error}; steady cloth skipped')
     if a.patches_dir and whole:
         # After the built-in ones: an external patch of the same bytes wins.
         selected=external_selection(external_patches(a.patches_dir,a.app_version,a.xml),a.patches_config)
