@@ -1711,9 +1711,8 @@ class SetupMixin:
                     _('Your characters, their backups and the trophies. Empty: {}.').format(L.DATA_DIR / 'user'),
                     on_change=self.refresh_status)
         self.folder(f, 'cache_dir', _('Cache folder'), _('Choose the cache folder'),
-                    _('Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when '
-                      'the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its '
-                      'own shaders.'))
+                    _('Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every '
+                      'version and every PC keeps its own shaders, wherever the saves are.').format(L.DATA_DIR / 'user'))
         where = self.tk.Label(f, text='', bg=L.PANEL, fg=theme.MUTED, font=(theme.BODY, 9), justify='left', anchor='w')
         where.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 2))
 

@@ -201,6 +201,10 @@ WORLD = {
         "because another version's shaders can break the picture.":
             'Папка сохранений находится в другой установке порта: эта установка хранит шейдеры в своей папке, '
             'потому что шейдеры другой версии могут испортить изображение.',
+        'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+        'every PC keeps its own shaders, wherever the saves are.':
+            'Шейдеры, журналы и временные файлы этой установки. Пусто: её папка user ({}), чтобы у каждой версии и '
+            'каждого ПК были свои шейдеры, где бы ни лежали сохранения.',
         'Caches now: {}':
             'Кэш сейчас: {}',
         'Cancel':
@@ -811,8 +815,6 @@ WORLD = {
             'Настройки: {} отличаются от рекомендуемых для вашего ПК',
         'Setup':
             'Мастер настройки',
-        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-            'Шейдеры, журналы и временные файлы этого ПК. Пусто: в папке сохранений, а если папка сохранений находится в облачной папке (OneDrive, Dropbox, Google Drive) — на этом ПК, чтобы у каждого ПК были свои шейдеры.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Тени от динамических источников: включены с уровня «Выше минимума».',
         'Show all ({})':
@@ -1582,6 +1584,10 @@ WORLD = {
         "because another version's shaders can break the picture.":
             'مجلد الحفظ موجود في تثبيت آخر للمنفذ: هذا التثبيت يحفظ المظللات في مجلده الخاص، لأن مظللات إصدار آخر '
             'قد تفسد الصورة.',
+        'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+        'every PC keeps its own shaders, wherever the saves are.':
+            'المظللات والسجلات والملفات المؤقتة لهذا التثبيت. فارغ: مجلد user الخاص به ({})، حتى يحتفظ كل إصدار وكل '
+            'جهاز بمظللاته الخاصة، أينما كانت ملفات الحفظ.',
         'Caches now: {}':
             'الكاش الآن: {}',
         'Camera':
@@ -2365,8 +2371,6 @@ WORLD = {
             'الإعدادات: {} تختلف عن التوصية لحاسوبك',
         'Setup':
             'الإعداد الأولي',
-        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-            'الشيدر والسجلات والملفات المؤقتة لهذا الحاسوب. فارغ: في مجلد الحفظ، أو على هذا الحاسوب إذا كان مجلد الحفظ داخل مجلد سحابي (OneDrive أو Dropbox أو Google Drive)، كي يحتفظ كل حاسوب بالشيدر الخاص به.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'ظلال الأضواء المتحركة: مفعّلة بدءًا من «فوق الحد الأدنى».',
         'Show all ({})':
@@ -3188,6 +3192,10 @@ WORLD = {
         "because another version's shaders can break the picture.":
             'Tu carpeta de partidas está en otra instalación del port: esta guarda sus shaders en su propia '
             'carpeta, porque los shaders de otra versión pueden estropear la imagen.',
+        'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+        'every PC keeps its own shaders, wherever the saves are.':
+            'Shaders, registros y archivos temporales de esta instalación. Vacío: su carpeta user ({}), para que '
+            'cada versión y cada PC tenga sus propios shaders, estén donde estén las partidas.',
         'Caches now: {}':
             'Cachés ahora: {}',
         'Camera':
@@ -3974,8 +3982,6 @@ WORLD = {
             'Ajustes: {} difieren de la recomendación para tu PC',
         'Setup':
             'Configuración',
-        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-            'Shaders, registros y archivos temporales de este PC. Vacío: en la carpeta de partidas, o en este PC si la carpeta de partidas está en una carpeta en la nube (OneDrive, Dropbox, Google Drive), para que cada PC conserve sus propios shaders.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Sombras de luces dinámicas: activadas a partir de «Por encima del mínimo».',
         'Show all ({})':
@@ -4801,6 +4807,10 @@ WORLD = {
         "because another version's shaders can break the picture.":
             'A sua pasta de saves está noutra instalação do port: esta guarda os shaders na sua própria pasta, '
             'porque shaders de outra versão podem estragar a imagem.',
+        'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+        'every PC keeps its own shaders, wherever the saves are.':
+            'Shaders, registos e ficheiros temporários desta instalação. Vazio: a sua pasta user ({}), para que '
+            'cada versão e cada PC tenha os seus próprios shaders, estejam os saves onde estiverem.',
         'Caches now: {}':
             'Caches agora: {}',
         'Camera':
@@ -5586,8 +5596,6 @@ WORLD = {
             'Configurações: {} diferem da recomendação para o seu PC',
         'Setup':
             'Configuração inicial',
-        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-            'Shaders, logs e arquivos temporários deste PC. Vazio: na pasta de saves, ou neste PC quando a pasta de saves estiver numa pasta na nuvem (OneDrive, Dropbox, Google Drive), para que cada PC mantenha seus próprios shaders.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Sombras de luzes dinâmicas: ligadas a partir de "Acima do mínimo".',
         'Show all ({})':
@@ -6410,6 +6418,10 @@ WORLD = {
         "because another version's shaders can break the picture.":
             'Ton dossier de sauvegardes se trouve dans une autre installation du port : celle-ci garde ses shaders '
             "dans son propre dossier, car les shaders d'une autre version peuvent abîmer l'image.",
+        'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+        'every PC keeps its own shaders, wherever the saves are.':
+            'Shaders, journaux et fichiers temporaires de cette installation. Vide : son dossier user ({}), pour '
+            'que chaque version et chaque PC garde ses propres shaders, où que soient les sauvegardes.',
         'Caches now: {}':
             'Caches actuellement : {}',
         'Camera':
@@ -7196,8 +7208,6 @@ WORLD = {
             'Réglages : {} diffèrent de la recommandation pour votre PC',
         'Setup':
             'Configuration',
-        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-            'Shaders, journaux et fichiers temporaires de ce PC. Vide : dans le dossier des sauvegardes, ou sur ce PC si le dossier des sauvegardes est dans un dossier cloud (OneDrive, Dropbox, Google Drive), pour que chaque PC garde ses propres shaders.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Ombres des lumières dynamiques : activées à partir de « Au-dessus du minimum ».',
         'Show all ({})':
@@ -8025,6 +8035,10 @@ WORLD = {
         "because another version's shaders can break the picture.":
             "La cartella dei salvataggi è in un'altra installazione del port: questa tiene i suoi shader in una "
             "cartella propria, perché gli shader di un'altra versione possono rovinare l'immagine.",
+        'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+        'every PC keeps its own shaders, wherever the saves are.':
+            'Shader, log e file temporanei di questa installazione. Vuoto: la sua cartella user ({}), così ogni '
+            'versione e ogni PC tiene i propri shader, ovunque siano i salvataggi.',
         'Caches now: {}':
             'Cache ora: {}',
         'Camera':
@@ -8811,8 +8825,6 @@ WORLD = {
             'Impostazioni: {} diverse da quelle consigliate per il tuo PC',
         'Setup':
             'Configurazione',
-        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-            'Shader, log e file temporanei di questo PC. Vuoto: nella cartella dei salvataggi, oppure su questo PC se la cartella dei salvataggi è in una cartella cloud (OneDrive, Dropbox, Google Drive), così ogni PC conserva i propri shader.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Ombre delle luci dinamiche: attive da "Sopra il minimo".',
         'Show all ({})':
@@ -9639,6 +9651,10 @@ WORLD = {
         "because another version's shaders can break the picture.":
             'Folder zapisów leży w innej instalacji portu: ta instalacja trzyma shadery we własnym folderze, bo '
             'shadery innej wersji mogą zepsuć obraz.',
+        'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+        'every PC keeps its own shaders, wherever the saves are.':
+            'Shadery, logi i pliki tymczasowe tej instalacji. Puste: jej folder user ({}), aby każda wersja i każdy '
+            'PC miały własne shadery, niezależnie od tego, gdzie są zapisy.',
         'Caches now: {}':
             'Pamięć podręczna teraz: {}',
         'Camera':
@@ -10423,8 +10439,6 @@ WORLD = {
             'Ustawienia: niektóre ({}) odbiegają od zalecenia dla twojego PC',
         'Setup':
             'Konfiguracja',
-        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-            'Shadery, logi i pliki tymczasowe tego PC. Puste: w folderze zapisów albo na tym PC, gdy folder zapisów leży w folderze w chmurze (OneDrive, Dropbox, Google Drive), aby każdy PC miał własne shadery.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Cienie dynamicznych świateł: włączone od „Powyżej minimum”.',
         'Show all ({})':
@@ -11249,6 +11263,10 @@ WORLD = {
         "because another version's shaders can break the picture.":
             'Kayıt klasörün portun başka bir kurulumunda: bu kurulum gölgelendiricilerini kendi klasöründe tutar, '
             'çünkü başka bir sürümün gölgelendiricileri görüntüyü bozabilir.',
+        'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+        'every PC keeps its own shaders, wherever the saves are.':
+            'Bu kurulumun gölgelendiricileri, günlükleri ve geçici dosyaları. Boş: kurulumun user klasörü ({}); '
+            'böylece kayıtlar nerede olursa olsun her sürüm ve her PC kendi gölgelendiricilerini tutar.',
         'Caches now: {}':
             'Önbellekler şu an: {}',
         'Camera':
@@ -12034,8 +12052,6 @@ WORLD = {
             'Ayarlar: {} ayar bilgisayarınız için önerilenden farklı',
         'Setup':
             'Kurulum',
-        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-            'Bu bilgisayarın shader’ları, günlükleri ve geçici dosyaları. Boş: kayıt klasöründe; kayıt klasörü bir bulut klasöründeyse (OneDrive, Dropbox, Google Drive) bu bilgisayarda, böylece her bilgisayar kendi shader’larını tutar.',
         'Shadows of dynamic lights: on from "Above minimum".':
             'Dinamik ışık gölgeleri: "Minimum üstü" seviyesinden itibaren açık.',
         'Show all ({})':
@@ -12857,6 +12873,9 @@ WORLD = {
         'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
         "because another version's shaders can break the picture.":
             '你的存档文件夹位于端口的另一个安装中：此安装将着色器保存在自己的文件夹中，因为其他版本的着色器可能会破坏画面。',
+        'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+        'every PC keeps its own shaders, wherever the saves are.':
+            '此安装的着色器、日志和临时文件。留空：其 user 文件夹（{}），这样无论存档在哪里，每个版本和每台电脑都保留自己的着色器。',
         'Caches now: {}':
             '当前缓存位置：{}',
         'Camera':
@@ -13639,8 +13658,6 @@ WORLD = {
             '设置：有 {} 项与你电脑的推荐设置不一致',
         'Setup':
             '初始设置',
-        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-            '本机的着色器、日志和临时文件。为空：放在存档文件夹中；若存档文件夹位于云同步文件夹（OneDrive、Dropbox、Google Drive）中，则放在本机，让每台电脑保留自己的着色器。',
         'Shadows of dynamic lights: on from "Above minimum".':
             '动态光源阴影：从“高于最低”档起开启。',
         'Show all ({})':
@@ -14457,6 +14474,9 @@ WORLD = {
         'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
         "because another version's shaders can break the picture.":
             'セーブフォルダーはポートの別のインストール内にあります。このインストールはシェーダーを自分のフォルダーに保存します。別バージョンのシェーダーは画面を壊すことがあるためです。',
+        'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+        'every PC keeps its own shaders, wherever the saves are.':
+            'このインストールのシェーダー、ログ、一時ファイル。空欄：その user フォルダー（{}）。セーブの場所に関係なく、バージョンごと・PCごとに専用のシェーダーを保持します。',
         'Caches now: {}':
             '現在のキャッシュ：{}',
         'Camera':
@@ -15239,8 +15259,6 @@ WORLD = {
             '設定：{} 項目がこの PC の推奨と異なります',
         'Setup':
             'セットアップ',
-        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-            'この PC のシェーダー、ログ、一時ファイル。空欄：セーブフォルダー内。ただしセーブフォルダーがクラウドフォルダー（OneDrive、Dropbox、Google Drive）にある場合は、PC ごとに自分のシェーダーを持てるようこの PC 上に置きます。',
         'Shadows of dynamic lights: on from "Above minimum".':
             '動的ライトの影：「最低より上」からオン。',
         'Show all ({})':
@@ -16059,6 +16077,9 @@ WORLD = {
         'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
         "because another version's shaders can break the picture.":
             '저장 폴더가 포트의 다른 설치 안에 있습니다. 이 설치는 셰이더를 자체 폴더에 보관합니다. 다른 버전의 셰이더가 화면을 망가뜨릴 수 있기 때문입니다.',
+        'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+        'every PC keeps its own shaders, wherever the saves are.':
+            '이 설치의 셰이더, 로그, 임시 파일입니다. 비워 두면: 해당 설치의 user 폴더({})를 사용하여, 저장 위치와 상관없이 버전마다, PC마다 자체 셰이더를 유지합니다.',
         'Caches now: {}':
             '현재 캐시: {}',
         'Camera':
@@ -16842,8 +16863,6 @@ WORLD = {
             '설정: {}개가 PC 권장값과 다름',
         'Setup':
             '초기 설정',
-        'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-            '이 PC의 셰이더, 로그, 임시 파일. 비워 두면: 세이브 폴더에 두며, 세이브 폴더가 클라우드 폴더(OneDrive, Dropbox, Google Drive)에 있으면 각 PC가 자신의 셰이더를 갖도록 이 PC에 둡니다.',
         'Shadows of dynamic lights: on from "Above minimum".':
             '동적 조명 그림자: "최소 이상"부터 켬.',
         'Show all ({})':

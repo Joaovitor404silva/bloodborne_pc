@@ -582,12 +582,14 @@ UI = {'de': {
         'Cache-Ordner',
     'Choose the cache folder':
         'Cache-Ordner wählen',
-    'Shaders, logs and temporary files of this PC. Empty: in the saves folder, or on this PC when the saves folder is in a cloud folder (OneDrive, Dropbox, Google Drive), so every PC keeps its own shaders.':
-        'Shader, Protokolle und temporäre Dateien dieses PCs. Leer: im Spielstandordner, oder auf diesem PC, wenn der Spielstandordner in einem Cloud-Ordner liegt (OneDrive, Dropbox, Google Drive), damit jeder PC seine eigenen Shader behält.',
     'Your saves folder is in another installation of the port: this one keeps its shaders in its own folder, '
     "because another version's shaders can break the picture.":
         'Dein Spielstandordner liegt in einer anderen Installation des Ports: Diese hier legt ihre Shader in '
         'ihren eigenen Ordner, denn Shader einer anderen Version können das Bild kaputt machen.',
+    'Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every version and '
+    'every PC keeps its own shaders, wherever the saves are.':
+        'Shader, Protokolle und temporäre Dateien dieser Installation. Leer: ihr user-Ordner ({}), damit jede '
+        'Version und jeder PC eigene Shader behält, egal wo die Spielstände liegen.',
     'Caches now: {}':
         'Caches jetzt: {}',
     'Your saves folder is in a cloud folder: the saves go with you, the shaders stay on this PC. Play on one PC at a time and let it finish syncing before you start on another one; in OneDrive, set the folder to "Always keep on this device".':

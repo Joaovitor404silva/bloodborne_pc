@@ -707,14 +707,13 @@ def saves_in_other_installation(s):
 
 def cache_folder(s):
     """Where the shader and pipeline caches, the logs and the temporary files go: the cache folder the
-    player chose, else the saves folder. A saves folder in a cloud folder keeps them on this PC (every
-    PC builds the shaders for its own graphics card, and they are big); one in another installation
-    keeps them in this one: that installation's build wrote its shaders there, and another build's
-    shaders turned a tester's picture dark ("stale pipelines" in the log, gone with an own cache)."""
+    player chose, else this installation's user folder, wherever the saves are. Saves may be shared (a
+    cloud folder, a folder several installations use); shaders belong to one build and one graphics
+    card: another build's shaders turned testers' pictures dark ("stale pipelines" in the log, gone
+    with an own cache)."""
     if s.get('cache_dir'):
         return Path(s['cache_dir'])
-    saves = saves_folder(s)
-    return DATA_DIR / 'user' if synced_folder(saves) or saves_in_other_installation(s) else saves
+    return DATA_DIR / 'user'
 
 
 def game_environment(s, graphics=None):
