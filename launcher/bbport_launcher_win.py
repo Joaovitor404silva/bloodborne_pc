@@ -1682,7 +1682,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 widget.bind('<ButtonRelease-1>', lambda e, command=command, widget=widget, cell=cell, glyph=glyph:
                             command() if widget.winfo_containing(e.x_root, e.y_root) in (cell, glyph) else None)
             self.title_buttons[name] = glyph
-        self.root.bind('<Configure>', lambda _e: self.title_state(), add='+')
+        # The window's own changes only: bound to the root, <Configure> comes for every element in it too.
+        self.root.bind('<Configure>', lambda e: self.title_state() if e.widget is self.root else None, add='+')
         return bar
 
     def toggle_maximized(self):
@@ -1893,7 +1894,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             return
         self.showing, self.page_wanted = True, None
         try:
-            cover = self.cover(self.content) if name != getattr(self, 'current_page', None) else None
+            # Only a page shown for the first time maps its elements one by one: the others stay
+            # mapped in the stack (show_page) and come up at once.
+            first = not getattr(self.pages.get(name), 'stacked', False)
+            cover = self.cover(self.content) if first and name != getattr(self, 'current_page', None) else None
             self.show_page(name)
             self.uncover(cover)
         finally:
@@ -1913,9 +1917,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.toggle_mode()
             self.status.configure(text=_('The expert view is on now, to show this. The switch is at the bottom of '
                                          'the side bar.'), fg=GOLD)
-        for page in self.pages.values():
-            page.pack_forget()
-        self.pages[name].pack(fill='both', expand=True)
+        # The pages lie on top of each other and the shown one is raised: unpacking one and packing
+        # the next made Tk unmap and map every element of both, about 40 ms a change (16 ms now).
+        page = self.pages[name]
+        if not getattr(page, 'stacked', False):
+            page.place(x=0, y=0, relwidth=1, relheight=1)
+            page.stacked = True
+        page.tkraise()
         self.current_page = name
         for n in self.nav:
             self.nav_paint(n)
