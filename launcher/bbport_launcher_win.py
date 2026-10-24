@@ -44,9 +44,9 @@ NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 VERSION = '1.9.5'
 # A beta of VERSION (its number), or 0: shown as 'v1.9.5 beta 1', and the release of VERSION itself is
 # offered as its update.
-BETA = 5
+BETA = 6
 VERSION_TEXT = f'{VERSION} beta {BETA}' if BETA else VERSION
-BETA_PAGE = 'https://github.com/nick24051998/bloodborne_pc/releases/tag/v1.9.5-beta.5'
+BETA_PAGE = 'https://github.com/nick24051998/bloodborne_pc/releases/tag/v1.9.5-beta.6'
 # Co-op: the community server that answers the game's own server requests.
 COMMUNITY_SERVER = 'https://thehuntersdream.com'
 RELEASES_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases/latest'
