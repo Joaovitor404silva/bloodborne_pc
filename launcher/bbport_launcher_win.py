@@ -3961,9 +3961,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         tk.Label(row, text=f'{index + 1}.', bg=CARD, fg=MUTED, font=(theme.BODY, 10), width=3, anchor='e').pack(
             side='left')
         ttk.Checkbutton(row, variable=var, style='Card.TCheckbutton').pack(side='left', padx=(px(6), 0))
+        hints = []
+        if name.casefold() == 'dvdroot_ps4':  # a mod extracted bare into the mods folder
+            hints.append(tk.Label(row, text=_('Put this in a folder of its own (e.g. mods\\<mod name>\\dvdroot_ps4)',
+                                              'Положите его в отдельную папку (например, mods\\<имя мода>\\dvdroot_ps4)'),
+                                  bg=CARD, fg=MUTED, font=(theme.BODY, 9), anchor='w', justify='left',
+                                  wraplength=px(520)))
+            hints[0].pack(side='bottom', fill='x', padx=(px(4), px(10)), pady=(0, px(6)))
         label = tk.Label(row, text=name, bg=CARD, fg=TEXT, font=(theme.BODY, 10), anchor='w', cursor='hand2')
         label.pack(side='left', fill='x', expand=True, padx=(px(4), px(10)))
-        for widget in (row, grip, label):
+        for widget in (row, grip, label, *hints):
             widget.bind('<ButtonPress-1>', lambda e, i=index: self.mod_drag_start(e, i))
             widget.bind('<B1-Motion>', self.mod_drag_move)
             widget.bind('<ButtonRelease-1>', lambda _e, v=var, w=widget: self.mod_drag_end(v if w is label else None))
