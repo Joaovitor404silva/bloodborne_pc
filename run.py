@@ -331,6 +331,24 @@ def backup_saves(user_dir, keep=SAVE_BACKUPS_KEPT, now=None):
     return target
 
 
+def writable_saves(user_dir):
+    """Save files marked read-only (copied from a backup disc or another PC, or by hand): the game
+    cannot replace them, so every save fails while it ends with 0 (runtime_file.c commit_file).
+    The mark is cleared before each start; returns how many files had it."""
+    import stat
+    cleared = 0
+    for path in (Path(user_dir) / 'savedata').rglob('*'):
+        try:
+            if path.is_file() and not path.stat().st_mode & stat.S_IWRITE:
+                os.chmod(path, stat.S_IREAD | stat.S_IWRITE)
+                cleared += 1
+        except OSError as error:
+            print(f'Saves: {path} stays read-only: {error}')
+    if cleared:
+        print(f'Saves: {cleared} read-only save file(s) made writable')
+    return cleared
+
+
 def main():
     args = sys.argv[1:]
     restarted = len(args) >= 2 and args[0] == '--after'
@@ -553,6 +571,7 @@ def main():
         # GPU caches (shaders, pipelines) beside the saves; read before main(), so set here.
         user_dir = Path(env.get('BB_USER_DIR', data / 'user')).resolve()
         user_dir.mkdir(parents=True, exist_ok=True)
+        writable_saves(user_dir)
         env.setdefault('BB_GPU_USER_DIR', str(user_dir))
         if env.get('BB_SAVE_BACKUPS') == '1' and not restarted:  # not again for an in-game restart
             backup_saves(user_dir)
