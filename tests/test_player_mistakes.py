@@ -184,9 +184,11 @@ class SettingsNotWritableTests(unittest.TestCase):
 
         def broken():
             raise ValueError('could not convert string to float: 0,5')
-        for _ in range(3):
-            root.after(0, broken)
-            root.update()
+        import io
+        with mock.patch.object(L.sys, 'stderr', io.StringIO()):
+            for _ in range(3):
+                root.after(0, broken)
+                root.update()
         self.assertEqual(ui.messagebox.showerror.call_count, 1)
         self.assertIn('0,5', ui.messagebox.showerror.call_args.args[1])
         self.assertEqual(len(ui.logged), 3)
@@ -194,6 +196,94 @@ class SettingsNotWritableTests(unittest.TestCase):
         source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
         main = source[source.index('\ndef main():'):]
         self.assertIn('root.report_callback_exception = launcher.callback_error', main)
+
+
+class PkgToolLayoutTests(unittest.TestCase):
+    """PKG tools such as PkgEditor extract sce_sys as Sc0 (inside the game folder, or Image0 and Sc0 side by
+    side); a dump without sce_module or sce_sys failed with a path inside the game view."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name)
+        self.game, self.sc0, self.out = self.root / 'Image0', self.root / 'Sc0', self.root / 'out'
+        for folder in (self.game / 'sce_module', self.game / 'dvdroot_ps4' / 'chr', self.game / 'sce_sys' / 'about',
+                       self.sc0 / 'trophy'):
+            folder.mkdir(parents=True)
+        (self.game / 'eboot.bin').write_bytes(b'eboot')
+        (self.game / 'dvdroot_ps4' / 'chr' / 'c0000.chrbnd.dcx').write_bytes(b'original')
+        (self.game / 'sce_sys' / 'about' / 'right.sprx').write_bytes(b'about')  # the image's own part of sce_sys
+        (self.sc0 / 'param.sfo').write_bytes(b'sfo')
+        (self.sc0 / 'trophy' / 'trophy00.trp').write_bytes(b'trophies')
+
+    def files(self, folder):
+        return {p.relative_to(folder).as_posix(): p.read_bytes() for p in folder.rglob('*') if p.is_file()}
+
+    def test_sc0_is_found_inside_or_beside_the_game_folder(self):
+        import prepare
+        self.assertEqual(prepare.system_folder(self.game), self.sc0)
+        inside = self.game / 'Sc0'
+        self.sc0.rename(inside)
+        self.assertEqual(prepare.system_folder(self.game), inside)
+        (self.game / 'sce_sys' / 'param.sfo').write_bytes(b'sfo')
+        self.assertEqual(prepare.system_folder(self.game), self.game / 'sce_sys')
+        self.assertEqual(prepare.system_folder(self.root / 'nothing'), self.root / 'nothing' / 'sce_sys')
+
+    def test_a_view_of_its_own_maps_sc0_and_leaves_the_dump_alone(self):
+        import mods
+        before, sc0 = self.files(self.game), self.files(self.sc0)
+        view = run.system_view(self.game, None, self.sc0, self.out)
+        self.assertTrue(view.name.startswith('mod-game-'))
+        self.assertEqual(self.files(view / 'sce_sys'), {'about/right.sprx': b'about', 'param.sfo': b'sfo',
+                                                         'trophy/trophy00.trp': b'trophies'})
+        self.assertEqual((view / 'eboot.bin').read_bytes(), b'eboot')
+        self.assertEqual((view / 'dvdroot_ps4' / 'chr' / 'c0000.chrbnd.dcx').read_bytes(), b'original')
+        mods.remove_overlay(view, self.game)
+        self.assertFalse(view.exists())
+        self.assertEqual(self.files(self.game), before)
+        self.assertEqual(self.files(self.sc0), sc0)
+
+    def test_the_view_made_for_mods_gets_sce_sys(self):
+        import mods
+        mod = self.root / 'mods' / 'a mod' / 'dvdroot_ps4' / 'chr'
+        mod.mkdir(parents=True)
+        (mod / 'c0000.chrbnd.dcx').write_bytes(b'modded')
+        view = mods.build_overlay(self.game, self.out, [('a mod', mod.parent.parent)])
+        before = self.files(self.game)
+        self.assertIs(run.system_view(self.game, view, self.sc0, self.out), view)
+        self.assertEqual((view / 'sce_sys' / 'param.sfo').read_bytes(), b'sfo')
+        self.assertEqual((view / 'dvdroot_ps4' / 'chr' / 'c0000.chrbnd.dcx').read_bytes(), b'modded')
+        self.assertEqual(self.files(self.game), before)  # only the view's link to sce_sys went, not its files
+        mods.remove_overlay(view, self.game)
+        self.assertEqual(self.files(self.game), before)
+
+    def test_a_missing_folder_is_named_before_the_start(self):
+        import shutil
+        import bbport_help as help_
+        self.assertIsNone(help_.system_problem(self.game))  # Sc0 serves
+        shutil.rmtree(self.game / 'sce_module')
+        self.assertIn('sce_module', help_.system_problem(self.game))
+        shutil.rmtree(self.sc0)
+        self.assertIn('sce_module / sce_sys', help_.system_problem(self.game))
+        with mock.patch.object(help_, 'scan_game', return_value={'files': 28800, 'bytes': 30 * 1024 ** 3,
+                                                                 'empty': [], 'shaders': True}), \
+                mock.patch.object(help_, 'eboot_state', return_value=('clean', 93_825_704)):
+            checks, _eboot = help_.run_checks(str(self.game), '', 'C:\\Games\\BBPort', '1920x1080')
+        self.assertIn(('bad', None, help_.system_problem(self.game)), checks)
+        self.assertEqual(L.start_problem({'game_dir': str(self.game)}), (help_.system_problem(self.game), 'game'))
+        ui = bare_launcher()
+        ui.app['game_dir'], ui.ini = str(self.game), dict(L.INI_DEFAULTS)
+        ui.var = lambda key, store: mock.Mock(get=mock.Mock(return_value=False if key == 'online' else ''))
+        ui.show = mock.Mock()
+        with mock.patch.object(L, 'game_underway', return_value=False), \
+                mock.patch.object(L.Launcher, 'save_settings', return_value=True), \
+                mock.patch.object(L.subprocess, 'Popen') as popen:
+            ui.play()
+        popen.assert_not_called()
+        self.assertIn('sce_module', ui.messagebox.showerror.call_args.args[1])
+        ui.show.assert_called_with('game')
 
 
 if __name__ == '__main__':

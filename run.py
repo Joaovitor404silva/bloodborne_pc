@@ -370,6 +370,39 @@ def backup_saves(user_dir, keep=SAVE_BACKUPS_KEPT, now=None):
     return target
 
 
+def system_view(game, view, system, out):
+    """The game view for a dump whose system folder a PKG tool named Sc0 (prepare.system_folder): the view
+    made for mods gets a sce_sys folder, or a view of its own is made (mod-game-*, removed after the game as a
+    view with mods is). Its sce_sys holds copies of the dump's own sce_sys files with Sc0's over them: a few
+    small files; the dump is never written to."""
+    import tempfile
+    from mods import make_link, remove_overlay
+    game, made = Path(game), view is None
+    if made:
+        place = Path(out).resolve()
+        if os.name == 'nt' and place.drive.casefold() != game.drive.casefold():
+            place = game.parent  # hard links reach one drive only (mods.build_overlay)
+        place.mkdir(parents=True, exist_ok=True)
+        view = Path(tempfile.mkdtemp(prefix='mod-game-', dir=place))
+    try:
+        if made:
+            for entry in game.iterdir():
+                if entry.name.casefold() not in ('sce_sys', 'sc0'):
+                    make_link(view / entry.name, entry)
+        target = view / 'sce_sys'
+        if os.path.lexists(target):
+            os.rmdir(target)  # the view's link to the dump's sce_sys; a folder with files is never removed
+        for source in (game / 'sce_sys', system):
+            if source.is_dir():
+                shutil.copytree(source, target, dirs_exist_ok=True)
+    except BaseException:
+        if made:
+            remove_overlay(view, game)
+        raise
+    print(f'Game files: {system} serves as sce_sys (a PKG tool\'s layout)')
+    return view
+
+
 def writable_saves(user_dir):
     """Save files marked read-only (copied from a backup disc or another PC, or by hand): the game
     cannot replace them, so every save fails while it ends with 0 (runtime_file.c commit_file).
@@ -430,6 +463,16 @@ def main():
     if not (game / 'eboot.bin').is_file():
         fail(f'No eboot.bin in {game} (set BB_GAME_DIR).')
     original_game = game.resolve()
+    # Without them the start fails later with a path inside the game view. A PKG tool's Sc0 is the
+    # system folder too (prepare.system_folder); system_view maps it to sce_sys.
+    sys.path.insert(0, str(PORT / 'scripts'))
+    from prepare import system_folder
+    system = system_folder(game)
+    missing = [name for name, there in (('sce_module', (game / 'sce_module').is_dir()),
+                                        ('sce_sys', (system / 'param.sfo').is_file())) if not there]
+    if missing:
+        fail(f'The game folder {game} has no {" / ".join(missing)}: the game was not unpacked completely. '
+             'Unpack the base game into a new, empty folder again and copy the 1.09 update over it.')
     if env.get('BB_SKIP_GAME_CHECK') != '1':
         try:
             prepatched = image_sha256(game) == LANCE_60FPS_IMAGE
@@ -527,6 +570,8 @@ def main():
         view = run_script('mods.py', *mod_args, capture=True)
     game = Path(view.strip())
     mod_view = game if game.resolve() != original_game else None
+    if system.name != 'sce_sys':
+        game = mod_view = system_view(original_game, mod_view, system, out)
     try:
         run_script('prepare.py', game, '--out', out)
         run_script('link_libc.py', game, '--out', out)

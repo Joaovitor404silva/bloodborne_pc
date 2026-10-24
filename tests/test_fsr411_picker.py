@@ -279,6 +279,9 @@ class ShortcutTests(unittest.TestCase):
         import tkinter as tk
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp)/'eboot.bin').touch()
+            for folder in ('sce_module', 'sce_sys'):  # a complete dump (launcher.start_problem)
+                (Path(temp)/folder).mkdir()
+            (Path(temp)/'sce_sys'/'param.sfo').touch()
             ui, root = Mock(), Mock()
             with patch.object(launcher.sys, 'argv', ['Bloodborne.exe', '--play']), \
                  patch.object(launcher, 'FROZEN', False), \

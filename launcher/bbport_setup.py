@@ -1902,8 +1902,8 @@ class SetupMixin:
 def game_values(folder):
     """param.sfo of a dump as a dict ({} when unreadable)."""
     try:
-        from prepare import sfo
-        return sfo((Path(folder) / 'sce_sys' / 'param.sfo').read_bytes())
+        from prepare import sfo, system_folder
+        return sfo((system_folder(folder) / 'param.sfo').read_bytes())
     except (OSError, ValueError, ImportError):
         return {}
 
@@ -1950,7 +1950,9 @@ def game_checks(folder):
     else:
         checks.append(('warn', _('Version {}: the game runs at 30 FPS only. Copy everything from the 1.09 update '
                                  'into this folder and replace the files.').format(version)))
-    missing = [name for name in ('sce_module', 'sce_sys', 'dvdroot_ps4') if not (folder / name).is_dir()]
+    # A PKG tool's Sc0 serves as sce_sys (run.py maps it): game_values found its param.sfo.
+    missing = [name for name in ('sce_module', 'sce_sys', 'dvdroot_ps4') if not (folder / name).is_dir()
+               and not (name == 'sce_sys' and values)]
     if missing:
         checks.append(('bad', _('Missing: {}. Unpack the base game completely into this folder.').format(
             ', '.join(missing))))

@@ -47,8 +47,8 @@ SKIP = {'dvdroot_ps4', 'sce_module', 'cache', 'shader', 'shader_cache', 'fsr4_sh
 def save_title(game_dir):
     """The title the dump's saves go under (INSTALL_DIR_SAVEDATA, else TITLE_ID), as bbport does."""
     try:
-        from prepare import sfo
-        values = sfo((Path(game_dir) / 'sce_sys' / 'param.sfo').read_bytes())
+        from prepare import sfo, system_folder
+        values = sfo((system_folder(game_dir) / 'param.sfo').read_bytes())
         title = str(values.get('INSTALL_DIR_SAVEDATA') or values.get('TITLE_ID') or '').strip()
         if re.fullmatch(r'[A-Z]{4}\d{5}', title):
             return title

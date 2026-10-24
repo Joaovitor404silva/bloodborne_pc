@@ -311,6 +311,26 @@ def memory_problem(output_res, status=None):
     return (free, need, page_file_off) if free < need + 1 else None
 
 
+def system_problem(game_dir):
+    """Why a game folder with eboot.bin cannot start before the game itself says so (with a path inside the game
+    view): no sce_module, or no sce_sys with param.sfo, also not as a PKG tool's Sc0 (run.py maps that). None
+    when both are there."""
+    game = Path(game_dir or '.')
+    try:
+        from prepare import system_folder
+        system = system_folder(game)
+    except ImportError:
+        system = game / 'sce_sys'
+    missing = [name for name, there in (('sce_module', (game / 'sce_module').is_dir()),
+                                        ('sce_sys', (system / 'param.sfo').is_file())) if not there]
+    if not missing:
+        return None
+    return _('The game folder has no {}: the game was not unpacked completely. Unpack the base game into a new, '
+             'empty folder again and copy the 1.09 update over it.',
+             'В папке игры нет {}: игра распакована не полностью. Распакуйте базовую игру заново в новую пустую '
+             'папку и скопируйте поверх неё обновление 1.09.').format(' / '.join(missing))
+
+
 def location_problem(port_dir):
     text = str(port_dir).lower()
     return 'location' if 'onedrive' in text or 'program files' in text else None
@@ -363,6 +383,9 @@ def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):
         else:
             checks.append(('ok', None, _('The game folder is complete ({} files, {} GB).').format(
                 number(scan['files']), number(scan['bytes'] / 1024 ** 3, 1))))
+    problem = system_problem(game) if game and (game / 'eboot.bin').is_file() else None
+    if problem:
+        checks.append(('bad', None, problem))
     mods = mods_with_eboot(mods_dir)
     if mods:
         checks.append(('warn', 'eboot_modified', _('These mods bring their own eboot.bin: {}. Turn them off or '

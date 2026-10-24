@@ -533,8 +533,8 @@ def game_info(folder):
     if not (folder / 'eboot.bin').is_file():
         return None
     try:
-        from prepare import sfo
-        values = sfo((folder / 'sce_sys/param.sfo').read_bytes())
+        from prepare import sfo, system_folder
+        values = sfo((system_folder(folder) / 'param.sfo').read_bytes())
         return values.get('TITLE', 'Bloodborne').replace('™', '').strip(), values.get('APP_VER', '?')
     except (OSError, ValueError, ImportError):
         return 'Bloodborne', '?'
@@ -566,8 +566,8 @@ OLD_HUNTERS = 'SPEXPANSIONDLC03'  # The Old Hunters' entitlement label: its fold
 def title_id(folder):
     """The dump's TITLE_ID (sce_sys/param.sfo); '' when unknown."""
     try:
-        from prepare import sfo
-        return str(sfo((Path(folder or '.') / 'sce_sys/param.sfo').read_bytes()).get('TITLE_ID', '')).strip()
+        from prepare import sfo, system_folder
+        return str(sfo((system_folder(folder or '.') / 'param.sfo').read_bytes()).get('TITLE_ID', '')).strip()
     except (OSError, ValueError, ImportError, TypeError):
         return ''
 
@@ -4077,6 +4077,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                                       'Выберите папку игры с eboot.bin (CUSA03173).'))
             self.show('game')
             return
+        problem = start_problem(self.app)
+        if problem:
+            self.messagebox.showerror('Bloodborne', problem[0])
+            self.show(problem[1])
+            return
         if not self.preflight():  # bbport_help: a start that would fail for a reason the player can fix
             return
         self.set_log('')
@@ -4610,6 +4615,15 @@ def remember_window(size):
         pass
 
 
+def start_problem(settings):
+    """(message, page) for what keeps the game from starting and cannot be repaired here, checked before every
+    start (Play, Play Bloodborne.exe); None when nothing does."""
+    problem = bbport_help.system_problem(settings.get('game_dir'))
+    if problem:
+        return problem, 'game'
+    return None
+
+
 def play_without_window(settings):
     """--play: the game with the saved settings (shortcuts, Steam). Output goes to the console
     when there is one and to <saves folder>/last_run.log."""
@@ -4772,14 +4786,19 @@ def main():
     if FROZEN and UPDATE_DIR not in PORT_DIR.parents:
         shutil.rmtree(UPDATE_DIR, ignore_errors=True)  # what a finished update left behind
     # Without a usable game folder there is nothing to play yet: open the launcher instead.
-    page, failed = 'play', None
+    page, failed, problem = 'play', None, None
     if '--play' in args and (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file() and CONFIG_FILE.exists():
-        result = play_without_window(settings)
-        if result == 0:
-            sys.exit(0)
-        # Ended with an error: the launcher opens on Help with what the log names, as after its own Play
-        # (from Steam or a shortcut the game used to close without a word).
-        page, failed = ('graphics', None) if result is None else ('help', result)
+        # What cannot be repaired is said before the start, in the launcher's window (there is none otherwise).
+        problem = start_problem(settings)
+        if problem:
+            page = problem[1]
+        else:
+            result = play_without_window(settings)
+            if result == 0:
+                sys.exit(0)
+            # Ended with an error: the launcher opens on Help with what the log names, as after its own Play
+            # (from Steam or a shortcut the game used to close without a word).
+            page, failed = ('graphics', None) if result is None else ('help', result)
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # sharp text on scaled displays
     except (AttributeError, OSError):
@@ -4796,6 +4815,8 @@ def main():
         launcher.show(page)
     if failed:
         root.after(500, lambda: launcher.after_exit(failed, always=True))
+    if problem:
+        root.after(500, lambda: messagebox.showerror('Bloodborne', problem[0]))
     root.mainloop()
 
 
