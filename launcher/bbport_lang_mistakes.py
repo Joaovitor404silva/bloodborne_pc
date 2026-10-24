@@ -259,3 +259,21 @@ for _language, _texts in MISTAKES.items():
     if len(_texts) != len(MISTAKE_KEYS):
         raise ValueError(f'bbport_lang_mistakes {_language}: {len(_texts)} texts for {len(MISTAKE_KEYS)} keys')
     bbport_lang.EXTRA_TRANSLATIONS.setdefault(_language, {}).update(zip(MISTAKE_KEYS, _texts))
+
+# The mods list's hint beside a mod extracted bare into the mods folder (mods\dvdroot_ps4).
+BARE_DVDROOT = 'Put this in a folder of its own (e.g. mods\\<mod name>\\dvdroot_ps4)'
+BARE_DVDROOT_TEXTS = {
+    'de': 'In einen eigenen Ordner legen (z. B. mods\\<Mod-Name>\\dvdroot_ps4)',
+    'es': 'Ponlo en una carpeta propia (p. ej. mods\\<nombre del mod>\\dvdroot_ps4)',
+    'pt': 'Coloque-o numa pasta própria (ex.: mods\\<nome do mod>\\dvdroot_ps4)',
+    'fr': 'Mets-le dans un dossier à part (ex. mods\\<nom du mod>\\dvdroot_ps4)',
+    'it': 'Mettilo in una cartella a parte (es. mods\\<nome della mod>\\dvdroot_ps4)',
+    'pl': 'Umieść go we własnym folderze (np. mods\\<nazwa moda>\\dvdroot_ps4)',
+    'tr': 'Bunu kendi klasörüne koy (ör. mods\\<mod adı>\\dvdroot_ps4)',
+    'ar': 'ضعه في مجلد خاص به (مثل mods\\<اسم التعديل>\\dvdroot_ps4)',
+    'zh': '请把它放进单独的文件夹（例如 mods\\<模组名>\\dvdroot_ps4）',
+    'ja': '専用のフォルダーに入れてください（例: mods\\<MOD名>\\dvdroot_ps4）',
+    'ko': '별도의 폴더에 넣으세요 (예: mods\\<모드 이름>\\dvdroot_ps4)',
+}
+for _language, _text in BARE_DVDROOT_TEXTS.items():
+    bbport_lang.EXTRA_TRANSLATIONS.setdefault(_language, {})[BARE_DVDROOT] = _text
