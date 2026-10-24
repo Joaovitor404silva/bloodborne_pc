@@ -25,6 +25,7 @@ import os
 import re
 import shutil
 import struct
+import time
 import zipfile
 from pathlib import Path
 
@@ -568,6 +569,21 @@ def param_from_sfo(path):
     return data if len(data) == 1328 else None
 
 
+LOCK_TRIES, LOCK_WAIT = 4, 0.6
+
+
+def retried(action, *args):
+    """An antivirus that scans a file the moment it is read or written holds it briefly ([WinError 32],
+    [WinError 5], [Errno 13]: PermissionError): the step is tried again over about two seconds first."""
+    for attempt in range(1, LOCK_TRIES + 1):
+        try:
+            return action(*args)
+        except PermissionError:
+            if attempt == LOCK_TRIES:
+                raise
+            time.sleep(LOCK_WAIT)
+
+
 def import_set(save, user_dir, game_dir=''):
     """Copies `save` over this port's save (after a backup) and returns the backup's path."""
     if not save.complete:
@@ -581,7 +597,7 @@ def import_set(save, user_dir, game_dir=''):
     try:
         for path in save.files:
             copy = staging / path.name
-            shutil.copyfile(path, copy)
+            retried(shutil.copyfile, path, copy)
             os.chmod(copy, 0o666)
             if copy.stat().st_size != path.stat().st_size:
                 raise OSError(f'{path.name} was not copied completely')
@@ -589,9 +605,9 @@ def import_set(save, user_dir, game_dir=''):
         for old in target.iterdir():
             if old.is_file() and SAVE_FILES.match(old.name):
                 os.chmod(old, 0o666)
-                old.unlink()
+                retried(old.unlink)
         for copy in staging.iterdir():
-            os.replace(copy, target / copy.name)
+            retried(os.replace, copy, target / copy.name)
     finally:
         shutil.rmtree(staging, ignore_errors=True)
     meta = target.with_name(SAVE_DIR + '.sce_sys')
@@ -642,12 +658,12 @@ def restore(archive, user_dir, game_dir=''):
         for old in target.iterdir():
             if old.is_file() and SAVE_FILES.match(old.name):
                 os.chmod(old, 0o666)
-                old.unlink()
+                retried(old.unlink)
         for copy in (staging / 'save').iterdir():
-            os.replace(copy, target / copy.name)
+            retried(os.replace, copy, target / copy.name)
         meta.mkdir(exist_ok=True)  # the game's metadata writes fail silently without it
         for copy in (staging / 'meta').iterdir():
-            os.replace(copy, meta / copy.name)
+            retried(os.replace, copy, meta / copy.name)
     finally:
         shutil.rmtree(staging, ignore_errors=True)
     return before

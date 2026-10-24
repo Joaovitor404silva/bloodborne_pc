@@ -90,5 +90,72 @@ class GameRunsAlreadyTests(unittest.TestCase):
             self.assertFalse(ui.game_running())
 
 
+class AntivirusLockTests(unittest.TestCase):
+    """An antivirus scanning a file the port has just written holds it for a moment."""
+
+    def result(self, code, errors=b'', output=b''):
+        return subprocess.CompletedProcess([], code, output, errors)
+
+    def test_a_locked_file_is_tried_again(self):
+        locked = self.result(1, b"PermissionError: [WinError 32] The process cannot access the file 'boot.bin'\n")
+        with mock.patch.object(run.subprocess, 'run', side_effect=[locked, locked, self.result(0)]) as calls, \
+                mock.patch.object(run.time, 'sleep') as sleep, mock.patch.object(run, 'echo_errors'):
+            self.assertIsNone(run.run_script('prepare.py', 'game'))
+        self.assertEqual(calls.call_count, 3)
+        self.assertEqual(sleep.call_count, 2)
+
+    def test_errno_13_counts_and_the_start_fails_after_about_two_seconds(self):
+        locked = self.result(1, b"PermissionError: [Errno 13] Permission denied: 'out\\\\patches.bin'\n")
+        with mock.patch.object(run.subprocess, 'run', return_value=locked) as calls, \
+                mock.patch.object(run.time, 'sleep') as sleep, mock.patch.object(run, 'echo_errors'):
+            with self.assertRaises(SystemExit):
+                run.run_script('patches.py', '--out', 'out')
+        self.assertEqual(calls.call_count, run.LOCK_TRIES)
+        self.assertLessEqual(sum(c.args[0] for c in sleep.call_args_list), 2.5)
+
+    def test_other_failures_are_not_repeated(self):
+        broken = self.result(1, b'prepare failed: out of bounds: 0x5000+0x1000 / 0x4000\n')
+        with mock.patch.object(run.subprocess, 'run', return_value=broken) as calls, \
+                mock.patch.object(run, 'echo_errors'):
+            self.assertIsNone(run.run_script('mods.py', 'game', capture=True, optional=True))
+            self.assertFalse(run.run_script('quit_menu.py', 'game', optional=True))
+        self.assertEqual(calls.call_count, 2)
+
+    def test_captured_output_is_text_as_before(self):
+        with mock.patch.object(run.subprocess, 'run', return_value=self.result(0, output=b'C:\\out\\mod-game-1\r\n')), \
+                mock.patch.object(run, 'echo_errors'):
+            self.assertEqual(run.run_script('mods.py', 'game', capture=True), 'C:\\out\\mod-game-1\n')
+
+    def test_the_errors_are_passed_on(self):
+        import io
+        stream = io.StringIO()
+        with mock.patch.object(run.sys, 'stderr', stream):
+            run.echo_errors('Mods: Prüfung: 3 files\n'.encode('utf-8'))
+        self.assertEqual(stream.getvalue(), 'Mods: Prüfung: 3 files\n')
+
+    def test_a_save_import_waits_for_the_lock(self):
+        import bbport_saves as saves
+        steps = iter([PermissionError(13, 'Permission denied'), PermissionError(32, 'in use'), 'done'])
+
+        def step():
+            item = next(steps)
+            if isinstance(item, Exception):
+                raise item
+            return item
+        with mock.patch.object(saves.time, 'sleep') as sleep:
+            self.assertEqual(saves.retried(step), 'done')
+        self.assertEqual(sleep.call_count, 2)
+        with mock.patch.object(saves.time, 'sleep'), self.assertRaises(PermissionError):
+            saves.retried(mock.Mock(side_effect=PermissionError(13, 'Permission denied')))
+
+    def test_what_still_fails_is_named_as_the_antivirus(self):
+        import bbport_help as help_
+        for line in ("PermissionError: [Errno 13] Permission denied: 'C:\\\\BBPort\\\\out\\\\boot-libc.bin'",
+                     'bb-probe.exe is missing from C:\\BBPort\\bin: an antivirus has probably moved it'):
+            self.assertEqual(help_.hints_in_log(line), ['antivirus'], line)
+        source = (ROOT / 'run.py').read_text(encoding='utf-8')
+        self.assertIn("fail(f'bb-probe.exe is missing from", source)  # the player's text when packaged
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -184,7 +184,8 @@ TOPIC_ACTIONS = {'black_screen': [('Clear the shader cache', 'clear_cache')],
 # The game's and run.py's messages that name the cause of a failed start or crash.
 LOG_HINTS = [
     (r'of guest memory|page file is too small|commit limit', 'page_file'),
-    (r'WinError (?:32|5)\b|PermissionError', 'antivirus'),
+    # also open()'s own words for it, and the game's program taken into an antivirus's quarantine (run.py)
+    (r'WinError (?:32|5)\b|PermissionError|Errno 13\b|bb-probe\.exe is missing', 'antivirus'),
     (r'out of bounds: 0x', 'eboot_truncated'),
     (r'gxshader\.shaderbnd\.dcx', 'update_only'),
     (r'not the 01\.09 build|Lance McDonald', 'eboot_modified'),

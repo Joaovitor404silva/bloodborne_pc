@@ -8,6 +8,7 @@ The in-game "Apply and restart" runs this script again through BB_RESTART_COMMAN
 `--after PID` waits for the previous game process to end first (its GPU device and memory).
 """
 import ctypes
+import io
 import json
 import os
 from pathlib import Path
@@ -175,25 +176,49 @@ def run_script(name, *args, capture=False, optional=False):
     # Inside the packaged Bloodborne.exe (PyInstaller) the executable runs scripts itself.
     script = ['--script'] if getattr(sys, 'frozen', False) else []
     command = [sys.executable, *script, str(PORT / 'scripts' / name), *map(str, args)]
-    if optional and not capture:
+    for attempt in range(1, LOCK_TRIES + 1):
+        # stdin given: the output handles are passed explicitly (a windowed Bloodborne.exe child would
+        # get none otherwise). The errors are read for a locked file, then passed on.
         try:
-            return subprocess.run(command, stdin=subprocess.DEVNULL, creationflags=no_console()).returncode == 0
+            result = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE if capture else None,
+                                    stderr=subprocess.PIPE, creationflags=no_console())
         except OSError:
-            return False
-    if capture:
-        result = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, text=True,
-                                creationflags=no_console())
-        if result.returncode:
-            if optional:
-                return None
-            sys.exit(result.returncode)
-        return result.stdout
-    # stdin given: the output handles are passed explicitly (a windowed Bloodborne.exe child would
-    # get none otherwise).
-    result = subprocess.run(command, stdin=subprocess.DEVNULL, creationflags=no_console())
+            if optional and not capture:
+                return False
+            raise
+        echo_errors(result.stderr)
+        if not result.returncode or attempt == LOCK_TRIES or \
+                not LOCKED.search(result.stderr.decode('utf-8', errors='replace')):
+            break
+        print(f'{name}: a file was locked (an antivirus scanning it?); trying again', flush=True)
+        time.sleep(LOCK_WAIT)
+    if optional and not capture:
+        return result.returncode == 0
     if result.returncode:
+        if optional:
+            return None
         sys.exit(result.returncode)
-    return None
+    # Decoded as text=True did: the locale's encoding, universal newlines.
+    return io.TextIOWrapper(io.BytesIO(result.stdout)).read() if capture else None
+
+
+# An antivirus that scans a file the port has just written holds it for a moment, and opening it fails
+# ("[WinError 32]", "[WinError 5]", "[Errno 13] Permission denied"). run_script runs such a step again,
+# LOCK_TRIES times in all over about two seconds, before the start fails.
+LOCKED = re.compile(r'WinError (?:32|5)\b|PermissionError|Errno 13\b')
+LOCK_TRIES, LOCK_WAIT = 4, 0.6
+
+
+def echo_errors(data):
+    """A script's error output, passed on as it came."""
+    if not data:
+        return
+    try:
+        sys.stderr.flush()
+        sys.stderr.buffer.write(data)
+        sys.stderr.buffer.flush()
+    except (AttributeError, OSError, ValueError):
+        sys.stderr.write(data.decode('utf-8', errors='replace'))
 
 
 def auto_live_blurs_dof(output, config):
@@ -389,6 +414,11 @@ def main():
 
     probe = Path(env['BB_PROBE']) if env.get('BB_PROBE') else find_executable('bb-probe.exe')
     if not probe or not probe.is_file():
+        if getattr(sys, 'frozen', False):
+            # A packaged port always has it: an antivirus took it away (the launcher's Help names the fix).
+            fail(f'bb-probe.exe is missing from {PORT / "bin"}: an antivirus has probably moved it to its '
+                 'quarantine. Restore it there and add the port folder to the antivirus\'s exclusions, or '
+                 'extract the port\'s zip again.')
         fail('bb-probe.exe not found: build it with build.sh (MSYS2 CLANG64) or use a packaged build.')
     # Development builds run from the MSYS2 tree: its CLANG64 DLLs (SDL3, FFmpeg, ...).
     if not (probe.parent / 'SDL3.dll').is_file():
