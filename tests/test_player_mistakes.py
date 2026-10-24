@@ -492,5 +492,70 @@ class HandEditedFileTests(unittest.TestCase):
         self.assertEqual((self.folder / 'user' / 'last_run.log').read_text(encoding='utf-8'), 'Settings: repaired\n')
 
 
+class OwnOutputSizeTests(unittest.TestCase):
+    """1920x1200, 2560x1600, 1366x768: the game's menu knows ten sizes, and its first save wrote 1920x1080."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        import bbport_textfile as textfile
+        self.textfile = textfile
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.folder = Path(temp.name)
+        self.ini = self.folder / 'bbport.ini'
+        for patch in (mock.patch.dict(os.environ, {'BB_CONFIG': str(self.ini)}),
+                      mock.patch.multiple(L, CONFIG_DIR=self.folder / 'launcher',
+                                          CONFIG_FILE=self.folder / 'launcher' / 'settings.json'),
+                      mock.patch.object(textfile, 'REPAIRS', [])):
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def test_what_is_remembered(self):
+        self.assertEqual(L.custom_output('1920x1200', {}), '1920x1200')
+        self.assertEqual(L.custom_output('2560x1440', {'output_custom': '1920x1200'}), '')  # chosen in the menu
+        self.assertEqual(L.custom_output('1920x1080', {'output_custom': '1920x1200'}), '1920x1200')
+        self.assertEqual(L.custom_output('1920x1200', {'output_display': True}), '')
+        self.assertEqual(L.own_output({'output_custom': '1920x1200'}, '1920x1080'), '1920x1200')
+        self.assertIsNone(L.own_output({'output_custom': '1920x1200'}, '2560x1440'))
+        self.assertIsNone(L.own_output({'output_custom': '1920x1200', 'output_display': True}, '1920x1080'))
+        self.assertIsNone(L.own_output({}, '1920x1080'))
+        # A listed size or the monitor's chosen on the launcher's page ends the own size (1920x1080 too).
+        source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
+        choice = source[source.index('    def output_choice'):source.index('    def select_fsr411_backend')]
+        self.assertEqual(choice.count("self.app['output_custom'] = ''"), 2)
+
+    def collect(self, ui):
+        ui.sync_ini = lambda: None  # what the game wrote is in ui.ini already
+        ui.collect()
+
+    def test_the_launcher_sets_it_again_at_every_save(self):
+        ui = bare_launcher(vars={}, remap_edits={}, mouse_edited=False, mod_order=[], patch_vars={})
+        ui.ini, ui.ini_lines = dict(L.INI_DEFAULTS, output_res='1920x1200'), []
+        self.collect(ui)
+        self.assertEqual(ui.app['output_custom'], '1920x1200')
+        ui.ini['output_res'] = '1920x1080'  # the game's menu saved
+        self.collect(ui)
+        self.assertEqual(L.load_ini({})[0]['output_res'], '1920x1200')
+        self.assertIn('1920x1200', self.textfile.REPAIRS[0])
+        ui.ini['output_res'] = '2560x1440'  # the player chose another size in the menu
+        self.collect(ui)
+        self.assertEqual((ui.app['output_custom'], L.load_ini({})[0]['output_res']), ('', '2560x1440'))
+
+    def test_play_bloodborne_exe_sets_it_again(self):
+        self.ini.write_text('output_res=1920x1080\n', encoding='utf-8')
+        settings = dict(L.APP_DEFAULTS, output_custom='2560x1600', user_dir=str(self.folder / 'user'),
+                        auto_backup=False)
+        with mock.patch.object(L, 'game_underway', return_value=False), mock.patch.object(L, 'attach_stdio'), \
+                mock.patch.object(L.display, 'Placer') as placer, mock.patch.object(L.trophies, 'Tracker'), \
+                mock.patch.object(L.subprocess, 'Popen') as popen:
+            popen.return_value.stdout.readline.return_value = b''
+            popen.return_value.wait.return_value = 0
+            self.assertEqual(L.play_without_window(settings), 0)
+        self.assertEqual(L.load_ini({})[0]['output_res'], '2560x1600')
+        self.assertEqual(placer.call_args.args[1], (2560, 1600))
+        self.assertIn('2560x1600', (self.folder / 'user' / 'last_run.log').read_text(encoding='utf-8'))
+
+
 if __name__ == '__main__':
     unittest.main()

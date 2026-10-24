@@ -1325,7 +1325,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         note = ttk.Label(holder, style='Muted.TLabel', wraplength=self.px(240), justify='left')
         note.pack(side='left', padx=(10, 0))
         picked = {'custom': res.get() not in sizes}
-        entry = self.size_entry(holder, own, lambda size: res.set(display.size_text(size)), note)
+
+        def typed(size):
+            text = display.size_text(size)
+            if text in sizes:
+                self.app['output_custom'] = ''
+            res.set(text)
+        entry = self.size_entry(holder, own, typed, note)
 
         def show(*_a):
             pick = 'display' if match.get() else 'custom' if picked['custom'] or res.get() not in sizes else res.get()
@@ -1349,6 +1355,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         def choose(_e):
             pick = values[box.current()]
             picked['custom'] = pick == 'custom'
+            if pick != 'custom':  # chosen here: 1920x1080 too is the player's choice then
+                self.app['output_custom'] = ''
             match.set(pick == 'display')
             if pick == 'display':
                 res.set(display.size_text(self.game_monitor_size()))
@@ -4072,6 +4080,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.app[key] = value
         for key in SHARED_GRAPHICS_KEYS:
             self.app.pop(key, None)
+        own = own_output(self.app, self.ini.get('output_res'))
+        if own:  # the game's menu wrote 1920x1080 over it
+            self.ini['output_res'] = own
+            if 'output_res' in self.vars:
+                self.vars['output_res'].set(own)
+            textfile.REPAIRS.append(f"Output: {own}, the player's own size, set again (the game's menu had "
+                                    f"written {INI_DEFAULTS['output_res']})")
+        self.app['output_custom'] = custom_output(self.ini.get('output_res'), self.app)
         write_settings(self.app)
         save_ini({key: self.ini[key] for key in INI_DEFAULTS}, self.ini_lines)
         self.ini, self.ini_lines = load_ini()
@@ -4713,6 +4729,27 @@ def remember_window(size):
         pass
 
 
+def custom_output(size, settings):
+    """The output size of the player's own to remember (settings.json output_custom): one the game's menu does
+    not know. gpu/shim/bbport_settings.cpp has ten; its first save in the menu writes 1920x1080 instead (the
+    proper fix is there: keep the size it read). '' for a listed size or the monitor's own; at 1920x1080 the
+    remembered one stays, since that is what the menu writes."""
+    if settings.get('output_display'):
+        return ''
+    if size not in {value for value, _t in OUTPUTS} and display.parse_size(size):
+        return size
+    return settings.get('output_custom', '') if size == INI_DEFAULTS['output_res'] else ''
+
+
+def own_output(settings, size):
+    """The player's own output size to set again over the game menu's 1920x1080, or None."""
+    custom = settings.get('output_custom')
+    if custom and size == INI_DEFAULTS['output_res'] and not settings.get('output_display') and \
+            display.parse_size(custom):
+        return custom
+    return None
+
+
 def has_complete_save(user_dir, game_dir):
     """Whether the game finds a save to load: the profile and a character where it reads them."""
     try:
@@ -4766,6 +4803,15 @@ def play_without_window(settings):
         if m and values.get('output_res') != display.size_text(m.size):
             values['output_res'] = display.size_text(m.size)
             save_ini({key: values[key] for key in INI_DEFAULTS}, lines)
+    own = own_output(settings, values.get('output_res'))
+    if own:  # the player's own size, which the game's menu wrote as 1920x1080 (custom_output)
+        values['output_res'] = own
+        try:
+            save_ini({key: values[key] for key in INI_DEFAULTS}, lines)
+            textfile.REPAIRS.append(f"Output: {own}, the player's own size, set again (the game's menu had "
+                                    f"written {INI_DEFAULTS['output_res']})")
+        except OSError:
+            pass
     line, encrypted = misplaced_saves(settings)
     notes = textfile.REPAIRS + ([line] if line else [])
     if encrypted:
