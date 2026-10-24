@@ -240,6 +240,7 @@ from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SL
                                   keyboard_layout)  # noqa: E402
 import bbport_gamepad  # noqa: E402
 import bbport_respec as respec  # noqa: E402
+import bbport_textfile as textfile  # noqa: E402
 
 LANG = 'en'
 
@@ -476,20 +477,100 @@ def load_json(path, default):
         return default
 
 
+def load_settings():
+    """settings.json. A broken one (a hand edit, a write cut off) silently became the defaults: the game folder
+    and the sign-in were gone. It is kept as .bad and the copy from the last good load (.bak) is used and written
+    back. Each good load refreshes that copy."""
+    backup = CONFIG_FILE.with_name(CONFIG_FILE.name + '.bak')
+    try:
+        text, _clean = textfile.read(CONFIG_FILE)
+        settings = json.loads(text)
+        if not isinstance(settings, dict):
+            raise ValueError('not a JSON object')
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as error:
+        broken = textfile.keep_bad(CONFIG_FILE) if isinstance(error, ValueError) else None
+        try:
+            settings = json.loads(textfile.read(backup)[0])
+            if not isinstance(settings, dict):
+                raise ValueError('not a JSON object')
+        except (OSError, ValueError):
+            textfile.REPAIRS.append(f'Settings: {CONFIG_FILE} cannot be read ({error}) and has no backup; '
+                                    f'the defaults are used' + (f', the old file is {broken.name}' if broken else ''))
+            return {}
+        if broken:
+            try:
+                write_settings(settings)
+            except OSError:
+                pass
+        textfile.REPAIRS.append(f'Settings: {CONFIG_FILE} cannot be read ({error}); the copy from the last good '
+                                f'start is used' + (f', the old file is {broken.name}' if broken else ''))
+        return settings
+    try:
+        if not backup.is_file() or textfile.read(backup)[0] != text:
+            textfile.write(backup, text)
+    except OSError:
+        pass
+    return settings
+
+
+def write_settings(settings):
+    """settings.json, whole or not at all."""
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    textfile.write(CONFIG_FILE, json.dumps(settings, indent=2, ensure_ascii=False))
+
+
 def ini_path():
     return Path(os.environ.get('BB_CONFIG', DATA_DIR / 'bbport.ini'))
 
 
+def ini_repairs(values):
+    """{key: value} for hand edits the launcher cannot use: a decimal comma (sharpness=0,5) read as meant (the
+    game took it for 0), a number or size that is none back to its default. Switches need none: anything but 1
+    is off, for the game too."""
+    fixed = {}
+    for key, value in values.items():
+        good = value
+        if key == 'sharpness':
+            try:
+                number = float(value.replace(',', '.'))
+                good = value if ',' not in value and 0 <= number <= 2 else f'{min(2.0, max(0.0, number)):.2f}'
+            except ValueError:
+                good = INI_DEFAULTS[key]
+        elif key in ('preset', 'model_lod', 'hud_position', 'fov', 'frame_gen_multiplier'):
+            good = value if re.fullmatch(r'-?\d+', value) else INI_DEFAULTS[key]
+        elif key == 'output_res':
+            good = value if re.fullmatch(r'\d+x\d+', value) else INI_DEFAULTS[key]
+        if good != value:
+            fixed[key] = good
+    return fixed
+
+
 def load_ini(legacy_settings=None):
-    values, lines = dict(INI_DEFAULTS), []
+    values, lines, clean = dict(INI_DEFAULTS), [], True
     try:
-        lines = ini_path().read_text(encoding='utf-8').splitlines()
+        text, clean = textfile.read(ini_path())
+        lines = text.splitlines()
     except OSError:
         pass
     for line in lines:
         if '=' in line and not line.lstrip().startswith('#'):
             key, value = line.split('=', 1)
             values[key.strip()] = value.strip()
+    # Edited by hand (another encoding, a decimal comma): rewritten clean, the old file kept as .bad.
+    fixed = ini_repairs(values)
+    if fixed or not clean:
+        values.update(fixed)
+        bad = textfile.keep_bad(ini_path())
+        try:
+            save_ini(fixed, lines)
+        except OSError:
+            return values, lines
+        what = ', '.join(f'{key}={value}' for key, value in fixed.items()) or 'its text as UTF-8'
+        textfile.REPAIRS.append(f'Settings: {ini_path()} repaired by hand edits ({what}); '
+                                f'the old file is {bad.name if bad else "not kept"}')
+        return load_ini(legacy_settings)
     # Move existing launcher preferences once. Explicit INI values always win,
     # including vk/0; a later overlay edit must never be replaced by the old JSON.
     present = {line.split('=', 1)[0].strip() for line in lines
@@ -524,7 +605,7 @@ def save_ini(values, lines):
     if not lines:
         out.append('# bbport settings (in-game menu: Insert / L3+R3)')
     out += [f'{key}={value}' for key, value in values.items() if key not in written]
-    ini_path().write_text('\n'.join(out) + '\n', encoding='utf-8')
+    textfile.write(ini_path(), '\n'.join(out) + '\n')
 
 
 def game_info(folder):
@@ -895,7 +976,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def __init__(self, root, tk, ttk, filedialog, messagebox):
         self.tk, self.ttk, self.filedialog, self.messagebox = tk, ttk, filedialog, messagebox
         self.root = root
-        saved = load_json(CONFIG_FILE, {})
+        saved = load_settings()
         self.app = {**APP_DEFAULTS, **saved}
         if self.app.get('online_pool') not in ('huntersdream', 'shadnet'):  # SuperMedo Server left the launcher
             self.app['online_pool'] = 'huntersdream'
@@ -3991,8 +4072,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.app[key] = value
         for key in SHARED_GRAPHICS_KEYS:
             self.app.pop(key, None)
-        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        CONFIG_FILE.write_text(json.dumps(self.app, indent=2, ensure_ascii=False), encoding='utf-8')
+        write_settings(self.app)
         save_ini({key: self.ini[key] for key in INI_DEFAULTS}, self.ini_lines)
         self.ini, self.ini_lines = load_ini()
         if self.remap_edits:
@@ -4085,6 +4165,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if not self.preflight():  # bbport_help: a start that would fail for a reason the player can fix
             return
         self.set_log('')
+        for line in textfile.REPAIRS:  # what was repaired since the last start: in this one's log
+            self.append(line + '\n')
+        textfile.REPAIRS.clear()
         self.pad_stop()  # the game reads the controller now
         line, encrypted = misplaced_saves(self.app)
         if line:
@@ -4106,7 +4189,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             return
         self.job = GameJob(self.process)
         self.placer = display.Placer(self.app, display.parse_size(self.ini.get('output_res')) or (1920, 1080)).start()
-        threading.Thread(target=self.read_output, args=(self.process,), daemon=True).start()
+        threading.Thread(target=self.read_output, args=(self.process, self.log.get('1.0', 'end-1c')),
+                         daemon=True).start()
         self.play_button.configure(state='disabled')
         self.stop_button.configure(state='normal')
         self.stop_button.pack(side='right', after=self.play_button)
@@ -4137,13 +4221,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.app['window_last'] = display.size_text(size)
             remember_window(size)
 
-    def read_output(self, process):
-        """Helper thread: the game's output to the Log page and to <saves folder>/last_run.log."""
+    def read_output(self, process, before=''):
+        """Helper thread: the game's output to the Log page and to <saves folder>/last_run.log, after `before`
+        (what the Log page said before the start: the repairs made for it)."""
         log = None
         try:
             log_dir = Path(self.app.get('user_dir') or DATA_DIR / 'user')
             log_dir.mkdir(parents=True, exist_ok=True)
             log = open(log_dir / 'last_run.log', 'w', encoding='utf-8', buffering=1)
+            if before:
+                log.write(before)
         except OSError:
             pass
         warned = False
@@ -4616,10 +4703,12 @@ def picture_of(widget):
 
 def remember_window(size):
     """Writes the game window's last size into settings.json (and nothing else)."""
-    settings = load_json(CONFIG_FILE, {})
+    settings = load_settings()
+    if not settings:  # never the size alone over settings that could not be read
+        return
     settings['window_last'] = display.size_text(size)
     try:
-        CONFIG_FILE.write_text(json.dumps(settings, indent=2, ensure_ascii=False), encoding='utf-8')
+        write_settings(settings)
     except OSError:
         pass
 
@@ -4678,7 +4767,7 @@ def play_without_window(settings):
             values['output_res'] = display.size_text(m.size)
             save_ini({key: values[key] for key in INI_DEFAULTS}, lines)
     line, encrypted = misplaced_saves(settings)
-    notes = [line] if line else []
+    notes = textfile.REPAIRS + ([line] if line else [])
     if encrypted:
         notes.append(f'Saves: {encrypted} holds an encrypted PS4 save (sdimg_): it cannot be used; export it with '
                      'Apollo Save Tool on the PS4')
@@ -4811,7 +4900,7 @@ def main():
     if args[:1] == ['--after'] and len(args) >= 2:
         wait_for_exit(args[1])
         args = args[2:]
-    settings = {**APP_DEFAULTS, **load_json(CONFIG_FILE, {})}
+    settings = {**APP_DEFAULTS, **load_settings()}
     LANG = settings.get('ui_language') or windows_language()
     saves.WORDS.update({key: _(text) for key, text in saves.REASONS.items()})  # backup file names
     if args[:1] == ['--install-update'] and len(args) == 3:

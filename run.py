@@ -247,7 +247,7 @@ def refresh_shared_graphics(env, config):
         return  # direct engine/script experiments retain their explicit overrides
     values = {}
     try:
-        for line in Path(config).read_text(encoding='utf-8').splitlines():
+        for line in Path(config).read_text(encoding='utf-8-sig', errors='replace').splitlines():
             if '=' in line and not line.lstrip().startswith(('#', ';')):
                 key, value = line.split('=', 1)
                 values[key.strip()] = value.strip()

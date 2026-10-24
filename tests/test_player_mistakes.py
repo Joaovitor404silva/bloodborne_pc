@@ -377,5 +377,120 @@ class MisplacedSaveTests(unittest.TestCase):
         self.assertTrue(L.has_complete_save(self.user, ''))
 
 
+class HandEditedFileTests(unittest.TestCase):
+    """bbport.ini and input.ini saved in ANSI or with sharpness=0,5 kept the launcher from opening; a broken
+    settings.json silently became the defaults (the game folder and the sign-in gone)."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        import bbport_textfile as textfile
+        self.textfile = textfile
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.folder = Path(temp.name)
+        for patch in (mock.patch.dict(os.environ, {'BB_CONFIG': str(self.folder / 'bbport.ini')}),
+                      mock.patch.multiple(L, CONFIG_DIR=self.folder / 'launcher',
+                                          CONFIG_FILE=self.folder / 'launcher' / 'settings.json'),
+                      mock.patch.object(textfile, 'REPAIRS', [])):
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def test_bbport_ini_edited_in_notepad(self):
+        ini = self.folder / 'bbport.ini'
+        original = b'# Sch\xe4rfe: 0,5 ist gut\r\nupscaler=fsr3\r\nsharpness=0,5\r\nshow_fps=0\r\nfov=wide\r\n'
+        ini.write_bytes(original)
+        values, lines = L.load_ini({})
+        self.assertEqual((values['sharpness'], values['show_fps'], values['fov'], values['upscaler']),
+                         ('0.50', '0', '43', 'fsr3'))
+        text = ini.read_bytes().decode('utf-8')  # UTF-8 now
+        self.assertIn('# Sch?rfe: 0,5 ist gut', text)  # the comment stays, the unreadable letter as ?
+        self.assertIn('sharpness=0.50', text)
+        self.assertEqual((self.folder / 'bbport.ini.bad').read_bytes(), original)
+        self.assertEqual(len(self.textfile.REPAIRS), 1)
+        self.assertIn('bbport.ini.bad', self.textfile.REPAIRS[0])
+        self.assertEqual(L.load_ini({})[0]['sharpness'], '0.50')  # nothing more to repair
+        self.assertEqual(len(self.textfile.REPAIRS), 1)
+        self.assertEqual(L.Launcher.ini_text('sharpness', float(values['sharpness'])), '0.50')
+
+    def test_good_values_are_left_as_they_are(self):
+        ini = self.folder / 'bbport.ini'
+        ini.write_bytes('\ufeffsharpness=0.5\nshow_fps=1\noutput_res=1920x1200\nfov=60\n'.encode('utf-8'))
+        before = ini.read_bytes()
+        values = L.load_ini({})[0]
+        self.assertEqual((values['sharpness'], values['output_res']), ('0.5', '1920x1200'))
+        self.assertFalse((self.folder / 'bbport.ini.bad').exists())
+        self.assertEqual(self.textfile.REPAIRS, [])
+        self.assertTrue(ini.read_bytes().endswith(before[-20:]))
+
+    def test_a_broken_settings_json_comes_back_from_the_last_good_start(self):
+        import json
+        good = dict(game_dir=r'D:\Games\CUSA03173', thd_token='secret', thd_online_id='Maria')
+        L.write_settings(good)
+        self.assertEqual(L.load_settings(), good)  # a good load keeps a copy
+        backup = L.CONFIG_FILE.with_name('settings.json.bak')
+        self.assertEqual(json.loads(backup.read_text(encoding='utf-8')), good)
+        L.CONFIG_FILE.write_text('{"game_dir": "D:\\Games\\CUSA03173", "thd_token": ', encoding='utf-8')  # cut off
+        self.assertEqual(L.load_settings(), good)
+        self.assertEqual(json.loads(L.CONFIG_FILE.read_text(encoding='utf-8')), good)  # written back
+        self.assertIn('thd_token', L.CONFIG_FILE.with_name('settings.json.bad').read_text(encoding='utf-8'))
+        self.assertIn('settings.json.bad', self.textfile.REPAIRS[-1])
+
+    def test_without_a_copy_the_defaults_and_the_broken_file_is_kept(self):
+        L.CONFIG_DIR.mkdir()
+        L.CONFIG_FILE.write_text('{ broken', encoding='utf-8')
+        self.assertEqual(L.load_settings(), {})
+        self.assertEqual(L.CONFIG_FILE.with_name('settings.json.bad').read_text(encoding='utf-8'), '{ broken')
+        L.remember_window((1600, 900))  # never the window size alone over settings that could not be read
+        self.assertEqual(L.CONFIG_FILE.read_text(encoding='utf-8'), '{ broken')
+
+    def test_input_ini_in_another_encoding(self):
+        import bbport_input_config as config
+        path = self.folder / 'input.ini'
+        original = b'# Steuerung f\xfcr Maria\ncross = space\n'
+        path.write_bytes(original)
+        bindings = config.load_input_ini(path)[0]
+        self.assertEqual(bindings['cross'], ['space'])
+        self.assertEqual(path.read_bytes().decode('utf-8').replace('\r\n', '\n'), '# Steuerung f?r Maria\ncross = space\n')
+        self.assertEqual((self.folder / 'input.ini.bad').read_bytes(), original)
+        self.assertIn('input.ini.bad', self.textfile.REPAIRS[0])
+
+    def test_a_write_is_whole_or_not_at_all(self):
+        path = self.folder / 'settings.ini'
+        path.write_text('old', encoding='utf-8')
+        with mock.patch.object(self.textfile.os, 'replace', side_effect=OSError(28, 'No space left on device')):
+            with self.assertRaises(OSError):
+                self.textfile.write(path, 'new')
+        self.assertEqual(path.read_text(encoding='utf-8'), 'old')
+        self.assertEqual(sorted(p.name for p in self.folder.iterdir()), ['settings.ini'])  # no temp left
+        self.textfile.write(path, 'new')
+        self.assertEqual(path.read_text(encoding='utf-8'), 'new')
+        self.assertEqual(self.textfile.keep_bad(path).name, 'settings.ini.bad')
+        self.assertEqual(self.textfile.keep_bad(path).name, 'settings.ini.bad2')  # never over an earlier one
+
+    def test_run_py_reads_a_hand_edited_ini(self):
+        ini = self.folder / 'bbport.ini'
+        ini.write_bytes(b'# Sch\xe4rfe\nfsr411_backend=dx12\n')
+        env = {'BB_SHARED_GRAPHICS_CONFIG': '1'}
+        run.refresh_shared_graphics(env, ini)
+        self.assertEqual(env['BB_FSR411_BACKEND'], 'dx12')
+
+    def test_the_repairs_go_into_the_next_starts_log(self):
+        source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
+        play = source[source.index('    def play(self):'):source.index('    def auto_backup(self):')]
+        self.assertIn('for line in textfile.REPAIRS:', play)
+        self.assertIn("args=(self.process, self.log.get('1.0', 'end-1c'))", play)
+        self.textfile.REPAIRS.append('Settings: repaired')
+        with mock.patch.object(L, 'game_underway', return_value=False), mock.patch.object(L, 'attach_stdio'), \
+                mock.patch.object(L, 'load_ini', return_value=(dict(L.INI_DEFAULTS), [])), \
+                mock.patch.object(L.display, 'Placer'), mock.patch.object(L.trophies, 'Tracker'), \
+                mock.patch.object(L.subprocess, 'Popen') as popen:
+            popen.return_value.stdout.readline.return_value = b''
+            popen.return_value.wait.return_value = 0
+            settings = dict(L.APP_DEFAULTS, user_dir=str(self.folder / 'user'), auto_backup=False)
+            self.assertEqual(L.play_without_window(settings), 0)
+        self.assertEqual((self.folder / 'user' / 'last_run.log').read_text(encoding='utf-8'), 'Settings: repaired\n')
+
+
 if __name__ == '__main__':
     unittest.main()

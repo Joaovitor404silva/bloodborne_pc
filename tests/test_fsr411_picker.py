@@ -285,7 +285,7 @@ class ShortcutTests(unittest.TestCase):
             ui, root = Mock(), Mock()
             with patch.object(launcher.sys, 'argv', ['Bloodborne.exe', '--play']), \
                  patch.object(launcher, 'FROZEN', False), \
-                 patch.object(launcher, 'load_json', return_value={'game_dir':temp}), \
+                 patch.object(launcher, 'load_settings', return_value={'game_dir':temp}), \
                  patch.object(launcher, 'play_without_window', return_value=None), \
                  patch.object(tk, 'Tk', return_value=root), \
                  patch.object(launcher, 'Launcher', return_value=ui):
