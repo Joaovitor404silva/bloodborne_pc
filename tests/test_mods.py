@@ -109,6 +109,60 @@ class ModTests(unittest.TestCase):
                 capture_output=True, text=True, check=True)
             self.assertEqual((Path(result.stdout.strip()) / 'dvdroot_ps4/chr/a.dcx').read_bytes(), expected)
 
+    def run_mods(self, profile=None):
+        """The game view mods.py builds, as the launcher starts it (profile: mods.json)."""
+        command = [sys.executable, str(ROOT / 'scripts/mods.py'), str(self.game),
+                   '--out', str(self.root / 'out'), '--mods-dir', str(self.moddir)]
+        if profile is not None:
+            config = self.root / 'mods.json'
+            config.write_text(json.dumps(profile))
+            command += ['--config', str(config)]
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        return Path(result.stdout.strip())
+
+    def test_bare_dvdroot_ps4_is_one_mod_among_the_others(self):
+        # A player's mods folder (Discord help): three mods in folders of their own and one
+        # extracted bare as mods/dvdroot_ps4, which used to be the only one loaded.
+        files = {'Backstep iframes': ['dvdroot_ps4/action/chr/c0000.hks'],
+                 'default layout': ['dvdroot_ps4/menu/hud.drb.dcx', 'dvdroot_ps4/msg/engus/menu.msgbnd.dcx'],
+                 'Tomb Prospector Concept Cape': ['dvdroot_ps4/parts/am_m_1000.partsbnd.dcx'],
+                 'dvdroot_ps4': ['map/m21_00_00_00/m21_00_00_00.msb.dcx', 'msg/engus/menu.msgbnd.dcx']}
+        game_path = lambda path: path if path.startswith('dvdroot_ps4/') else f'dvdroot_ps4/{path}'
+        for name, paths in files.items():
+            for path in paths:
+                for target, contents in [(self.moddir / name / path, name), (self.game / game_path(path), 'original')]:
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_text(contents)
+        self.assertEqual(mods.discover(self.moddir),
+                         ['Backstep iframes', 'default layout', 'dvdroot_ps4', 'Tomb Prospector Concept Cape'])
+        # map/ and msg/ go under the game's dvdroot_ps4 once, without a second one.
+        self.assertEqual(sorted(p.as_posix() for p, _s in mods.mod_files(self.moddir / 'dvdroot_ps4')),
+                         ['dvdroot_ps4/map/m21_00_00_00/m21_00_00_00.msb.dcx', 'dvdroot_ps4/msg/engus/menu.msgbnd.dcx'])
+        shared = 'dvdroot_ps4/msg/engus/menu.msgbnd.dcx'
+        for profile, winner in [(None, 'dvdroot_ps4'),  # alphabetical: dvdroot_ps4 loads last
+                                ({'order': ['dvdroot_ps4', 'default layout']}, 'default layout'),
+                                ({'disabled': ['dvdroot_ps4']}, 'default layout')]:
+            with self.subTest(profile=profile):
+                view = self.run_mods(profile)
+                bare_on = 'dvdroot_ps4' not in (profile or {}).get('disabled', [])
+                for name, paths in files.items():
+                    for path in paths:
+                        if game_path(path) != shared:
+                            expected = name if bare_on or name != 'dvdroot_ps4' else 'original'
+                            self.assertEqual((view / game_path(path)).read_text(), expected, path)
+                self.assertEqual((view / shared).read_text(), winner)
+                self.assertFalse((view / 'dvdroot_ps4/dvdroot_ps4').exists())
+
+    def test_mods_folder_with_only_a_dvdroot_ps4_is_one_overlay(self):
+        bare = self.moddir / 'dvdroot_ps4/chr/a.dcx'
+        bare.parent.mkdir(parents=True)
+        bare.write_bytes(b'bare')
+        (self.moddir / 'Junk/stuff').mkdir(parents=True)  # not a mod: still the overlay alone
+        self.assertEqual((self.run_mods() / 'dvdroot_ps4/chr/a.dcx').read_bytes(), b'bare')
+        # Its switch in the launcher's list is respected too.
+        view = self.run_mods({'disabled': ['dvdroot_ps4']})
+        self.assertEqual((view / 'dvdroot_ps4/chr/a.dcx').read_bytes(), b'original')
+
     def test_app0_wrapped_mod_discovered(self):
         self.moddir.mkdir()
         (self.moddir / 'Wrapped/app0/dvdroot_ps4').mkdir(parents=True)
