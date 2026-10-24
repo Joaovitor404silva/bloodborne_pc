@@ -611,6 +611,17 @@ def main():
             names.append('Steady cloth')
         except ValueError as error:
             print(f'Patches: {error}; steady cloth skipped')
+    if os.environ.get('BB_CRASH_GUARDS')!='0':
+        # Crash guards (crash_guards.py): the game's own unchecked pointers that crashed players.
+        sys.path.insert(0,str(Path(__file__).resolve().parent))
+        import crash_guards
+        elf=(a.out/'eboot.elf').read_bytes()
+        try:
+            crash_guards.check_original(lambda start,end: eboot_bytes(elf,start,end))
+            writes+=crash_guards.code_writes()
+            names.append('Crash guards')
+        except ValueError as error:
+            print(f'Patches: {error}; crash guards skipped')
     if a.patches_dir and whole:
         # After the built-in ones: an external patch of the same bytes wins.
         selected=external_selection(external_patches(a.patches_dir,a.app_version,a.xml),a.patches_config)
