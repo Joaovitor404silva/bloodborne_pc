@@ -286,5 +286,96 @@ class PkgToolLayoutTests(unittest.TestCase):
         ui.show.assert_called_with('game')
 
 
+class MisplacedSaveTests(unittest.TestCase):
+    """Saves copied into the saves folder where the game does not read them: another title's folder, shadPS4's
+    savedata/1000, a folder level too many. The Play page said "Saves found", the game showed none."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        import bbport_saves as saves
+        self.saves = saves
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.user = Path(temp.name) / 'user'
+        self.target = saves.target_dir(self.user, '')  # savedata/1/CUSA00207/SPRJ0005
+
+    def save(self, folder, names=('userdata0000', 'userdata0010'), data=b'Maria'):
+        folder.mkdir(parents=True, exist_ok=True)
+        for name in names:
+            (folder / name).write_bytes(data)
+        return folder
+
+    def test_the_one_save_found_is_copied_to_where_the_game_reads_it(self):
+        for wrong in ('savedata/1/CUSA00900/SPRJ0005', 'savedata/1000/CUSA00207/SPRJ0005',
+                      'savedata/CUSA00207/SPRJ0005', 'Bloodborne save/SPRJ0005'):
+            with self.subTest(wrong=wrong):
+                import shutil
+                shutil.rmtree(self.user, ignore_errors=True)
+                source = self.save(self.user / wrong)
+                self.assertFalse(L.has_complete_save(self.user, ''))
+                line, encrypted = L.misplaced_saves({'user_dir': str(self.user), 'game_dir': ''})
+                self.assertIn('copied to where the game reads them', line)
+                self.assertIsNone(encrypted)
+                self.assertEqual((self.target / 'userdata0010').read_bytes(), b'Maria')
+                self.assertEqual((source / 'userdata0010').read_bytes(), b'Maria')  # copied, never moved
+                self.assertTrue(L.has_complete_save(self.user, ''))
+                self.assertEqual(self.saves.misplaced(self.user, ''), ([], []))  # done: nothing next time
+
+    def test_what_was_there_is_backed_up_first(self):
+        self.save(self.target, names=('userdata0000',), data=b'half')  # no profile: the game crashes on it
+        self.save(self.user / 'savedata/1/CUSA00900/SPRJ0005')
+        adopted, _encrypted = self.saves.adopt_misplaced(self.user, '')
+        self.assertTrue(adopted)
+        import zipfile
+        backups = list(self.saves.backup_dir(self.user).glob('*.zip'))
+        self.assertEqual(len(backups), 1)
+        with zipfile.ZipFile(backups[0]) as zipped:
+            self.assertEqual(zipped.read('savedata/1/CUSA00207/SPRJ0005/userdata0000'), b'half')
+        self.assertEqual((self.target / 'userdata0000').read_bytes(), b'Maria')
+
+    def test_nothing_is_copied_when_it_is_not_clear(self):
+        self.save(self.user / 'savedata/1/CUSA00900/SPRJ0005')
+        self.save(self.user / 'savedata/1000/CUSA00207/SPRJ0005')
+        self.assertEqual(self.saves.adopt_misplaced(self.user, '')[0], None)  # two: which one is the player's?
+        self.assertFalse(self.target.exists())
+
+    def test_the_ports_own_save_and_its_copies_are_left_alone(self):
+        self.save(self.target, data=b'own')
+        self.save(self.user / 'savedata/1/CUSA00900/SPRJ0005')
+        self.assertEqual(self.saves.adopt_misplaced(self.user, ''), (None, []))
+        self.assertEqual((self.target / 'userdata0000').read_bytes(), b'own')
+        import shutil
+        shutil.rmtree(self.user)
+        for copy in ('respec-backups/20261024-120000/SPRJ0005', 'save-backups/20261024-120000/savedata/1/CUSA00207/'
+                     'SPRJ0005', 'save_import'):
+            self.save(self.user / copy)
+        self.assertEqual(self.saves.misplaced(self.user, ''), ([], []))
+
+    def test_an_encrypted_ps4_save_is_named_once(self):
+        folder = self.user / 'savedata/PS4/SAVEDATA/1a2b3c/CUSA00207'
+        folder.mkdir(parents=True)
+        (folder / 'sdimg_SPRJ0005').write_bytes(b'encrypted')
+        settings = {'user_dir': str(self.user), 'game_dir': ''}
+        self.assertEqual(L.misplaced_saves(settings), (None, str(folder)))
+        settings['encrypted_told'] = str(folder)
+        self.assertEqual(L.misplaced_saves(settings), (None, None))
+        ui = bare_launcher()
+        ui.app.update(user_dir=str(self.user), game_dir='')
+        ui.refresh_saves = mock.Mock()
+        line, encrypted = L.misplaced_saves(ui.app)
+        self.assertIsNone(line)
+        source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
+        play = source[source.index('    def play(self):'):source.index('    def auto_backup(self):')]
+        self.assertIn("self.app['encrypted_told'] = encrypted", play)
+        self.assertIn('Apollo Save Tool', play)
+
+    def test_the_play_page_counts_only_a_save_the_game_can_load(self):
+        self.save(self.user / 'savedata/1/CUSA00207/SPRJ0005', names=('userdata0000',))
+        self.assertFalse(L.has_complete_save(self.user, ''))
+        self.save(self.target)
+        self.assertTrue(L.has_complete_save(self.user, ''))
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -3585,7 +3585,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             game = _('⚠ Game version {}: runs at 30 FPS without the community patches (they are for 1.09)',
                      '⚠ Версия игры {}: 30 FPS без патчей сообщества (они для 1.09)').format(info[1])
         user = Path(self.var('user_dir', 'app').get() or DATA_DIR / 'user')
-        saves = list((user / 'savedata').glob('*/*/SPRJ*')) if (user / 'savedata').is_dir() else []
+        saves = [user] if has_complete_save(user, self.var('game_dir', 'app').get()) else []
         save = (_('✓ Saves found in {}', '✓ Найдены сохранения в {}').format(user) if saves
                 else _('• No saves yet: bring your character from another version, or the game creates them'))
         missing = fsr4_missing()
@@ -4086,6 +4086,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             return
         self.set_log('')
         self.pad_stop()  # the game reads the controller now
+        line, encrypted = misplaced_saves(self.app)
+        if line:
+            self.append(line + '\n')
+            self.refresh_saves()
+        if encrypted:  # named once: the game starts without it
+            self.app['encrypted_told'] = encrypted
+            self.messagebox.showinfo('Bloodborne', _("These are a PS4's own encrypted backups (sdimg_…); they cannot "
+                                                     'be used. Export the save with Apollo Save Tool on the PS4 '
+                                                     'instead.') + '\n\n' + encrypted)
         self.auto_backup()
         try:
             self.process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(self.app, self.ini),
@@ -4615,6 +4624,33 @@ def remember_window(size):
         pass
 
 
+def has_complete_save(user_dir, game_dir):
+    """Whether the game finds a save to load: the profile and a character where it reads them."""
+    try:
+        return saves.SaveSet('', saves.target_dir(user_dir, game_dir)).complete
+    except OSError:
+        return False
+
+
+def misplaced_saves(settings):
+    """Before every start: a save put in the saves folder where the game does not read it is copied to where it
+    does (bbport_saves.adopt_misplaced). (A line for the log or None, the folder of an encrypted PS4 save not
+    named yet or None.)"""
+    user, game = saves_folder(settings), settings.get('game_dir', '')
+    try:
+        adopted, encrypted = saves.adopt_misplaced(user, game)
+    except OSError as error:
+        return _('Saves: a save in {} could not be copied to where the game reads it: {}',
+                 'Сохранения: не удалось скопировать сохранение из {} туда, где игра его читает: {}').format(
+            user, error), None
+    if adopted:
+        return _('Saves: {} copied to where the game reads them ({}); the original stays where it was.',
+                 'Сохранения: {} скопированы туда, где игра их читает ({}); оригинал остался на месте.').format(
+            adopted.folder, saves.target_dir(user, game)), None
+    folder = str(encrypted[0].parent) if encrypted else None
+    return None, folder if folder and folder != settings.get('encrypted_told') else None
+
+
 def start_problem(settings):
     """(message, page) for what keeps the game from starting and cannot be repaired here, checked before every
     start (Play, Play Bloodborne.exe); None when nothing does."""
@@ -4641,6 +4677,11 @@ def play_without_window(settings):
         if m and values.get('output_res') != display.size_text(m.size):
             values['output_res'] = display.size_text(m.size)
             save_ini({key: values[key] for key in INI_DEFAULTS}, lines)
+    line, encrypted = misplaced_saves(settings)
+    notes = [line] if line else []
+    if encrypted:
+        notes.append(f'Saves: {encrypted} holds an encrypted PS4 save (sdimg_): it cannot be used; export it with '
+                     'Apollo Save Tool on the PS4')
     if settings.get('auto_backup', True):
         try:
             saves.auto_backup(Path(settings.get('user_dir') or DATA_DIR / 'user'), settings['game_dir'])
@@ -4660,6 +4701,7 @@ def play_without_window(settings):
     log_dir.mkdir(parents=True, exist_ok=True)
     tracker = trophies.Tracker(log_dir)
     with open(log_dir / 'last_run.log', 'w', encoding='utf-8', buffering=1) as log:
+        log.writelines(note + '\n' for note in notes)
         process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(settings, graphics),
                                    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, creationflags=NO_WINDOW)

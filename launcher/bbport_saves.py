@@ -288,6 +288,61 @@ def find_in(root, depth=6):
     return found, encrypted
 
 
+# ---- put where the game does not read it ---------------------------------------------------------------
+# Copies of this port's own saves in its saves folder (the backups, a respec's copy, an import's staging):
+# never taken for a save the player put in the wrong place.
+OWN_COPIES = {'save_backups', 'save-backups', 'respec-backups', 'save_import', 'savedata.benchmark-backup'}
+
+
+def misplaced(user_dir, game_dir=''):
+    """([SaveSet], [encrypted]) while this port's own save folder has no complete save: the complete saves
+    elsewhere in the saves folder, where the game does not read them (another title's folder, shadPS4's
+    savedata/1000, a folder level too many or too few), and a PS4's encrypted ones (sdimg_ files or folders)."""
+    user, target = Path(user_dir), target_dir(user_dir, game_dir)
+    try:
+        if SaveSet('', target).complete:
+            return [], []
+    except OSError:
+        pass
+    here = os.path.normcase(os.path.abspath(target))
+    found, encrypted, level = [], [], [user]
+    for _ in range(7):
+        following = []
+        for folder in level:
+            try:
+                children = list(folder.iterdir())
+            except OSError:
+                continue
+            for child in children:
+                name = child.name.lower()
+                if name.startswith('sdimg_'):
+                    encrypted.append(child)
+                elif not child.is_dir() or name in SKIP or name in OWN_COPIES or name.endswith('.sce_sys'):
+                    continue
+                elif is_save_folder(child):
+                    try:
+                        save = SaveSet(label_for(child), child)
+                    except OSError:
+                        continue
+                    if save.complete and os.path.normcase(os.path.abspath(child)) != here:
+                        found.append(save)
+                else:
+                    following.append(child)
+        level = following[:4000]
+    return found, encrypted
+
+
+def adopt_misplaced(user_dir, game_dir=''):
+    """Before a start: the one complete save in the saves folder where the game does not read it, copied to
+    where it does (import_set: what is there backed up first, the found save left where it is). Returns (the
+    save copied or None, the encrypted ones seen); with several found none is copied (which is the player's?)."""
+    found, encrypted = misplaced(user_dir, game_dir)
+    if len(found) != 1:
+        return None, encrypted
+    import_set(found[0], user_dir, game_dir)
+    return found[0], encrypted
+
+
 # ---- copying ---------------------------------------------------------------------------------------
 # ---- backups ---------------------------------------------------------------------------------------
 # <saves folder>/save_backups/*.zip, each with the game's files as this port keeps them and
