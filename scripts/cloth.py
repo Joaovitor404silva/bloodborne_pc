@@ -14,17 +14,20 @@ then pulls groups of 4 particles back toward the cloth's modelled shape by a fra
 
 - Bends: gravity moves a particle g dt^2 a step and the bend takes back (1 - k) of the rest: the
   droop of a step is (1 - k) / k x g dt^2, 16x less at 120 FPS: the cloth keeps its modelled,
-  flared shape. k' = k / (1 + (r - 1)(1 - k)), r = (frame time at 30 FPS / frame time)^2, keeps
-  the droop of 30 FPS (a rigid k = 1 stays rigid). r is held at most 16 (as at 120 FPS, the
-  highest rate supported): weaker, at 240 FPS a cape can fold up on an arm after loading.
-- D is applied per step: D^min(1, 30 x frame time) keeps the damping per second of 30 FPS.
+  flared shape. k' = k / (1 + (r - 1)(1 - k)) with r = (frame time at 30 FPS / frame time)^2 would
+  keep 30 FPS's droop exactly, but in the beta long coats and skirts were "too relaxed" with it,
+  going wild in motion, and a kilt stuck out (a cape folded up at 240 FPS). Half of it is used:
+  r = frame time at 30 FPS / frame time, at most 4 (as at 120 FPS). A rigid k = 1 stays rigid.
+- D is applied per step: D^min(1, 60 x frame time) keeps the damping per second of 60 FPS (with 30,
+  less damping at 60: long garments were "jumpy").
 - (position - previous) is the motion over the previous step; when frames differ in length
   (uncapped they differ 0.8 to 2x from one to the next) the cloth's speed jumps with them.
   Time-corrected Verlet: x frame time / previous frame time (0.5..2), on a frame's first step.
 
-At 30 FPS and below all three are unchanged. Measured with it: the hem 341 px at 60 FPS, 355 at
-120. The per-frame values (ratio, r - 1) are worked out once per frame (the frame timer's ring
-index, +0x260, changes) by the first cloth job to see the new frame. Our own code; the frame
+At 30 FPS and below all three are unchanged; damping is also unchanged at 60. Measured (hem
+width, the widest row): 342 px at 30 FPS; stock 357 at 60 and 398 at 120; with it 344 at 60, and
+at 120 the hem hangs below that row. The per-frame values (ratio, r - 1) are worked out once per
+frame (the frame timer's ring index, +0x260, changes) by the first cloth job to see the new frame. Our own code; the frame
 timer is the game's (0x55404F8: +0x260 frames, +0x264 the last frame's time in seconds).
 """
 import struct
@@ -48,7 +51,8 @@ BEND_BYTES = bytes.fromhex('c4e2791841f2c5b859c0')  # constraint's stiffness x t
 BATCH = 0x738645              # vmovss xmm6, [rcx-0xe]; vmulss xmm6, xmm6, [r8]: the same in the
 BATCH_BYTES = bytes.fromhex('c5fa1071f2c4c14a5930')  # batched solver (0x7384F0) bend operators use
 REFERENCE = 30.0             # the PS4's frame rate, the cloth's tuning
-CONSTANTS = (0.0, 0.5, 1.0, 2.0, REFERENCE, 15.0)
+DAMPING_REFERENCE = 60.0      # damping per second as at 60 FPS (as at 30, long coats and skirts swung on)
+CONSTANTS = (0.0, 0.5, 1.0, 2.0, REFERENCE, 3.0, DAMPING_REFERENCE)
 
 
 def rip(code, opcode, target):
@@ -60,7 +64,7 @@ def rip(code, opcode, target):
 def code_writes():
     cave = quit_menu.Code(CAVE)
     constants = CAVE + 0x400 - 4 * len(CONSTANTS)
-    zero, half, one, two, reference, most = (constants + 4 * i for i in range(len(CONSTANTS)))
+    zero, half, one, two, reference, most, damping = (constants + 4 * i for i in range(len(CONSTANTS)))
     labels, jumps = {}, []
 
     def jump(opcode, name):   # the rel32 form of a short jump's opcode, fixed up at the end
@@ -79,14 +83,15 @@ def code_writes():
     rip(cave, bytes.fromhex('488b05'), FRAME_TIMER)   # mov rax, [frame timer]
     cave.raw('4885c0')                         # test rax, rax
     jump('74', 'broadcast')                    # no timer yet: unchanged
-    # Damping per second as at 30 FPS: D^k, k = min(1, 30 x frame time), for 0 < D < 1 (the frame's,
-    # not this step's: a cloth with two steps a frame keeps its damping per frame at 30 FPS).
+    # Damping per second as at 60 FPS: D^k, k = min(1, 60 x frame time), for 0 < D < 1 (the frame's,
+    # not this step's: a cloth with two steps a frame keeps its damping per frame). Unchanged at 60 FPS
+    # and below: as at 30 FPS (less damping at 60), long coats and skirts were "jumpy" in the beta.
     rip(cave, bytes.fromhex('c5f82f05'), one)         # vcomiss xmm0, [1]
     jump('73', 'ratio')                        # D >= 1: nothing to scale
     rip(cave, bytes.fromhex('c5f82f05'), zero)        # vcomiss xmm0, [0]
     jump('76', 'ratio')                        # D <= 0
     cave.raw('c5fa1088' + struct.pack('<I', FRAME_TIME).hex())   # vmovss xmm1, [rax+0x264]
-    rip(cave, bytes.fromhex('c5f2590d'), reference)   # vmulss xmm1, xmm1, [30]
+    rip(cave, bytes.fromhex('c5f2590d'), damping)     # vmulss xmm1, xmm1, [60]
     rip(cave, bytes.fromhex('c5f25d0d'), one)         # vminss xmm1, xmm1, [1]
     rip(cave, bytes.fromhex('c5f82f0d'), zero)        # vcomiss xmm1, [0]
     jump('76', 'ratio')                        # no frame time: unchanged
@@ -129,11 +134,11 @@ def code_writes():
     rip(cave, bytes.fromhex('c5fa100d'), one)         # vmovss xmm1, [1]
     label('store')
     rip(cave, bytes.fromhex('c5fa110d'), RATIO)       # vmovss [ratio], xmm1
-    # And SOFTEN = r - 1, r = (frame time at 30 FPS / frame time)^2: 0 at 30 FPS and below, at most 15
-    # (as at 120 FPS: weaker, the bends of a cape fold it up at the shoulders, measured at 240).
+    # And SOFTEN = r - 1, r = frame time at 30 FPS / frame time: 0 at 30 FPS and below, at most 3 (as at
+    # 120 FPS). Half the full correction (its square root): with the square, long coats and skirts were
+    # "too relaxed" in the beta, going wild in motion, and a kilt stuck out; a cape folded up at 240.
     cave.raw('c5fa1088' + struct.pack('<I', FRAME_TIME).hex())   # vmovss xmm1, [rax+0x264]
     rip(cave, bytes.fromhex('c5f2590d'), reference)   # vmulss xmm1, xmm1, [30]
-    cave.raw('c5f259c9')                       # vmulss xmm1, xmm1, xmm1
     rip(cave, bytes.fromhex('c5fa1015'), one)         # vmovss xmm2, [1]
     cave.raw('c5ea5ed1')                       # vdivss xmm2, xmm2, xmm1
     rip(cave, bytes.fromhex('c5ea5c15'), one)         # vsubss xmm2, xmm2, [1]
