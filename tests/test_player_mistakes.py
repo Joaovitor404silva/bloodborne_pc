@@ -640,5 +640,69 @@ class RefusedSignInTests(unittest.TestCase):
             root.after.assert_any_call(500, ui.play)
 
 
+class WrongClockTests(unittest.TestCase):
+    """A PC whose clock is wrong: its newest backup lay in the future and stopped every automatic backup, and every
+    certificate looked expired."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        import bbport_saves as saves
+        self.saves = saves
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.user = Path(temp.name)
+        target = saves.target_dir(self.user, '')
+        target.mkdir(parents=True)
+        for name in ('userdata0000', 'userdata0010'):
+            (target / name).write_bytes(b'Maria')
+
+    def test_a_backup_from_the_future_does_not_stop_the_automatic_ones(self):
+        import datetime
+        future = datetime.datetime.now() + datetime.timedelta(days=400)  # made while the clock was a year ahead
+        with mock.patch.object(self.saves.datetime, 'datetime', mock.Mock(now=mock.Mock(return_value=future),
+                                                                           fromisoformat=datetime.datetime.fromisoformat,
+                                                                           fromtimestamp=datetime.datetime.fromtimestamp,
+                                                                           strptime=datetime.datetime.strptime)):
+            self.assertTrue(self.saves.backup(self.user, '', reason='auto'))
+        notes = []
+        made = self.saves.auto_backup(self.user, '', notes=notes)
+        self.assertTrue(made)
+        self.assertIn('dated in the future', notes[0])
+        self.assertIsNone(self.saves.auto_backup(self.user, ''))  # nothing played since this one
+
+    def test_a_wrong_clock_is_named_instead_of_the_certificate(self):
+        error = OSError("<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has "
+                        "expired (_ssl.c:1006)>")
+        with mock.patch.object(L, 'clock_off', return_value=3 * 86400) as asked:
+            self.assertIn("Your PC's date is wrong", L.connection_error(error, 'https://thehuntersdream.com'))
+        asked.assert_called_once_with('thehuntersdream.com')
+        with mock.patch.object(L, 'clock_off', return_value=30):  # the clock is right: Windows' root store, not the date
+            self.assertEqual(L.connection_error(error, 'https://api.github.com/x'), str(error))
+        with mock.patch.object(L, 'clock_off', side_effect=[None, -2 * 86400]) as asked:  # no time from that server
+            self.assertIn("Your PC's date is wrong", L.connection_error(error, 'https://api.github.com/x'))
+        self.assertEqual([c.args[0] for c in asked.call_args_list], ['api.github.com', L.TIME_HOST])
+        with mock.patch.object(L, 'clock_off') as asked:
+            self.assertEqual(L.connection_error(OSError('timed out'), 'https://api.github.com/x'), 'timed out')
+        asked.assert_not_called()
+
+    def test_the_server_time_comes_from_a_plain_http_answer(self):
+        import email.utils
+        import time
+        answer = mock.Mock()
+        answer.getresponse.return_value.getheader.return_value = email.utils.formatdate(time.time() - 7200, usegmt=True)
+        with mock.patch('http.client.HTTPConnection', return_value=answer) as connect:
+            self.assertAlmostEqual(L.clock_off('example.org'), 7200, delta=60)
+        connect.assert_called_once_with('example.org', 80, timeout=6)
+        with mock.patch('http.client.HTTPConnection', side_effect=OSError('offline')):
+            self.assertIsNone(L.clock_off('example.org'))
+
+    def test_the_messages_that_show_it(self):
+        source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
+        for call in ('connection_error(error, COMMUNITY_SERVER)', 'connection_error(failure, RELEASES_API)',
+                     'connection_error(failure, url)'):
+            self.assertIn(call, source)
+
+
 if __name__ == '__main__':
     unittest.main()

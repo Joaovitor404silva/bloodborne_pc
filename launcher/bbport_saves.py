@@ -547,13 +547,20 @@ def latest_change(user_dir, game_dir=''):
         return 0
 
 
-def auto_backup(user_dir, game_dir='', keep=AUTO_KEEP):
+def auto_backup(user_dir, game_dir='', keep=AUTO_KEEP, notes=None):
     """Before a start: a backup when the save changed since the newest backup; the oldest automatic
-    ones beyond `keep` go. Returns the new backup or None."""
+    ones beyond `keep` go. Returns the new backup or None. A backup dated more than a day ahead was made
+    while the PC's clock was wrong: it is not taken for the newest (it stopped every automatic backup
+    until its date), and `notes` gets a line for the log."""
     changed = latest_change(user_dir, game_dir)
     if not changed:
         return None
-    existing = backups(user_dir)
+    ahead = time.time() + 86400
+    existing = [b for b in backups(user_dir) if b.created.timestamp() <= ahead]
+    future = len(backups(user_dir)) - len(existing)
+    if future and notes is not None:
+        notes.append(f'Saves: {future} backup(s) dated in the future (the PC\'s clock was wrong when they were '
+                     'made) are not taken for the newest')
     if existing and existing[0].created.timestamp() >= int(changed):
         return None  # nothing played since
     made = backup(user_dir, game_dir, reason='auto')

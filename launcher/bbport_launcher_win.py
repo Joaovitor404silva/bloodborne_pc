@@ -2611,8 +2611,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 try:
                     name, token = thd_sign_in(game, on_code)
                 except (OSError, ValueError) as error:
-                    self.ui_calls.put(lambda e=error: (signing.configure(text=_('Sign-in failed: {}').format(e)),
-                                                       show_code()))
+                    self.ui_calls.put(lambda e=connection_error(error, COMMUNITY_SERVER): (
+                        signing.configure(text=_('Sign-in failed: {}').format(e)), show_code()))
                     return
                 self.ui_calls.put(lambda: (thd_id.set(name), thd_token.set(token), signing.configure(text=''),
                                            show_code(), show_accounts(), self.collect()))
@@ -4223,11 +4223,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         """Before a start: the saves backed up when they changed since the last backup (never in the way)."""
         if not self.app.get('auto_backup', True):
             return
+        notes = []
         try:
-            made = saves.auto_backup(self.save_user_dir(), self.app['game_dir'])
+            made = saves.auto_backup(self.save_user_dir(), self.app['game_dir'], notes=notes)
         except OSError as error:
             self.append(_('The automatic backup of the saves failed: {}').format(error) + '\n')
             return
+        for line in notes:
+            self.append(line + '\n')
         if made:
             self.append(_('Saves backed up: {}').format(made.name) + '\n')
             self.refresh_saves()
@@ -4397,7 +4400,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             version, url, page = latest_release()
         except (OSError, ValueError, KeyError) as failure:
             if manual:
-                self.ui_calls.put(lambda error=failure: self.messagebox.showerror(
+                self.ui_calls.put(lambda error=connection_error(failure, RELEASES_API): self.messagebox.showerror(
                     'Bloodborne', _('Could not check for updates: {}', 'Не удалось проверить обновления: {}').format(error)))
             return
 
@@ -4494,7 +4497,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                  cwd=str(new), stdin=subprocess.DEVNULL, creationflags=NO_WINDOW)
                 self.ui_calls.put(self.root.destroy)
             except (OSError, zipfile.BadZipFile) as failure:
-                def show_failure(error=failure):
+                def show_failure(error=connection_error(failure, url)):
                     failed()
                     self.messagebox.showerror('Bloodborne', _('Update failed: {}', 'Не удалось обновить: {}').format(error))
                 self.ui_calls.put(show_failure)
@@ -4747,6 +4750,48 @@ def remember_window(size):
         pass
 
 
+# OpenSSL's words for a certificate outside its dates, which is what every certificate looks like to a PC whose
+# clock is wrong.
+CERTIFICATE_DATES = re.compile(r'certificate (?:has expired|is not yet valid)', re.I)
+# Windows' own connection check answers plain HTTP with its time, where a server does not (api.github.com).
+TIME_HOST = 'www.msftconnecttest.com'
+
+
+def clock_off(host):
+    """Seconds this PC's clock is off, by the Date of a plain HTTP answer from `host` (no certificate to check);
+    None when it cannot be asked."""
+    import email.utils
+    import http.client
+    try:
+        connection = http.client.HTTPConnection(host, 80, timeout=6)
+        try:
+            connection.request('HEAD', '/', headers={'User-Agent': f'bbport-launcher/{VERSION}'})
+            date = connection.getresponse().getheader('Date')
+        finally:
+            connection.close()
+        return time.time() - email.utils.parsedate_to_datetime(date).timestamp()
+    except (OSError, ValueError, TypeError, http.client.HTTPException):
+        return None
+
+
+def connection_error(error, url):
+    """The words for a failed HTTPS call: "Your PC's date is wrong" when the certificate seemed expired or not yet
+    valid and this PC's clock is more than a day off (the one thing to do: set it); else the error itself. Run off
+    the Tk thread: it may ask the server's time."""
+    if CERTIFICATE_DATES.search(str(error)):
+        import urllib.parse
+        off = clock_off(urllib.parse.urlsplit(url).hostname or '')
+        if off is None:
+            off = clock_off(TIME_HOST)
+        if off is not None and abs(off) > 86400:
+            return _("Your PC's date is wrong ({}), so secure connections fail. Set the date in Windows: Settings > "
+                     'Time & language > Date & time, "Set time automatically".',
+                     'Дата на вашем ПК неверна ({}), поэтому защищённые соединения не работают. Установите дату в '
+                     'Windows: Параметры > Время и язык > Дата и время, «Установить время автоматически».').format(
+                time.strftime('%d.%m.%Y'))
+    return str(error)
+
+
 # What the game logs when The Hunter's Dream refuses the saved sign-in (gpu/bbnet/thd/thd_session.cpp MarkRefused).
 SIGN_IN_REFUSED = "refused this PC's sign-in"
 
@@ -4866,7 +4911,7 @@ def play_without_window(settings):
                      'Apollo Save Tool on the PS4')
     if settings.get('auto_backup', True):
         try:
-            saves.auto_backup(Path(settings.get('user_dir') or DATA_DIR / 'user'), settings['game_dir'])
+            saves.auto_backup(Path(settings.get('user_dir') or DATA_DIR / 'user'), settings['game_dir'], notes=notes)
         except OSError:
             pass  # never in the way of a start
     placer = display.Placer(settings, display.parse_size(values.get('output_res')) or (1920, 1080)).start()
