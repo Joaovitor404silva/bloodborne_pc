@@ -947,7 +947,7 @@ class SetupMixin:
         return sorted(usable, key=lambda s: -s.modified)
 
     def import_save(self, save, refresh):
-        if self.process:
+        if self.game_running():
             self.messagebox.showinfo('Bloodborne', _('Close the game first; it writes its saves while it runs.'))
             return
         user, here = self.save_user_dir(), self.save_target()
@@ -975,8 +975,9 @@ class SetupMixin:
 
     # ---- the save manager (Saves page) -----------------------------------------------------------
     def game_running(self):
-        """The game runs (from here, a shortcut or Steam): it writes its saves while it runs."""
-        return bool(self.process) or bool(bench.game_pids())
+        """The game runs or is being prepared (from here, a shortcut, Steam or the in-game restart): it writes its
+        saves while it runs."""
+        return bool(self.process) or L.game_underway()
 
     def refresh_saves(self, only_if_changed=False):
         """The characters and the backups drawn anew (on a page change only when the files changed)."""

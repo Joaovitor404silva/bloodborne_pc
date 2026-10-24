@@ -145,6 +145,7 @@ class DetectionTests(unittest.TestCase):
         status = dict(supported=False, reason='download', detail=support.DLL['vk'])
         ui.fsr411_status = lambda method: status
         with patch.object(support, 'query', return_value=READY), \
+             patch.object(launcher, 'game_underway', return_value=False), \
              patch.object(launcher.subprocess, 'Popen') as popen:
             ui.play()
         popen.assert_not_called()

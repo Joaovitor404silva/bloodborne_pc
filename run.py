@@ -151,6 +151,20 @@ def remove_stale_views(out, game):
         print(f'Mods: removed {removed} game view(s) an earlier game left behind')
 
 
+# Held while a start prepares and runs the game: the launcher and Play Bloodborne.exe bring that game's
+# window to the front instead of starting a second one (bbport_launcher_win.game_underway).
+GAME_MUTEX = 'Local\\bbport-game'
+
+
+def hold_game_mutex(name=GAME_MUTEX):
+    """Opens the game's named mutex for the rest of this process; False when another start has it."""
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel.CreateMutexW.restype = ctypes.c_void_p
+    global _GAME_MUTEX_HANDLE
+    _GAME_MUTEX_HANDLE = kernel.CreateMutexW(None, False, name)
+    return ctypes.get_last_error() != 183  # ERROR_ALREADY_EXISTS
+
+
 def no_console():
     """Started without a console (the launcher): console programs must not open their own."""
     return 0 if ctypes.windll.kernel32.GetConsoleWindow() else subprocess.CREATE_NO_WINDOW
@@ -355,6 +369,11 @@ def main():
     if restarted:
         wait_for(int(args[1]))
         args = args[2:]
+    # Two starts at once (a second click on Play Bloodborne.exe while the first is being prepared) would
+    # prepare the same files and share the saves. The in-game restart takes over from the game it replaces.
+    if not hold_game_mutex() and not restarted:
+        print('Start: another start of the game is being prepared or runs; this one ends')
+        return 0
     # As run.sh: relative paths (BB_GAME_DIR, BB_DATA_DIR, fsr4_shaders/) are from the port.
     os.chdir(PORT)
     env = os.environ

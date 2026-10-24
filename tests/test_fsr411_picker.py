@@ -268,6 +268,7 @@ class ShortcutTests(unittest.TestCase):
                 return_value=({'upscaler':'fsr411', 'fsr411_backend':'vk'}, [])), \
              patch.object(support, 'query', return_value=READY), \
              patch.object(support, 'method_status', return_value=status), \
+             patch.object(launcher, 'game_underway', return_value=False), \
              patch.object(launcher.subprocess, 'Popen') as popen, \
              patch.object(launcher.ctypes.windll.user32, 'MessageBoxW') as popup, patch('builtins.print'):
             self.assertIsNone(launcher.play_without_window(launcher.APP_DEFAULTS))

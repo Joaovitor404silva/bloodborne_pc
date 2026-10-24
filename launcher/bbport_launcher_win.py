@@ -169,6 +169,36 @@ def wait_for_exit(pid, seconds=15):
         kernel.CloseHandle(handle)
 
 
+# run.py holds this named mutex while it prepares and runs the game (run.py GAME_MUTEX).
+GAME_MUTEX = 'Local\\bbport-game'
+
+
+def game_underway(mutex=GAME_MUTEX):
+    """Whether a game is being prepared or runs: from this launcher, Play Bloodborne.exe (Steam, a shortcut) or
+    the in-game restart. A second one would share its saves and prepared files."""
+    kernel = ctypes.windll.kernel32
+    kernel.OpenMutexW.restype = ctypes.c_void_p
+    handle = kernel.OpenMutexW(0x00100000, False, mutex)  # SYNCHRONIZE
+    if handle:
+        kernel.CloseHandle(ctypes.c_void_p(handle))
+        return True
+    return bool(bench.game_pids())
+
+
+def front_game_window():
+    """The running game's window to the front (restored when minimized); False when it has none yet (still
+    being prepared)."""
+    user32 = ctypes.windll.user32
+    for pid in bench.game_pids():
+        hwnd = bench.game_window(pid)
+        if hwnd:
+            if user32.IsIconic(hwnd):
+                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+            user32.SetForegroundWindow(hwnd)
+            return True
+    return False
+
+
 def run_command():
     """The command that starts run.py: this executable when frozen, else Python."""
     return [sys.executable, '--run'] if FROZEN else [sys.executable, str(PORT_DIR / 'run.py')]
@@ -193,6 +223,7 @@ import bbport_hardware as hardware  # noqa: E402
 import bbport_frame  # noqa: E402
 import bbport_display as display  # noqa: E402
 import bbport_saves as saves  # noqa: E402
+import bbport_benchmark as bench  # noqa: E402 (the game's process and window)
 import bbport_pad  # noqa: E402
 import bbport_help  # noqa: E402
 import bbport_search  # noqa: E402
@@ -2295,7 +2326,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         """The respec dialog (bbport_respec): a character, its six attributes, Apply."""
         tk, ttk = self.tk, self.ttk
         title = _('Respec', 'Перераспределение')
-        if self.process:
+        if self.game_running():
             self.messagebox.showinfo(title, _('Close the game first: it would save over the change.',
                                               'Сначала закройте игру: она запишет сохранение поверх.'))
             return
@@ -3953,6 +3984,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def play(self):
         if self.process or self.fsr411_downloading:
             return
+        if game_underway():
+            # Started from Steam, a shortcut or the in-game restart: its window comes to the front instead of a
+            # second game on the same saves.
+            front_game_window()
+            self.append(_('The game runs already (started from Steam, a shortcut or the in-game restart): its '
+                          'window was brought to the front.',
+                          'Игра уже запущена (из Steam, ярлыка или после перезапуска в игре): её окно выведено '
+                          'на передний план.') + '\n')
+            self.status.configure(text=_('The game is running.', 'Игра запущена.'), fg=GOLD)
+            return
         online, npid = self.var('online', 'app'), self.var('online_npid', 'app')
         if not online.get() and npid.get().strip():
             choice = self.messagebox.askyesnocancel(
@@ -4229,7 +4270,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def install_version(self, version, url, page, progress, failed):
         """Downloads release `version` and lets its launcher copy itself over this installation
         (saves, settings and mods stay). False when nothing was started."""
-        if self.process:
+        if self.game_running():
             self.messagebox.showinfo('Bloodborne', _('Close the game before updating.', 'Закройте игру перед обновлением.'))
             return False
         if not FROZEN or not url:  # a source tree updates with git
@@ -4529,6 +4570,12 @@ def play_without_window(settings):
     """--play: the game with the saved settings (shortcuts, Steam). Output goes to the console
     when there is one and to <saves folder>/last_run.log."""
     attach_stdio()
+    if game_underway():
+        # A second click while the first is being prepared, or Steam while the launcher's game runs: that game's
+        # window comes to the front instead of a second game on the same saves and prepared files.
+        front_game_window()
+        print('Play: a game is being prepared or runs already; its window was brought to the front')
+        return 0
     values, lines = load_ini(settings)
     graphics = values
     if settings.get('output_display'):  # the game monitor's own size, as the launcher's Play does
