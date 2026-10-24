@@ -403,6 +403,27 @@ def system_view(game, view, system, out):
     return view
 
 
+def user_folders(env, data):
+    """The saves folder (BB_USER_DIR, else <data>/user), and BB_GPU_USER_DIR for the caches (beside the saves
+    unless set). The player's own saves folder is never made anew: on a drive that is not connected, or renamed,
+    an empty one would show no characters (the launcher says so before the start). A cache folder that cannot be
+    had (its drive is gone) gives way to the saves folder; caches are made again, nothing is lost."""
+    user_dir = Path(env.get('BB_USER_DIR', Path(data) / 'user')).resolve()
+    if env.get('BB_USER_DIR') and not user_dir.is_dir():
+        fail(f'The saves folder {user_dir} is not there: its drive is not connected, or the folder was renamed '
+             'or moved. Connect the drive, or choose the saves folder again in the launcher (Saves).')
+    user_dir.mkdir(parents=True, exist_ok=True)
+    cache_dir = env.get('BB_GPU_USER_DIR')
+    if cache_dir:
+        try:
+            Path(cache_dir).mkdir(parents=True, exist_ok=True)
+        except OSError as error:
+            print(f'Cache: {cache_dir} cannot be used ({error}); the caches go to {user_dir} this time')
+            env['BB_GPU_USER_DIR'] = str(user_dir)
+    env.setdefault('BB_GPU_USER_DIR', str(user_dir))
+    return user_dir
+
+
 def writable_saves(user_dir):
     """Save files marked read-only (copied from a backup disc or another PC, or by hand): the game
     cannot replace them, so every save fails while it ends with 0 (runtime_file.c commit_file).
@@ -663,10 +684,8 @@ def main():
 
         # The in-game restart starts this script again once this process is gone.
         # GPU caches (shaders, pipelines) beside the saves; read before main(), so set here.
-        user_dir = Path(env.get('BB_USER_DIR', data / 'user')).resolve()
-        user_dir.mkdir(parents=True, exist_ok=True)
+        user_dir = user_folders(env, data)
         writable_saves(user_dir)
-        env.setdefault('BB_GPU_USER_DIR', str(user_dir))
         if env.get('BB_SAVE_BACKUPS') == '1' and not restarted:  # not again for an in-game restart
             backup_saves(user_dir)
         if env.get('BB_ONLINE') == '1' and env.get('BB_NET_BACKEND') == 'thd':

@@ -4875,6 +4875,14 @@ def start_problem(settings):
     problem = bbport_help.system_problem(settings.get('game_dir'))
     if problem:
         return problem, 'game'
+    # A saves folder of the player's own on a drive that is not connected, or renamed: an empty one made in its
+    # place would show no characters, and the game would start new ones there.
+    user = str(settings.get('user_dir') or '').strip()
+    if user and not Path(user).is_dir():
+        return _('The saves folder {} is not there: its drive is not connected, or the folder was renamed or moved. '
+                 'Connect the drive, or choose the saves folder again.',
+                 'Папки сохранений {} нет: её диск не подключён, или папку переименовали или переместили. Подключите '
+                 'диск или выберите папку сохранений заново.').format(user), 'saves'
     return None
 
 

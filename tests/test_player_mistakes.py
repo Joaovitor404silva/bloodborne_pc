@@ -704,5 +704,50 @@ class WrongClockTests(unittest.TestCase):
             self.assertIn(call, source)
 
 
+class MissingFolderTests(unittest.TestCase):
+    """A saves or cache folder of the player's own on a drive that is not connected, or renamed: run.py made an
+    empty saves folder (no characters) or stopped with a traceback."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.folder = Path(temp.name)
+
+    def test_a_missing_saves_folder_is_named_and_never_made(self):
+        gone = self.folder / 'E-drive' / 'Bloodborne saves'
+        with self.assertRaises(SystemExit), mock.patch.object(run.sys, 'stderr'):
+            run.user_folders({'BB_USER_DIR': str(gone)}, self.folder)
+        self.assertFalse(gone.exists())
+        with mock.patch.object(L.bbport_help, 'system_problem', return_value=None):
+            problem = L.start_problem({'game_dir': '', 'user_dir': str(gone)})
+        self.assertEqual(problem[1], 'saves')
+        self.assertIn(str(gone), problem[0])
+        with mock.patch.object(L.bbport_help, 'system_problem', return_value=None):
+            self.assertIsNone(L.start_problem({'game_dir': '', 'user_dir': ''}))  # the port's own: made when needed
+
+    def test_the_ports_own_saves_folder_is_made(self):
+        env = {}
+        self.assertEqual(run.user_folders(env, self.folder), (self.folder / 'user').resolve())
+        self.assertTrue((self.folder / 'user').is_dir())
+        self.assertEqual(env['BB_GPU_USER_DIR'], str((self.folder / 'user').resolve()))
+
+    def test_a_cache_folder_that_cannot_be_had_gives_way_to_the_saves_folder(self):
+        import io
+        blocked = self.folder / 'a file'
+        blocked.write_text('not a folder')
+        env = {'BB_GPU_USER_DIR': str(blocked / 'cache')}
+        out = io.StringIO()
+        with mock.patch.object(run.sys, 'stdout', out):
+            user = run.user_folders(env, self.folder)
+        self.assertEqual(env['BB_GPU_USER_DIR'], str(user))
+        self.assertIn('the caches go to', out.getvalue())
+        env = {'BB_GPU_USER_DIR': str(self.folder / 'new cache')}  # missing on a drive that is there: made
+        run.user_folders(env, self.folder)
+        self.assertEqual(env['BB_GPU_USER_DIR'], str(self.folder / 'new cache'))
+        self.assertTrue((self.folder / 'new cache').is_dir())
+
+
 if __name__ == '__main__':
     unittest.main()
