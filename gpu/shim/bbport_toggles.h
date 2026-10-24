@@ -69,6 +69,9 @@ enum : std::uint64_t {
     // when nothing moves. Static-camera flicker of railings/window bars p99.9 -45% (2026-10-03).
     TaaKeepNearerHistory = 1ull << 55,
     SceneMipBias = 1ull << 57, ///< negative LOD bias of G-buffer samplers at reduced scene sizes
+    // Game memory backing the GPU has not used for a while is released when VRAM runs short
+    // (BufferCache::RunArenaCollector); set: it is kept for good, as before.
+    ArenaRelease = 1ull << 60,
     // Bits 20-29 are used as raw debug toggles by the camera/object motion and the upscaler.
 };
 inline bool Disabled(std::uint64_t bit) {

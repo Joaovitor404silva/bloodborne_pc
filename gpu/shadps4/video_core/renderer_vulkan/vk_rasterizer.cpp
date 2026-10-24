@@ -1418,6 +1418,7 @@ void Rasterizer::OnSubmit() {
     }
     texture_cache.ProcessDownloadImages();
     texture_cache.RunGarbageCollector();
+    buffer_cache.RunArenaCollector();
     runtime.TickFrame();
 }
 
