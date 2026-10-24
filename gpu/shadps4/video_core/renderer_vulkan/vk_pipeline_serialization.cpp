@@ -15,7 +15,8 @@ namespace Serialization {
 // bbport: above every version a release has used (1.9.2: 11, 8, 6), never back to an old one: the
 // GPU rollback to 1.8.2's code took them back to 7, 7, 5, and a cache another build wrote into
 // the same folder then passed as this build's.
-static constexpr u32 ShaderBinaryVersion = 12u;
+// Projection jitter needs recompiled vertex shaders, including for existing caches.
+static constexpr u32 ShaderBinaryVersion = 13u;
 static constexpr u32 ShaderMetaVersion = 9u;
 static constexpr u32 PipelineKeyVersion = 7u;
 
