@@ -34,6 +34,11 @@ static constexpr size_t STREAM_BUFFER_SIZE = 128_MB;
 static constexpr u64 SLAB_SIZE = 32_MB;
 static constexpr u64 CHUNK_BITS = 21;
 static constexpr u64 CHUNK_SIZE = u64{1} << CHUNK_BITS;
+// BB_ARENA_DEBUG=1: every release, unbind and freed slab in the log.
+static const bool arena_debug = [] {
+    const char* env = std::getenv("BB_ARENA_DEBUG");
+    return env && env[0] == '1';
+}();
 
 static constexpr auto ARENA_USAGE =
     vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst |
@@ -475,6 +480,7 @@ const Buffer* BufferCache::GetArena(u64 first_block, u64 last_block) {
     }
 
     LOG_WARNING(Render, "Migrating arena");
+    const std::size_t binds_before = pending_binds.size();
 
     const u64 first_addr = first_arena ? first_arena->cpu_addr : (first_page << arena_page_bits);
     const u64 first_size = first_arena ? first_arena->size_bytes : arena_page_size;
@@ -496,6 +502,11 @@ const Buffer* BufferCache::GetArena(u64 first_block, u64 last_block) {
         });
     });
 
+    std::printf("Game memory: arena at %#llx migrated (%llu MiB): %zu ranges bound again; %zu releases "
+                "not unbound yet, %zu pending bind lists before\n",
+                static_cast<unsigned long long>(first_addr), static_cast<unsigned long long>(total_size >> 20),
+                bind->binds.size(), unbinds.size(), binds_before);
+    std::fflush(stdout);
     u64 base_page = first_addr >> arena_page_bits;
     for (u32 page = 0; page < (first_size >> arena_page_bits); ++page) {
         address_space[base_page + page] = new_arena;
@@ -891,6 +902,11 @@ void BufferCache::PutBackReleased() {
             spare_vram_slab = true;
             continue;
         }
+        if (arena_debug) {
+            std::printf("Game memory: slab %zu freed (%s)\n", static_cast<std::size_t>(&slab - slabs.data()),
+                        slab.vram ? "VRAM" : "system memory");
+            std::fflush(stdout);
+        }
         instance.GetDevice().freeMemory(slab.memory);
         slab_of.erase(static_cast<VkDeviceMemory>(slab.memory));
         (slab.vram ? vram_slab_bytes : system_slab_bytes) -= SLAB_SIZE;
@@ -941,6 +957,13 @@ u64 BufferCache::ReleaseChunk(u64 chunk) {
     released_bytes += bytes;
     ++released_chunks;
     chunk_flags[chunk] |= CHUNK_RELEASED;
+    if (arena_debug) {
+        std::printf("Game memory: released chunk %#llx (%zu parts, %llu KiB) of arena %p at tick %llu\n",
+                    static_cast<unsigned long long>(chunk << CHUNK_BITS), parts.size(),
+                    static_cast<unsigned long long>(bytes >> 10), static_cast<const void*>(arena),
+                    static_cast<unsigned long long>(tick));
+        std::fflush(stdout);
+    }
     return bytes;
 }
 
@@ -961,6 +984,13 @@ void BufferCache::FlushUnbinds() {
             .memoryOffset = 0,
         });
         released.push_back({tick, unbind.slab, unbind.piece, static_cast<u32>(unbind.end - unbind.start)});
+        if (arena_debug) {
+            std::printf("Game memory: unbind %#llx-%#llx of arena %p with submission %llu\n",
+                        static_cast<unsigned long long>(unbind.start << block_shift),
+                        static_cast<unsigned long long>(unbind.end << block_shift),
+                        static_cast<const void*>(unbind.arena), static_cast<unsigned long long>(tick));
+            std::fflush(stdout);
+        }
         return true;
     });
 }
@@ -981,6 +1011,12 @@ void BufferCache::CancelUnbinds(const Buffer* arena, u64 start, u64 end) {
         const u64 b = std::min(end, unbind.end);
         released.push_back({tick, unbind.slab, unbind.piece + static_cast<u32>(a - unbind.start),
                             static_cast<u32>(b - a)});
+        if (arena_debug) {
+            std::printf("Game memory: bound again before its unbind: %#llx-%#llx of arena %p\n",
+                        static_cast<unsigned long long>(a << block_shift),
+                        static_cast<unsigned long long>(b << block_shift), static_cast<const void*>(arena));
+            std::fflush(stdout);
+        }
         Unbind head = unbind;
         head.end = a;
         Unbind tail = unbind;
@@ -1138,6 +1174,23 @@ void BufferCache::SubmitPendingArenaBinds(Vulkan::SubmitInfo& info) {
         instance.ReportDeviceLost("sparse binding");
     }
     ASSERT_MSG(submit_result != vk::Result::eErrorDeviceLost, "Device lost during submit");
+    // bbport: a bind that failed never signals: the submission waiting for it (and the game) would
+    // stop without a word.
+    std::size_t total = 0, unbound = 0;
+    for (const auto& binds : pending_binds) {
+        total += binds.binds.size();
+        for (const auto& bind : binds.binds) {
+            unbound += bind.memory ? 0 : 1;
+        }
+    }
+    if (submit_result != vk::Result::eSuccess || (arena_debug && total > 1000)) {
+        std::printf("GPU: game memory binding %s: %zu buffers, %zu binds (%zu unbinds), tick %llu\n",
+                    vk::to_string(submit_result).c_str(), pending_binds.size(), total, unbound,
+                    static_cast<unsigned long long>(signal_tick));
+        std::fflush(stdout);
+    }
+    ASSERT_MSG(submit_result == vk::Result::eSuccess, "Game memory binding failed: {}",
+               vk::to_string(submit_result));
 
     pending_binds.clear();
 }
