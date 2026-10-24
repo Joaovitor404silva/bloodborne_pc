@@ -128,7 +128,7 @@ bool Swapchain::AcquireNextImage() {
     return !needs_recreation;
 }
 
-bool Swapchain::Present() {
+bool Swapchain::Present(vk::Queue queue) {
     const vk::PresentInfoKHR present_info = {
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = &present_ready[image_index],
@@ -137,7 +137,7 @@ bool Swapchain::Present() {
         .pImageIndices = &image_index,
     };
 
-    auto result = instance.GetPresentQueue().presentKHR(present_info);
+    auto result = (queue ? queue : instance.GetPresentQueue()).presentKHR(present_info);
     if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
         needs_recreation = true;
     } else {
@@ -251,7 +251,7 @@ void Swapchain::SetSurfaceProperties() {
     // Select number of images in swap chain, we prefer one buffer in the background to work on
     // (bbport: two with frame generation, which presents several images per game frame).
     image_count = capabilities.minImageCount +
-                  (BbSettings::Get().frame_gen != BbSettings::FrameGenOff ? 2 : 1);
+                  (BbSettings::Get().ActiveFrameGen() != BbSettings::FrameGenOff ? 2 : 1);
     if (capabilities.maxImageCount > 0) {
         image_count = std::min(image_count, capabilities.maxImageCount);
     }

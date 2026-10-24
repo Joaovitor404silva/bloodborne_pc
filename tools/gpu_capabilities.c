@@ -1,9 +1,13 @@
 /* Check whether native-size depth/stencil images can be blitted to reduced
  * renderer targets. The renderer needs both directions for live presets. */
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vulkan/vulkan.h>
+#ifdef _WIN32
+void PrintFsr411Capabilities(VkPhysicalDevice device);
+#endif
 
 static VkDeviceSize largest_local_heap(VkPhysicalDevice device) {
     VkPhysicalDeviceMemoryProperties memory;
@@ -64,8 +68,17 @@ static int live_resolution_suits(VkPhysicalDevice device) {
     return suits;
 }
 
+/* --vram: prints "<MiB> <1 if discrete>" for the GPU the game uses (run.py's low-VRAM profile). */
+static void print_vram(VkPhysicalDevice device) {
+    VkPhysicalDeviceProperties props;
+    vkGetPhysicalDeviceProperties(device, &props);
+    printf("%llu %d\n", (unsigned long long)(largest_local_heap(device) >> 20),
+           props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU);
+}
+
 int main(int argc, char **argv) {
     const int live_mode = argc > 1 && !strcmp(argv[1], "--live-resolution");
+    const int vram_mode = argc > 1 && !strcmp(argv[1], "--vram");
     const VkApplicationInfo app = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pApplicationName = "bbport scene scaling probe",
@@ -96,9 +109,17 @@ int main(int argc, char **argv) {
     /* Match vk_instance.cpp's default ranking or its explicit BB_GPU_ID index. */
     VkPhysicalDevice selected = devices[0];
     const char *gpu_id = getenv("BB_GPU_ID");
-    if (gpu_id && atoi(gpu_id) >= 0) {
-        const unsigned long index = strtoul(gpu_id, NULL, 10);
-        if (index >= count) {
+    char *end = NULL;
+    errno = 0;
+    const long index = gpu_id ? strtol(gpu_id, &end, 10) : -1;
+    if (gpu_id && (end == gpu_id || *end || errno == ERANGE)) {
+        fputs("GPU scene scaling: invalid BB_GPU_ID\n", stderr);
+        free(devices);
+        vkDestroyInstance(instance, NULL);
+        return 1;
+    }
+    if (index >= 0) {
+        if ((unsigned long)index >= count) {
             fputs("GPU scene scaling: BB_GPU_ID is outside the device list\n", stderr);
             free(devices);
             vkDestroyInstance(instance, NULL);
@@ -109,8 +130,17 @@ int main(int argc, char **argv) {
         for (uint32_t i = 1; i < count; ++i)
             if (better_device(devices[i], selected)) selected = devices[i];
     }
-    if (live_mode) {
-        printf("%d\n", live_resolution_suits(selected));
+#ifdef _WIN32
+    if (argc > 1 && !strcmp(argv[1], "--fsr411")) {
+        PrintFsr411Capabilities(selected);
+        free(devices);
+        vkDestroyInstance(instance, NULL);
+        return 0;
+    }
+#endif
+    if (live_mode || vram_mode) {
+        if (live_mode) printf("%d\n", live_resolution_suits(selected));
+        else print_vram(selected);
         free(devices);
         vkDestroyInstance(instance, NULL);
         return 0;

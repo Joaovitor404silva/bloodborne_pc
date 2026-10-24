@@ -13,6 +13,7 @@
 #include <array>
 #include <chrono>
 #include <deque>
+#include <memory>
 #include <span>
 #include <vector>
 
@@ -26,6 +27,8 @@ namespace Vulkan {
 
 class Instance;
 class Scheduler;
+class Fg401Native;
+class FusedFgUi;
 
 /// The game's camera of a frame: near and far planes, vertical field of view (radians).
 struct FrameGenCamera {
@@ -35,6 +38,8 @@ struct FrameGenCamera {
     /// Row-vector D3D clip-space matrices (CameraMotion::ClipTransforms): the projection,
     /// current to previous clip, and back. Without them DLSS gets a camera that stood still.
     bool has_matrices = false;
+    bool has_world_camera = false;
+    std::array<float,12> view_to_world{};
     std::array<float, 16> view_to_clip{};
     std::array<float, 16> clip_to_prev_clip{};
     std::array<float, 16> prev_clip_to_clip{};
@@ -89,9 +94,14 @@ public:
     /// Capture (menus, movies). `hudless`: the same frame composed from Hudless() (General),
     /// or null: FSR 3.1 then interpolates it and draws this frame's UI over the result; DLSS
     /// gets it as its HUD-less input.
-    u32 Generate(vk::CommandBuffer cmdbuf, vk::Image color, vk::ImageView color_view,
+    u32 Generate(vk::CommandBuffer& cmdbuf, vk::Image color, vk::ImageView color_view,
                  vk::ImageUsageFlags color_usage, vk::Image hudless, vk::ImageView hudless_view,
                  u32 width, u32 height, std::span<const Output> outputs);
+
+    struct Completion { vk::Semaphore semaphore{}; u64 tick{}; };
+    Completion CompletionTicket() const { return detached_completion; }
+    static bool OverlapWanted();
+    void DrainOverlap();
 
     /// Diagnosis: with the presenter's frame dump pending (BB_FRAME_DUMP_TRIGGER), writes
     /// `image` (General layout, 4 bytes per pixel) to BB_DUMP_DIR as fg_<name>_*.raw.
@@ -110,6 +120,15 @@ private:
     void ComposeUi(vk::CommandBuffer cmdbuf, vk::ImageView color, vk::ImageView hudless,
                    const Output& output, u32 width, u32 height);
     void DestroyFsr3();
+#ifdef _WIN32
+    u32 GenerateFsr401Overlap(vk::CommandBuffer& command, vk::Image source,
+        vk::ImageView color_view, vk::ImageView hudless_view, u32 width, u32 height,
+        const Output& output, float frame_ms);
+    std::unique_ptr<Scheduler> fg401_completion_scheduler;
+    std::unique_ptr<Fg401Native> fsr401_overlap;
+    std::unique_ptr<FusedFgUi> fg401_fused_ui;
+#endif
+    Completion detached_completion{};
     /// A provider failed for good: DLSS hands over to FSR 3.1, FSR 3.1 switches it off.
     void Fail(int provider, const char* reason);
 
@@ -147,7 +166,8 @@ private:
     bool last_hudless = false;
     u32 hudless_changes = 0; ///< reported the first few times
     bool depth_inverted = false;
-    std::chrono::steady_clock::time_point last_generate{};
+    std::chrono::steady_clock::time_point last_generate{}, last_capture{};
+    float capture_frame_ms=16.6f;
 
     // FSR 3.1: the context and the frames it still holds views for until the GPU is done.
     FfxVkFsr3_3_1_6FrameGenerationContext* fsr3 = nullptr;

@@ -195,7 +195,7 @@ void Menu() {
     ImGui::Text("%s", FpsText().c_str());
 
     ImGui::SeparatorText("Temporal upscaling");
-    static const char* upscalers[] = {"Off", "FSR 3.1", "FSR 4 (INT8)", "FSR 4.1.1 (INT8)",
+    static const char* upscalers[] = {"Off", "FSR 3.1", "FSR 4 (INT8)", "FSR 4.1.1 (experimental)",
                                      "TAA (native anti-aliasing)", "DLSS (NVIDIA RTX)"};
     static const char* later[] = {"XeSS"};
     int upscaler = s.upscaler;
@@ -211,7 +211,12 @@ void Menu() {
             ImGui::EndDisabled();
             if (!supported) {
                 ImGui::SameLine();
-                ImGui::TextDisabled("- unsupported by this GPU");
+                if (i == BbSettings::UpscalerFsr411) {
+                    ImGui::TextDisabled("- unavailable");
+                    if (const char* problem = s.fsr411_problem.load()) Hint(problem);
+                } else {
+                    ImGui::TextDisabled("- unsupported by this GPU");
+                }
             }
         }
         for (const char* name : later) {
@@ -223,6 +228,26 @@ void Menu() {
         }
         ImGui::EndCombo();
     }
+#ifdef _WIN32
+    const bool fsr411_selected = s.upscaler == BbSettings::UpscalerFsr411;
+    static const char* fsr411_backends[] = {"Vulkan (fsr4vk)", "AMD DX12"};
+    ImGui::BeginDisabled(!fsr411_selected);
+    int backend = s.fsr411_backend;
+    if (ImGui::BeginCombo("FSR 4.1.1 backend", fsr411_selected ? fsr411_backends[backend] : "-")) {
+        for (int i = 0; i < 2; ++i) {
+            if (ImGui::Selectable(fsr411_backends[i], i == backend)) {
+                Store(s.fsr411_backend, i, true);
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::EndDisabled();
+    Hint("AMD DX12 uses AMD's FSR library through the Windows bridge. Vulkan uses fsr4vk. The method is saved with the launcher settings in bbport.ini and applies after restarting the game.");
+    if (fsr411_selected && s.fsr411_backend != s.startup_fsr411_backend) {
+        ImGui::TextDisabled("Active method: %s; selected method applies after restart",
+                            fsr411_backends[s.startup_fsr411_backend]);
+    }
+#endif
     if (const char* problem = s.dlss_problem.load(); problem && upscaler == BbSettings::UpscalerDlss) {
         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "DLSS: %s", problem);
     }
@@ -235,7 +260,11 @@ void Menu() {
     }
     if (BbSettings::IsFsr4(s.upscaler)) {
         if (s.upscaler == BbSettings::UpscalerFsr411) {
-            Hint("FSR 4.1.1 INT8: AMD 4.1.1 DLL model reproduced in Vulkan. One model covers Native through Performance, with another for Ultra Performance. Assets: tools/fsr4cap/build_assets.sh (requires the DLL and Proton).");
+#ifdef _WIN32
+            Hint("FSR 4.1.1 temporal upscaling uses the method selected above. AMD DX12 is included in the Windows package; Vulkan assets can be downloaded in the launcher. Quality presets and sharpening apply to both methods.");
+#else
+            Hint("FSR 4.1.1 uses the Vulkan model passes. One model covers Native through Performance, with another for Ultra Performance. See tools/fsr4cap/build_assets.sh for asset preparation.");
+#endif
         } else {
             Hint("FSR 4 INT8 uses the v07 model from the AMD FidelityFX SDK. Higher quality than FSR 3.1, with more GPU work. Changing presets rebuilds the model and may pause briefly. Assets: tools/fetch_fsr4_assets.sh.");
         }
@@ -307,6 +336,19 @@ void Menu() {
     ImGui::EndDisabled();
     Checkbox("Object motion vectors", s.object_motion);
     Hint("Accurate vectors for animated objects reduce breakup on clothing and weapons during movement. Static geometry receives no extra pass. Changes require a restart.");
+#ifdef _WIN32
+    const bool cache_available = s.object_motion &&
+        (s.upscaler == BbSettings::UpscalerFsr3 || BbSettings::IsFsr4(s.upscaler));
+    ImGui::BeginDisabled(!cache_available);
+    Checkbox("Motion-vector cache (experimental)", s.object_motion_cache);
+    ImGui::EndDisabled();
+    Hint("Reuses object-motion render targets and may improve FSR performance. Uses extra VRAM and requires object motion vectors. The saved choice applies after restarting the game.");
+    if (cache_available && BbSettings::FsrSettingsNeedRestart()) {
+        const bool active = s.startup_object_motion_cache && s.startup_object_motion &&
+            (s.startup_upscaler == BbSettings::UpscalerFsr3 || BbSettings::IsFsr4(s.startup_upscaler));
+        ImGui::TextDisabled("Startup cache mode: %s; changes apply after restart", active ? "On" : "Off");
+    }
+#endif
     bool show_motion = s.debug_view == BbSettings::DebugMotion;
     if (ImGui::Checkbox("Show motion vectors (debug)", &show_motion)) {
         s.debug_view = show_motion ? BbSettings::DebugMotion : BbSettings::DebugNone;
@@ -315,19 +357,23 @@ void Menu() {
     ImGui::EndDisabled(); // upscaler off
 
     ImGui::SeparatorText("Frame generation");
-    static const char* frame_gens[] = {"Off", "FSR 3.1 (any GPU)", "DLSS (NVIDIA RTX 40/50)"};
+    static const char* frame_gens[] = {"Off", "FSR 3.1 (any GPU)", "DLSS (NVIDIA RTX 40/50)", "AMD ML-FG 4.0.1 (RX 9000, 2x SDR, experimental)"};
     const int frame_gen = s.frame_gen;
     if (ImGui::BeginCombo("Frame generation", frame_gens[frame_gen])) {
         for (int i = 0; i < BbSettings::FrameGenCount; ++i) {
-            const bool supported = i != BbSettings::FrameGenDlss || s.dlssg_max_multiplier > 1;
+            const bool supported = (i != BbSettings::FrameGenDlss || s.dlssg_max_multiplier > 1) &&
+                (i != BbSettings::FrameGenFsr401 || s.fg401_supported);
             ImGui::BeginDisabled(!supported);
             if (ImGui::Selectable(frame_gens[i], i == frame_gen)) {
-                Store(s.frame_gen, i, true);
+                BbSettings::SelectFrameGen(i);
+                dirty = true;
             }
             ImGui::EndDisabled();
             if (!supported) {
                 ImGui::SameLine();
-                ImGui::TextDisabled("- unsupported by this GPU");
+                ImGui::TextDisabled(i == BbSettings::FrameGenFsr401 ? "- unavailable" : "- unsupported by this GPU");
+                if (i == BbSettings::FrameGenFsr401)
+                    if (const char* problem = s.fg401_problem.load()) Hint(problem);
             }
         }
         ImGui::EndCombo();
@@ -346,7 +392,7 @@ void Menu() {
     ImGui::EndDisabled();
     Hint("On: no more frames than the display shows (an uncapped game gets fewer generated frames, and the GPU does less). Off: the multiplier as chosen; past the refresh rate the display shows the newest frames.");
     // What runs now (fitted: at most the frames the display shows between two of the game's).
-    if (s.frame_gen != BbSettings::FrameGenOff && s.frame_gen_display_hz > 0) {
+    if (s.ActiveFrameGen() != BbSettings::FrameGenOff && !s.frame_gen_hdr && s.frame_gen_display_hz > 0) {
         const int now = std::min(s.frame_gen_now.load(), multiplier - 1);
         if (now > 0 && s.frame_gen_flip_limit > 0) {
             ImGui::TextDisabled("Now %dx on a %d Hz display; V-Sync (FIFO) caps the game at %d FPS",
@@ -362,7 +408,16 @@ void Menu() {
             ImGui::TextDisabled("Paused: presenting fell behind (V-Sync on a slower display?)");
         }
     }
-    if (const char* problem = s.frame_gen_problem.load()) {
+    if (s.frame_gen == BbSettings::FrameGenFsr401) {
+        if (const char* problem = s.fg401_problem.load()) {
+            ImGui::PushTextWrapPos();
+            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s", problem);
+            ImGui::PopTextWrapPos();
+        }
+        if (s.frame_gen_hdr)
+            ImGui::TextDisabled("ML-FG paused: HDR output.");
+    }
+    if (const char* problem = s.frame_gen_problem.load(); problem && !s.frame_gen_hdr) {
         ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.3f, 1.0f), "%s", problem);
     }
 
@@ -403,7 +458,7 @@ void Menu() {
         }
         ImGui::EndCombo();
     }
-    Hint("On: output and presets change without restarting, while game post-processing stays at 1080p. Off: the scene is patched to the preset resolution at startup. Auto enables the live path on capable discrete GPUs. Changes apply after restarting the game.");
+    Hint("On: output and presets change without restarting, while game post-processing stays at 1080p. Off: the scene is patched to the preset resolution at startup. Auto enables the live path on capable discrete GPUs, except for outputs above 1080p with depth of field on (the live path blurs those scenes). Changes apply after restarting the game.");
     ImGui::SeparatorText("Game effects (restart required)");
     static const char* lods[] = {"Highest (-2)", "Original", "Lower (1)", "Lowest (2)"};
     static constexpr int lod_values[] = {-2, 0, 1, 2};
@@ -429,7 +484,7 @@ void Menu() {
     Hint("Effects are applied through game patches at startup (patches/Bloodborne.xml). Motion blur and dynamic shadows can increase GPU load.");
     Hint("Free camera: hold Cross and press L3 (keyboard: Space + Z). Debug menu: left touchpad / Tab. Requires DbgFont14h.ccm and DbgFont14h.tpf in dvdroot_ps4/font from the debug-font mod. Right touchpad: Backspace.");
 
-    bool restart = s.object_motion != s.startup_object_motion ||
+    bool restart = BbSettings::FsrSettingsNeedRestart() || s.object_motion != s.startup_object_motion ||
                    s.model_lod != s.startup_model_lod || s.fov != s.startup_fov ||
                    s.live_resolution != s.startup_live_resolution ||
                    BbSettings::ResolutionNeedsRestart();

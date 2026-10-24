@@ -52,6 +52,7 @@ struct Frame {
     };
     std::array<Generated, FrameGenerator::MaxGenerated> generated{};
     u32 generated_count{};
+    bool detached_output{};
 };
 
 enum SchedulerType {
@@ -168,6 +169,8 @@ private:
     std::unique_ptr<FrameGenerator> frame_generator;
     /// The game's picture before its UI, through the same passes as the frame.
     Frame hudless_frame{};
+    // One per presentation frame: the completion queue may still sample the older HUD.
+    std::vector<Frame> overlap_hudless_frames;
     std::chrono::steady_clock::time_point last_game_present{};
     std::atomic<double> game_frame_ms{16.7}; ///< written by the present thread
     /// Generated frames per game frame the display can show (UpdateFrameGenLimit).
