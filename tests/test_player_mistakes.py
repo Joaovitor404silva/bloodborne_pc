@@ -788,5 +788,26 @@ class TemporaryFolderTests(unittest.TestCase):
         self.assertIsNone(help_.location_problem(r'C:\Games\BBPort'))
 
 
+class TranslationTests(unittest.TestCase):
+    """The new texts in every language of the launcher (Russian beside the English in the code)."""
+
+    def test_every_new_text_is_used_and_translated(self):
+        import string
+        import bbport_lang
+        import bbport_lang_mistakes as texts
+        source = ''.join((ROOT / 'launcher' / name).read_text(encoding='utf-8')
+                         for name in ('bbport_launcher_win.py', 'bbport_help.py'))
+        languages = [code for code, _name in bbport_lang.LANGUAGE_NAMES if code not in ('', 'en', 'ru')]
+        self.assertEqual(sorted(texts.MISTAKES), sorted(languages))
+        fields = lambda text: [f[1] for f in string.Formatter().parse(text) if f[1] is not None]  # noqa: E731
+        for key in texts.MISTAKE_KEYS:
+            self.assertIn(key[:40], source)  # a text the launcher shows (its start, before any line break)
+            for language in languages:
+                with self.subTest(language=language, text=key[:30]):
+                    translated = bbport_lang.table(language)[key]
+                    self.assertNotEqual(translated, key)
+                    self.assertEqual(fields(translated), fields(key))  # the same {} in the same order
+
+
 if __name__ == '__main__':
     unittest.main()

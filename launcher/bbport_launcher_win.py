@@ -219,6 +219,7 @@ import bbport_lang_help  # noqa: E402,F401 (the Help page's and the game tests' 
 import bbport_lang_ui  # noqa: E402,F401 (the regrouped pages, the side bar, the guide)
 import bbport_lang_world  # noqa: E402,F401 (the new texts in the other eleven languages)
 import bbport_lang_port  # noqa: E402,F401 (the 1.9.3 texts and the Controls page's key names)
+import bbport_lang_mistakes  # noqa: E402,F401 (the repairs of player mistakes, in the other eleven languages)
 import bbport_hardware as hardware  # noqa: E402
 import bbport_frame  # noqa: E402
 import bbport_display as display  # noqa: E402
