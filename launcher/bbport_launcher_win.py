@@ -2577,6 +2577,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             name = thd_id.get() if thd_token.get() else ''
             account.configure(text=_('Signed in as {}').format(name) if name else _('Not signed in'))
         show_accounts()
+        thd_token.trace_add('write', lambda *_a: show_accounts())  # also forgotten after a refusal
         self.row(f, _('Account'), account, key='thd_online_id')
         signing = ttk.Label(f, text='', style='Muted.TLabel', justify='left', wraplength=self.px(560))
         # The code to type on the website, large, with a button that copies it.
@@ -4308,6 +4309,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                         self.placer = None
                     self.stop_button.configure(state='disabled')
                     self.stop_button.pack_forget()
+                    self.forget_refused_sign_in()
                     self.refresh_status()
                     reopen = self.setting('reopen_after_game')
                     if self.hidden:
@@ -4334,6 +4336,22 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         except queue.Empty:
             pass
         self.root.after(100, self.drain_output)
+
+    def forget_refused_sign_in(self):
+        """After the game: a sign-in The Hunter's Dream refused is forgotten (forget_sign_in), with a line in
+        the log; the Play page and the Online page then say "not signed in", and the next Play asks."""
+        token = self.var('thd_token', 'app')
+        if not token.get() or not sign_in_refused(self.app):
+            return
+        token.set('')
+        self.app['thd_token'] = ''
+        try:
+            forget_sign_in()
+        except OSError:
+            pass  # saved with the other settings later
+        self.append(_("The Hunter's Dream refused this PC's sign-in: sign in again on the Online page.",
+                      'The Hunter\'s Dream отклонил вход с этого ПК: войдите снова на странице «Онлайн-игра».') +
+                    '\n')
 
     def stop(self):
         if self.job:
@@ -4729,6 +4747,35 @@ def remember_window(size):
         pass
 
 
+# What the game logs when The Hunter's Dream refuses the saved sign-in (gpu/bbnet/thd/thd_session.cpp MarkRefused).
+SIGN_IN_REFUSED = "refused this PC's sign-in"
+
+
+def sign_in_refused(settings):
+    """Whether the last game's log says The Hunter's Dream refused the saved sign-in (a revoked or expired token).
+    The game goes on offline and said so only there; the launcher still showed it signed in."""
+    try:
+        text = (saves_folder(settings) / 'last_run.log').read_text(encoding='utf-8', errors='replace')
+    except OSError:
+        return False
+    return SIGN_IN_REFUSED in text[-400_000:]
+
+
+def forget_sign_in():
+    """The refused sign-in out of settings.json (nothing else changed): the Online page shows "Not signed in"
+    and the next Play asks to sign in."""
+    settings = load_settings()
+    if settings.get('thd_token'):
+        settings['thd_token'] = ''
+        write_settings(settings)
+
+
+def needs_sign_in(settings):
+    """Online with The Hunter's Dream without a sign-in: run.py would stop the start (game_environment)."""
+    return bool(settings.get('online')) and settings.get('online_pool') != 'shadnet' and HUNTERS_DREAM_POOL and \
+        not settings.get('thd_token')
+
+
 def custom_output(size, settings):
     """The output size of the player's own to remember (settings.json output_custom): one the game's menu does
     not know. gpu/shim/bbport_settings.cpp has ten; its first save in the menu writes 1920x1080 instead (the
@@ -4850,6 +4897,14 @@ def play_without_window(settings):
             except (OSError, ValueError):
                 pass
         code = process.wait()
+    if settings.get('thd_token') and sign_in_refused(settings):
+        try:
+            forget_sign_in()
+            with open(log_dir / 'last_run.log', 'a', encoding='utf-8') as log:
+                log.write("Online: The Hunter's Dream refused the saved sign-in; it is forgotten, the next start "
+                          'asks to sign in\n')
+        except OSError:
+            pass
     placer.stop()
     if placer.last and not settings.get('fullscreen'):
         remember_window(placer.last)
@@ -4969,6 +5024,8 @@ def main():
         problem = start_problem(settings)
         if problem:
             page = problem[1]
+        elif needs_sign_in(settings):
+            page = 'sign in'  # its Play asks: sign in now, or play offline this time
         else:
             result = play_without_window(settings)
             if result == 0:
@@ -4988,7 +5045,9 @@ def main():
     launcher = Launcher(root, tk, ttk, filedialog, messagebox)
     root.report_callback_exception = launcher.callback_error  # never invisible (a test keeps its own)
     bring_to_front_on_request(lambda: launcher.ui_calls.put(launcher.bring_back))
-    if page != 'play':
+    if page == 'sign in':
+        root.after(500, launcher.play)
+    elif page != 'play':
         launcher.show(page)
     if failed:
         root.after(500, lambda: launcher.after_exit(failed, always=True))
