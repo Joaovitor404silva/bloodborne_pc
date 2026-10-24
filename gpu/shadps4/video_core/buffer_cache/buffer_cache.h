@@ -247,6 +247,9 @@ private:
 
     struct Backing : public Interval {
         vk::DeviceMemory memory;
+        /// bbport: in blocks, like start and end: SubRange and CanMergeWith add block counts to it
+        /// (in bytes, a range split by a release pointed one piece too early and two ranges
+        /// shared pieces).
         u64 offset;
         constexpr bool CanMergeWith(const Backing& other) const noexcept {
             return memory == other.memory && offset + (end - start) == other.offset;

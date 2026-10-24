@@ -498,7 +498,7 @@ const Buffer* BufferCache::GetArena(u64 first_block, u64 last_block) {
             .resourceOffset = (start - base_block) << block_shift,
             .size = (end - start) << block_shift,
             .memory = backing.memory,
-            .memoryOffset = backing.offset + ((start - backing.start) << block_shift),
+            .memoryOffset = (backing.offset + (start - backing.start)) << block_shift,
         });
     });
 
@@ -563,14 +563,14 @@ void BufferCache::EnsureResident(const Buffer* arena, u64 first_block, u64 last_
             backing.start = block;
             backing.end = block + run->count;
             backing.memory = slab.memory;
-            backing.offset = u64{run->index} << block_shift;
+            backing.offset = run->index;
             resident_ranges.Add(backing);
             CancelUnbinds(arena, block, block + run->count);
             binds->binds.emplace_back(vk::SparseMemoryBind{
                 .resourceOffset = (block << block_shift) - arena->cpu_addr,
                 .size = u64{run->count} << block_shift,
                 .memory = slab.memory,
-                .memoryOffset = backing.offset,
+                .memoryOffset = backing.offset << block_shift,
             });
             arena_backed += u64{run->count} << block_shift;
             block += run->count;
@@ -952,7 +952,7 @@ u64 BufferCache::ReleaseChunk(u64 chunk) {
             .start = part.start,
             .end = part.end,
             .slab = slab_of.at(static_cast<VkDeviceMemory>(part.memory)),
-            .piece = static_cast<u32>(part.offset >> block_shift),
+            .piece = static_cast<u32>(part.offset),
             .clear_tick = tick,
         });
         // Uploaded again from the game's memory when it is bound again.
@@ -1148,90 +1148,49 @@ void BufferCache::SubmitPendingArenaBinds(Vulkan::SubmitInfo& info) {
         return;
     }
 
-    // bbport: in batches of at most 256 binds, each waiting for the one before: AMD's Windows
-    // driver refused an arena migration's 849 binds in one call (ErrorInitializationFailed; 638
-    // went through), and the submission waiting for them never ran (the game stopped silently).
-    constexpr std::size_t MaxBinds = 256;
-    const auto signal_sema = memory_semaphore.Handle();
     std::vector<vk::SparseBufferMemoryBindInfo> buffer_binds;
-    std::size_t in_batch = 0, batches = 0, total = 0;
-    u64 waited = 0; // the semaphore value the next batch waits for (0: none yet)
-    const auto submit_batch = [&] {
-        if (buffer_binds.empty()) {
-            return;
-        }
-        const u64 signal_tick = memory_semaphore.NextTick();
-        const vk::TimelineSemaphoreSubmitInfo timeline_si = {
-            .waitSemaphoreValueCount = waited ? 1u : 0u,
-            .pWaitSemaphoreValues = &waited,
-            .signalSemaphoreValueCount = 1u,
-            .pSignalSemaphoreValues = &signal_tick,
-        };
-        const vk::BindSparseInfo sparse_info = {
-            .pNext = &timeline_si,
-            .waitSemaphoreCount = waited ? 1u : 0u,
-            .pWaitSemaphores = &signal_sema,
-            .bufferBindCount = static_cast<u32>(buffer_binds.size()),
-            .pBufferBinds = buffer_binds.data(),
-            .signalSemaphoreCount = 1u,
-            .pSignalSemaphores = &signal_sema,
-        };
-        const auto submit_result = instance.GetGraphicsQueue().bindSparse(sparse_info);
-        if (submit_result == vk::Result::eErrorDeviceLost) {
-            instance.ReportDeviceLost("sparse binding");
-        }
-        ASSERT_MSG(submit_result != vk::Result::eErrorDeviceLost, "Device lost during submit");
-        // A bind that failed never signals: the submission waiting for it (and the game) would
-        // stop without a word.
-        if (submit_result != vk::Result::eSuccess) {
-            std::printf("GPU: game memory binding %s: batch %zu, %zu binds in %zu buffers; the first:\n",
-                        vk::to_string(submit_result).c_str(), batches, in_batch, buffer_binds.size());
-            u32 shown = 0;
-            for (const auto& info : buffer_binds) {
-                for (u32 i = 0; i < info.bindCount && shown < 24; ++i, ++shown) {
-                    const auto& bind = info.pBinds[i];
-                    const auto it = slab_of.find(static_cast<VkDeviceMemory>(bind.memory));
-                    std::printf("  offset %#llx size %#llx memory %s %lld offset %#llx\n",
-                                static_cast<unsigned long long>(bind.resourceOffset),
-                                static_cast<unsigned long long>(bind.size),
-                                bind.memory ? "slab" : "none",
-                                bind.memory ? (it != slab_of.end() ? static_cast<long long>(it->second) : -1ll)
-                                            : 0ll,
-                                static_cast<unsigned long long>(bind.memoryOffset));
-                }
-            }
-            std::fflush(stdout);
-        }
-        ASSERT_MSG(submit_result == vk::Result::eSuccess, "Game memory binding failed: {}",
-                   vk::to_string(submit_result));
-        waited = signal_tick;
-        buffer_binds.clear();
-        in_batch = 0;
-        ++batches;
-    };
+    buffer_binds.reserve(pending_binds.size());
+    std::size_t total = 0;
     for (const auto& binds : pending_binds) {
-        std::size_t done = 0;
-        while (done < binds.binds.size()) {
-            const std::size_t count = std::min(binds.binds.size() - done, MaxBinds - in_batch);
-            buffer_binds.push_back(vk::SparseBufferMemoryBindInfo{
-                .buffer = binds.arena->Handle(),
-                .bindCount = static_cast<u32>(count),
-                .pBinds = binds.binds.data() + done,
-            });
-            done += count;
-            in_batch += count;
-            total += count;
-            if (in_batch == MaxBinds) {
-                submit_batch();
-            }
-        }
+        buffer_binds.emplace_back(vk::SparseBufferMemoryBindInfo{
+            .buffer = binds.arena->Handle(),
+            .bindCount = static_cast<u32>(binds.binds.size()),
+            .pBinds = binds.binds.data(),
+        });
+        total += binds.binds.size();
     }
-    submit_batch();
-    if (arena_debug && batches > 1) {
-        std::printf("Game memory: %zu binds in %zu batches\n", total, batches);
+
+    const u64 signal_tick = memory_semaphore.NextTick();
+    const auto signal_sema = memory_semaphore.Handle();
+
+    const vk::TimelineSemaphoreSubmitInfo timeline_si = {
+        .signalSemaphoreValueCount = 1u,
+        .pSignalSemaphoreValues = &signal_tick,
+    };
+
+    const vk::BindSparseInfo sparse_info = {
+        .pNext = &timeline_si,
+        .bufferBindCount = static_cast<u32>(buffer_binds.size()),
+        .pBufferBinds = buffer_binds.data(),
+        .signalSemaphoreCount = 1u,
+        .pSignalSemaphores = &signal_sema,
+    };
+
+    info.AddWait(signal_sema, signal_tick);
+    auto submit_result = instance.GetGraphicsQueue().bindSparse(sparse_info);
+    if (submit_result == vk::Result::eErrorDeviceLost) {
+        instance.ReportDeviceLost("sparse binding");
+    }
+    ASSERT_MSG(submit_result != vk::Result::eErrorDeviceLost, "Device lost during submit");
+    // bbport: a bind that failed never signals: the submission waiting for it (and the game) would
+    // stop without a word.
+    if (submit_result != vk::Result::eSuccess) {
+        std::printf("GPU: game memory binding %s: %zu binds in %zu buffers\n",
+                    vk::to_string(submit_result).c_str(), total, buffer_binds.size());
         std::fflush(stdout);
     }
-    info.AddWait(signal_sema, waited);
+    ASSERT_MSG(submit_result == vk::Result::eSuccess, "Game memory binding failed: {}",
+               vk::to_string(submit_result));
 
     pending_binds.clear();
 }
