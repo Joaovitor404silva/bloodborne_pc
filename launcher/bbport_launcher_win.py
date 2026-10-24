@@ -2668,7 +2668,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         side.pack(side='right', padx=(12, 18))
         tk.Label(side, text=_(*GRADE_NAMES[grade]), bg=CARD, fg=TROPHY_COLORS[grade] if earned else MUTED,
                  font=(theme.BODY, 9, 'bold')).pack(anchor='e')
-        date_format = '%Y年%m月%d日' if LANG == 'zh' else '%d %b %Y'
+        date_format = '%Y年%m月%d日' if LANG in ('zh', 'ja') else '%Y. %m. %d.' if LANG == 'ko' else '%d %b %Y'
         tk.Label(side, text=time.strftime(date_format, time.localtime(when)) if earned else _('Locked', 'Не получен'),
                  bg=CARD, fg=MUTED, font=(theme.BODY, 9)).pack(anchor='e', pady=(2, 0))
         middle = tk.Frame(card, bg=CARD)

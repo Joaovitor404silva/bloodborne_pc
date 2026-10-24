@@ -89,7 +89,42 @@ class TrophyLocalizationTests(unittest.TestCase):
             self.assertIn(expected, text)
         self.assertIn(time.strftime('%Y年%m月%d日', time.localtime(0)), text)
 
+    def test_multilingual_trophy_translations_coverage(self):
+        supported_langs = ('zh', 'ru', 'ja', 'ko', 'de', 'fr', 'es', 'it', 'pt', 'pl', 'tr')
+        for lang in supported_langs:
+            table = launcher.bbport_lang.table(lang)
+            for _id, name, description, _grade, _group in launcher.trophies.TROPHIES:
+                with self.subTest(lang=lang, trophy=_id):
+                    self.assertIn(name, table)
+                    self.assertIn(description, table)
+                    self.assertTrue(len(table[name]) > 0)
+                    self.assertTrue(len(table[description]) > 0)
+
+    def test_all_supported_languages_render_translated_trophy_cards(self):
+        expected_gascoigne = {
+            'zh': '加斯科因神父',
+            'ru': 'Отец Гаскойн',
+            'ja': 'ガスコイン神父',
+            'ko': '개스코인 신부',
+            'de': 'Pater Gascoigne',
+            'fr': 'Père Gascoigne',
+            'es': 'Padre Gascoigne',
+            'it': 'Padre Gascoigne',
+            'pt': 'Padre Gascoigne',
+            'pl': 'Ojciec Gascoigne',
+            'tr': 'Peder Gascoigne',
+        }
+        for lang, expected_name in expected_gascoigne.items():
+            with self.subTest(language=lang):
+                launcher.LANG = lang
+                body = Widget()
+                self.app.trophy_card(body, launcher.trophies.BY_ID[14], None)
+                card_labels = labels(body)
+                self.assertIn(expected_name, card_labels)
+
     def test_psn_wording_keeps_names_punctuation_and_line_breaks(self):
+        # Chinese
+        launcher.LANG = 'zh'
         self.assertEqual(launcher._('Bloodborne'), 'Bloodborne')
         self.assertEqual(launcher._('Yharnam Sunrise'), '亚南日出')
         self.assertEqual(launcher._('Honoring Wishes'), '履行愿望')
@@ -100,7 +135,42 @@ class TrophyLocalizationTests(unittest.TestCase):
             launcher._("Captivated by the moon presence, you pledge to watch over the hunter's dream."),
             '因月亮的出现而被迷惑，\n你发誓要照看好猎人之梦。')
 
+        # Russian
+        launcher.LANG = 'ru'
+        self.assertEqual(launcher._('Yharnam Sunrise'), 'Ярнамский восход')
+        self.assertEqual(launcher._('All trophies acquired. Hats off!'), 'Получены все трофеи. Снимаем шляпу!')
+
+        # Japanese
+        launcher.LANG = 'ja'
+        self.assertEqual(launcher._('Yharnam Sunrise'), 'ヤーナムの夜明け')
+        self.assertEqual(launcher._('All trophies acquired. Hats off!'), 'すべてのトロフィーを得た証。おめでとう')
+
+        # German
+        launcher.LANG = 'de'
+        self.assertEqual(launcher._('Yharnam Sunrise'), 'Yharnam-Sonnenaufgang')
+        self.assertEqual(launcher._('All trophies acquired. Hats off!'), 'Alle Trophäen erhalten. Hut ab!')
+
+        # Korean
+        launcher.LANG = 'ko'
+        self.assertEqual(launcher._('Yharnam Sunrise'), '야남의 새벽')
+        self.assertEqual(launcher._('All trophies acquired. Hats off!'), '모든 트로피를 획득한 증표. 축하한다')
+
+    def test_date_formatting_by_language(self):
+        for lang, expected_date in (
+            ('zh', time.strftime('%Y年%m月%d日', time.localtime(0))),
+            ('ja', time.strftime('%Y年%m月%d日', time.localtime(0))),
+            ('ko', time.strftime('%Y. %m. %d.', time.localtime(0))),
+            ('en', time.strftime('%d %b %Y', time.localtime(0))),
+            ('de', time.strftime('%d %b %Y', time.localtime(0))),
+        ):
+            with self.subTest(language=lang):
+                launcher.LANG = lang
+                body = Widget()
+                self.app.trophy_card(body, launcher.trophies.BY_ID[14], 0)
+                self.assertIn(expected_date, labels(body))
+
     def test_notification_and_unknown_trophy_fallback(self):
+        launcher.LANG = 'zh'
         self.app.toasts = [14]
         self.app.show_toast()
         self.assertEqual(self.icon_ids[-1], 14)
@@ -113,6 +183,7 @@ class TrophyLocalizationTests(unittest.TestCase):
         self.assertIn('奖杯 999', labels(self.app.content))
 
     def test_empty_filters_use_chinese_messages(self):
+        launcher.LANG = 'zh'
         self.app.tracker.unlocked = {}
         self.app.trophy_filter = 'earned'
         self.app.render_trophies()
@@ -124,8 +195,8 @@ class TrophyLocalizationTests(unittest.TestCase):
         self.app.render_trophies()
         self.assertIn(launcher._('Every trophy is earned. Hail, good hunter.'), labels(self.app.trophy_body))
 
-    def test_other_languages_keep_the_english_trophy_fallback(self):
-        for language in ('en', 'ru', 'fr'):
+    def test_english_and_unsupported_languages_keep_english_fallback(self):
+        for language in ('en', 'unsupported'):
             with self.subTest(language=language):
                 launcher.LANG = language
                 body = Widget()
