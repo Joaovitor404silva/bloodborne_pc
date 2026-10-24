@@ -1044,9 +1044,23 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         root.after(300, self.poll_trophies)
         self.hunters, self.hunters_when, self.hunters_asking = None, 0, False
         root.after(3000, self.poll_hunters)
+        root.after(800, self.temporary_warning)
         threading.Thread(target=self.detect_gpu, daemon=True).start()
         if self.app.get('check_updates', True) and not COOP_TEST:
             threading.Thread(target=self.check_update, daemon=True).start()
+
+    def temporary_warning(self):
+        """Once per start of a port opened from inside a zip or rar, its saves in it (saves_in_temporary_folder):
+        they would be deleted with that folder, which cannot be helped from here."""
+        if not saves_in_temporary_folder(self.app):
+            return
+        self.messagebox.showwarning('Bloodborne', _(
+            'The port runs from a temporary folder ({}), as when it is started from inside a zip or rar file. That '
+            'folder is deleted when the archive closes, and your saves with it.\n\nExtract the port to a folder '
+            'first (like C:\\Games\\BBPort) and start Bloodborne.exe from there.',
+            'Порт запущен из временной папки ({}), как при запуске прямо из zip- или rar-архива. Эта папка '
+            'удаляется, когда архив закрывается, а вместе с ней и ваши сохранения.\n\nСначала распакуйте порт '
+            'в папку (например, C:\\Games\\BBPort) и запускайте Bloodborne.exe оттуда.').format(PORT_DIR))
 
     def callback_error(self, kind, value, trace):
         """Tk's handler for an error in a button's or a timer's code. Its own printed to a console the packaged
@@ -4869,6 +4883,13 @@ def misplaced_saves(settings):
     return None, folder if folder and folder != settings.get('encrypted_told') else None
 
 
+def saves_in_temporary_folder(settings):
+    """The port runs from an archive program's temporary folder (bbport_help.temporary_folder) and its saves are in
+    there too (not in a saves folder of the player's own elsewhere)."""
+    return bbport_help.temporary_folder(PORT_DIR) and \
+        bbport_help.temporary_folder(saves_folder(settings))
+
+
 def start_problem(settings):
     """(message, page) for what keeps the game from starting and cannot be repaired here, checked before every
     start (Play, Play Bloodborne.exe); None when nothing does."""
@@ -5079,6 +5100,8 @@ def main():
             page = problem[1]
         elif needs_sign_in(settings):
             page = 'sign in'  # its Play asks: sign in now, or play offline this time
+        elif saves_in_temporary_folder(settings):
+            pass  # the launcher opens and warns (temporary_warning); its Play starts the game anyway
         else:
             result = play_without_window(settings)
             if result == 0:

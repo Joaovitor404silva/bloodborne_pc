@@ -333,7 +333,19 @@ def system_problem(game_dir):
 
 def location_problem(port_dir):
     text = str(port_dir).lower()
-    return 'location' if 'onedrive' in text or 'program files' in text else None
+    synced = getattr(L, 'synced_folder', None)  # OneDrive, Dropbox, Google Drive, iCloud, Nextcloud
+    return 'location' if 'onedrive' in text or 'program files' in text or (synced and synced(port_dir)) else None
+
+
+# The folders an archive program puts a file in that is opened from inside a zip or rar: WinRAR's Rar$EX…, 7-Zip's
+# 7zO…, Windows' own Temp1_<name>.zip (all in %TEMP%). Not %TEMP% as a whole: other folders there are no archive's.
+ARCHIVE_FOLDER = re.compile(r'[\\/](?:rar\$ex[^\\/]*|7zo[^\\/]*|temp\d+_[^\\/]*\.zip)(?:[\\/]|$)', re.I)
+
+
+def temporary_folder(port_dir):
+    """Whether the port runs from an archive program's folder (ARCHIVE_FOLDER): it is deleted when the archive
+    closes, the saves in it too."""
+    return ARCHIVE_FOLDER.search(os.path.abspath(str(port_dir))) is not None
 
 
 def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):

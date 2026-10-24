@@ -749,5 +749,44 @@ class MissingFolderTests(unittest.TestCase):
         self.assertTrue((self.folder / 'new cache').is_dir())
 
 
+class TemporaryFolderTests(unittest.TestCase):
+    """Started from inside a zip or rar: WinRAR and 7-Zip unpack into a temporary folder that goes when the archive
+    closes, with the saves in it. Dropbox and Google Drive were not flagged as synced folders."""
+
+    def test_an_archive_programs_folder(self):
+        import tempfile
+        import bbport_help as help_
+        temp = tempfile.gettempdir()
+        for folder in (os.path.join(temp, 'Rar$EXa12345.6789', 'BBPort'), os.path.join(temp, '7zO8C1B.tmp', 'BBPort'),
+                       os.path.join(temp, 'Temp1_bbport-1.9.4.zip', 'BBPort'), r'D:\Rar$EXb99.1\BBPort'):
+            self.assertTrue(help_.temporary_folder(folder), folder)
+        self.assertFalse(help_.temporary_folder(r'C:\Games\BBPort'))
+        # Other folders in %TEMP% are no archive's: the launcher's own update, a developer's checkout.
+        self.assertFalse(help_.temporary_folder(os.path.join(temp, 'bbport-update', 'new', 'BBPort')))
+        self.assertFalse(help_.temporary_folder(os.path.join(temp, 'claude', 'scratchpad', 'wt-mistakes')))
+        self.assertFalse(help_.temporary_folder(r'C:\Games\Temp1 notes.zip files\BBPort'))
+
+    def test_the_warning_once_per_start_only_with_the_saves_in_there(self):
+        import tempfile
+        from pathlib import Path
+        port = Path(tempfile.gettempdir()) / 'Rar$EXa12.3' / 'BBPort'
+        ui = bare_launcher()
+        with mock.patch.multiple(L, PORT_DIR=port, DATA_DIR=port):
+            ui.temporary_warning()
+            self.assertIn('Extract the port to a folder first', ui.messagebox.showwarning.call_args.args[1])
+            ui.messagebox.reset_mock()
+            ui.app['user_dir'] = r'D:\Bloodborne saves'  # saves of their own elsewhere: nothing to lose
+            ui.temporary_warning()
+            ui.messagebox.showwarning.assert_not_called()
+        source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
+        self.assertEqual(source.count('root.after(800, self.temporary_warning)'), 1)  # once, when the window opens
+
+    def test_dropbox_and_google_drive_are_named_like_onedrive(self):
+        import bbport_help as help_
+        self.assertEqual(help_.location_problem(r'C:\Users\a\Dropbox\BBPort'), 'location')
+        self.assertEqual(help_.location_problem(r'G:\My Drive\..\Google Drive\BBPort'), 'location')
+        self.assertIsNone(help_.location_problem(r'C:\Games\BBPort'))
+
+
 if __name__ == '__main__':
     unittest.main()
