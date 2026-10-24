@@ -139,6 +139,7 @@ private:
         vk::DeviceMemory memory{};
         bool vram{};    ///< in the VRAM heap (else system memory the GPU reaches)
         bool reserve{}; ///< the reserve kept at start: taken last, never freed
+        bool pinned{};  ///< alive at an arena migration: the old arena still binds its pieces
         u32 pieces{};   ///< pieces in the slab
         u32 used{};     ///< pieces bound, or released but not yet put back
         std::vector<u32> free; ///< pieces to take, sorted so the lowest is taken first
