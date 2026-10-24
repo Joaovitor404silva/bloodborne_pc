@@ -157,5 +157,44 @@ class AntivirusLockTests(unittest.TestCase):
         self.assertIn("fail(f'bb-probe.exe is missing from", source)  # the player's text when packaged
 
 
+class SettingsNotWritableTests(unittest.TestCase):
+    """A port folder without write permission or a full drive: Play did nothing, without a word."""
+
+    def test_play_names_the_file_and_the_folder(self):
+        ui = bare_launcher()
+        ui.var = lambda key, store: mock.Mock(get=mock.Mock(return_value=False if key == 'online' else ''))
+        full = OSError(28, 'There is not enough space on the disk', r'D:\Games\BBPort\bbport.ini')
+        with mock.patch.object(L, 'game_underway', return_value=False), \
+                mock.patch.object(L.Launcher, 'collect', side_effect=full), \
+                mock.patch.object(L.subprocess, 'Popen') as popen:
+            ui.play()
+        popen.assert_not_called()
+        text = ui.messagebox.showerror.call_args.args[1]
+        self.assertIn('bbport.ini', text)
+        self.assertIn(r'D:\Games\BBPort', text)
+        self.assertIn('There is not enough space on the disk', text)
+
+    def test_an_unexpected_error_is_shown_once_and_logged(self):
+        import tkinter as tk
+        root = tk.Tk()
+        root.withdraw()
+        self.addCleanup(root.destroy)
+        ui = bare_launcher(root=root)
+        root.report_callback_exception = ui.callback_error
+
+        def broken():
+            raise ValueError('could not convert string to float: 0,5')
+        for _ in range(3):
+            root.after(0, broken)
+            root.update()
+        self.assertEqual(ui.messagebox.showerror.call_count, 1)
+        self.assertIn('0,5', ui.messagebox.showerror.call_args.args[1])
+        self.assertEqual(len(ui.logged), 3)
+        self.assertIn('ValueError', ui.logged[0])
+        source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
+        main = source[source.index('\ndef main():'):]
+        self.assertIn('root.report_callback_exception = launcher.callback_error', main)
+
+
 if __name__ == '__main__':
     unittest.main()

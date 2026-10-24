@@ -967,6 +967,49 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if self.app.get('check_updates', True) and not COOP_TEST:
             threading.Thread(target=self.check_update, daemon=True).start()
 
+    def callback_error(self, kind, value, trace):
+        """Tk's handler for an error in a button's or a timer's code. Its own printed to a console the packaged
+        launcher does not have, and Play then did nothing without a word: now the error goes to the Log page and
+        a message names it (once per error, a timer may repeat it)."""
+        import traceback
+        text = ''.join(traceback.format_exception(kind, value, trace))
+        try:
+            sys.stderr.write(text)
+        except (AttributeError, OSError, ValueError):
+            pass
+        try:
+            self.append(text)
+        except Exception:  # the Log page may not exist yet
+            pass
+        shown = getattr(self, 'errors_shown', set())
+        self.errors_shown = shown
+        if text in shown:
+            return
+        shown.add(text)
+        self.messagebox.showerror('Bloodborne', _('Something went wrong in the launcher: {}',
+                                                  'В лаунчере произошла ошибка: {}').format(value or kind.__name__) +
+                                  '\n\n' + _('The details are on the Log page. Help > "Save a report" makes the zip to '
+                                             'attach when you ask for help.',
+                                             'Подробности на странице «Журнал». «Помощь» > «Сохранить отчёт» создаёт '
+                                             'zip-файл, который нужно приложить, когда просите о помощи.'))
+
+    def save_settings(self):
+        """collect() before PLAY; False with a message when they cannot be written (a folder without write
+        permission, a full drive): the game would start with other settings, or not at all."""
+        try:
+            self.collect()
+        except OSError as error:
+            path = Path(error.filename or ini_path())
+            self.messagebox.showerror('Bloodborne', _(
+                'Your settings could not be saved, so the game cannot start with them.\n\nFile: {}\nFolder: {}\n'
+                'Windows says: {}\n\nFree up space on that drive, or move the port to a folder you can write to '
+                '(like C:\\Games\\BBPort).',
+                'Не удалось сохранить настройки, поэтому игра не может запуститься с ними.\n\nФайл: {}\nПапка: {}\n'
+                'Windows сообщает: {}\n\nОсвободите место на этом диске или переместите порт в папку, доступную '
+                'для записи (например, C:\\Games\\BBPort).').format(path.name, path.parent, error.strerror or error))
+            return False
+        return True
+
     def px(self, size):
         return int(size * self.dpi)
 
@@ -4019,7 +4062,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             return
         if self.var('output_display', 'app').get():
             self.var('output_res', 'ini').set(display.size_text(self.game_monitor_size()))
-        self.collect()
+        if not self.save_settings():
+            return
         if self.ini.get('upscaler') == 'fsr411':
             self.fsr411_support = bbport_fsr411.query(PORT_DIR, bbport_fsr411.environment(PORT_DIR, self.app), refresh=True)
             status = self.fsr411_status(self.ini['fsr411_backend'])
@@ -4746,6 +4790,7 @@ def main():
     from tkinter import filedialog, messagebox, ttk
     root = tk.Tk()
     launcher = Launcher(root, tk, ttk, filedialog, messagebox)
+    root.report_callback_exception = launcher.callback_error  # never invisible (a test keeps its own)
     bring_to_front_on_request(lambda: launcher.ui_calls.put(launcher.bring_back))
     if page != 'play':
         launcher.show(page)
