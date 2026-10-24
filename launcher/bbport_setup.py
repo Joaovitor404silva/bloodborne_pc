@@ -1012,7 +1012,7 @@ class SetupMixin:
         return sorted(usable, key=lambda s: -s.modified)
 
     def import_save(self, save, refresh):
-        if self.process:
+        if self.game_running():
             self.messagebox.showinfo('Bloodborne', _('Close the game first; it writes its saves while it runs.'))
             return
         user, here = self.save_user_dir(), self.save_target()
@@ -1046,8 +1046,9 @@ class SetupMixin:
 
     # ---- the save manager (Saves page) -----------------------------------------------------------
     def game_running(self):
-        """The game runs (from here, a shortcut or Steam): it writes its saves while it runs."""
-        return bool(self.process) or bool(bench.game_pids())
+        """The game runs or is being prepared (from here, a shortcut, Steam or the in-game restart): it writes its
+        saves while it runs."""
+        return bool(self.process) or L.game_underway()
 
     def refresh_saves(self, only_if_changed=False):
         """The characters and the backups drawn anew (on a page change only when the files changed)."""
@@ -1985,8 +1986,8 @@ class SetupMixin:
 def game_values(folder):
     """param.sfo of a dump as a dict ({} when unreadable)."""
     try:
-        from prepare import sfo
-        return sfo((Path(folder) / 'sce_sys' / 'param.sfo').read_bytes())
+        from prepare import sfo, system_folder
+        return sfo((system_folder(folder) / 'param.sfo').read_bytes())
     except (OSError, ValueError, ImportError):
         return {}
 
@@ -2033,7 +2034,9 @@ def game_checks(folder):
     else:
         checks.append(('warn', _('Version {}: the game runs at 30 FPS only. Copy everything from the 1.09 update '
                                  'into this folder and replace the files.').format(version)))
-    missing = [name for name in ('sce_module', 'sce_sys', 'dvdroot_ps4') if not (folder / name).is_dir()]
+    # A PKG tool's Sc0 serves as sce_sys (run.py maps it): game_values found its param.sfo.
+    missing = [name for name in ('sce_module', 'sce_sys', 'dvdroot_ps4') if not (folder / name).is_dir()
+               and not (name == 'sce_sys' and values)]
     if missing:
         checks.append(('bad', _('Missing: {}. Unpack the base game completely into this folder.').format(
             ', '.join(missing))))

@@ -176,6 +176,36 @@ def wait_for_exit(pid, seconds=15):
         kernel.CloseHandle(handle)
 
 
+# run.py holds this named mutex while it prepares and runs the game (run.py GAME_MUTEX).
+GAME_MUTEX = 'Local\\bbport-game'
+
+
+def game_underway(mutex=GAME_MUTEX):
+    """Whether a game is being prepared or runs: from this launcher, Play Bloodborne.exe (Steam, a shortcut) or
+    the in-game restart. A second one would share its saves and prepared files."""
+    kernel = ctypes.windll.kernel32
+    kernel.OpenMutexW.restype = ctypes.c_void_p
+    handle = kernel.OpenMutexW(0x00100000, False, mutex)  # SYNCHRONIZE
+    if handle:
+        kernel.CloseHandle(ctypes.c_void_p(handle))
+        return True
+    return bool(bench.game_pids())
+
+
+def front_game_window():
+    """The running game's window to the front (restored when minimized); False when it has none yet (still
+    being prepared)."""
+    user32 = ctypes.windll.user32
+    for pid in bench.game_pids():
+        hwnd = bench.game_window(pid)
+        if hwnd:
+            if user32.IsIconic(hwnd):
+                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+            user32.SetForegroundWindow(hwnd)
+            return True
+    return False
+
+
 def run_command():
     """The command that starts run.py: this executable when frozen, else Python."""
     return [sys.executable, '--run'] if FROZEN else [sys.executable, str(PORT_DIR / 'run.py')]
@@ -196,10 +226,12 @@ import bbport_lang_help  # noqa: E402,F401 (the Help page's and the game tests' 
 import bbport_lang_ui  # noqa: E402,F401 (the regrouped pages, the side bar, the guide)
 import bbport_lang_world  # noqa: E402,F401 (the new texts in the other eleven languages)
 import bbport_lang_port  # noqa: E402,F401 (the 1.9.3 texts and the Controls page's key names)
+import bbport_lang_mistakes  # noqa: E402,F401 (the repairs of player mistakes, in the other eleven languages)
 import bbport_hardware as hardware  # noqa: E402
 import bbport_frame  # noqa: E402
 import bbport_display as display  # noqa: E402
 import bbport_saves as saves  # noqa: E402
+import bbport_benchmark as bench  # noqa: E402 (the game's process and window)
 import bbport_pad  # noqa: E402
 import bbport_help  # noqa: E402
 import bbport_search  # noqa: E402
@@ -217,6 +249,7 @@ from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SL
                                   keyboard_layout)  # noqa: E402
 import bbport_gamepad  # noqa: E402
 import bbport_respec as respec  # noqa: E402
+import bbport_textfile as textfile  # noqa: E402
 
 LANG = 'en'
 
@@ -456,20 +489,100 @@ def load_json(path, default):
         return default
 
 
+def load_settings():
+    """settings.json. A broken one (a hand edit, a write cut off) silently became the defaults: the game folder
+    and the sign-in were gone. It is kept as .bad and the copy from the last good load (.bak) is used and written
+    back. Each good load refreshes that copy."""
+    backup = CONFIG_FILE.with_name(CONFIG_FILE.name + '.bak')
+    try:
+        text, _clean = textfile.read(CONFIG_FILE)
+        settings = json.loads(text)
+        if not isinstance(settings, dict):
+            raise ValueError('not a JSON object')
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as error:
+        broken = textfile.keep_bad(CONFIG_FILE) if isinstance(error, ValueError) else None
+        try:
+            settings = json.loads(textfile.read(backup)[0])
+            if not isinstance(settings, dict):
+                raise ValueError('not a JSON object')
+        except (OSError, ValueError):
+            textfile.REPAIRS.append(f'Settings: {CONFIG_FILE} cannot be read ({error}) and has no backup; '
+                                    f'the defaults are used' + (f', the old file is {broken.name}' if broken else ''))
+            return {}
+        if broken:
+            try:
+                write_settings(settings)
+            except OSError:
+                pass
+        textfile.REPAIRS.append(f'Settings: {CONFIG_FILE} cannot be read ({error}); the copy from the last good '
+                                f'start is used' + (f', the old file is {broken.name}' if broken else ''))
+        return settings
+    try:
+        if not backup.is_file() or textfile.read(backup)[0] != text:
+            textfile.write(backup, text)
+    except OSError:
+        pass
+    return settings
+
+
+def write_settings(settings):
+    """settings.json, whole or not at all."""
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    textfile.write(CONFIG_FILE, json.dumps(settings, indent=2, ensure_ascii=False))
+
+
 def ini_path():
     return Path(os.environ.get('BB_CONFIG', DATA_DIR / 'bbport.ini'))
 
 
+def ini_repairs(values):
+    """{key: value} for hand edits the launcher cannot use: a decimal comma (sharpness=0,5) read as meant (the
+    game took it for 0), a number or size that is none back to its default. Switches need none: anything but 1
+    is off, for the game too."""
+    fixed = {}
+    for key, value in values.items():
+        good = value
+        if key == 'sharpness':
+            try:
+                number = float(value.replace(',', '.'))
+                good = value if ',' not in value and 0 <= number <= 2 else f'{min(2.0, max(0.0, number)):.2f}'
+            except ValueError:
+                good = INI_DEFAULTS[key]
+        elif key in ('preset', 'model_lod', 'hud_position', 'fov', 'frame_gen_multiplier'):
+            good = value if re.fullmatch(r'-?\d+', value) else INI_DEFAULTS[key]
+        elif key == 'output_res':
+            good = value if re.fullmatch(r'\d+x\d+', value) else INI_DEFAULTS[key]
+        if good != value:
+            fixed[key] = good
+    return fixed
+
+
 def load_ini(legacy_settings=None):
-    values, lines = dict(INI_DEFAULTS), []
+    values, lines, clean = dict(INI_DEFAULTS), [], True
     try:
-        lines = ini_path().read_text(encoding='utf-8').splitlines()
+        text, clean = textfile.read(ini_path())
+        lines = text.splitlines()
     except OSError:
         pass
     for line in lines:
         if '=' in line and not line.lstrip().startswith('#'):
             key, value = line.split('=', 1)
             values[key.strip()] = value.strip()
+    # Edited by hand (another encoding, a decimal comma): rewritten clean, the old file kept as .bad.
+    fixed = ini_repairs(values)
+    if fixed or not clean:
+        values.update(fixed)
+        bad = textfile.keep_bad(ini_path())
+        try:
+            save_ini(fixed, lines)
+        except OSError:
+            return values, lines
+        what = ', '.join(f'{key}={value}' for key, value in fixed.items()) or 'its text as UTF-8'
+        textfile.REPAIRS.append(f'Settings: {ini_path()} repaired by hand edits ({what}); '
+                                f'the old file is {bad.name if bad else "not kept"}')
+        return load_ini(legacy_settings)
     # Move existing launcher preferences once. Explicit INI values always win,
     # including vk/0; a later overlay edit must never be replaced by the old JSON.
     present = {line.split('=', 1)[0].strip() for line in lines
@@ -504,7 +617,7 @@ def save_ini(values, lines):
     if not lines:
         out.append('# bbport settings (in-game menu: Insert / L3+R3)')
     out += [f'{key}={value}' for key, value in values.items() if key not in written]
-    ini_path().write_text('\n'.join(out) + '\n', encoding='utf-8')
+    textfile.write(ini_path(), '\n'.join(out) + '\n')
 
 
 def game_info(folder):
@@ -513,8 +626,8 @@ def game_info(folder):
     if not (folder / 'eboot.bin').is_file():
         return None
     try:
-        from prepare import sfo
-        values = sfo((folder / 'sce_sys/param.sfo').read_bytes())
+        from prepare import sfo, system_folder
+        values = sfo((system_folder(folder) / 'param.sfo').read_bytes())
         return values.get('TITLE', 'Bloodborne').replace('™', '').strip(), values.get('APP_VER', '?')
     except (OSError, ValueError, ImportError):
         return 'Bloodborne', '?'
@@ -546,8 +659,8 @@ OLD_HUNTERS = 'SPEXPANSIONDLC03'  # The Old Hunters' entitlement label: its fold
 def title_id(folder):
     """The dump's TITLE_ID (sce_sys/param.sfo); '' when unknown."""
     try:
-        from prepare import sfo
-        return str(sfo((Path(folder or '.') / 'sce_sys/param.sfo').read_bytes()).get('TITLE_ID', '')).strip()
+        from prepare import sfo, system_folder
+        return str(sfo((system_folder(folder or '.') / 'param.sfo').read_bytes()).get('TITLE_ID', '')).strip()
     except (OSError, ValueError, ImportError, TypeError):
         return ''
 
@@ -951,7 +1064,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def __init__(self, root, tk, ttk, filedialog, messagebox):
         self.tk, self.ttk, self.filedialog, self.messagebox = tk, ttk, filedialog, messagebox
         self.root = root
-        saved = load_json(CONFIG_FILE, {})
+        saved = load_settings()
         self.app = {**APP_DEFAULTS, **saved}
         if 'online_custom_servers' not in saved:
             self.app['online_custom_servers'] = has_own_servers(self.app)
@@ -1025,9 +1138,66 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         root.after(300, self.poll_trophies)
         self.hunters, self.hunters_when, self.hunters_asking = None, 0, False
         root.after(3000, self.poll_hunters)
+        root.after(800, self.temporary_warning)
         threading.Thread(target=self.detect_gpu, daemon=True).start()
         if self.app.get('check_updates', True) and not COOP_TEST:
             threading.Thread(target=self.check_update, daemon=True).start()
+
+    def temporary_warning(self):
+        """Once per start of a port opened from inside a zip or rar, its saves in it (saves_in_temporary_folder):
+        they would be deleted with that folder, which cannot be helped from here."""
+        if not saves_in_temporary_folder(self.app):
+            return
+        self.messagebox.showwarning('Bloodborne', _(
+            'The port runs from a temporary folder ({}), as when it is started from inside a zip or rar file. That '
+            'folder is deleted when the archive closes, and your saves with it.\n\nExtract the port to a folder '
+            'first (like C:\\Games\\BBPort) and start Bloodborne.exe from there.',
+            'Порт запущен из временной папки ({}), как при запуске прямо из zip- или rar-архива. Эта папка '
+            'удаляется, когда архив закрывается, а вместе с ней и ваши сохранения.\n\nСначала распакуйте порт '
+            'в папку (например, C:\\Games\\BBPort) и запускайте Bloodborne.exe оттуда.').format(PORT_DIR))
+
+    def callback_error(self, kind, value, trace):
+        """Tk's handler for an error in a button's or a timer's code. Its own printed to a console the packaged
+        launcher does not have, and Play then did nothing without a word: now the error goes to the Log page and
+        a message names it (once per error, a timer may repeat it)."""
+        import traceback
+        text = ''.join(traceback.format_exception(kind, value, trace))
+        try:
+            sys.stderr.write(text)
+        except (AttributeError, OSError, ValueError):
+            pass
+        try:
+            self.append(text)
+        except Exception:  # the Log page may not exist yet
+            pass
+        shown = getattr(self, 'errors_shown', set())
+        self.errors_shown = shown
+        if text in shown:
+            return
+        shown.add(text)
+        self.messagebox.showerror('Bloodborne', _('Something went wrong in the launcher: {}',
+                                                  'В лаунчере произошла ошибка: {}').format(value or kind.__name__) +
+                                  '\n\n' + _('The details are on the Log page. Help > "Save a report" makes the zip to '
+                                             'attach when you ask for help.',
+                                             'Подробности на странице «Журнал». «Помощь» > «Сохранить отчёт» создаёт '
+                                             'zip-файл, который нужно приложить, когда просите о помощи.'))
+
+    def save_settings(self):
+        """collect() before PLAY; False with a message when they cannot be written (a folder without write
+        permission, a full drive): the game would start with other settings, or not at all."""
+        try:
+            self.collect()
+        except OSError as error:
+            path = Path(error.filename or ini_path())
+            self.messagebox.showerror('Bloodborne', _(
+                'Your settings could not be saved, so the game cannot start with them.\n\nFile: {}\nFolder: {}\n'
+                'Windows says: {}\n\nFree up space on that drive, or move the port to a folder you can write to '
+                '(like C:\\Games\\BBPort).',
+                'Не удалось сохранить настройки, поэтому игра не может запуститься с ними.\n\nФайл: {}\nПапка: {}\n'
+                'Windows сообщает: {}\n\nОсвободите место на этом диске или переместите порт в папку, доступную '
+                'для записи (например, C:\\Games\\BBPort).').format(path.name, path.parent, error.strerror or error))
+            return False
+        return True
 
     def px(self, size):
         return int(size * self.dpi)
@@ -1263,7 +1433,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         note = ttk.Label(holder, style='Muted.TLabel', wraplength=self.px(240), justify='left')
         note.pack(side='left', padx=(10, 0))
         picked = {'custom': res.get() not in sizes}
-        entry = self.size_entry(holder, own, lambda size: res.set(display.size_text(size)), note)
+
+        def typed(size):
+            text = display.size_text(size)
+            if text in sizes:
+                self.app['output_custom'] = ''
+            res.set(text)
+        entry = self.size_entry(holder, own, typed, note)
 
         def show(*_a):
             pick = 'display' if match.get() else 'custom' if picked['custom'] or res.get() not in sizes else res.get()
@@ -1287,6 +1463,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         def choose(_e):
             pick = values[box.current()]
             picked['custom'] = pick == 'custom'
+            if pick != 'custom':  # chosen here: 1920x1080 too is the player's choice then
+                self.app['output_custom'] = ''
             match.set(pick == 'display')
             if pick == 'display':
                 res.set(display.size_text(self.game_monitor_size()))
@@ -2397,7 +2575,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         """The respec dialog (bbport_respec): a character, its six attributes, Apply."""
         tk, ttk = self.tk, self.ttk
         title = _('Respec', 'Перераспределение')
-        if self.process:
+        if self.game_running():
             self.messagebox.showinfo(title, _('Close the game first: it would save over the change.',
                                               'Сначала закройте игру: она запишет сохранение поверх.'))
             return
@@ -2523,6 +2701,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             name = thd_id.get() if thd_token.get() else ''
             account.configure(text=_('Signed in as {}').format(name) if name else _('Not signed in'))
         show_accounts()
+        thd_token.trace_add('write', lambda *_a: show_accounts())  # also forgotten after a refusal
         self.row(f, _('Account'), account, key='thd_online_id')
         signing = ttk.Label(f, text='', style='Muted.TLabel', justify='left', wraplength=self.px(560))
         # The code to type on the website, large, with a button that copies it.
@@ -2555,8 +2734,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 try:
                     name, token = thd_sign_in(on_code)
                 except (OSError, ValueError) as error:
-                    self.ui_calls.put(lambda e=error: (signing.configure(text=_('Sign-in failed: {}').format(e)),
-                                                       show_code()))
+                    self.ui_calls.put(lambda e=connection_error(error, COMMUNITY_SERVER): (
+                        signing.configure(text=_('Sign-in failed: {}').format(e)), show_code()))
                     return
                 self.ui_calls.put(lambda: (thd_id.set(name), thd_token.set(token), signing.configure(text=''),
                                            show_code(), show_accounts(), self.collect()))
@@ -3628,7 +3807,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             game = _('⚠ Game version {}: runs at 30 FPS without the community patches (they are for 1.09)',
                      '⚠ Версия игры {}: 30 FPS без патчей сообщества (они для 1.09)').format(info[1])
         user = Path(self.var('user_dir', 'app').get() or DATA_DIR / 'user')
-        saves = list((user / 'savedata').glob('*/*/SPRJ*')) if (user / 'savedata').is_dir() else []
+        saves = [user] if has_complete_save(user, self.var('game_dir', 'app').get()) else []
         save = (_('✓ Saves found in {}', '✓ Найдены сохранения в {}').format(user) if saves
                 else _('• No saves yet: bring your character from another version, or the game creates them'))
         missing = fsr4_missing()
@@ -4049,8 +4228,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.app[key] = value
         for key in SHARED_GRAPHICS_KEYS:
             self.app.pop(key, None)
-        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        CONFIG_FILE.write_text(json.dumps(self.app, indent=2, ensure_ascii=False), encoding='utf-8')
+        own = own_output(self.app, self.ini.get('output_res'))
+        if own:  # the game's menu wrote 1920x1080 over it
+            self.ini['output_res'] = own
+            if 'output_res' in self.vars:
+                self.vars['output_res'].set(own)
+            textfile.REPAIRS.append(f"Output: {own}, the player's own size, set again (the game's menu had "
+                                    f"written {INI_DEFAULTS['output_res']})")
+        self.app['output_custom'] = custom_output(self.ini.get('output_res'), self.app)
+        write_settings(self.app)
         save_ini({key: self.ini[key] for key in INI_DEFAULTS}, self.ini_lines)
         self.ini, self.ini_lines = load_ini()
         if self.remap_edits:
@@ -4085,6 +4271,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def play(self):
         if self.process or self.fsr411_downloading:
             return
+        if game_underway():
+            # Started from Steam, a shortcut or the in-game restart: its window comes to the front instead of a
+            # second game on the same saves.
+            front_game_window()
+            self.append(_('The game runs already (started from Steam, a shortcut or the in-game restart): its '
+                          'window was brought to the front.',
+                          'Игра уже запущена (из Steam, ярлыка или после перезапуска в игре): её окно выведено '
+                          'на передний план.') + '\n')
+            self.status.configure(text=_('The game is running.', 'Игра запущена.'), fg=GOLD)
+            return
         online, npid = self.var('online', 'app'), self.var('online_npid', 'app')
         if not online.get() and npid.get().strip():
             choice = self.messagebox.askyesnocancel(
@@ -4110,7 +4306,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             return
         if self.var('output_display', 'app').get():
             self.var('output_res', 'ini').set(display.size_text(self.game_monitor_size()))
-        self.collect()
+        if not self.save_settings():
+            return
         if self.ini.get('upscaler') == 'fsr411':
             self.fsr411_support = bbport_fsr411.query(PORT_DIR, bbport_fsr411.environment(PORT_DIR, self.app), refresh=True)
             status = self.fsr411_status(self.ini['fsr411_backend'])
@@ -4124,10 +4321,27 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                                       'Выберите папку игры с eboot.bin (CUSA03173).'))
             self.show('game')
             return
+        problem = start_problem(self.app)
+        if problem:
+            self.messagebox.showerror('Bloodborne', problem[0])
+            self.show(problem[1])
+            return
         if not self.preflight():  # bbport_help: a start that would fail for a reason the player can fix
             return
         self.set_log('')
+        for line in textfile.REPAIRS:  # what was repaired since the last start: in this one's log
+            self.append(line + '\n')
+        textfile.REPAIRS.clear()
         self.pad_stop()  # the game reads the controller now
+        line, encrypted = misplaced_saves(self.app)
+        if line:
+            self.append(line + '\n')
+            self.refresh_saves()
+        if encrypted:  # named once: the game starts without it
+            self.app['encrypted_told'] = encrypted
+            self.messagebox.showinfo('Bloodborne', _("These are a PS4's own encrypted backups (sdimg_…); they cannot "
+                                                     'be used. Export the save with Apollo Save Tool on the PS4 '
+                                                     'instead.') + '\n\n' + encrypted)
         self.auto_backup()
         try:
             self.process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(self.app, self.ini),
@@ -4139,7 +4353,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             return
         self.job = GameJob(self.process)
         self.placer = display.Placer(self.app, display.parse_size(self.ini.get('output_res')) or (1920, 1080)).start()
-        threading.Thread(target=self.read_output, args=(self.process,), daemon=True).start()
+        threading.Thread(target=self.read_output, args=(self.process, self.log.get('1.0', 'end-1c')),
+                         daemon=True).start()
         self.play_button.configure(state='disabled')
         self.stop_button.configure(state='normal')
         self.stop_button.pack(side='right', after=self.play_button)
@@ -4155,11 +4370,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         """Before a start: the saves backed up when they changed since the last backup (never in the way)."""
         if not self.app.get('auto_backup', True):
             return
+        notes = []
         try:
-            made = saves.auto_backup(self.save_user_dir(), self.app['game_dir'])
+            made = saves.auto_backup(self.save_user_dir(), self.app['game_dir'], notes=notes)
         except OSError as error:
             self.append(_('The automatic backup of the saves failed: {}').format(error) + '\n')
             return
+        for line in notes:
+            self.append(line + '\n')
         if made:
             self.append(_('Saves backed up: {}').format(made.name) + '\n')
             self.refresh_saves()
@@ -4170,13 +4388,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.app['window_last'] = display.size_text(size)
             remember_window(size)
 
-    def read_output(self, process):
-        """Helper thread: the game's output to the Log page and to <saves folder>/last_run.log."""
+    def read_output(self, process, before=''):
+        """Helper thread: the game's output to the Log page and to <saves folder>/last_run.log, after `before`
+        (what the Log page said before the start: the repairs made for it)."""
         log = None
         try:
             log_dir = Path(self.app.get('user_dir') or DATA_DIR / 'user')
             log_dir.mkdir(parents=True, exist_ok=True)
             log = open(log_dir / 'last_run.log', 'w', encoding='utf-8', buffering=1)
+            if before:
+                log.write(before)
         except OSError:
             pass
         warned = False
@@ -4241,6 +4462,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                         self.placer = None
                     self.stop_button.configure(state='disabled')
                     self.stop_button.pack_forget()
+                    self.forget_refused_sign_in()
                     self.refresh_status()
                     reopen = self.setting('reopen_after_game')
                     if self.hidden:
@@ -4267,6 +4489,22 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         except queue.Empty:
             pass
         self.root.after(100, self.drain_output)
+
+    def forget_refused_sign_in(self):
+        """After the game: a sign-in The Hunter's Dream refused is forgotten (forget_sign_in), with a line in
+        the log; the Play page and the Online page then say "not signed in", and the next Play asks."""
+        token = self.var('thd_token', 'app')
+        if not token.get() or not sign_in_refused(self.app):
+            return
+        token.set('')
+        self.app['thd_token'] = ''
+        try:
+            forget_sign_in()
+        except OSError:
+            pass  # saved with the other settings later
+        self.append(_("The Hunter's Dream refused this PC's sign-in: sign in again on the Online page.",
+                      'The Hunter\'s Dream отклонил вход с этого ПК: войдите снова на странице «Онлайн-игра».') +
+                    '\n')
 
     def stop(self):
         if self.job:
@@ -4312,7 +4550,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             offer = update_to_offer()
         except (OSError, ValueError, KeyError) as failure:
             if manual:
-                self.ui_calls.put(lambda error=failure: self.messagebox.showerror(
+                self.ui_calls.put(lambda error=connection_error(failure, RELEASES_API): self.messagebox.showerror(
                     'Bloodborne', _('Could not check for updates: {}', 'Не удалось проверить обновления: {}').format(error)))
             return
 
@@ -4364,7 +4602,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def install_version(self, version, url, page, progress, failed):
         """Downloads release `version` and lets its launcher copy itself over this installation
         (saves, settings and mods stay). False when nothing was started."""
-        if self.process:
+        if self.game_running():
             self.messagebox.showinfo('Bloodborne', _('Close the game before updating.', 'Закройте игру перед обновлением.'))
             return False
         if not FROZEN or not url:  # a source tree updates with git
@@ -4409,7 +4647,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                  cwd=str(new), stdin=subprocess.DEVNULL, creationflags=NO_WINDOW)
                 self.ui_calls.put(self.root.destroy)
             except (OSError, zipfile.BadZipFile) as failure:
-                def show_failure(error=failure):
+                def show_failure(error=connection_error(failure, url)):
                     failed()
                     self.messagebox.showerror('Bloodborne', _('Update failed: {}', 'Не удалось обновить: {}').format(error))
                 self.ui_calls.put(show_failure)
@@ -4652,18 +4890,169 @@ def picture_of(widget):
 
 def remember_window(size):
     """Writes the game window's last size into settings.json (and nothing else)."""
-    settings = load_json(CONFIG_FILE, {})
+    settings = load_settings()
+    if not settings:  # never the size alone over settings that could not be read
+        return
     settings['window_last'] = display.size_text(size)
     try:
-        CONFIG_FILE.write_text(json.dumps(settings, indent=2, ensure_ascii=False), encoding='utf-8')
+        write_settings(settings)
     except OSError:
         pass
+
+
+# OpenSSL's words for a certificate outside its dates, which is what every certificate looks like to a PC whose
+# clock is wrong.
+CERTIFICATE_DATES = re.compile(r'certificate (?:has expired|is not yet valid)', re.I)
+# Windows' own connection check answers plain HTTP with its time, where a server does not (api.github.com).
+TIME_HOST = 'www.msftconnecttest.com'
+
+
+def clock_off(host):
+    """Seconds this PC's clock is off, by the Date of a plain HTTP answer from `host` (no certificate to check);
+    None when it cannot be asked."""
+    import email.utils
+    import http.client
+    try:
+        connection = http.client.HTTPConnection(host, 80, timeout=6)
+        try:
+            connection.request('HEAD', '/', headers={'User-Agent': f'bbport-launcher/{VERSION}'})
+            date = connection.getresponse().getheader('Date')
+        finally:
+            connection.close()
+        return time.time() - email.utils.parsedate_to_datetime(date).timestamp()
+    except (OSError, ValueError, TypeError, http.client.HTTPException):
+        return None
+
+
+def connection_error(error, url):
+    """The words for a failed HTTPS call: "Your PC's date is wrong" when the certificate seemed expired or not yet
+    valid and this PC's clock is more than a day off (the one thing to do: set it); else the error itself. Run off
+    the Tk thread: it may ask the server's time."""
+    if CERTIFICATE_DATES.search(str(error)):
+        import urllib.parse
+        off = clock_off(urllib.parse.urlsplit(url).hostname or '')
+        if off is None:
+            off = clock_off(TIME_HOST)
+        if off is not None and abs(off) > 86400:
+            return _("Your PC's date is wrong ({}), so secure connections fail. Set the date in Windows: Settings > "
+                     'Time & language > Date & time, "Set time automatically".',
+                     'Дата на вашем ПК неверна ({}), поэтому защищённые соединения не работают. Установите дату в '
+                     'Windows: Параметры > Время и язык > Дата и время, «Установить время автоматически».').format(
+                time.strftime('%d.%m.%Y'))
+    return str(error)
+
+
+# What the game logs when The Hunter's Dream refuses the saved sign-in (gpu/bbnet/thd/thd_session.cpp MarkRefused).
+SIGN_IN_REFUSED = "refused this PC's sign-in"
+
+
+def sign_in_refused(settings):
+    """Whether the last game's log says The Hunter's Dream refused the saved sign-in (a revoked or expired token).
+    The game goes on offline and said so only there; the launcher still showed it signed in."""
+    try:
+        text = (saves_folder(settings) / 'last_run.log').read_text(encoding='utf-8', errors='replace')
+    except OSError:
+        return False
+    return SIGN_IN_REFUSED in text[-400_000:]
+
+
+def forget_sign_in():
+    """The refused sign-in out of settings.json (nothing else changed): the Online page shows "Not signed in"
+    and the next Play asks to sign in."""
+    settings = load_settings()
+    if settings.get('thd_token'):
+        settings['thd_token'] = ''
+        write_settings(settings)
+
+
+def needs_sign_in(settings):
+    """Online with The Hunter's Dream without a sign-in: run.py would stop the start (game_environment)."""
+    return bool(settings.get('online')) and settings.get('online_pool') != 'shadnet' and HUNTERS_DREAM_POOL and \
+        not settings.get('thd_token')
+
+
+def custom_output(size, settings):
+    """The output size of the player's own to remember (settings.json output_custom): one the game's menu does
+    not know. gpu/shim/bbport_settings.cpp has ten; its first save in the menu writes 1920x1080 instead (the
+    proper fix is there: keep the size it read). '' for a listed size or the monitor's own; at 1920x1080 the
+    remembered one stays, since that is what the menu writes."""
+    if settings.get('output_display'):
+        return ''
+    if size not in {value for value, _t in OUTPUTS} and display.parse_size(size):
+        return size
+    return settings.get('output_custom', '') if size == INI_DEFAULTS['output_res'] else ''
+
+
+def own_output(settings, size):
+    """The player's own output size to set again over the game menu's 1920x1080, or None."""
+    custom = settings.get('output_custom')
+    if custom and size == INI_DEFAULTS['output_res'] and not settings.get('output_display') and \
+            display.parse_size(custom):
+        return custom
+    return None
+
+
+def has_complete_save(user_dir, game_dir):
+    """Whether the game finds a save to load: the profile and a character where it reads them."""
+    try:
+        return saves.SaveSet('', saves.target_dir(user_dir, game_dir)).complete
+    except OSError:
+        return False
+
+
+def misplaced_saves(settings):
+    """Before every start: a save put in the saves folder where the game does not read it is copied to where it
+    does (bbport_saves.adopt_misplaced). (A line for the log or None, the folder of an encrypted PS4 save not
+    named yet or None.)"""
+    user, game = saves_folder(settings), settings.get('game_dir', '')
+    try:
+        adopted, encrypted = saves.adopt_misplaced(user, game)
+    except OSError as error:
+        return _('Saves: a save in {} could not be copied to where the game reads it: {}',
+                 'Сохранения: не удалось скопировать сохранение из {} туда, где игра его читает: {}').format(
+            user, error), None
+    if adopted:
+        return _('Saves: {} copied to where the game reads them ({}); the original stays where it was.',
+                 'Сохранения: {} скопированы туда, где игра их читает ({}); оригинал остался на месте.').format(
+            adopted.folder, saves.target_dir(user, game)), None
+    folder = str(encrypted[0].parent) if encrypted else None
+    return None, folder if folder and folder != settings.get('encrypted_told') else None
+
+
+def saves_in_temporary_folder(settings):
+    """The port runs from an archive program's temporary folder (bbport_help.temporary_folder) and its saves are in
+    there too (not in a saves folder of the player's own elsewhere)."""
+    return bbport_help.temporary_folder(PORT_DIR) and \
+        bbport_help.temporary_folder(saves_folder(settings))
+
+
+def start_problem(settings):
+    """(message, page) for what keeps the game from starting and cannot be repaired here, checked before every
+    start (Play, Play Bloodborne.exe); None when nothing does."""
+    problem = bbport_help.system_problem(settings.get('game_dir'))
+    if problem:
+        return problem, 'game'
+    # A saves folder of the player's own on a drive that is not connected, or renamed: an empty one made in its
+    # place would show no characters, and the game would start new ones there.
+    user = str(settings.get('user_dir') or '').strip()
+    if user and not Path(user).is_dir():
+        return _('The saves folder {} is not there: its drive is not connected, or the folder was renamed or moved. '
+                 'Connect the drive, or choose the saves folder again.',
+                 'Папки сохранений {} нет: её диск не подключён, или папку переименовали или переместили. Подключите '
+                 'диск или выберите папку сохранений заново.').format(user), 'saves'
+    return None
 
 
 def play_without_window(settings):
     """--play: the game with the saved settings (shortcuts, Steam). Output goes to the console
     when there is one and to <saves folder>/last_run.log."""
     attach_stdio()
+    if game_underway():
+        # A second click while the first is being prepared, or Steam while the launcher's game runs: that game's
+        # window comes to the front instead of a second game on the same saves and prepared files.
+        front_game_window()
+        print('Play: a game is being prepared or runs already; its window was brought to the front')
+        return 0
     values, lines = load_ini(settings)
     graphics = values
     if settings.get('output_display'):  # the game monitor's own size, as the launcher's Play does
@@ -4671,9 +5060,23 @@ def play_without_window(settings):
         if m and values.get('output_res') != display.size_text(m.size):
             values['output_res'] = display.size_text(m.size)
             save_ini({key: values[key] for key in INI_DEFAULTS}, lines)
+    own = own_output(settings, values.get('output_res'))
+    if own:  # the player's own size, which the game's menu wrote as 1920x1080 (custom_output)
+        values['output_res'] = own
+        try:
+            save_ini({key: values[key] for key in INI_DEFAULTS}, lines)
+            textfile.REPAIRS.append(f"Output: {own}, the player's own size, set again (the game's menu had "
+                                    f"written {INI_DEFAULTS['output_res']})")
+        except OSError:
+            pass
+    line, encrypted = misplaced_saves(settings)
+    notes = textfile.REPAIRS + ([line] if line else [])
+    if encrypted:
+        notes.append(f'Saves: {encrypted} holds an encrypted PS4 save (sdimg_): it cannot be used; export it with '
+                     'Apollo Save Tool on the PS4')
     if settings.get('auto_backup', True):
         try:
-            saves.auto_backup(Path(settings.get('user_dir') or DATA_DIR / 'user'), settings['game_dir'])
+            saves.auto_backup(Path(settings.get('user_dir') or DATA_DIR / 'user'), settings['game_dir'], notes=notes)
         except OSError:
             pass  # never in the way of a start
     placer = display.Placer(settings, display.parse_size(values.get('output_res')) or (1920, 1080)).start()
@@ -4690,6 +5093,7 @@ def play_without_window(settings):
     log_dir.mkdir(parents=True, exist_ok=True)
     tracker = trophies.Tracker(log_dir)
     with open(log_dir / 'last_run.log', 'w', encoding='utf-8', buffering=1) as log:
+        log.writelines(note + '\n' for note in notes)
         process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(settings, graphics),
                                    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, creationflags=NO_WINDOW)
@@ -4703,6 +5107,14 @@ def play_without_window(settings):
             except (OSError, ValueError):
                 pass
         code = process.wait()
+    if settings.get('thd_token') and sign_in_refused(settings):
+        try:
+            forget_sign_in()
+            with open(log_dir / 'last_run.log', 'a', encoding='utf-8') as log:
+                log.write("Online: The Hunter's Dream refused the saved sign-in; it is forgotten, the next start "
+                          'asks to sign in\n')
+        except OSError:
+            pass
     placer.stop()
     if placer.last and not settings.get('fullscreen'):
         remember_window(placer.last)
@@ -4853,7 +5265,7 @@ def main():
     if args[:1] == ['--after'] and len(args) >= 2:
         wait_for_exit(args[1])
         args = args[2:]
-    settings = {**APP_DEFAULTS, **load_json(CONFIG_FILE, {})}
+    settings = {**APP_DEFAULTS, **load_settings()}
     LANG = settings.get('ui_language') or windows_language()
     saves.WORDS.update({key: _(text) for key, text in saves.REASONS.items()})  # backup file names
     if args[:1] == ['--install-update'] and len(args) == 3:
@@ -4870,14 +5282,23 @@ def main():
     if FROZEN and UPDATE_DIR not in PORT_DIR.parents:
         shutil.rmtree(UPDATE_DIR, ignore_errors=True)  # what a finished update left behind
     # Without a usable game folder there is nothing to play yet: open the launcher instead.
-    page, failed = 'play', None
+    page, failed, problem = 'play', None, None
     if '--play' in args and (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file() and CONFIG_FILE.exists():
-        result = play_without_window(settings)
-        if result == 0:
-            sys.exit(0)
-        # Ended with an error: the launcher opens on Help with what the log names, as after its own Play
-        # (from Steam or a shortcut the game used to close without a word).
-        page, failed = ('graphics', None) if result is None else ('help', result)
+        # What cannot be repaired is said before the start, in the launcher's window (there is none otherwise).
+        problem = start_problem(settings)
+        if problem:
+            page = problem[1]
+        elif needs_sign_in(settings):
+            page = 'sign in'  # its Play asks: sign in now, or play offline this time
+        elif saves_in_temporary_folder(settings):
+            pass  # the launcher opens and warns (temporary_warning); its Play starts the game anyway
+        else:
+            result = play_without_window(settings)
+            if result == 0:
+                sys.exit(0)
+            # Ended with an error: the launcher opens on Help with what the log names, as after its own Play
+            # (from Steam or a shortcut the game used to close without a word).
+            page, failed = ('graphics', None) if result is None else ('help', result)
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # sharp text on scaled displays
     except (AttributeError, OSError):
@@ -4888,11 +5309,16 @@ def main():
     from tkinter import filedialog, messagebox, ttk
     root = tk.Tk()
     launcher = Launcher(root, tk, ttk, filedialog, messagebox)
+    root.report_callback_exception = launcher.callback_error  # never invisible (a test keeps its own)
     bring_to_front_on_request(lambda: launcher.ui_calls.put(launcher.bring_back))
-    if page != 'play':
+    if page == 'sign in':
+        root.after(500, launcher.play)
+    elif page != 'play':
         launcher.show(page)
     if failed:
         root.after(500, lambda: launcher.after_exit(failed, always=True))
+    if problem:
+        root.after(500, lambda: messagebox.showerror('Bloodborne', problem[0]))
     root.mainloop()
 
 

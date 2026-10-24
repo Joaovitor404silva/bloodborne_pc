@@ -11,6 +11,8 @@ button per button action through load_controller_bindings/save_controller_bindin
 import os
 from pathlib import Path
 
+import bbport_textfile as textfile
+
 # Keyboard-only outputs the remap page edits. (action key in the .ini, Tk display order).
 BUTTON_OUTPUTS = ['cross', 'circle', 'square', 'triangle', 'l1', 'r1', 'l2', 'r2', 'l3', 'r3',
                    'options', 'pad_up', 'pad_down', 'pad_left', 'pad_right',
@@ -501,11 +503,20 @@ def load_input_ini(path):
     mouse look" checkbox does in save_input_ini.
     """
     try:
-        lines = Path(path).read_text(encoding='utf-8').splitlines()
+        text, clean = textfile.read(path)
+        lines = text.splitlines()
     except FileNotFoundError:
-        lines = DEFAULT_INPUT_INI.splitlines()
+        lines, clean = DEFAULT_INPUT_INI.splitlines(), True
     except OSError:
-        lines = []
+        lines, clean = [], True
+    if not clean:  # saved in another encoding by an editor: rewritten as UTF-8, the old file kept as .bad
+        bad = textfile.keep_bad(path)
+        try:
+            textfile.write(path, '\n'.join(lines) + '\n')
+            textfile.REPAIRS.append(f'Controls: {path} was not UTF-8; rewritten as UTF-8, '
+                                    f'the old file is {bad.name if bad else "not kept"}')
+        except OSError:
+            pass
     return read_input_lines(lines)
 
 
@@ -586,7 +597,7 @@ def save_input_ini(path, bindings, lines):
         if output not in written and bindings.get(output):
             values = bindings[output]
             out.extend(f'{output} = {format_binding(v)}' for v in (values if isinstance(values, list) else [values]))
-    Path(path).write_text('\n'.join(out) + '\n', encoding='utf-8')
+    textfile.write(path, '\n'.join(out) + '\n')
 
 
 def save_mouse_settings(path, settings, lines):
@@ -635,7 +646,7 @@ def save_mouse_settings(path, settings, lines):
     for key in MOUSE_SIMPLE_LINES:
         if key not in written_simple and settings[key] != MOUSE_SETTINGS_DEFAULTS[key]:
             out.append(_mouse_simple_line(key, settings[key]))
-    Path(path).write_text('\n'.join(out) + '\n', encoding='utf-8')
+    textfile.write(path, '\n'.join(out) + '\n')
 
 
 def _mouse_simple_line(key, value):
@@ -729,7 +740,7 @@ def save_controller_bindings(path, controller, lines):
            if o in controller and o not in written and controller[o]]
     at = last_controller if last_controller is not None else len(out)
     out[at:at] = new
-    Path(path).write_text('\n'.join(out) + '\n', encoding='utf-8')
+    textfile.write(path, '\n'.join(out) + '\n')
 
 
 def controller_conflicts(controller):

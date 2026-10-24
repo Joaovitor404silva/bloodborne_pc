@@ -209,7 +209,8 @@ TOPIC_ORDER += [key for key in TOPICS if key not in TOPIC_ORDER]  # topics added
 # The game's and run.py's messages that name the cause of a failed start or crash.
 LOG_HINTS = [
     (r'of guest memory|page file is too small|commit limit', 'page_file'),
-    (r'WinError (?:32|5)\b|PermissionError', 'antivirus'),
+    # also open()'s own words for it, and the game's program taken into an antivirus's quarantine (run.py)
+    (r'WinError (?:32|5)\b|PermissionError|Errno 13\b|bb-probe\.exe is missing', 'antivirus'),
     (r'out of bounds: 0x', 'eboot_truncated'),
     (r'gxshader\.shaderbnd\.dcx', 'update_only'),
     (r'bad patch entry|Files: \d+ differ from the package', 'mixed_versions'),
@@ -379,9 +380,41 @@ def memory_problem(output_res, status=None):
     return (free, need, page_file_off) if free < need + 1 else None
 
 
+def system_problem(game_dir):
+    """Why a game folder with eboot.bin cannot start before the game itself says so (with a path inside the game
+    view): no sce_module, or no sce_sys with param.sfo, also not as a PKG tool's Sc0 (run.py maps that). None
+    when both are there."""
+    game = Path(game_dir or '.')
+    try:
+        from prepare import system_folder
+        system = system_folder(game)
+    except ImportError:
+        system = game / 'sce_sys'
+    missing = [name for name, there in (('sce_module', (game / 'sce_module').is_dir()),
+                                        ('sce_sys', (system / 'param.sfo').is_file())) if not there]
+    if not missing:
+        return None
+    return _('The game folder has no {}: the game was not unpacked completely. Unpack the base game into a new, '
+             'empty folder again and copy the 1.09 update over it.',
+             'В папке игры нет {}: игра распакована не полностью. Распакуйте базовую игру заново в новую пустую '
+             'папку и скопируйте поверх неё обновление 1.09.').format(' / '.join(missing))
+
+
 def location_problem(port_dir):
     text = str(port_dir).lower()
-    return 'location' if 'onedrive' in text or 'program files' in text else None
+    synced = getattr(L, 'synced_folder', None)  # OneDrive, Dropbox, Google Drive, iCloud, Nextcloud
+    return 'location' if 'onedrive' in text or 'program files' in text or (synced and synced(port_dir)) else None
+
+
+# The folders an archive program puts a file in that is opened from inside a zip or rar: WinRAR's Rar$EX…, 7-Zip's
+# 7zO…, Windows' own Temp1_<name>.zip (all in %TEMP%). Not %TEMP% as a whole: other folders there are no archive's.
+ARCHIVE_FOLDER = re.compile(r'[\\/](?:rar\$ex[^\\/]*|7zo[^\\/]*|temp\d+_[^\\/]*\.zip)(?:[\\/]|$)', re.I)
+
+
+def temporary_folder(port_dir):
+    """Whether the port runs from an archive program's folder (ARCHIVE_FOLDER): it is deleted when the archive
+    closes, the saves in it too."""
+    return ARCHIVE_FOLDER.search(os.path.abspath(str(port_dir))) is not None
 
 
 def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):
@@ -436,6 +469,9 @@ def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):
         else:
             checks.append(('ok', None, _('The game folder is complete ({} files, {} GB).').format(
                 number(scan['files']), number(scan['bytes'] / 1024 ** 3, 1))))
+    problem = system_problem(game) if game and (game / 'eboot.bin').is_file() else None
+    if problem:
+        checks.append(('bad', None, problem))
     mods = mods_with_eboot(mods_dir)
     if mods:
         checks.append(('warn', 'eboot_modified', _('These mods bring their own eboot.bin: {}. Turn them off or '
