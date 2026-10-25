@@ -81,6 +81,7 @@ std::atomic<u64> vram_used{0};
 std::atomic<u64> vram_limit{0};
 std::atomic<u64> vram_pressure{0};
 std::atomic<u64> vram_critical{0};
+std::atomic<u64> vram_card_free{0};
 
 // CPU, GPU and RAM for the counter, sampled at a few Hz (the readings are syscalls, and none of
 // the numbers moves between two frames). Negative: not known (yet, or not available).
@@ -923,6 +924,11 @@ void FpsCounter() {
             ImGui::Text("%.1f GB", double(used) / gb);
         }
         ImGui::PopStyleColor();
+        // The card's own headroom: the limit above is the port's conservative budget, so without
+        // this "4.6 of 4.6" reads as "the card is full" when it is not.
+        ImGui::SameLine(0.0f, 8.0f * base_scale);
+        ImGui::TextDisabled("(card: %.1f GB free)",
+                            double(vram_card_free.load(std::memory_order_relaxed)) / gb);
     }
     if (s.show_gpu) {
         Label("GPU:");
@@ -1227,11 +1233,13 @@ void Warn(const std::string& headline, const std::string& detail, float used_fra
     warn_until = std::chrono::steady_clock::now() + std::chrono::seconds(10);
 }
 
-void SetVramUsage(u64 used_bytes, u64 limit_bytes, u64 pressure_bytes, u64 critical_bytes) {
+void SetVramUsage(u64 used_bytes, u64 limit_bytes, u64 pressure_bytes, u64 critical_bytes,
+                  u64 card_free_bytes) {
     vram_used.store(used_bytes, std::memory_order_relaxed);
     vram_limit.store(limit_bytes, std::memory_order_relaxed);
     vram_pressure.store(pressure_bytes, std::memory_order_relaxed);
     vram_critical.store(critical_bytes, std::memory_order_relaxed);
+    vram_card_free.store(card_free_bytes, std::memory_order_relaxed);
 }
 
 // Called for every presented image: the interval for the FPS readout and BB_FPS_LOG.

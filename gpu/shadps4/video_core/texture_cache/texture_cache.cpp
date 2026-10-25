@@ -1120,13 +1120,21 @@ void TextureCache::GarbageCollectImages() {
         return env ? std::strtoull(env, nullptr, 10) << 20 : 0;
     }();
     if (instance.CanReportMemoryUsage()) {
-        total_used_memory = instance.GetDeviceMemoryUsage();
+        u64 mem_budget_now = 0;
+        instance.GetDeviceMemoryStats(total_used_memory, mem_budget_now);
         // bbport: the buffer cache's reserve (512 MiB of VRAM allocated at start for the game's
         // memory once VRAM is full) is not in use until then: counted, it put 6 GB cards half a
         // gigabyte closer to the marks than textures make them.
         const u64 reserve_free =
             buffer_cache.ArenaReserveBytes() - buffer_cache.ArenaReserveUsedBytes();
         total_used_memory -= std::min(total_used_memory, reserve_free);
+        // bbport: what the card can still give this process, beyond the port's own budget. The
+        // driver's budget already has other applications and its own reserve subtracted, so this
+        // is the honest "is the card full" number: the budget the marks use is deliberately
+        // conservative. Also after the reserve correction, so an untouched reserve does not read
+        // as taken.
+        const u64 card_free =
+            mem_budget_now > total_used_memory ? mem_budget_now - total_used_memory : 0;
         // bbport: on integrated GPUs (Steam Deck) the usage covers system-memory heaps holding
         // much more than images (buffers backing guest memory), and the startup budget left
         // ~1 GB after its 8 GB system reserve: usage stayed above the critical mark, so the
@@ -1153,7 +1161,7 @@ void TextureCache::GarbageCollectImages() {
         // the system-memory heap the GPU allocates from, which is the right number there too.
         const u64 limit = forced_budget ? forced_budget : instance.GetTotalMemoryBudget();
         BbOverlay::SetVramUsage(total_used_memory, limit, pressure_gc_memory,
-                                critical_gc_memory);
+                                critical_gc_memory, card_free);
         if (warn_mb != 0 && !instance.IsIntegrated()) {
             const u64 free = limit > total_used_memory ? limit - total_used_memory : 0;
             constexpr u64 warn_step = 256_MB;
@@ -1170,9 +1178,9 @@ void TextureCache::GarbageCollectImages() {
                 };
                 BbOverlay::Warn(
                     "Video memory is running low",
-                    fmt::format("{} of {} left. Save now: the game closes if it fills up.\n"
-                                "Lower resolution or upscaler gives the most back.",
-                                size(free), size(limit)),
+                    fmt::format("{} left of {} (card: {} free).\nSave now: the game can still "
+                                "close. Lower resolution or upscaler frees the most.",
+                                size(free), size(limit), size(card_free)),
                     limit != 0 ? float(double(total_used_memory) / double(limit)) : -1.0f);
                 std::printf("VRAM: %llu MiB free of %llu MiB (%llu MiB in use), warned the player "
                             "to save\n",
