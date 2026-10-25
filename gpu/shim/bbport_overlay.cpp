@@ -89,6 +89,7 @@ struct SystemLoad {
     std::atomic<float> cpu{-1.0f}; ///< this process, % of the machine (all cores = 100 %)
     std::atomic<float> gpu{-1.0f}; ///< this process, % of the busiest 3D engine
     std::atomic<u64> ram{0};       ///< this process's working set
+    std::atomic<u64> ram_free{0};  ///< the machine's available physical memory, 0: not known
 };
 // Leaked on purpose: the GPU sampler thread reads it while the process is shutting down.
 SystemLoad& Load() {
@@ -155,6 +156,14 @@ float QueryGpuLoad() {
     return float(std::min(load, 100.0));
 }
 
+// The machine's available physical memory: what Task Manager's "Available" shows (free plus
+// standby). The RAM row's process figure alone reads as a leak.
+u64 AvailableMemory() {
+    MEMORYSTATUSEX status{};
+    status.dwLength = sizeof(status);
+    return GlobalMemoryStatusEx(&status) ? status.ullAvailPhys : 0;
+}
+
 void StartGpuSampler() {
     static std::once_flag once;
     std::call_once(once, [] {
@@ -173,6 +182,9 @@ void StartGpuSampler() {
 }
 #else
 void SampleCpu() {}
+u64 AvailableMemory() {
+    return 0;
+}
 void StartGpuSampler() {}
 #endif
 
@@ -993,6 +1005,13 @@ void FpsCounter() {
             ImGui::TextDisabled("--");
         } else {
             ImGui::Text("%.1f GB", double(ram) / gb);
+            // The machine's headroom, like the VRAM row's card figure: the game's working set on
+            // its own looks like it is eating all the memory.
+            const u64 free = Load().ram_free.load(std::memory_order_relaxed);
+            if (free != 0) {
+                ImGui::SameLine(0.0f, 8.0f * base_scale);
+                ImGui::TextDisabled("(%.1f GB free)", double(free) / gb);
+            }
         }
     }
     if (s.show_fps_graph && frame_history_count > 1) {
@@ -1290,6 +1309,7 @@ void NotePresent() {
         last_sample = now;
         SampleCpu();
         Load().ram.store(BbProcessMemory::Get().working_set, std::memory_order_relaxed);
+        Load().ram_free.store(AvailableMemory(), std::memory_order_relaxed);
         if (BbSettings::Get().show_gpu) {
             StartGpuSampler();
         }
