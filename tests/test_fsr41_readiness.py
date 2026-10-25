@@ -95,6 +95,7 @@ class ReadinessTests(unittest.TestCase):
                  patch.object(runner.sys,'argv',['run.py']), patch.dict(os.environ,{},clear=True), \
                  patch.object(runtime,'discover',return_value={'vulkan':'found-vk.dll','dx12':'found-dx.dll'}), \
                  patch.object(runner,'refresh_shared_graphics'), \
+                 patch.object(runner,'hold_game_mutex',return_value=True), \
                  patch.object(runner,'find_executable',return_value=None):
                 try:
                     with self.assertRaises(SystemExit): runner.main()
