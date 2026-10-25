@@ -242,6 +242,7 @@ import bbport_hardware as hardware  # noqa: E402
 import bbport_frame  # noqa: E402
 import bbport_display as display  # noqa: E402
 import bbport_saves as saves  # noqa: E402
+import bbport_exit_backup  # noqa: E402,F401 (bundled for run.py)
 import bbport_benchmark as bench  # noqa: E402 (the game's process and window)
 import bbport_pad  # noqa: E402
 import bbport_help  # noqa: E402
@@ -390,6 +391,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'game_monitor': '', 'window_size': 'output', 'window_custom': '1600x900', 'window_last': '',
                 'output_display': False,  # output resolution: the game monitor's own, set at every start
                 'auto_backup': True,  # the saves backed up before every start (bbport_saves.auto_backup)
+                'exit_backup': False,  # and after the game exits (run.py, bbport_exit_backup)
                 'seen_version': '',  # the version whose news the Play page has shown
                 # Game tests (System & performance): the kind, the scenario, its options.
                 'test_mode': 'performance', 'test_scenario': 'hunters-view', 'test_compare': 'preset',
@@ -1040,6 +1042,7 @@ def game_environment(s, graphics=None):
         env['BB_DISCORD_APP_ID'] = DISCORD_APPLICATION_ID
     env['BB_MENU_KEY'] = str(s.get('menu_key') or 'Insert')  # the in-game menu's key and combination
     env['BB_MENU_PAD'] = str(s.get('menu_pad') or 'l3+r3')
+    env['BB_EXIT_BACKUP'] = '1' if s.get('exit_backup', False) else '0'
     env['BB_VOICE_LANGUAGE'] = s['voice_language']
     if str(s['player_name']).strip():
         env['BB_USER_NAME'] = str(s['player_name']).strip()

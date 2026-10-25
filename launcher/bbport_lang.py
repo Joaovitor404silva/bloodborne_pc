@@ -1241,6 +1241,7 @@ from bbport_lang_sharp_ui import TRANSLATIONS as SHARP_UI_TRANSLATIONS  # noqa: 
 from bbport_fg401 import TRANSLATIONS as FG401_TRANSLATIONS  # noqa: E402
 from bbport_fsr411 import TRANSLATIONS as FSR411_SUPPORT_TRANSLATIONS
 from bbport_lang_trophies import TRANSLATIONS as TROPHY_TRANSLATIONS
+from bbport_lang_exit import TRANSLATIONS as EXIT_TRANSLATIONS  # noqa: E402
 
 EXTRA_TRANSLATIONS = {
     'zh': {
@@ -1281,4 +1282,5 @@ def table(language):
         _tables[language].update(FG401_TRANSLATIONS.get(language, {}))
         _tables[language].update(FSR411_SUPPORT_TRANSLATIONS.get(language, {}))
         _tables[language].update(TROPHY_TRANSLATIONS.get(language, {}))
+        _tables[language].update(EXIT_TRANSLATIONS.get(language, {}))
     return _tables[language]

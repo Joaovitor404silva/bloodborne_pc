@@ -812,6 +812,10 @@ def main():
             threading.Thread(target=thermal_watch, args=(game_over,), daemon=True).start()
         try:
             # No stdin: an inherited pipe (shells such as Git Bash) cost the game its console output.
+            if env.get('BB_EXIT_BACKUP') == '1':  # the save as the game left it, also after a crash
+                sys.path.insert(0, str(PORT / 'launcher'))
+                from bbport_exit_backup import run_with_backup
+                return run_with_backup(command, saves_dir, original_game, creationflags=no_console())
             return subprocess.run(command, stdin=subprocess.DEVNULL, creationflags=no_console()).returncode
         finally:
             if game_over:
