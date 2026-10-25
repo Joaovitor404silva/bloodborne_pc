@@ -506,6 +506,10 @@ public:
     /// (VK_EXT_memory_budget: what this process can use now, other processes included).
     [[nodiscard]] u64 GetDeviceMemoryBudgetNow() const;
 
+    /// bbport: both at once. The collector reads them every pass, and each read is a driver round
+    /// trip.
+    void GetDeviceMemoryStats(u64& usage, u64& budget) const;
+
     /// Returns the total memory budget available to the device.
     [[nodiscard]] u64 GetTotalMemoryBudget() const {
         return total_memory_budget;

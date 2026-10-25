@@ -109,7 +109,15 @@ struct Values {
     std::atomic<float> reactive_threshold{0.2f};
     std::atomic<float> reactive_max{0.9f};
     std::atomic<int> debug_view{DebugNone};
+    /// The FPS overlay's readouts, one toggle each (bbport.ini: show_fps, show_frame_times,
+    /// show_vram, show_gpu, show_cpu, show_ram, show_fps_graph).
     std::atomic<bool> show_fps{false};
+    std::atomic<bool> show_frame_times{false};
+    std::atomic<bool> show_vram{false};
+    std::atomic<bool> show_gpu{false};
+    std::atomic<bool> show_cpu{false};
+    std::atomic<bool> show_ram{false};
+    std::atomic<bool> show_fps_graph{false};
     /// Silence the game while its window does not have focus (bbgpu_audio_muted).
     std::atomic<bool> mute_unfocused{false};
     /// Keyboard and mouse button prompts: with the device in use (auto), or always one kind.

@@ -2,6 +2,7 @@
 #include "bbport_overlay.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cfloat>
 #include <chrono>
@@ -11,7 +12,17 @@
 #include <cstdlib>
 #include <mutex>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <pdh.h>
+#include <pdhmsg.h>
+#include <cwchar>
+#include <thread>
+#include <vector>
+#endif
+
 #include <SDL3/SDL.h>
+#include "bbport_process_memory.h"
 #include "bbport_settings.h"
 #include "bbport_fsr41_ui.h"
 #include <filesystem>
@@ -92,6 +103,166 @@ bool dirty = false; // settings changed while open: saved on close
 // The game's text dialog (SetTextEntry), guarded by imgui_mutex.
 bool text_entry_active = false;
 std::string text_entry_prompt, text_entry_text;
+// Video memory warning (BbOverlay::Warn): text from the GPU thread, read by the present thread.
+std::mutex warn_mutex;
+std::string warn_headline;
+std::string warn_detail;
+float warn_fraction = -1.0f; ///< memory in use over the limit, or negative for no bar
+std::chrono::steady_clock::time_point warn_until{};
+
+// Video memory readout (SetVramUsage): written by the GPU thread's collector, read by the present
+// thread.
+std::atomic<u64> vram_used{0};
+std::atomic<u64> vram_limit{0};
+std::atomic<u64> vram_pressure{0};
+std::atomic<u64> vram_critical{0};
+std::atomic<u64> vram_card_free{0};
+
+// CPU, GPU and RAM for the counter, sampled at a few Hz (the readings are syscalls, and none of
+// the numbers moves between two frames). Negative: not known (yet, or not available).
+struct SystemLoad {
+    std::atomic<float> cpu{-1.0f}; ///< this process, % of the machine (all cores = 100 %)
+    std::atomic<float> gpu{-1.0f}; ///< this process, % of the busiest 3D engine
+    std::atomic<u64> ram{0};       ///< this process's working set
+    std::atomic<u64> ram_free{0};  ///< the machine's available physical memory, 0: not known
+};
+// Leaked on purpose: the GPU sampler thread reads it while the process is shutting down.
+SystemLoad& Load() {
+    static SystemLoad* load = new SystemLoad;
+    return *load;
+}
+
+#ifdef _WIN32
+// This process's CPU time over wall time, as a share of the whole machine.
+void SampleCpu() {
+    FILETIME created{}, exited{}, kernel{}, user{};
+    if (!GetProcessTimes(GetCurrentProcess(), &created, &exited, &kernel, &user)) {
+        return;
+    }
+    const u64 ticks = (u64(kernel.dwHighDateTime) << 32 | kernel.dwLowDateTime) +
+                      (u64(user.dwHighDateTime) << 32 | user.dwLowDateTime);
+    static u64 last_ticks = 0;
+    static std::chrono::steady_clock::time_point last_time{};
+    const auto now = std::chrono::steady_clock::now();
+    if (last_ticks != 0 && now > last_time) {
+        const double wall_us = std::chrono::duration<double, std::micro>(now - last_time).count();
+        const double cpu_us = double(ticks - last_ticks) / 10.0; // FILETIME: 100 ns ticks
+        const unsigned cores = std::max(1u, std::thread::hardware_concurrency());
+        Load().cpu.store(float(100.0 * cpu_us / (wall_us * cores)), std::memory_order_relaxed);
+    }
+    last_ticks = ticks;
+    last_time = now;
+}
+
+// Windows' per-process GPU Engine counters (the number Task Manager shows), 3D engine only: the
+// one a game loads. Opening the query and enumerating the instances is not free, so this runs on
+// its own thread once a second, never on the present thread.
+float QueryGpuLoad() {
+    static PDH_HQUERY query{};
+    static PDH_HCOUNTER counter{};
+    static const bool ready = [&] {
+        return PdhOpenQueryW(nullptr, 0, &query) == ERROR_SUCCESS &&
+               PdhAddEnglishCounterW(query, L"\\GPU Engine(*)\\Utilization Percentage", 0,
+                                     &counter) == ERROR_SUCCESS;
+    }();
+    if (!ready || PdhCollectQueryData(query) != ERROR_SUCCESS) {
+        return -1.0f;
+    }
+    constexpr DWORD format = PDH_FMT_DOUBLE | PDH_FMT_NOCAP100;
+    DWORD bytes = 0, count = 0;
+    if (PdhGetFormattedCounterArrayW(counter, format, &bytes, &count, nullptr) != PDH_MORE_DATA) {
+        return -1.0f;
+    }
+    static std::vector<BYTE> buffer;
+    buffer.resize(bytes);
+    auto* items = reinterpret_cast<PDH_FMT_COUNTERVALUE_ITEM_W*>(buffer.data());
+    if (PdhGetFormattedCounterArrayW(counter, format, &bytes, &count, items) != ERROR_SUCCESS) {
+        return -1.0f;
+    }
+    const std::wstring mine = L"pid_" + std::to_wstring(GetCurrentProcessId()) + L"_";
+    double load = 0.0;
+    for (DWORD i = 0; i < count; ++i) {
+        if (!items[i].szName || !std::wcsstr(items[i].szName, L"engtype_3D") ||
+            std::wcsncmp(items[i].szName, mine.c_str(), mine.size()) != 0) {
+            continue;
+        }
+        load += items[i].FmtValue.doubleValue;
+    }
+    return float(std::min(load, 100.0));
+}
+
+// The machine's available physical memory: what Task Manager's "Available" shows (free plus
+// standby). The RAM row's process figure alone reads as a leak.
+u64 AvailableMemory() {
+    MEMORYSTATUSEX status{};
+    status.dwLength = sizeof(status);
+    return GlobalMemoryStatusEx(&status) ? status.ullAvailPhys : 0;
+}
+
+void StartGpuSampler() {
+    static std::once_flag once;
+    std::call_once(once, [] {
+        // shortcut: runs until the process exits (nothing joins it), upgrade if the overlay ever
+        // needs an orderly shutdown. Idle while the readout is switched off, so it costs nothing
+        // for players who never enable it.
+        std::thread([] {
+            for (;;) {
+                if (BbSettings::Get().show_gpu) {
+                    Load().gpu.store(QueryGpuLoad(), std::memory_order_relaxed);
+                }
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+        }).detach();
+    });
+}
+#else
+void SampleCpu() {}
+u64 AvailableMemory() {
+    return 0;
+}
+void StartGpuSampler() {}
+#endif
+
+// The frame-time graph (NotePresent writes, FpsCounter reads, both on the present thread).
+constexpr size_t FrameHistorySize = 240; ///< about four seconds at 60 Hz
+std::array<float, FrameHistorySize> frame_history{};
+size_t frame_history_count = 0;
+size_t frame_history_next = 0;
+
+// Green while the frame rate can keep up with a display, amber down to the game's 30 FPS floor,
+// red below it. The numbers mean the same thing however the game is capped.
+ImVec4 PaceColor(float frame_ms) {
+    if (frame_ms <= 20.0f) {
+        return ImVec4(0.55f, 0.95f, 0.55f, 1.0f);
+    }
+    if (frame_ms <= 33.5f) {
+        return ImVec4(1.00f, 0.82f, 0.45f, 1.0f);
+    }
+    return ImVec4(1.00f, 0.45f, 0.40f, 1.0f);
+}
+
+// A load in percent: amber from `amber`, red from `red`.
+ImVec4 LoadColor(float percent, float amber, float red) {
+    if (percent >= red) {
+        return ImVec4(1.00f, 0.45f, 0.40f, 1.0f);
+    }
+    if (percent >= amber) {
+        return ImVec4(1.00f, 0.82f, 0.45f, 1.0f);
+    }
+    return ImVec4(0.55f, 0.95f, 0.55f, 1.0f);
+}
+
+// Video memory against the collector's own marks: the colours then mean what the collector does
+// (green: room, amber: evicting, red: evicting aggressively).
+ImVec4 VramColor(u64 used, u64 pressure, u64 critical) {
+    if (critical != 0 && used >= critical) {
+        return ImVec4(1.00f, 0.45f, 0.40f, 1.0f);
+    }
+    if (pressure != 0 && used >= pressure) {
+        return ImVec4(1.00f, 0.82f, 0.45f, 1.0f);
+    }
+    return ImVec4(0.55f, 0.95f, 0.55f, 1.0f);
+}
 float base_scale = 1.0f;
 
 // Present rate for the FPS counter.
@@ -204,7 +375,7 @@ std::string FpsText() {
         std::snprintf(text, sizeof(text), "%.0f FPS (game %.0f, frame gen %dx)", shown,
                       s.game_fps.load(), int(shown / s.game_fps + 0.5f));
     } else {
-        std::snprintf(text, sizeof(text), "%.0f FPS  %.1f ms", shown, frame_ms_avg);
+        std::snprintf(text, sizeof(text), "%.0f FPS", shown);
     }
     return text;
 }
@@ -640,7 +811,18 @@ void Menu() {
     }
 
     ImGui::SeparatorText("Other");
-    Checkbox("Show FPS counter", s.show_fps);
+    ImGui::TextDisabled("Counter (top right), one switch per line it shows:");
+    Checkbox("FPS", s.show_fps);
+    ImGui::SameLine();
+    Checkbox("Frame times", s.show_frame_times);
+    ImGui::SameLine();
+    Checkbox("VRAM", s.show_vram);
+    Checkbox("GPU usage", s.show_gpu);
+    ImGui::SameLine();
+    Checkbox("CPU usage", s.show_cpu);
+    ImGui::SameLine();
+    Checkbox("RAM usage", s.show_ram);
+    Checkbox("Frame time graph", s.show_fps_graph);
     Checkbox("Mute when the game is in the background", s.mute_unfocused);
     static const char* prompt_modes[] = {"Follow the device in use", "PlayStation", "Keyboard and mouse", "Xbox",
                                          "Nintendo Switch"};
@@ -707,6 +889,160 @@ void TextEntryBox() {
     ImGui::End();
 }
 
+const char* UpscalerLabel(int upscaler) {
+    switch (upscaler) {
+    case BbSettings::UpscalerFsr3: return "FSR 3.1";
+    case BbSettings::UpscalerFsr4: return "FSR 4";
+    case BbSettings::UpscalerFsr411: return "FSR 4.1.1";
+    case BbSettings::UpscalerFsr412: return "FSR 4.1.2";
+    case BbSettings::UpscalerTaa: return "TAA";
+    case BbSettings::UpscalerDlss: return "DLSS";
+    default: return "";
+    }
+}
+
+// The upscaler's vendor colour, as the vendors brand them.
+// TODO(port): Intel XeSS (blue, #0068B5) when it is implemented: add the enum value in
+// bbport_settings.h and a case here.
+ImVec4 UpscalerColor(int upscaler) {
+    switch (upscaler) {
+    case BbSettings::UpscalerDlss:
+        return ImVec4(0.55f, 0.90f, 0.30f, 1.0f); // NVIDIA green
+    case BbSettings::UpscalerFsr3:
+    case BbSettings::UpscalerFsr4:
+    case BbSettings::UpscalerFsr411:
+    case BbSettings::UpscalerFsr412:
+        return ImVec4(0.95f, 0.40f, 0.35f, 1.0f); // AMD red
+    default:
+        return ImVec4(0.75f, 0.75f, 0.75f, 1.0f); // TAA, off: no vendor
+    }
+}
+
+/// The processor name Windows shows in System settings, read once (a reference: the counter asks
+/// for it every frame).
+const std::string& CpuName() {
+#if defined(_WIN32)
+    static const std::string name = [] {
+        wchar_t buffer[256]{};
+        DWORD bytes = sizeof(buffer);
+        if (RegGetValueW(HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+                         L"ProcessorNameString", RRF_RT_REG_SZ, nullptr, buffer, &bytes) !=
+            ERROR_SUCCESS) {
+            return std::string{};
+        }
+        char utf8[512]{};
+        const int length =
+            WideCharToMultiByte(CP_UTF8, 0, buffer, -1, utf8, sizeof(utf8), nullptr, nullptr);
+        return std::string(utf8, length > 1 ? size_t(length - 1) : 0);
+    }();
+    return name;
+#else
+    static const std::string name;
+    return name;
+#endif
+}
+
+std::string gpu_name; ///< the Vulkan device's model name, set in Init
+u32 output_width = 0, output_height = 0; ///< the presented size, set in Render
+
+// A dim label, with every value starting in the same column (the reference overlay's look). The
+// column is measured, not a constant: a longer label or a larger UI scale would otherwise crowd a
+// value or clip it.
+void Label(const char* text, float column) {
+    ImGui::TextDisabled("%s", text);
+    ImGui::SameLine(column);
+}
+
+// Frame-time graph: the last four seconds as a filled curve, milliseconds on the left, the same
+// heights read as FPS on the right. Auto-ranged like a scope, no fixed reference lines: the axes
+// carry the scale. Each axis gets a gutter sized from its own widest tick, and the plot is inset by
+// half a line top and bottom, so no number sits on the curve or gets cut by the box.
+void FrameTimeGraph(float average_ms) {
+    char text[32];
+    const float font = ImGui::GetFontSize();
+    const float unit = 4.0f * base_scale;
+    // The samples in ring order, oldest first. frame_history_next is the next slot to write, so the
+    // oldest stored one is frame_history_count back from it (not next itself: it is unwritten until
+    // the ring has filled once).
+    const size_t oldest =
+        (frame_history_next + FrameHistorySize - frame_history_count) % FrameHistorySize;
+    float lo = frame_history[oldest];
+    float hi = lo;
+    for (size_t i = 1; i < frame_history_count; ++i) {
+        const float ms = frame_history[(oldest + i) % FrameHistorySize];
+        lo = std::min(lo, ms);
+        hi = std::max(hi, ms);
+    }
+    // At least 4 ms of span, so a steady scene does not zoom into noise.
+    if (hi - lo < 4.0f) {
+        const float mid = 0.5f * (lo + hi);
+        lo = mid - 2.0f;
+        hi = mid + 2.0f;
+    }
+    lo = std::max(lo - 0.4f, 0.0f);
+    hi += 0.4f;
+
+    const float ticks[3] = {lo, 0.5f * (lo + hi), hi};
+    float gutter_l = 0.0f, gutter_r = 0.0f;
+    for (const float ms : ticks) {
+        std::snprintf(text, sizeof(text), "%.1f", double(ms));
+        gutter_l = std::max(gutter_l, ImGui::CalcTextSize(text).x);
+        std::snprintf(text, sizeof(text), "%.0f", double(ms > 0.0f ? 1000.0f / ms : 0.0f));
+        gutter_r = std::max(gutter_r, ImGui::CalcTextSize(text).x);
+    }
+    gutter_l += unit * 2.0f;
+    gutter_r += unit * 2.0f;
+
+    const float plot_w = 210.0f * base_scale;
+    const float vpad = font * 0.5f + unit; // half a line above and below the plot
+    const float w = gutter_l + plot_w + gutter_r;
+    const float h = 60.0f * base_scale + 2.0f * vpad;
+
+    const ImVec2 origin = ImGui::GetCursorScreenPos();
+    const ImVec2 end{origin.x + w, origin.y + h};
+    ImGui::Dummy(ImVec2(w, h));
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    const ImVec2 plot_min{origin.x + gutter_l, origin.y + vpad};
+    const ImVec2 plot_max{end.x - gutter_r, end.y - vpad};
+    IM_ASSERT(plot_max.x > plot_min.x && plot_max.y > plot_min.y); // gutters fit in the box
+    const float plot_h = plot_max.y - plot_min.y;
+    const ImVec4 tone = PaceColor(average_ms);
+    const ImU32 line = ImGui::ColorConvertFloat4ToU32(tone);
+    const ImU32 fill_top = ImGui::ColorConvertFloat4ToU32(ImVec4(tone.x, tone.y, tone.z, 0.35f));
+    const ImU32 fill_bottom = ImGui::ColorConvertFloat4ToU32(ImVec4(tone.x, tone.y, tone.z, 0.02f));
+    const ImU32 grid = ImGui::ColorConvertFloat4ToU32(ImVec4(1.0f, 1.0f, 1.0f, 0.08f));
+    const ImU32 ms_text = ImGui::ColorConvertFloat4ToU32(ImVec4(0.62f, 0.80f, 0.92f, 1.0f));
+    const ImU32 fps_text = ImGui::ColorConvertFloat4ToU32(ImVec4(0.55f, 0.95f, 0.55f, 1.0f));
+
+    draw->AddRectFilled(origin, end, ImGui::ColorConvertFloat4ToU32(ImVec4(0, 0, 0, 0.42f)),
+                        4.0f * base_scale);
+    const auto y_for = [&](float ms) {
+        return plot_max.y - plot_h * (ms - lo) / (hi - lo);
+    };
+    for (int tick = 2; tick >= 0; --tick) {
+        const float y = y_for(ticks[tick]);
+        draw->AddLine(ImVec2(plot_min.x, y), ImVec2(plot_max.x, y), grid, 1.0f);
+        std::snprintf(text, sizeof(text), "%.1f", double(ticks[tick]));
+        draw->AddText(ImVec2(origin.x + unit, y - font * 0.5f), ms_text, text);
+        std::snprintf(text, sizeof(text), "%.0f",
+                      double(ticks[tick] > 0.0f ? 1000.0f / ticks[tick] : 0.0f));
+        const ImVec2 size = ImGui::CalcTextSize(text);
+        draw->AddText(ImVec2(end.x - unit - size.x, y - font * 0.5f), fps_text, text);
+    }
+
+    const float step = (plot_max.x - plot_min.x) / float(FrameHistorySize);
+    ImVec2 points[FrameHistorySize];
+    for (size_t i = 0; i < frame_history_count; ++i) {
+        const size_t sample = (oldest + i) % FrameHistorySize; // oldest first
+        const float x = plot_min.x + step * float(i + 1);
+        points[i] = ImVec2(x, std::clamp(y_for(frame_history[sample]), plot_min.y, plot_max.y));
+        draw->AddRectFilledMultiColor(ImVec2(x - step, points[i].y), ImVec2(x, plot_max.y),
+                                      fill_top, fill_top, fill_bottom, fill_bottom);
+    }
+    draw->AddPolyline(points, int(frame_history_count), line, ImDrawFlags_None, 1.5f * base_scale);
+    draw->AddCircleFilled(points[frame_history_count - 1], 2.2f * base_scale, line);
+}
+
 void FpsCounter() {
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     const float pad = 12.0f * base_scale;
@@ -719,15 +1055,172 @@ void FpsCounter() {
                      ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNav |
                      ImGuiWindowFlags_NoFocusOnAppearing);
     const auto& s = BbSettings::Get();
-    ImGui::Text("%s  %s", FpsText().c_str(),
-                s.upscaler == BbSettings::UpscalerFsr3   ? "FSR 3.1"
-                : s.upscaler == BbSettings::UpscalerFsr4 ? "FSR 4"
-                : s.upscaler == BbSettings::UpscalerFsr411 ? "FSR 4.1.1"
-                : s.upscaler == BbSettings::UpscalerFsr412 ? "FSR 4.1.2"
-                : s.upscaler == BbSettings::UpscalerTaa ? "TAA"
-                : s.upscaler == BbSettings::UpscalerDlss ? "DLSS"
-                                                         : "");
+    const ImVec4 pace = PaceColor(frame_ms_avg);
+    const float rate = frame_ms_avg > 0.0f ? 1000.0f / frame_ms_avg : 0.0f;
+    constexpr double gb = 1024.0 * 1024.0 * 1024.0;
+    const float model_gap = 12.0f * base_scale;
+    // One value column for the whole panel, as wide as the longest label it can show plus a gap.
+    // Measured and constant, so values line up and never move when a switch is flipped.
+    float column = 0.0f;
+    for (const char* label : {"FPS:", "Frame:", "VRAM:", "GPU:", "CPU:", "RAM:"}) {
+        column = std::max(column, ImGui::CalcTextSize(label).x);
+    }
+    column += 10.0f * base_scale;
+    if (s.show_fps) {
+        Label("FPS:", column);
+        ImGui::PushStyleColor(ImGuiCol_Text, pace);
+        ImGui::Text("%.1f", double(rate));
+        ImGui::PopStyleColor();
+        ImGui::SameLine(0.0f, model_gap);
+        const int out = s.output_res;
+        ImGui::TextDisabled("|  %ux%u", output_width ? output_width : u32(BbSettings::OutputWidths[out]),
+                            output_height ? output_height : u32(BbSettings::OutputHeights[out]));
+        if (UpscalerLabel(s.upscaler)[0] != '\0') {
+            ImGui::SameLine(0.0f, 6.0f * base_scale);
+            ImGui::TextColored(UpscalerColor(s.upscaler), "%s", UpscalerLabel(s.upscaler));
+        }
+        const int generated = s.frame_gen != BbSettings::FrameGenOff ? s.frame_gen_now.load() : 0;
+        if (generated > 0 && s.game_fps > 0.0f) {
+            ImGui::SameLine(0.0f, 6.0f * base_scale);
+            ImGui::TextDisabled("(game %.0f, %dx)", double(s.game_fps.load()), generated);
+        }
+    }
+    if (s.show_frame_times) {
+        Label("Frame:", column);
+        ImGui::PushStyleColor(ImGuiCol_Text, pace);
+        ImGui::Text("%.1f ms", frame_ms_avg);
+        ImGui::PopStyleColor();
+    }
+    // Video memory in use, against the limit the collector holds itself to: the same numbers the
+    // low-memory warning reports. 0, so nothing shown, until the first collector pass.
+    const u64 used = vram_used.load(std::memory_order_relaxed);
+    if (s.show_vram && used != 0) {
+        const u64 limit = vram_limit.load(std::memory_order_relaxed);
+        Label("VRAM:", column);
+        ImGui::PushStyleColor(ImGuiCol_Text,
+                             VramColor(used, vram_pressure.load(std::memory_order_relaxed),
+                                       vram_critical.load(std::memory_order_relaxed)));
+        if (limit != 0) {
+            ImGui::Text("%.1f / %.1f GB", double(used) / gb, double(limit) / gb);
+        } else {
+            ImGui::Text("%.1f GB", double(used) / gb);
+        }
+        ImGui::PopStyleColor();
+        // The card's own headroom: the limit above is the port's conservative budget, so without
+        // this "4.6 of 4.6" reads as "the card is full" when it is not.
+        ImGui::SameLine(0.0f, 8.0f * base_scale);
+        ImGui::TextDisabled("(card: %.1f GB free)",
+                            double(vram_card_free.load(std::memory_order_relaxed)) / gb);
+    }
+    if (s.show_gpu) {
+        Label("GPU:", column);
+        const float gpu = Load().gpu.load(std::memory_order_relaxed);
+        if (gpu < 0.0f) {
+            ImGui::TextDisabled("--");
+        } else {
+            ImGui::TextColored(LoadColor(gpu, 90.0f, 97.0f), "%.0f%%", double(gpu));
+        }
+        if (!gpu_name.empty()) {
+            ImGui::SameLine(0.0f, model_gap);
+            ImGui::TextDisabled("%s", gpu_name.c_str());
+        }
+    }
+    if (s.show_cpu) {
+        Label("CPU:", column);
+        const float cpu = Load().cpu.load(std::memory_order_relaxed);
+        if (cpu < 0.0f) {
+            ImGui::TextDisabled("--");
+        } else {
+            ImGui::TextColored(LoadColor(cpu, 70.0f, 90.0f), "%.0f%%", double(cpu));
+        }
+        const std::string& model = CpuName();
+        if (!model.empty()) {
+            ImGui::SameLine(0.0f, model_gap);
+            ImGui::TextDisabled("%s", model.c_str());
+        }
+    }
+    if (s.show_ram) {
+        Label("RAM:", column);
+        const u64 ram = Load().ram.load(std::memory_order_relaxed);
+        if (ram == 0) {
+            ImGui::TextDisabled("--");
+        } else {
+            ImGui::Text("%.1f GB", double(ram) / gb);
+            // The machine's headroom, like the VRAM row's card figure: the game's working set on
+            // its own looks like it is eating all the memory.
+            const u64 free = Load().ram_free.load(std::memory_order_relaxed);
+            if (free != 0) {
+                ImGui::SameLine(0.0f, 8.0f * base_scale);
+                ImGui::TextDisabled("(%.1f GB free)", double(free) / gb);
+            }
+        }
+    }
+    if (s.show_fps_graph && frame_history_count > 1) {
+        FrameTimeGraph(frame_ms_avg);
+        // Legend under the graph, the current values of what the line shows.
+        const float square = 9.0f * base_scale;
+        const ImVec2 at = ImGui::GetCursorScreenPos();
+        ImGui::Dummy(ImVec2(square, square));
+        ImGui::GetWindowDrawList()->AddRectFilled(at, ImVec2(at.x + square, at.y + square),
+                                                  ImGui::ColorConvertFloat4ToU32(pace),
+                                                  1.5f * base_scale);
+        ImGui::SameLine(0.0f, 6.0f * base_scale);
+        ImGui::Text("Frame: %.1f ms", frame_ms_avg);
+        ImGui::SameLine(0.0f, 14.0f * base_scale);
+        ImGui::TextDisabled("%.0f FPS", double(rate));
+    }
     ImGui::End();
+}
+
+bool WarningActive() {
+    std::scoped_lock lock{warn_mutex};
+    return !warn_headline.empty() && std::chrono::steady_clock::now() < warn_until;
+}
+
+// Amber banner at the top of the screen: the player should save before the game runs out of
+// video memory (nothing is blocked; the game still crashes if it has to). The headline is
+// brighter than the detail so the point of the banner reads first.
+void WarningBanner() {
+    std::string headline, detail;
+    float fraction = -1.0f;
+    {
+        std::scoped_lock lock{warn_mutex};
+        headline = warn_headline;
+        detail = warn_detail;
+        fraction = warn_fraction;
+    }
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + viewport->WorkSize.x * 0.5f,
+                                   viewport->WorkPos.y + 24.0f * base_scale),
+                            ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+    ImGui::SetNextWindowBgAlpha(0.92f);
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.42f, 0.20f, 0.02f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.95f, 0.60f, 0.20f, 1.0f));
+    if (ImGui::Begin("##vram-warning", nullptr,
+                     ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
+                         ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNav |
+                         ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoFocusOnAppearing)) {
+        ImGui::PushTextWrapPos(560.0f * base_scale);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 0.82f, 0.45f, 1.00f));
+        ImGui::TextUnformatted(headline.c_str());
+        ImGui::PopStyleColor();
+        if (fraction >= 0.0f) {
+            // How much of the memory in use: the bar says in one glance what the numbers say.
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram,
+                                  fraction > 0.90f ? ImVec4(1.00f, 0.45f, 0.40f, 1.0f)
+                                                   : ImVec4(1.00f, 0.72f, 0.30f, 1.0f));
+            ImGui::ProgressBar(std::min(fraction, 1.0f), ImVec2(-FLT_MIN, 5.0f * base_scale), "");
+            ImGui::PopStyleColor();
+        }
+        if (!detail.empty()) {
+            ImGui::Spacing();
+            ImGui::TextUnformatted(detail.c_str());
+        }
+        ImGui::PopTextWrapPos();
+    }
+    ImGui::End();
+    ImGui::PopStyleColor(2);
 }
 
 } // namespace
@@ -737,6 +1230,7 @@ void Init(const Vulkan::Instance& instance, vk::Format format, u32 image_count) 
     if (initialized) {
         return;
     }
+    gpu_name = std::string(instance.GetModelName());
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -921,8 +1415,16 @@ bool HandleEvent(const SDL_Event& event) {
     }
 }
 
+// Any of the counter's readouts asked for (the graph lives in the same window).
+bool ReadoutsOn() {
+    const auto& s = BbSettings::Get();
+    return s.show_fps || s.show_frame_times || s.show_vram || s.show_gpu || s.show_cpu ||
+           s.show_ram || s.show_fps_graph;
+}
+
 bool Visible() {
-    return initialized && (menu_open || text_entry_active || BbSettings::Get().show_fps);
+    return initialized &&
+           (menu_open || text_entry_active || WarningActive() || ReadoutsOn());
 }
 
 bool CapturesInput() {
@@ -936,6 +1438,23 @@ void SetTextEntry(bool active, const std::string& prompt, const std::string& tex
     text_entry_text = text;
 }
 
+void Warn(const std::string& headline, const std::string& detail, float used_fraction) {
+    std::scoped_lock lock{warn_mutex};
+    warn_headline = headline;
+    warn_detail = detail;
+    warn_fraction = used_fraction;
+    warn_until = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+}
+
+void SetVramUsage(u64 used_bytes, u64 limit_bytes, u64 pressure_bytes, u64 critical_bytes,
+                  u64 card_free_bytes) {
+    vram_used.store(used_bytes, std::memory_order_relaxed);
+    vram_limit.store(limit_bytes, std::memory_order_relaxed);
+    vram_pressure.store(pressure_bytes, std::memory_order_relaxed);
+    vram_critical.store(critical_bytes, std::memory_order_relaxed);
+    vram_card_free.store(card_free_bytes, std::memory_order_relaxed);
+}
+
 // Called for every presented image: the interval for the FPS readout and BB_FPS_LOG.
 void NotePresent() {
     const auto now = std::chrono::steady_clock::now();
@@ -944,6 +1463,21 @@ void NotePresent() {
     last_present_ms = ms;
     if (ms > 0.0f && ms < 1000.0f) {
         frame_ms_avg = frame_ms_avg == 0.0f ? ms : frame_ms_avg * 0.95f + ms * 0.05f;
+        frame_history[frame_history_next] = ms;
+        frame_history_next = (frame_history_next + 1) % FrameHistorySize;
+        frame_history_count = std::min(frame_history_count + 1, FrameHistorySize);
+    }
+    // CPU and RAM at 4 Hz (syscalls, and neither changes between two frames); the GPU reading
+    // has its own thread, started the first time the readout is asked for.
+    static auto last_sample = now;
+    if (now - last_sample >= std::chrono::milliseconds(250)) {
+        last_sample = now;
+        SampleCpu();
+        Load().ram.store(BbProcessMemory::Get().working_set, std::memory_order_relaxed);
+        Load().ram_free.store(AvailableMemory(), std::memory_order_relaxed);
+        if (BbSettings::Get().show_gpu) {
+            StartGpuSampler();
+        }
     }
     // BB_FPS_LOG=1: presents per second and the slowest frame, every 5 seconds (test runs).
     static const bool fps_log = [] {
@@ -968,6 +1502,9 @@ void NotePresent() {
 
 void Render(vk::CommandBuffer cmdbuf, vk::ImageView view, vk::Extent2D extent) {
     const float ms = last_present_ms;
+    // What is actually presented: follows a window resize, unlike the configured output.
+    output_width = extent.width;
+    output_height = extent.height;
     if (!Visible()) {
         return;
     }
@@ -989,11 +1526,14 @@ void Render(vk::CommandBuffer cmdbuf, vk::ImageView view, vk::Extent2D extent) {
     if (menu_open) {
         Menu();
     }
-    if (BbSettings::Get().show_fps && !menu_open) {
+    if (ReadoutsOn() && !menu_open) {
         FpsCounter();
     }
     if (text_entry_active) {
         TextEntryBox();
+    }
+    if (WarningActive()) {
+        WarningBanner();
     }
     ImGui::Render();
 
