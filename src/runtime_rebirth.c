@@ -15,13 +15,19 @@
  * screen prices that level. The player's data is GameDataMan (a global of the game image)
  * -> +0x8; its layout is the save's (launcher/bbport_respec.py) 0x40 bytes further in. The
  * targets are kept per character (origin and name) in <user>/rebirth.txt, so levels not spent
- * yet stay free after quitting. */
+ * yet stay free after quitting. A rebirth whose target could not be saved is refused (it would
+ * take the levels with nothing to regain them by), and the target last read or written is kept
+ * in memory, so pricing a level does not open the file (an antivirus holding it made levels
+ * cost Blood Echoes). */
 #include "runtime.h"
 #include <inttypes.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #define GAME_DATA_MAN 0x553B130u
 enum { VITALITY = 0x40, INSIGHT = 0x84, LEVEL = 0x90, NAME = 0xA8, NAME_CHARS = 16, ORIGIN = 0xCE };
@@ -46,6 +52,10 @@ static const uint8_t ORIGINS[9][7] = {
 
 static unsigned char *image;
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+/* The target of the character last asked about (rebirth.txt's line, or 0). */
+static struct { int valid; char key[96]; unsigned target; } known;
+/* What the last level priced came to, for the log (one line when it changes). */
+static struct { char key[96]; unsigned target; int free_level; } logged;
 
 /* The character as it was before the rebirth whose level-up screen is open. */
 static struct {
@@ -113,37 +123,93 @@ static void targets_path(char *out, size_t size) {
     snprintf(out, size, "%s/rebirth.txt", runtime_file_user_dir());
 }
 
-/* The target level for `key` (0: none). */
-static unsigned read_target(const char *key) {
-    char path[4096], line[256];
-    targets_path(path, sizeof(path));
+/* `key`'s line in the file at `path`: 1 and *target when there is one, 0 when not, -1 when the
+ * file cannot be read. */
+static int read_line(const char *path, const char *key, unsigned *target) {
+    char line[256];
     FILE *f = fopen(path, "r");
-    if (!f) return 0;
-    unsigned target = 0;
+    if (!f) return -1;
+    int found = 0;
     const size_t length = strlen(key);
     while (fgets(line, sizeof(line), f)) {
-        if (!strncmp(line, key, length) && line[length] == ' ') target = (unsigned)strtoul(line + length + 1, NULL, 10);
+        if (!strncmp(line, key, length) && line[length] == ' ') {
+            *target = (unsigned)strtoul(line + length + 1, NULL, 10);
+            found = 1;
+        }
     }
     fclose(f);
+    return found;
+}
+
+/* The target level for `key` (0: none). Without rebirth.txt, the rebirth.txt.new that 1.9.5's
+ * betas left when replacing it failed (they removed it first) is the latest. */
+static unsigned read_target(const char *key) {
+    if (known.valid && !strcmp(known.key, key)) return known.target;
+    char path[4096], temp[4200];
+    targets_path(path, sizeof(path));
+    snprintf(temp, sizeof(temp), "%s.new", path);
+    unsigned target = 0;
+    if (read_line(path, key, &target) < 0) read_line(temp, key, &target);
+    known.valid = 1;
+    snprintf(known.key, sizeof(known.key), "%s", key);
+    known.target = target;
     return target;
 }
 
-/* Sets (or with 0 removes) `key`'s target; the other characters' lines are kept. */
-static void write_target(const char *key, unsigned target) {
+/* `temp` becomes `path`, replacing it; tried for a few seconds while another program (an
+ * antivirus, a sync client) has either open. */
+static int replace_file(const char *temp, const char *path) {
+    for (int attempt = 0; attempt < 40; ++attempt) {
+#ifdef _WIN32
+        if (MoveFileExA(temp, path, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) return 1;
+        Sleep(50);
+#else
+        if (!rename(temp, path)) return 1;
+#endif
+    }
+    return 0;
+}
+
+/* Sets (or with 0 removes) `key`'s target; the other characters' lines are kept. 0: it could not
+ * be saved (the file is unchanged). */
+static int write_target(const char *key, unsigned target) {
     char path[4096], temp[4200], line[256];
     targets_path(path, sizeof(path));
     snprintf(temp, sizeof(temp), "%s.new", path);
-    FILE *in = fopen(path, "r"), *out = fopen(temp, "w");
-    if (!out) { if (in) fclose(in); return; }
+    FILE *in = fopen(path, "r");
+    char *lines = NULL;
+    size_t used = 0;
+    if (!in) in = fopen(temp, "r");
     const size_t length = strlen(key);
     while (in && fgets(line, sizeof(line), in)) {
-        if (!(strncmp(line, key, length) == 0 && line[length] == ' ')) fputs(line, out);
+        if (strncmp(line, key, length) == 0 && line[length] == ' ') continue;
+        const size_t n = strlen(line);
+        char *grown = realloc(lines, used + n + 1);
+        if (!grown) { fclose(in); free(lines); return 0; }
+        lines = grown;
+        memcpy(lines + used, line, n + 1);
+        used += n;
     }
     if (in) fclose(in);
-    if (target) fprintf(out, "%s %u\n", key, target);
-    fclose(out);
-    remove(path);
-    rename(temp, path);
+    FILE *out = fopen(temp, "w");
+    int ok = out != NULL;
+    if (out) {
+        if (used) ok &= fwrite(lines, 1, used, out) == used;
+        if (target) ok &= fprintf(out, "%s %u\n", key, target) > 0;
+        ok &= fflush(out) == 0;
+        ok &= fclose(out) == 0;
+    }
+    free(lines);
+    ok = ok && replace_file(temp, path);
+    if (!ok) {
+        remove(temp);
+        printf("Runtime: rebirth: %s could not be saved\n", path);
+        return 0;
+    }
+    known.valid = 1;
+    snprintf(known.key, sizeof(known.key), "%s", key);
+    known.target = target;
+    return 1;
 }
 
 /* 1: open the level-up screen (reborn now, or levels still to regain from an earlier rebirth,
@@ -179,7 +245,12 @@ int runtime_rebirth(void) {
             if (level <= new_level) {
                 printf("Runtime: rebirth: already the origin's level %u (with the weapons' needs)\n", new_level);
                 result = 2;
-            } else if (insight >= REBIRTH_INSIGHT) {
+            } else if (insight < REBIRTH_INSIGHT) {
+                printf("Runtime: rebirth refused: Insight %" PRIu32 " (needs %d)\n", insight, REBIRTH_INSIGHT);
+            } else if (!write_target(key, target > level ? target : level)) {
+                /* Without its target the levels could not be regained: no rebirth. */
+                printf("Runtime: rebirth refused: its free levels could not be saved\n");
+            } else {
                 before.active = 1;
                 snprintf(before.key, sizeof(before.key), "%s", key);
                 for (int i = 0; i < 6; ++i) before.attributes[i] = get32(p, ATTRIBUTE[i]);
@@ -187,7 +258,6 @@ int runtime_rebirth(void) {
                 before.insight = insight;
                 before.reborn_level = new_level;
                 before.target = target;
-                write_target(key, target > level ? target : level);
                 for (int i = 0; i < 6; ++i) put32(p, ATTRIBUTE[i], reborn[i]);
                 put32(p, LEVEL, new_level);
                 put32(p, INSIGHT, insight - REBIRTH_INSIGHT);
@@ -195,8 +265,6 @@ int runtime_rebirth(void) {
                        "levels up to %u free, Insight %" PRIu32 " -> %" PRIu32 "\n", level, new_level, origin[0],
                        target > level ? target : level, insight, insight - REBIRTH_INSIGHT);
                 result = 1;
-            } else {
-                printf("Runtime: rebirth refused: Insight %" PRIu32 " (needs %d)\n", insight, REBIRTH_INSIGHT);
             }
         }
     }
@@ -238,8 +306,21 @@ int runtime_rebirth_free_level(int level) {
         character_key(p, key, sizeof(key));
         const unsigned target = read_target(key);
         free_level = (unsigned)level < target;
-        /* Every level is bought again: the target is no longer needed. */
-        if (target && get32(p, LEVEL) >= target) write_target(key, 0);
+        if (target && (strcmp(logged.key, key) || logged.target != target || logged.free_level != free_level)) {
+            printf("Runtime: rebirth: level %d %s (free up to level %u)\n", level + 1,
+                   free_level ? "free" : "costs Blood Echoes", target);
+            fflush(stdout);
+            snprintf(logged.key, sizeof(logged.key), "%s", key);
+            logged.target = target;
+            logged.free_level = free_level;
+        }
+        /* Every level is bought again: the target is no longer needed (and not tried again while
+         * the screen prices levels when the file can't be written now). */
+        if (target && get32(p, LEVEL) >= target) {
+            if (!write_target(key, 0)) known.target = 0;
+            printf("Runtime: rebirth: every level regained (%u)\n", target);
+            fflush(stdout);
+        }
     }
     pthread_mutex_unlock(&lock);
     return free_level;
