@@ -2,6 +2,7 @@
 #include "bbport_overlay.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cfloat>
 #include <chrono>
@@ -61,12 +62,45 @@ std::string text_entry_prompt, text_entry_text;
 std::mutex warn_mutex;
 std::string warn_headline;
 std::string warn_detail;
+float warn_fraction = -1.0f; ///< memory in use over the limit, or negative for no bar
 std::chrono::steady_clock::time_point warn_until{};
 
 // Video memory readout (SetVramUsage): written by the GPU thread's collector, read by the present
 // thread.
 std::atomic<u64> vram_used{0};
 std::atomic<u64> vram_limit{0};
+std::atomic<u64> vram_pressure{0};
+std::atomic<u64> vram_critical{0};
+
+// The frame-time graph (NotePresent writes, FpsCounter reads, both on the present thread).
+constexpr size_t FrameHistorySize = 240; ///< about four seconds at 60 Hz
+std::array<float, FrameHistorySize> frame_history{};
+size_t frame_history_count = 0;
+size_t frame_history_next = 0;
+
+// Green while the frame rate can keep up with a display, amber down to the game's 30 FPS floor,
+// red below it. The numbers mean the same thing however the game is capped.
+ImVec4 PaceColor(float frame_ms) {
+    if (frame_ms <= 20.0f) {
+        return ImVec4(0.55f, 0.95f, 0.55f, 1.0f);
+    }
+    if (frame_ms <= 33.5f) {
+        return ImVec4(1.00f, 0.82f, 0.45f, 1.0f);
+    }
+    return ImVec4(1.00f, 0.45f, 0.40f, 1.0f);
+}
+
+// Video memory against the collector's own marks: the colours then mean what the collector does
+// (green: room, amber: evicting, red: evicting aggressively).
+ImVec4 VramColor(u64 used, u64 pressure, u64 critical) {
+    if (critical != 0 && used >= critical) {
+        return ImVec4(1.00f, 0.45f, 0.40f, 1.0f);
+    }
+    if (pressure != 0 && used >= pressure) {
+        return ImVec4(1.00f, 0.82f, 0.45f, 1.0f);
+    }
+    return ImVec4(0.55f, 0.95f, 0.55f, 1.0f);
+}
 float base_scale = 1.0f;
 
 // Present rate for the FPS counter.
@@ -512,6 +546,8 @@ void Menu() {
 
     ImGui::SeparatorText("Other");
     Checkbox("Show FPS counter", s.show_fps);
+    ImGui::SameLine();
+    Checkbox("Frame time graph", s.show_fps_graph);
     Checkbox("Mute when the game is in the background", s.mute_unfocused);
     static const char* prompt_modes[] = {"Follow the device in use", "PlayStation", "Keyboard and mouse", "Xbox",
                                          "Nintendo Switch"};
@@ -590,6 +626,7 @@ void FpsCounter() {
                      ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNav |
                      ImGuiWindowFlags_NoFocusOnAppearing);
     const auto& s = BbSettings::Get();
+    ImGui::PushStyleColor(ImGuiCol_Text, PaceColor(frame_ms_avg));
     ImGui::Text("%s  %s", FpsText().c_str(),
                 s.upscaler == BbSettings::UpscalerFsr3   ? "FSR 3.1"
                 : s.upscaler == BbSettings::UpscalerFsr4 ? "FSR 4"
@@ -597,17 +634,38 @@ void FpsCounter() {
                 : s.upscaler == BbSettings::UpscalerTaa ? "TAA"
                 : s.upscaler == BbSettings::UpscalerDlss ? "DLSS"
                                                          : "");
+    ImGui::PopStyleColor();
     // Video memory in use, against the limit the collector holds itself to: the same numbers the
     // low-memory warning reports. 0, so nothing shown, until the first collector pass.
     const u64 used = vram_used.load(std::memory_order_relaxed);
     if (used != 0) {
         constexpr double gb = 1024.0 * 1024.0 * 1024.0;
         const u64 limit = vram_limit.load(std::memory_order_relaxed);
+        ImGui::PushStyleColor(ImGuiCol_Text,
+                             VramColor(used, vram_pressure.load(std::memory_order_relaxed),
+                                       vram_critical.load(std::memory_order_relaxed)));
         if (limit != 0) {
             ImGui::Text("VRAM %.1f / %.1f GB", double(used) / gb, double(limit) / gb);
         } else {
             ImGui::Text("VRAM %.1f GB", double(used) / gb);
         }
+        ImGui::PopStyleColor();
+    }
+    if (s.show_fps_graph && frame_history_count > 1) {
+        // 10 ms steps: the scale stays still while the scene does, and a spike widens it for a
+        // moment instead of flattening everything below it.
+        float top = 20.0f;
+        for (size_t i = 0; i < frame_history_count; ++i) {
+            top = std::max(top, frame_history[i]);
+        }
+        top = std::ceil(top / 10.0f) * 10.0f;
+        const int offset =
+            frame_history_count == FrameHistorySize ? int(frame_history_next) : 0;
+        ImGui::PushStyleColor(ImGuiCol_PlotLines, PaceColor(frame_ms_avg));
+        ImGui::PlotLines("##frame-time", frame_history.data(), int(frame_history_count), offset,
+                         nullptr, 0.0f, top, ImVec2(200.0f * base_scale, 42.0f * base_scale));
+        ImGui::PopStyleColor();
+        ImGui::TextDisabled("frame time  (0-%.0f ms, %.1f ms average)", top, frame_ms_avg);
     }
     ImGui::End();
 }
@@ -622,10 +680,12 @@ bool WarningActive() {
 // brighter than the detail so the point of the banner reads first.
 void WarningBanner() {
     std::string headline, detail;
+    float fraction = -1.0f;
     {
         std::scoped_lock lock{warn_mutex};
         headline = warn_headline;
         detail = warn_detail;
+        fraction = warn_fraction;
     }
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x + viewport->WorkSize.x * 0.5f,
@@ -643,6 +703,14 @@ void WarningBanner() {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 0.82f, 0.45f, 1.00f));
         ImGui::TextUnformatted(headline.c_str());
         ImGui::PopStyleColor();
+        if (fraction >= 0.0f) {
+            // How much of the memory in use: the bar says in one glance what the numbers say.
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram,
+                                  fraction > 0.90f ? ImVec4(1.00f, 0.45f, 0.40f, 1.0f)
+                                                   : ImVec4(1.00f, 0.72f, 0.30f, 1.0f));
+            ImGui::ProgressBar(std::min(fraction, 1.0f), ImVec2(-FLT_MIN, 5.0f * base_scale), "");
+            ImGui::PopStyleColor();
+        }
         if (!detail.empty()) {
             ImGui::Spacing();
             ImGui::TextUnformatted(detail.c_str());
@@ -836,16 +904,19 @@ void SetTextEntry(bool active, const std::string& prompt, const std::string& tex
     text_entry_text = text;
 }
 
-void Warn(const std::string& headline, const std::string& detail) {
+void Warn(const std::string& headline, const std::string& detail, float used_fraction) {
     std::scoped_lock lock{warn_mutex};
     warn_headline = headline;
     warn_detail = detail;
+    warn_fraction = used_fraction;
     warn_until = std::chrono::steady_clock::now() + std::chrono::seconds(10);
 }
 
-void SetVramUsage(u64 used_bytes, u64 limit_bytes) {
+void SetVramUsage(u64 used_bytes, u64 limit_bytes, u64 pressure_bytes, u64 critical_bytes) {
     vram_used.store(used_bytes, std::memory_order_relaxed);
     vram_limit.store(limit_bytes, std::memory_order_relaxed);
+    vram_pressure.store(pressure_bytes, std::memory_order_relaxed);
+    vram_critical.store(critical_bytes, std::memory_order_relaxed);
 }
 
 // Called for every presented image: the interval for the FPS readout and BB_FPS_LOG.
@@ -856,6 +927,9 @@ void NotePresent() {
     last_present_ms = ms;
     if (ms > 0.0f && ms < 1000.0f) {
         frame_ms_avg = frame_ms_avg == 0.0f ? ms : frame_ms_avg * 0.95f + ms * 0.05f;
+        frame_history[frame_history_next] = ms;
+        frame_history_next = (frame_history_next + 1) % FrameHistorySize;
+        frame_history_count = std::min(frame_history_count + 1, FrameHistorySize);
     }
     // BB_FPS_LOG=1: presents per second and the slowest frame, every 5 seconds (test runs).
     static const bool fps_log = [] {

@@ -1152,7 +1152,8 @@ void TextureCache::GarbageCollectImages() {
         // to. The same numbers the warning below is based on. On an integrated GPU the limit is
         // the system-memory heap the GPU allocates from, which is the right number there too.
         const u64 limit = forced_budget ? forced_budget : instance.GetTotalMemoryBudget();
-        BbOverlay::SetVramUsage(total_used_memory, limit);
+        BbOverlay::SetVramUsage(total_used_memory, limit, pressure_gc_memory,
+                                critical_gc_memory);
         if (warn_mb != 0 && !instance.IsIntegrated()) {
             const u64 free = limit > total_used_memory ? limit - total_used_memory : 0;
             constexpr u64 warn_step = 256_MB;
@@ -1169,10 +1170,10 @@ void TextureCache::GarbageCollectImages() {
                 };
                 BbOverlay::Warn(
                     "Video memory is running low",
-                    fmt::format("{} left of {}. Save your game now: if the memory runs out, the "
-                                "game closes.\nLowering the output resolution or the upscaler "
-                                "frees the most memory.",
-                                size(free), size(limit)));
+                    fmt::format("{} of {} left. Save now: the game closes if it fills up.\n"
+                                "Lower resolution or upscaler gives the most back.",
+                                size(free), size(limit)),
+                    limit != 0 ? float(double(total_used_memory) / double(limit)) : -1.0f);
                 std::printf("VRAM: %llu MiB free of %llu MiB (%llu MiB in use), warned the player "
                             "to save\n",
                             static_cast<unsigned long long>(free >> 20),

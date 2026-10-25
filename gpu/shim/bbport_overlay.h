@@ -43,12 +43,13 @@ bool CapturesInput();
 void SetTextEntry(bool active, const std::string& prompt, const std::string& text);
 
 /// Any thread: an amber banner at the top of the screen for ten seconds: `headline` in the
-/// highlight colour, `detail` below it in the normal one. Drawn by the present thread; replaces a
-/// banner still showing.
-void Warn(const std::string& headline, const std::string& detail);
+/// highlight colour, a bar filled to `used_fraction` (0..1; negative draws no bar) and `detail`
+/// under it. Drawn by the present thread; replaces a banner still showing.
+void Warn(const std::string& headline, const std::string& detail, float used_fraction);
 
-/// Any thread: video memory in use and the limit it is compared against (0: no limit known),
-/// shown in the FPS counter. The collector calls it once per pass.
-void SetVramUsage(u64 used_bytes, u64 limit_bytes);
+/// Any thread: video memory in use, the limit it is compared against (0: no limit known) and the
+/// collector's pressure and critical marks (0: none), shown in the FPS counter. The collector
+/// calls it once per pass.
+void SetVramUsage(u64 used_bytes, u64 limit_bytes, u64 pressure_bytes, u64 critical_bytes);
 
 } // namespace BbOverlay
