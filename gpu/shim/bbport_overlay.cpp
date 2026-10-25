@@ -626,6 +626,7 @@ void Menu() {
     bool restart = BbSettings::FsrSettingsNeedRestart() || s.object_motion != s.startup_object_motion ||
                    s.model_lod != s.startup_model_lod || s.fov != s.startup_fov ||
                    s.live_resolution != s.startup_live_resolution ||
+                   s.fps_mode != s.startup_fps_mode || s.frame_cap != s.startup_frame_cap ||
                    BbSettings::ResolutionNeedsRestart();
     for (int e = 0; e < BbSettings::EffectCount; ++e) {
         restart |= s.effects[e] != s.startup_effects[e];

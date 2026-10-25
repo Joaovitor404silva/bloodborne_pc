@@ -646,6 +646,7 @@ int main(int argc, char **argv) {
     }
     image = allocate(round_page(size));
     runtime_rebirth_set_image(image);
+    bbgpu_pc_menu_set_image(image);
     if (fread(image, 1, size, f) != size || fgetc(f) != EOF) fail("incorrect memory image size");
     fclose(f);
     runtime_discord_start(image);
@@ -694,6 +695,7 @@ int main(int argc, char **argv) {
     /* The Hunter's Dream backend reads the game's code before the patches change it. */
     bbnet_set_image(image, size);
     if (patch_file) apply_patches(patch_file, segments, ns, relocs, nr);
+    bbgpu_pc_menu_prepare(image);
 #ifdef _WIN32
     printf("Guest TCB loads redirected to the TEB TLS slot: %" PRIu64 "\n", patch_tcb_loads(segments, ns));
 #endif

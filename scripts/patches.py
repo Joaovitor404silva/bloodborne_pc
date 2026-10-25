@@ -587,6 +587,17 @@ def main():
             names.append('Quit to Desktop')
         except ValueError as error:
             print(f'Patches: {error}; Quit to Desktop skipped')
+    if read_settings(a.settings).get('pc_menu','1')!='0' and os.environ.get('BB_PC_MENU')!='0':
+        # PC Settings in the System menu (pc_menu.py; its texts are in Quit to Desktop's layer).
+        sys.path.insert(0,str(Path(__file__).resolve().parent))
+        import pc_menu
+        elf=(a.out/'eboot.elf').read_bytes()
+        try:
+            pc_menu.check_original(lambda start,end: eboot_bytes(elf,start,end))
+            writes+=pc_menu.code_writes()
+            names.append('PC Settings')
+        except ValueError as error:
+            print(f'Patches: {error}; PC Settings skipped')
     if read_settings(a.settings).get('rebirth','1')!='0' and os.environ.get('BB_REBIRTH')!='0':
         # Rebirth at the Doll (rebirth.py; the talk script and texts are a mod layer).
         sys.path.insert(0,str(Path(__file__).resolve().parent))

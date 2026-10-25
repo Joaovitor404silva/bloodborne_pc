@@ -312,6 +312,14 @@ def refresh_shared_graphics(env, config):
         values.get('object_motion', '1') == '1' and \
         values.get('upscaler', 'fsr4') in ('fsr3', 'fsr4', 'fsr411', 'fsr412')
     env['BB_OBJECT_MOTION_CACHE'] = '1' if cache else '0'
+    # Frame rate mode and cap: the launcher and the game's PC Settings page share them.
+    if values.get('fps_mode') in ('30', '60', '90', 'uncap'):
+        env['BB_FPS'] = values['fps_mode']
+    if 'frame_cap' in values:
+        if values['frame_cap'].isdigit():
+            env['BB_FPS_LIMIT'] = values['frame_cap']
+        else:
+            env.pop('BB_FPS_LIMIT', None)
 
 
 def find_executable(name):
@@ -619,14 +627,20 @@ def main():
     # Quit to Desktop (bbport.ini quit_to_desktop, patches.py): the entries' names in the menu
     # texts of every language and six-row title and System menus, also a layer below the mods
     # (before the ultrawide one, which builds on its menu movies).
+    # PC Settings (bbport.ini pc_menu, patches.py, pc_menu.py) adds its line and page texts to
+    # the same layer, and a seventh System menu row.
     text_layer = out / 'quit_text'
     shutil.rmtree(text_layer, ignore_errors=True)
-    if ini_value(config, 'quit_to_desktop') != '0' and (game_app_version(game) in (None, '01.09') or env.get('BB_FORCE_PATCHES')):
+    quit_menu = ini_value(config, 'quit_to_desktop') != '0'
+    pc_menu = ini_value(config, 'pc_menu') != '0'
+    if (quit_menu or pc_menu) and (game_app_version(game) in (None, '01.09') or env.get('BB_FORCE_PATCHES')):
         # Optional: when its files cannot be written ("[WinError 5] Access is denied", an
         # antivirus or the folder's permissions), the game starts without it.
-        if not run_script('quit_menu.py', game, '--out', text_layer, optional=True):
+        flags = ([] if quit_menu else ['--no-quit']) + (['--pc'] if pc_menu else [])
+        if not run_script('quit_menu.py', game, '--out', text_layer, *flags, optional=True):
             shutil.rmtree(text_layer, ignore_errors=True)
             env['BB_QUIT_TO_DESKTOP'] = '0'  # patches.py: no menu entries without their texts
+            env['BB_PC_MENU'] = '0'
             print('Quit to Desktop: its menu texts could not be written; the game starts without it')
     # Rebirth at the Doll (bbport.ini rebirth, patches.py): the Doll's talk script and its texts
     # (on top of Quit to Desktop's, which edit the same menu text archives), a layer below the mods.

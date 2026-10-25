@@ -331,6 +331,8 @@ TWEAKS = [
                               'Японская раскладка: Круг — подтверждение и действие, Крест — уклонение'), False),
     ('quit_to_desktop', ('Quit to Desktop in the title menu and in the System menu',
                          'Пункт «Выйти на рабочий стол» в главном меню и в меню «Система»'), True),
+    ('pc_menu', ('PC Settings in the System menu: graphics, frame rate, effects and camera in the game',
+                 'Пункт «Настройки ПК» в меню «Система»: графика, частота кадров, эффекты и камера в игре'), True),
     ('rebirth', ("Rebirth at the Doll: back to your origin's attributes for 5 Insight, levels regained free",
                  'Перерождение у Куклы: характеристики происхождения за 5 озарений, уровни возвращаются бесплатно'), True),
     ('steady_cloth', ('Cloth as on PS4 at higher frame rates: capes and coats hang and move as at 30 FPS',), True),
@@ -416,6 +418,14 @@ PRESETS = [('0', ('Native AA (×1.0)',)), ('1', ('Quality (×1.5)',)), ('2', ('B
            ('3', ('Performance (×2)',)), ('4', ('Ultra Performance (×3)',))]
 FSR411_BACKENDS = [('vk', ('Vulkan (fsr4vk)',)), ('dx12', ('AMD DX12',))]
 SHARED_GRAPHICS_KEYS = ('fsr411_backend', 'object_motion_cache')
+# Launcher settings the game's PC Settings page also changes (bbport_pc_menu.cpp): kept in
+# settings.json as before and mirrored to bbport.ini, where the newer value is.
+MIRRORED_KEYS = ('fps_mode', 'frame_cap')
+
+
+def mirrored(app, ini):
+    """`app` with the mirrored settings bbport.ini holds (the game may have changed them)."""
+    return {**app, **{key: ini[key] for key in MIRRORED_KEYS if key in ini}}
 
 
 def fsr411_backend(settings):
@@ -1045,6 +1055,7 @@ def game_environment(s, graphics=None):
     env['BB_PRESENT_MODE'] = s['present_mode']
     if s['hdr']:
         env['BB_HDR'] = '1'
+    s = mirrored(s, graphics)
     env['BB_FPS'] = s['fps_mode']
     if s.get('frame_cap', ''):
         env['BB_FPS_LIMIT'] = s['frame_cap']
@@ -1150,6 +1161,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         # settings for this PC once it is rated (auto_settings), not the fixed defaults.
         self.ini_new = not ini_path().exists()
         self.ini, self.ini_lines = load_ini(self.app)
+        self.app = mirrored(self.app, self.ini)  # the game's PC Settings page may have changed them
         self.remap_ini_path = input_ini_path(ini_path())
         self.remap_bindings, self.remap_lines, self.remap_toggle_key, self.remap_reload_key, \
             self.mouse_settings = load_input_ini(self.remap_ini_path)
@@ -4252,6 +4264,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 continue
             if shown == self.ini.get(key) and shown != disk[key]:
                 var.set(disk[key] == '1' if key in INI_FLAGS else disk[key])
+        for key in MIRRORED_KEYS:  # changed by the game's PC Settings page
+            var = self.vars.get(key)
+            if key in disk and disk[key] != self.ini.get(key) and                     (var is None or str(var.get()) == str(self.app.get(key))):
+                self.app[key] = disk[key]
+                if var is not None:
+                    var.set(disk[key])
         self.ini, self.ini_lines = disk, lines
 
     def collect(self):
@@ -4277,7 +4295,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                     f"written {INI_DEFAULTS['output_res']})")
         self.app['output_custom'] = custom_output(self.ini.get('output_res'), self.app)
         write_settings(self.app)
-        save_ini({key: self.ini[key] for key in INI_DEFAULTS}, self.ini_lines)
+        save_ini({**{key: self.ini[key] for key in INI_DEFAULTS},
+                  **{key: str(self.app.get(key, APP_DEFAULTS[key])) for key in MIRRORED_KEYS}}, self.ini_lines)
         self.ini, self.ini_lines = load_ini()
         if self.remap_edits:
             save_input_ini(self.remap_ini_path, {key: [v for v in values if v]

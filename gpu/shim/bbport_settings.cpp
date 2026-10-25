@@ -92,6 +92,12 @@ void Set(Values& v, const std::string& key, const std::string& value) {
         v.sharp_ui = i != 0;
     } else if (key == "fov") {
         v.fov = std::clamp(i, FovMin, FovMax);
+    } else if (key == "fps_mode") {
+        for (int m = 0; m < FpsModeCount; ++m) {
+            if (value == FpsModeNames[m]) v.fps_mode = m;
+        }
+    } else if (key == "frame_cap") {
+        v.frame_cap = value.empty() ? FrameCapAuto : std::max(i, 0);
     } else if (key == "output_res") {
         for (int r = 0; r < OutputCount; ++r) {
             if (value == std::to_string(OutputWidths[r]) + "x" + std::to_string(OutputHeights[r])) {
@@ -130,6 +136,10 @@ void Load() {
     for (int e = 0; e < EffectCount; ++e) {
         v.effects[e] = Effects[e].default_on;
     }
+    // Before the file: what the launcher started the game with (older bbport.ini files have no
+    // fps_mode / frame_cap yet).
+    if (const char* fps = std::getenv("BB_FPS")) Set(v, "fps_mode", fps);
+    if (const char* cap = std::getenv("BB_FPS_LIMIT")) Set(v, "frame_cap", cap);
     if (FILE* file = std::fopen(Path(), "r")) {
         char line[256];
         while (std::fgets(line, sizeof(line), file)) {
@@ -192,6 +202,8 @@ void Load() {
     v.startup_output_res = v.output_res;
     v.startup_hud_position = v.hud_position;
     v.startup_fov = v.fov;
+    v.startup_fps_mode = v.fps_mode;
+    v.startup_frame_cap = v.frame_cap;
     v.startup_live_resolution = v.live_resolution;
 }
 
@@ -342,6 +354,13 @@ void Save() {
     std::fprintf(file, "sharp_ui=%d\n", int(v.sharp_ui.load()));
     // Read by run.py at start (fov.py).
     std::fprintf(file, "fov=%d\n", v.fov.load());
+    // Read by run.py at start (patches.py FPS preset, BB_FPS_LIMIT); the launcher shares them.
+    std::fprintf(file, "fps_mode=%s\n", FpsModeNames[std::clamp(v.fps_mode.load(), 0, FpsModeCount - 1)]);
+    if (v.frame_cap < 0) {
+        std::fprintf(file, "frame_cap=\n");
+    } else {
+        std::fprintf(file, "frame_cap=%d\n", v.frame_cap.load());
+    }
     // Read by run.sh at start.
     std::fprintf(file, "live_resolution=%s\n", v.live_resolution < 0 ? "auto"
                                                   : v.live_resolution ? "1" : "0");
