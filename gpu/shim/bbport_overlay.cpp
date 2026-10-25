@@ -734,54 +734,115 @@ void TextEntryBox() {
     ImGui::End();
 }
 
-// Frame-time graph: the last four seconds as a filled curve, with faint lines at 60 and 30 FPS so
-// a frame that misses one is visible at a glance. Drawn by hand instead of ImGui::PlotLines: the
-// gradient fill and the reference lines are what make the shape readable.
-void FrameTimeGraph(float average_ms) {
-    const float w = 220.0f * base_scale;
-    const float h = 56.0f * base_scale;
-    // 10 ms steps: the scale stays still while the scene does, and a spike widens it for a moment
-    // instead of flattening everything below it.
-    float top = 20.0f;
-    for (size_t i = 0; i < frame_history_count; ++i) {
-        top = std::max(top, frame_history[i]);
+const char* UpscalerLabel(int upscaler) {
+    switch (upscaler) {
+    case BbSettings::UpscalerFsr3: return "FSR 3.1";
+    case BbSettings::UpscalerFsr4: return "FSR 4";
+    case BbSettings::UpscalerFsr411: return "FSR 4.1.1";
+    case BbSettings::UpscalerTaa: return "TAA";
+    case BbSettings::UpscalerDlss: return "DLSS";
+    default: return "";
     }
-    top = std::ceil(top / 10.0f) * 10.0f;
+}
+
+/// The processor name Windows shows in System settings, read once.
+std::string CpuName() {
+#if defined(_WIN32)
+    static const std::string name = [] {
+        wchar_t buffer[256]{};
+        DWORD bytes = sizeof(buffer);
+        if (RegGetValueW(HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+                         L"ProcessorNameString", RRF_RT_REG_SZ, nullptr, buffer, &bytes) !=
+            ERROR_SUCCESS) {
+            return std::string{};
+        }
+        char utf8[512]{};
+        const int length =
+            WideCharToMultiByte(CP_UTF8, 0, buffer, -1, utf8, sizeof(utf8), nullptr, nullptr);
+        return std::string(utf8, length > 1 ? size_t(length - 1) : 0);
+    }();
+    return name;
+#else
+    return std::string{};
+#endif
+}
+
+std::string gpu_name; ///< the Vulkan device's model name, set in Init
+
+// A dim label, with every value starting in the same column (the reference overlay's look).
+void Label(const char* text) {
+    ImGui::TextDisabled("%s", text);
+    ImGui::SameLine(52.0f * base_scale);
+}
+
+// Frame-time graph: the last four seconds as a filled curve, milliseconds on the left, the same
+// heights read as FPS on the right. Auto-ranged like a scope, no fixed reference lines: the axes
+// carry the scale.
+void FrameTimeGraph(float average_ms) {
+    const float w = 230.0f * base_scale;
+    const float h = 62.0f * base_scale;
+    const float gutter_l = 32.0f * base_scale;
+    const float gutter_r = 28.0f * base_scale;
+    // At least 4 ms of span, so a steady scene does not zoom into noise.
+    float lo = frame_history[0], hi = frame_history[0];
+    for (size_t i = 1; i < frame_history_count; ++i) {
+        lo = std::min(lo, frame_history[i]);
+        hi = std::max(hi, frame_history[i]);
+    }
+    if (hi - lo < 4.0f) {
+        const float mid = 0.5f * (lo + hi);
+        lo = mid - 2.0f;
+        hi = mid + 2.0f;
+    }
+    lo = std::max(lo - 0.4f, 0.0f);
+    hi += 0.4f;
 
     const ImVec2 origin = ImGui::GetCursorScreenPos();
     const ImVec2 end{origin.x + w, origin.y + h};
     ImGui::Dummy(ImVec2(w, h));
     ImDrawList* draw = ImGui::GetWindowDrawList();
+    const ImVec2 plot_min{origin.x + gutter_l, origin.y + 1.0f * base_scale};
+    const ImVec2 plot_max{end.x - gutter_r, end.y - 1.0f * base_scale};
+    const float plot_h = plot_max.y - plot_min.y;
     const ImVec4 tone = PaceColor(average_ms);
-    const ImU32 strong = ImGui::ColorConvertFloat4ToU32(tone);
-    const ImU32 faint = ImGui::ColorConvertFloat4ToU32(ImVec4(1.0f, 1.0f, 1.0f, 0.10f));
-    const ImU32 fill_top = ImGui::ColorConvertFloat4ToU32(ImVec4(tone.x, tone.y, tone.z, 0.38f));
+    const ImU32 line = ImGui::ColorConvertFloat4ToU32(tone);
+    const ImU32 fill_top = ImGui::ColorConvertFloat4ToU32(ImVec4(tone.x, tone.y, tone.z, 0.35f));
     const ImU32 fill_bottom = ImGui::ColorConvertFloat4ToU32(ImVec4(tone.x, tone.y, tone.z, 0.02f));
-    const float rounding = 4.0f * base_scale;
+    const ImU32 grid = ImGui::ColorConvertFloat4ToU32(ImVec4(1.0f, 1.0f, 1.0f, 0.08f));
+    const ImU32 ms_text = ImGui::ColorConvertFloat4ToU32(ImVec4(0.62f, 0.80f, 0.92f, 1.0f));
+    const ImU32 fps_text = ImGui::ColorConvertFloat4ToU32(ImVec4(0.55f, 0.95f, 0.55f, 1.0f));
 
-    draw->AddRectFilled(origin, end, ImGui::ColorConvertFloat4ToU32(ImVec4(0, 0, 0, 0.30f)),
-                        rounding);
-    for (const float ms : {1000.0f / 60.0f, 1000.0f / 30.0f}) {
-        if (ms < top) {
-            const float y = end.y - h * (ms / top);
-            draw->AddLine(ImVec2(origin.x, y), ImVec2(end.x, y), faint, 1.0f);
-        }
+    draw->AddRectFilled(origin, end, ImGui::ColorConvertFloat4ToU32(ImVec4(0, 0, 0, 0.42f)),
+                        4.0f * base_scale);
+    const auto y_for = [&](float ms) {
+        return plot_max.y - plot_h * (ms - lo) / (hi - lo);
+    };
+    const float font = ImGui::GetFontSize();
+    char text[32];
+    for (int tick = 2; tick >= 0; --tick) {
+        const float ms = lo + (hi - lo) * (float(tick) * 0.5f);
+        const float y = y_for(ms);
+        draw->AddLine(ImVec2(plot_min.x, y), ImVec2(plot_max.x, y), grid, 1.0f);
+        std::snprintf(text, sizeof(text), "%.1f", double(ms));
+        draw->AddText(ImVec2(origin.x + 2.0f * base_scale, y - font * 0.5f), ms_text, text);
+        std::snprintf(text, sizeof(text), "%.0f",
+                      double(ms > 0.0f ? 1000.0f / ms : 0.0f));
+        const ImVec2 size = ImGui::CalcTextSize(text);
+        draw->AddText(ImVec2(plot_max.x + gutter_r - size.x - 2.0f * base_scale, y - font * 0.5f),
+                      fps_text, text);
     }
 
-    const float step = w / float(FrameHistorySize);
+    const float step = (plot_max.x - plot_min.x) / float(FrameHistorySize);
     ImVec2 points[FrameHistorySize];
     for (size_t i = 0; i < frame_history_count; ++i) {
         const size_t sample = (frame_history_next + i) % FrameHistorySize; // oldest first
-        const float x = origin.x + step * float(i + 1);
-        const float y = end.y - h * std::min(frame_history[sample] / top, 1.0f);
-        points[i] = ImVec2(x, y);
-        draw->AddRectFilledMultiColor(ImVec2(x - step, y), ImVec2(x, end.y), fill_top, fill_top,
-                                      fill_bottom, fill_bottom);
+        const float x = plot_min.x + step * float(i + 1);
+        points[i] = ImVec2(x, std::clamp(y_for(frame_history[sample]), plot_min.y, plot_max.y));
+        draw->AddRectFilledMultiColor(ImVec2(x - step, points[i].y), ImVec2(x, plot_max.y),
+                                      fill_top, fill_top, fill_bottom, fill_bottom);
     }
-    draw->AddPolyline(points, int(frame_history_count), strong, ImDrawFlags_None,
-                      1.6f * base_scale);
-    draw->AddCircleFilled(points[frame_history_count - 1], 2.4f * base_scale, strong);
-    draw->AddRect(origin, end, faint, rounding);
+    draw->AddPolyline(points, int(frame_history_count), line, ImDrawFlags_None, 1.5f * base_scale);
+    draw->AddCircleFilled(points[frame_history_count - 1], 2.2f * base_scale, line);
 }
 
 void FpsCounter() {
@@ -797,78 +858,97 @@ void FpsCounter() {
                      ImGuiWindowFlags_NoFocusOnAppearing);
     const auto& s = BbSettings::Get();
     const ImVec4 pace = PaceColor(frame_ms_avg);
+    const float rate = frame_ms_avg > 0.0f ? 1000.0f / frame_ms_avg : 0.0f;
+    constexpr double gb = 1024.0 * 1024.0 * 1024.0;
+    const float model_gap = 10.0f * base_scale;
     if (s.show_fps) {
+        Label("FPS:");
         ImGui::PushStyleColor(ImGuiCol_Text, pace);
-        ImGui::Text("%s  %s", FpsText().c_str(),
-                    s.upscaler == BbSettings::UpscalerFsr3   ? "FSR 3.1"
-                    : s.upscaler == BbSettings::UpscalerFsr4 ? "FSR 4"
-                    : s.upscaler == BbSettings::UpscalerFsr411 ? "FSR 4.1.1"
-                    : s.upscaler == BbSettings::UpscalerTaa ? "TAA"
-                    : s.upscaler == BbSettings::UpscalerDlss ? "DLSS"
-                                                             : "");
+        ImGui::Text("%.1f", double(rate));
         ImGui::PopStyleColor();
+        ImGui::SameLine(0.0f, model_gap);
+        const int generated = s.frame_gen != BbSettings::FrameGenOff ? s.frame_gen_now.load() : 0;
+        const int out = s.output_res;
+        if (generated > 0 && s.game_fps > 0.0f) {
+            ImGui::TextDisabled("|  %dx%d  %s  (game %.0f, %dx)",
+                                BbSettings::OutputWidths[out], BbSettings::OutputHeights[out],
+                                UpscalerLabel(s.upscaler), double(s.game_fps.load()), generated);
+        } else {
+            ImGui::TextDisabled("|  %dx%d  %s", BbSettings::OutputWidths[out],
+                                BbSettings::OutputHeights[out], UpscalerLabel(s.upscaler));
+        }
     }
     if (s.show_frame_times) {
+        Label("Frame:");
         ImGui::PushStyleColor(ImGuiCol_Text, pace);
         ImGui::Text("%.1f ms", frame_ms_avg);
         ImGui::PopStyleColor();
     }
-    constexpr double gb = 1024.0 * 1024.0 * 1024.0;
     // Video memory in use, against the limit the collector holds itself to: the same numbers the
     // low-memory warning reports. 0, so nothing shown, until the first collector pass.
     const u64 used = vram_used.load(std::memory_order_relaxed);
     if (s.show_vram && used != 0) {
         const u64 limit = vram_limit.load(std::memory_order_relaxed);
+        Label("VRAM:");
         ImGui::PushStyleColor(ImGuiCol_Text,
                              VramColor(used, vram_pressure.load(std::memory_order_relaxed),
                                        vram_critical.load(std::memory_order_relaxed)));
         if (limit != 0) {
-            ImGui::Text("VRAM %.1f / %.1f GB", double(used) / gb, double(limit) / gb);
+            ImGui::Text("%.1f / %.1f GB", double(used) / gb, double(limit) / gb);
         } else {
-            ImGui::Text("VRAM %.1f GB", double(used) / gb);
+            ImGui::Text("%.1f GB", double(used) / gb);
         }
         ImGui::PopStyleColor();
     }
-    // GPU, CPU and RAM are what this game is using right now: one line, each part optional.
-    if (s.show_gpu || s.show_cpu || s.show_ram) {
-        bool first = true;
-        const auto gap = [&first] {
-            if (!first) {
-                ImGui::SameLine(0.0f, 12.0f * base_scale);
-            }
-            first = false;
-        };
-        if (s.show_gpu) {
-            gap();
-            const float gpu = Load().gpu.load(std::memory_order_relaxed);
-            if (gpu < 0.0f) {
-                ImGui::TextDisabled("GPU --");
-            } else {
-                ImGui::TextColored(LoadColor(gpu, 90.0f, 97.0f), "GPU %.0f%%", double(gpu));
-            }
+    if (s.show_gpu) {
+        Label("GPU:");
+        const float gpu = Load().gpu.load(std::memory_order_relaxed);
+        if (gpu < 0.0f) {
+            ImGui::TextDisabled("--");
+        } else {
+            ImGui::TextColored(LoadColor(gpu, 90.0f, 97.0f), "%.0f%%", double(gpu));
         }
-        if (s.show_cpu) {
-            gap();
-            const float cpu = Load().cpu.load(std::memory_order_relaxed);
-            if (cpu < 0.0f) {
-                ImGui::TextDisabled("CPU --");
-            } else {
-                ImGui::TextColored(LoadColor(cpu, 70.0f, 90.0f), "CPU %.0f%%", double(cpu));
-            }
+        if (!gpu_name.empty()) {
+            ImGui::SameLine(0.0f, model_gap);
+            ImGui::TextDisabled("%s", gpu_name.c_str());
         }
-        if (s.show_ram) {
-            gap();
-            const u64 ram = Load().ram.load(std::memory_order_relaxed);
-            if (ram == 0) {
-                ImGui::TextDisabled("RAM --");
-            } else {
-                ImGui::Text("RAM %.1f GB", double(ram) / gb);
-            }
+    }
+    if (s.show_cpu) {
+        Label("CPU:");
+        const float cpu = Load().cpu.load(std::memory_order_relaxed);
+        if (cpu < 0.0f) {
+            ImGui::TextDisabled("--");
+        } else {
+            ImGui::TextColored(LoadColor(cpu, 70.0f, 90.0f), "%.0f%%", double(cpu));
+        }
+        const std::string model = CpuName();
+        if (!model.empty()) {
+            ImGui::SameLine(0.0f, model_gap);
+            ImGui::TextDisabled("%s", model.c_str());
+        }
+    }
+    if (s.show_ram) {
+        Label("RAM:");
+        const u64 ram = Load().ram.load(std::memory_order_relaxed);
+        if (ram == 0) {
+            ImGui::TextDisabled("--");
+        } else {
+            ImGui::Text("%.1f GB", double(ram) / gb);
         }
     }
     if (s.show_fps_graph && frame_history_count > 1) {
         FrameTimeGraph(frame_ms_avg);
-        ImGui::TextDisabled("%.1f ms average  |  lines at 60 and 30 FPS", frame_ms_avg);
+        // Legend under the graph, the current values of what the line shows.
+        const float square = 9.0f * base_scale;
+        const ImVec2 at = ImGui::GetCursorScreenPos();
+        ImGui::Dummy(ImVec2(square, square));
+        ImGui::GetWindowDrawList()->AddRectFilled(at, ImVec2(at.x + square, at.y + square),
+                                                  ImGui::ColorConvertFloat4ToU32(pace),
+                                                  1.5f * base_scale);
+        ImGui::SameLine(0.0f, 6.0f * base_scale);
+        ImGui::Text("Frame: %.1f ms", frame_ms_avg);
+        ImGui::SameLine(0.0f, 14.0f * base_scale);
+        ImGui::TextDisabled("%.0f FPS", double(rate));
     }
     ImGui::End();
 }
@@ -931,6 +1011,7 @@ void Init(const Vulkan::Instance& instance, vk::Format format, u32 image_count) 
     if (initialized) {
         return;
     }
+    gpu_name = std::string(instance.GetModelName());
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
