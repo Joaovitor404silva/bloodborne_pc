@@ -2862,14 +2862,34 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    _('Off: the public servers. On: a private server, with the addresses from the person who '
                      'runs it.'))
         group('shadnet')
-        # SuperMedo Server: a new account, made on the server from here.
+        # SuperMedo Server: the account in use (Sign out empties it), and a new account made on the
+        # server from here with its own boxes; once made, it is the account in use.
+        npid_var, password_var = self.var('online_npid', 'app'), self.var('online_password', 'app')
+        self.section(f, _('SuperMedo account'))
+        signed = ttk.Label(f, text='', justify='left')
+
+        def show_signed(*_args):
+            name = npid_var.get().strip()
+            signed.configure(text=_('Signed in as {}').format(name) if name and password_var.get()
+                             else _('Not signed in: create an account below, or enter yours above.'))
+        npid_var.trace_add('write', show_signed)
+        password_var.trace_add('write', show_signed)
+        show_signed()
+
+        def sign_out():
+            npid_var.set('')
+            password_var.set('')
+            self.collect()
+        self.row(f, _('Account'), signed)
+        self.row(f, '', ttk.Button(f, text=_('Sign out'), command=sign_out))
+        self.section(f, _('New SuperMedo account'))
         sign_up = ttk.Label(f, text='', style='Muted.TLabel', justify='left', wraplength=self.px(560))
-        email = self.tk.StringVar(value='')
+        new_npid, new_password, email = (self.tk.StringVar(value='') for _n in range(3))
 
         def create_account():
-            npid, password = self.var('online_npid', 'app').get().strip(), self.var('online_password', 'app').get()
+            npid, password = new_npid.get().strip(), new_password.get()
             if not npid or not password or '@' not in email.get():
-                sign_up.configure(text=_('Enter an Online ID and a password above, and your email address.'))
+                sign_up.configure(text=_('Enter a new Online ID, a password and your email address.'))
                 return
             sign_up.configure(text=_('Creating the account…'))
 
@@ -2878,11 +2898,18 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     problem = shadnet_register(SUPERMEDO_SERVER, npid, password, email.get().strip())
                 except OSError as error:
                     problem = _('SuperMedo Server could not be reached: {}').format(error)
-                text = problem or _('Account {} created. Press Play to go online.').format(npid)
-                self.ui_calls.put(lambda: (sign_up.configure(text=text), problem or self.collect()))
+                if problem:
+                    self.ui_calls.put(lambda: sign_up.configure(text=problem))
+                    return
+                text = _('Account {} created and signed in. Press Play to go online.').format(npid)
+                self.ui_calls.put(lambda: (npid_var.set(npid), password_var.set(password),
+                                           sign_up.configure(text=text), self.collect()))
             threading.Thread(target=work, daemon=True).start()
+        self.row(f, _('New Online ID'), ttk.Entry(f, textvariable=new_npid, width=40),
+                 _('1 to 16 letters, numbers, _ or -. Other players see this name.'))
+        self.row(f, _('New password'), ttk.Entry(f, textvariable=new_password, width=40, show='•'))
         self.row(f, _('Email address'), ttk.Entry(f, textvariable=email, width=40),
-                 _('Only to make the account. Choose an Online ID and a password above, then press the button.'))
+                 _('Only to make the account.'))
         self.row(f, '', ttk.Button(f, text=_('Create account'), command=create_account))
         sign_up.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
         group('supermedo')
