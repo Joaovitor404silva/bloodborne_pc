@@ -792,26 +792,35 @@ const std::string& CpuName() {
 std::string gpu_name; ///< the Vulkan device's model name, set in Init
 u32 output_width = 0, output_height = 0; ///< the presented size, set in Render
 
-// A dim label, with every value starting in the same column (the reference overlay's look).
-void Label(const char* text) {
+// A dim label, with every value starting in the same column (the reference overlay's look). The
+// column is measured, not a constant: a longer label or a larger UI scale would otherwise crowd a
+// value or clip it.
+void Label(const char* text, float column) {
     ImGui::TextDisabled("%s", text);
-    ImGui::SameLine(52.0f * base_scale);
+    ImGui::SameLine(column);
 }
 
 // Frame-time graph: the last four seconds as a filled curve, milliseconds on the left, the same
 // heights read as FPS on the right. Auto-ranged like a scope, no fixed reference lines: the axes
-// carry the scale.
+// carry the scale. Each axis gets a gutter sized from its own widest tick, and the plot is inset by
+// half a line top and bottom, so no number sits on the curve or gets cut by the box.
 void FrameTimeGraph(float average_ms) {
-    const float w = 230.0f * base_scale;
-    const float h = 62.0f * base_scale;
-    const float gutter_l = 32.0f * base_scale;
-    const float gutter_r = 28.0f * base_scale;
-    // At least 4 ms of span, so a steady scene does not zoom into noise.
-    float lo = frame_history[0], hi = frame_history[0];
+    char text[32];
+    const float font = ImGui::GetFontSize();
+    const float unit = 4.0f * base_scale;
+    // The samples in ring order, oldest first. frame_history_next is the next slot to write, so the
+    // oldest stored one is frame_history_count back from it (not next itself: it is unwritten until
+    // the ring has filled once).
+    const size_t oldest =
+        (frame_history_next + FrameHistorySize - frame_history_count) % FrameHistorySize;
+    float lo = frame_history[oldest];
+    float hi = lo;
     for (size_t i = 1; i < frame_history_count; ++i) {
-        lo = std::min(lo, frame_history[i]);
-        hi = std::max(hi, frame_history[i]);
+        const float ms = frame_history[(oldest + i) % FrameHistorySize];
+        lo = std::min(lo, ms);
+        hi = std::max(hi, ms);
     }
+    // At least 4 ms of span, so a steady scene does not zoom into noise.
     if (hi - lo < 4.0f) {
         const float mid = 0.5f * (lo + hi);
         lo = mid - 2.0f;
@@ -820,12 +829,29 @@ void FrameTimeGraph(float average_ms) {
     lo = std::max(lo - 0.4f, 0.0f);
     hi += 0.4f;
 
+    const float ticks[3] = {lo, 0.5f * (lo + hi), hi};
+    float gutter_l = 0.0f, gutter_r = 0.0f;
+    for (const float ms : ticks) {
+        std::snprintf(text, sizeof(text), "%.1f", double(ms));
+        gutter_l = std::max(gutter_l, ImGui::CalcTextSize(text).x);
+        std::snprintf(text, sizeof(text), "%.0f", double(ms > 0.0f ? 1000.0f / ms : 0.0f));
+        gutter_r = std::max(gutter_r, ImGui::CalcTextSize(text).x);
+    }
+    gutter_l += unit * 2.0f;
+    gutter_r += unit * 2.0f;
+
+    const float plot_w = 210.0f * base_scale;
+    const float vpad = font * 0.5f + unit; // half a line above and below the plot
+    const float w = gutter_l + plot_w + gutter_r;
+    const float h = 60.0f * base_scale + 2.0f * vpad;
+
     const ImVec2 origin = ImGui::GetCursorScreenPos();
     const ImVec2 end{origin.x + w, origin.y + h};
     ImGui::Dummy(ImVec2(w, h));
     ImDrawList* draw = ImGui::GetWindowDrawList();
-    const ImVec2 plot_min{origin.x + gutter_l, origin.y + 1.0f * base_scale};
-    const ImVec2 plot_max{end.x - gutter_r, end.y - 1.0f * base_scale};
+    const ImVec2 plot_min{origin.x + gutter_l, origin.y + vpad};
+    const ImVec2 plot_max{end.x - gutter_r, end.y - vpad};
+    IM_ASSERT(plot_max.x > plot_min.x && plot_max.y > plot_min.y); // gutters fit in the box
     const float plot_h = plot_max.y - plot_min.y;
     const ImVec4 tone = PaceColor(average_ms);
     const ImU32 line = ImGui::ColorConvertFloat4ToU32(tone);
@@ -840,25 +866,21 @@ void FrameTimeGraph(float average_ms) {
     const auto y_for = [&](float ms) {
         return plot_max.y - plot_h * (ms - lo) / (hi - lo);
     };
-    const float font = ImGui::GetFontSize();
-    char text[32];
     for (int tick = 2; tick >= 0; --tick) {
-        const float ms = lo + (hi - lo) * (float(tick) * 0.5f);
-        const float y = y_for(ms);
+        const float y = y_for(ticks[tick]);
         draw->AddLine(ImVec2(plot_min.x, y), ImVec2(plot_max.x, y), grid, 1.0f);
-        std::snprintf(text, sizeof(text), "%.1f", double(ms));
-        draw->AddText(ImVec2(origin.x + 2.0f * base_scale, y - font * 0.5f), ms_text, text);
+        std::snprintf(text, sizeof(text), "%.1f", double(ticks[tick]));
+        draw->AddText(ImVec2(origin.x + unit, y - font * 0.5f), ms_text, text);
         std::snprintf(text, sizeof(text), "%.0f",
-                      double(ms > 0.0f ? 1000.0f / ms : 0.0f));
+                      double(ticks[tick] > 0.0f ? 1000.0f / ticks[tick] : 0.0f));
         const ImVec2 size = ImGui::CalcTextSize(text);
-        draw->AddText(ImVec2(plot_max.x + gutter_r - size.x - 2.0f * base_scale, y - font * 0.5f),
-                      fps_text, text);
+        draw->AddText(ImVec2(end.x - unit - size.x, y - font * 0.5f), fps_text, text);
     }
 
     const float step = (plot_max.x - plot_min.x) / float(FrameHistorySize);
     ImVec2 points[FrameHistorySize];
     for (size_t i = 0; i < frame_history_count; ++i) {
-        const size_t sample = (frame_history_next + i) % FrameHistorySize; // oldest first
+        const size_t sample = (oldest + i) % FrameHistorySize; // oldest first
         const float x = plot_min.x + step * float(i + 1);
         points[i] = ImVec2(x, std::clamp(y_for(frame_history[sample]), plot_min.y, plot_max.y));
         draw->AddRectFilledMultiColor(ImVec2(x - step, points[i].y), ImVec2(x, plot_max.y),
@@ -883,9 +905,16 @@ void FpsCounter() {
     const ImVec4 pace = PaceColor(frame_ms_avg);
     const float rate = frame_ms_avg > 0.0f ? 1000.0f / frame_ms_avg : 0.0f;
     constexpr double gb = 1024.0 * 1024.0 * 1024.0;
-    const float model_gap = 10.0f * base_scale;
+    const float model_gap = 12.0f * base_scale;
+    // One value column for the whole panel, as wide as the longest label it can show plus a gap.
+    // Measured and constant, so values line up and never move when a switch is flipped.
+    float column = 0.0f;
+    for (const char* label : {"FPS:", "Frame:", "VRAM:", "GPU:", "CPU:", "RAM:"}) {
+        column = std::max(column, ImGui::CalcTextSize(label).x);
+    }
+    column += 10.0f * base_scale;
     if (s.show_fps) {
-        Label("FPS:");
+        Label("FPS:", column);
         ImGui::PushStyleColor(ImGuiCol_Text, pace);
         ImGui::Text("%.1f", double(rate));
         ImGui::PopStyleColor();
@@ -904,7 +933,7 @@ void FpsCounter() {
         }
     }
     if (s.show_frame_times) {
-        Label("Frame:");
+        Label("Frame:", column);
         ImGui::PushStyleColor(ImGuiCol_Text, pace);
         ImGui::Text("%.1f ms", frame_ms_avg);
         ImGui::PopStyleColor();
@@ -914,7 +943,7 @@ void FpsCounter() {
     const u64 used = vram_used.load(std::memory_order_relaxed);
     if (s.show_vram && used != 0) {
         const u64 limit = vram_limit.load(std::memory_order_relaxed);
-        Label("VRAM:");
+        Label("VRAM:", column);
         ImGui::PushStyleColor(ImGuiCol_Text,
                              VramColor(used, vram_pressure.load(std::memory_order_relaxed),
                                        vram_critical.load(std::memory_order_relaxed)));
@@ -931,7 +960,7 @@ void FpsCounter() {
                             double(vram_card_free.load(std::memory_order_relaxed)) / gb);
     }
     if (s.show_gpu) {
-        Label("GPU:");
+        Label("GPU:", column);
         const float gpu = Load().gpu.load(std::memory_order_relaxed);
         if (gpu < 0.0f) {
             ImGui::TextDisabled("--");
@@ -944,7 +973,7 @@ void FpsCounter() {
         }
     }
     if (s.show_cpu) {
-        Label("CPU:");
+        Label("CPU:", column);
         const float cpu = Load().cpu.load(std::memory_order_relaxed);
         if (cpu < 0.0f) {
             ImGui::TextDisabled("--");
@@ -958,7 +987,7 @@ void FpsCounter() {
         }
     }
     if (s.show_ram) {
-        Label("RAM:");
+        Label("RAM:", column);
         const u64 ram = Load().ram.load(std::memory_order_relaxed);
         if (ram == 0) {
             ImGui::TextDisabled("--");
