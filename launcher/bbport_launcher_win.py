@@ -896,6 +896,28 @@ def thd_open(request):
     return bbport_tls.urlopen(request, timeout=10)
 
 
+def discord_sign_in(server, on_page, timeout=600):
+    """Sign in with Discord on SuperMedo Server (its /auth pages): opens the sign-in page through
+    on_page(url), waits for it and returns (Online ID, password), or raises ValueError (why)."""
+    def call(path, data=None):
+        request = urllib.request.Request(server + path, data=data, method='POST' if data is not None else 'GET')
+        with bbport_tls.urlopen(request, timeout=15) as response:
+            return json.loads(response.read())
+    started = call('/auth/start', b'')
+    on_page(started['url'])
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        time.sleep(2)
+        reply = call('/auth/poll?session=' + started['session'])
+        if reply.get('status') == 'done':
+            return reply['npid'], reply['password']
+        if reply.get('status') == 'failed':
+            raise ValueError(reply.get('message') or 'the sign-in failed')
+        if reply.get('status') == 'expired':
+            break
+    raise ValueError('the sign-in took too long; start it again')
+
+
 def thd_call(url, body, tries=3):
     """A call to The Hunter's Dream's account service (bbhost's): its reply, or ValueError with
     the server's reason. What is no answer of the service (an error page, a timeout, a dropped
@@ -2871,7 +2893,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         def show_signed(*_args):
             name = npid_var.get().strip()
             signed.configure(text=_('Signed in as {}').format(name) if name and password_var.get()
-                             else _('Not signed in: create an account below, or enter yours above.'))
+                             else _('Not signed in: sign in with Discord, or create an account below.'))
         npid_var.trace_add('write', show_signed)
         password_var.trace_add('write', show_signed)
         show_signed()
@@ -2880,8 +2902,33 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             npid_var.set('')
             password_var.set('')
             self.collect()
+        discord_line = ttk.Label(f, text='', style='Muted.TLabel', justify='left', wraplength=self.px(560))
+
+        def sign_in_discord():
+            discord_line.configure(text=_('Starting the sign-in…'))
+
+            def on_page(page):
+                webbrowser.open(page)
+                self.ui_calls.put(lambda: discord_line.configure(
+                    text=_('Sign in with Discord in the page that opened, then come back here.')))
+
+            def work():
+                try:
+                    npid, password = discord_sign_in(COMMUNITY_SERVER, on_page)
+                except (OSError, ValueError, KeyError) as error:
+                    self.ui_calls.put(lambda e=error: discord_line.configure(
+                        text=_('Sign-in failed: {}').format(e)))
+                    return
+                self.ui_calls.put(lambda: (npid_var.set(npid), password_var.set(password),
+                                           discord_line.configure(text=''), self.collect()))
+            threading.Thread(target=work, daemon=True).start()
         self.row(f, _('Account'), signed)
-        self.row(f, '', ttk.Button(f, text=_('Sign out'), command=sign_out))
+        buttons = ttk.Frame(f)
+        ttk.Button(buttons, text=_('Sign in with Discord'), command=sign_in_discord).pack(side='left')
+        ttk.Button(buttons, text=_('Sign out'), command=sign_out).pack(side='left', padx=(14, 0))
+        self.row(f, '', buttons, _('Discord makes your SuperMedo account the first time, named after your '
+                                    'Discord name; nothing to remember. Sign in again on any PC.'))
+        discord_line.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
         self.section(f, _('New SuperMedo account'))
         sign_up = ttk.Label(f, text='', style='Muted.TLabel', justify='left', wraplength=self.px(560))
         new_npid, new_password, email = (self.tk.StringVar(value='') for _n in range(3))
