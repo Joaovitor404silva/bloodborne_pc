@@ -30,7 +30,8 @@ import quit_menu  # noqa: E402
 REBIRTH_INSIGHT = 5          # src/runtime_rebirth.c REBIRTH_INSIGHT
 # Unused flags in the Doll's range (721000xx): the request, and the port's answer: open the
 # level-up screen (reborn now, or levels still to regain), or nothing to do; CLOSED: the screen
-# the rebirth opened was closed (the port undoes a rebirth no level was bought after).
+# the rebirth opened was closed (the port undoes a rebirth no level was bought after). No script
+# sets CLOSED any more (doll_script: the screen's closing can't be seen), so its hook is idle.
 REQUEST, RESULT, NOTHING, CLOSED = 72100090, 72100091, 72100092, 72100093
 OPTION_TEXT, QUESTION_TEXT, SHORT_TEXT, NOTHING_TEXT = 15000170, 10010790, 10010791, 10010792  # free in FMG 30
 TALK_FMG = 30
@@ -67,130 +68,119 @@ TEXTS = {
     'engus': ('Rebirth',
               "Be reborn for {n} Insight? Your attributes and level return to your origin's, keeping what "
               'your equipped weapons need. Regain your levels without Blood Echoes, now or later with '
-              'Channel Blood Echoes. Leaving without regaining a level cancels the rebirth.',
+              'Channel Blood Echoes.',
               'Rebirth requires {n} Insight.',
               'Your attributes are already those of your origin.'),
     'dandk': ('Genfødsel',
               'Bliv genfødt for {n} Indsigt? Dine attributter og dit niveau vender tilbage til din '
               'oprindelses, men det, dine udrustede våben kræver, bevares. Genvind dine niveauer uden '
-              'blodekkoer, nu eller senere med Kanalisér blodekkoer. Går du uden at genvinde et niveau, '
-              'annulleres genfødslen.',
+              'blodekkoer, nu eller senere med Kanalisér blodekkoer.',
               'Genfødsel kræver {n} Indsigt.',
               'Dine attributter er allerede din oprindelses.'),
     'deude': ('Wiedergeburt',
               'Für {n} Einsicht wiedergeboren werden? Deine Attribute und deine Stufe kehren zu denen '
               'deiner Herkunft zurück, was deine ausgerüsteten Waffen erfordern, bleibt erhalten. Gewinne '
-              'deine Stufen ohne Blutechos zurück, jetzt oder später mit Blutechos kanalisieren. Gehst du, '
-              'ohne eine Stufe zurückzugewinnen, wird die Wiedergeburt abgebrochen.',
+              'deine Stufen ohne Blutechos zurück, jetzt oder später mit Blutechos kanalisieren.',
               'Die Wiedergeburt erfordert {n} Einsicht.',
               'Deine Attribute entsprechen bereits deiner Herkunft.'),
     'finfi': ('Uudelleensyntyminen',
               'Synnytäänkö uudelleen {n} Oivalluksella? Ominaisuutesi ja tasosi palaavat taustasi '
               'mukaisiksi, mutta varustettujen aseidesi vaatimukset säilyvät. Saat tasosi takaisin ilman '
-              'verihäiveitä nyt tai myöhemmin valinnalla Kanavoi verihäiveitä. Jos poistut saamatta tasoa '
-              'takaisin, uudelleensyntyminen perutaan.',
+              'verihäiveitä nyt tai myöhemmin valinnalla Kanavoi verihäiveitä.',
               'Uudelleensyntyminen vaatii {n} Oivallusta.',
               'Ominaisuutesi ovat jo taustasi mukaiset.'),
     'frafr': ('Renaissance',
               'Renaître pour {n} points de Lucidité ? Vos attributs et votre niveau reviennent à ceux de '
               "votre origine, en gardant ce qu'exigent vos armes équipées. Regagnez vos niveaux sans "
-              'échos de sang, maintenant ou plus tard avec Canaliser les échos du sang. Partir sans '
-              'regagner de niveau annule la renaissance.',
+              'échos de sang, maintenant ou plus tard avec Canaliser les échos du sang.',
               'La renaissance nécessite {n} points de Lucidité.',
               'Vos attributs sont déjà ceux de votre origine.'),
     'itait': ('Rinascita',
               'Rinascere per {n} Intuizione? Attributi e livello tornano a quelli della tua origine, '
               'mantenendo ciò che richiedono le armi equipaggiate. Recupera i livelli senza echi del '
-              'sangue, ora o più tardi con Incanala echi del sangue. Uscire senza recuperare un livello '
-              'annulla la rinascita.',
+              'sangue, ora o più tardi con Incanala echi del sangue.',
               'La rinascita richiede {n} Intuizione.',
               'I tuoi attributi sono già quelli della tua origine.'),
     'jpnjp': ('生まれ直す',
               '啓蒙を{n}消費して生まれ直しますか？能力とレベルが過去の値に戻ります（装備中の武器に必要な'
               '能力はそのまま残ります）。レベルは今または後で「血の遺志を力とする」から血の遺志なしで取り戻せ'
-              'ます。レベルを取り戻さずに立ち去ると、生まれ直しは取り消されます。',
+              'ます。',
               '生まれ直すには啓蒙が{n}必要です。',
               '能力はすでに過去の値です。'),
     'korkr': ('다시 태어나기',
               '계몽을 {n} 소비해 다시 태어나겠습니까? 능력치와 레벨이 과거의 값으로 돌아갑니다(장비한 '
               '무기에 필요한 능력치는 유지됩니다). 레벨은 지금 또는 나중에 「피의 유지를 깃들인다」에서 피의 '
-              '유지 없이 되찾을 수 있습니다. 레벨을 되찾지 않고 떠나면 다시 태어나기가 취소됩니다.',
+              '유지 없이 되찾을 수 있습니다.',
               '다시 태어나려면 계몽이 {n} 필요합니다.',
               '능력치가 이미 과거의 값입니다.'),
     'nldnl': ('Wedergeboorte',
               'Herboren worden voor {n} Inzicht? Je attributen en niveau keren terug naar die van je '
               'herkomst, maar wat je uitgeruste wapens vereisen blijft. Win je niveaus terug zonder '
-              'bloedsporen, nu of later met Bloedsporen kanaliseren. Weggaan zonder een niveau terug te '
-              'winnen annuleert de wedergeboorte.',
+              'bloedsporen, nu of later met Bloedsporen kanaliseren.',
               'Wedergeboorte vereist {n} Inzicht.',
               'Je attributen zijn al die van je herkomst.'),
     'norno': ('Gjenfødsel',
               'Bli gjenfødt for {n} Innsikt? Egenskapene og nivået ditt går tilbake til opphavets, men det '
               'de utrustede våpnene dine krever, beholdes. Vinn tilbake nivåene uten blodekko, nå eller '
-              'senere med Kanaliser blodekko. Drar du uten å vinne tilbake et nivå, avbrytes gjenfødselen.',
+              'senere med Kanaliser blodekko.',
               'Gjenfødsel krever {n} Innsikt.',
               'Egenskapene dine er allerede opphavets.'),
     'polpl': ('Odrodzenie',
               'Odrodzić się za {n} Wglądu? Atrybuty i poziom wrócą do wartości z pochodzenia, z '
               'zachowaniem wymagań wyposażonej broni. Odzyskaj poziomy bez tętnień krwi, teraz lub później '
-              'przez Przepływ tętnień krwi. Wyjście bez odzyskania poziomu anuluje odrodzenie.',
+              'przez Przepływ tętnień krwi.',
               'Odrodzenie wymaga {n} Wglądu.',
               'Twoje atrybuty są już takie jak z pochodzenia.'),
     'porbr': ('Renascimento',
               'Renascer por {n} de discernimento? Seus atributos e nível voltam aos da sua origem, '
               'mantendo o que suas armas equipadas exigem. Recupere seus níveis sem ecos de sangue, agora '
-              'ou depois com Canalizar ecos de sangue. Sair sem recuperar um nível cancela o renascimento.',
+              'ou depois com Canalizar ecos de sangue.',
               'O renascimento requer {n} de discernimento.',
               'Seus atributos já são os da sua origem.'),
     'porpt': ('Renascimento',
               'Renascer por {n} de Iluminismo? Os teus atributos e nível voltam aos da tua origem, '
               'mantendo o que as tuas armas equipadas exigem. Recupera os teus níveis sem ecos de sangue, '
-              'agora ou mais tarde com Canalizar ecos de sangue. Sair sem recuperar um nível cancela o '
-              'renascimento.',
+              'agora ou mais tarde com Canalizar ecos de sangue.',
               'O renascimento requer {n} de Iluminismo.',
               'Os teus atributos já são os da tua origem.'),
     'rusru': ('Перерождение',
               'Переродиться за {n} озарения? Характеристики и уровень вернутся к значениям вашего '
               'происхождения, но требования экипированного оружия сохранятся. Уровни можно вернуть без '
-              'отголосков крови сейчас или позже через Распределить отголоски крови. Если уйти, не вернув '
-              'ни одного уровня, перерождение отменяется.',
+              'отголосков крови сейчас или позже через Распределить отголоски крови.',
               'Для перерождения нужно {n} озарения.',
               'Ваши характеристики уже соответствуют происхождению.'),
     'spaar': ('Renacimiento',
               '¿Renacer por {n} de Conocimiento? Tus atributos y nivel vuelven a los de tu origen, '
               'conservando lo que exigen tus armas equipadas. Recupera tus niveles sin ecos de sangre, '
-              'ahora o más tarde con Canalizar ecos de sangre. Irte sin recuperar un nivel cancela el '
-              'renacimiento.',
+              'ahora o más tarde con Canalizar ecos de sangre.',
               'El renacimiento requiere {n} de Conocimiento.',
               'Tus atributos ya son los de tu origen.'),
     'spaes': ('Renacimiento',
               '¿Renacer por {n} de Lucidez? Tus atributos y nivel vuelven a los de tu origen, conservando '
               'lo que exigen tus armas equipadas. Recupera tus niveles sin ecos de sangre, ahora o más '
-              'tarde con Canalizar ecos de sangre. Marcharte sin recuperar un nivel cancela el renacimiento.',
+              'tarde con Canalizar ecos de sangre.',
               'El renacimiento requiere {n} de Lucidez.',
               'Tus atributos ya son los de tu origen.'),
     'swese': ('Pånyttfödelse',
               'Bli pånyttfödd för {n} Insikt? Dina egenskaper och din nivå återgår till ditt ursprungs, '
               'men det dina utrustade vapen kräver behålls. Vinn tillbaka nivåerna utan blodekon, nu eller '
-              'senare med Kanalisera blodekon. Lämnar du utan att vinna tillbaka en nivå avbryts '
-              'pånyttfödelsen.',
+              'senare med Kanalisera blodekon.',
               'Pånyttfödelse kräver {n} Insikt.',
               'Dina egenskaper är redan ditt ursprungs.'),
     'turtr': ('Yeniden Doğuş',
               '{n} Sezgi karşılığında yeniden doğmak ister misin? Özelliklerin ve seviyen kökenindeki '
               'değerlere döner, kuşandığın silahların gerektirdikleri korunur. Seviyelerini Kan Yankısı '
-              "harcamadan şimdi ya da daha sonra Kan Yankıları'nı Aktar ile geri kazan. Hiç seviye geri "
-              'kazanmadan ayrılırsan yeniden doğuş iptal edilir.',
+              "harcamadan şimdi ya da daha sonra Kan Yankıları'nı Aktar ile geri kazan.",
               'Yeniden doğuş {n} Sezgi gerektirir.',
               'Özelliklerin zaten kökenindeki değerlerde.'),
     'zhocn': ('重生',
               '要消耗{n}点洞察力重生吗？属性与等级将恢复为背景的初始值，但保留已装备武器所需的属性。之后可'
-              '通过“传导血之回响”，现在或以后无需血之回响即可恢复等级。若未恢复任何等级就离开，重生将被取消。',
+              '通过“传导血之回响”，现在或以后无需血之回响即可恢复等级。',
               '重生需要{n}点洞察力。',
               '你的属性已是背景的初始值。'),
     'zhotw': ('重生',
               '要消耗{n}點靈視重生嗎？屬性與等級將恢復為背景的初始值，但保留已裝備武器所需的屬性。之後可'
-              '透過「導引血之迴響」，現在或以後無需血之迴響即可恢復等級。若未恢復任何等級就離開，重生將被取消。',
+              '透過「導引血之迴響」，現在或以後無需血之迴響即可恢復等級。',
               '重生需要{n}點靈視。',
               '你的屬性已是背景的初始值。'),
 }
@@ -369,7 +359,7 @@ def doll_script(data):
         if str(OPTION) in used:
             raise ValueError(f'talk list entry {OPTION} already used')
         next_id = max(st.id for st in group) + 1
-        ask, reborn, level_up, short, nothing, closed = (esd.State(next_id + i) for i in range(6))
+        ask, reborn, level_up, short, nothing = (esd.State(next_id + i) for i in range(5))
         # Rebirth right after Channel Blood Echoes.
         at = next(i for i, c in enumerate(menu.entry)
                   if (c.bank, c.id) == (1, 19) and esd.disassemble(c.args[1]) == str(LEVEL_UP_TEXT))
@@ -385,17 +375,19 @@ def doll_script(data):
         reborn.conditions = [esd.Condition(level_up, call_equals(15, [RESULT], 1)),
                              esd.Condition(nothing, call_equals(15, [NOTHING], 1)),
                              esd.Condition(short, b'\x41\xa1')]
-        # The level-up screen, as Channel Blood Echoes opens it (c1_31, open while f25(23) != 0).
+        # The level-up screen, as Channel Blood Echoes opens it (c1_31, then back to the list). The
+        # script can't see the screen close: f25(23) stays 0 while it is open (neither 1 nor any
+        # other value shows up), so the 1.9.5 betas' "leaving without a level cancels the
+        # rebirth" (CLOSED when f25(23) == 0) undid every rebirth the moment the screen opened,
+        # which then showed the reborn character at full price and kept it on leaving. A rebirth
+        # is kept; the levels not bought yet stay free for later.
         level_up.entry = [command(1, 11, RESULT, 0), esd.Command(1, 31, [])]
-        level_up.conditions = [esd.Condition(closed, call_equals(25, [23], 0))]
-        # Closed: the port keeps the rebirth only if a level was bought (runtime_rebirth_closed).
-        closed.entry = [command(1, 11, CLOSED, 1)]
-        closed.conditions = [esd.Condition(menu, b'\x41\xa1')]
+        level_up.conditions = [esd.Condition(menu, call_equals(25, [23], 0))]
         short.entry = [command(1, 17, 1, SHORT_TEXT, 1, 0, 1)]
         short.conditions = [esd.Condition(menu, call_equals(21, [], 0))]
         nothing.entry = [command(1, 11, NOTHING, 0), command(1, 17, 1, NOTHING_TEXT, 1, 0, 1)]
         nothing.conditions = [esd.Condition(menu, call_equals(21, [], 0))]
-        group.extend([ask, reborn, level_up, short, nothing, closed])
+        group.extend([ask, reborn, level_up, short, nothing])
     return esd.write(script)
 
 

@@ -100,6 +100,17 @@ class TalkScriptTests(unittest.TestCase):
                 read = next(i for i, e in enumerate(evaluators) if '= f23()' in e)
                 self.assertEqual(evaluators[read + 1], f'(reg0 == {rebirth.OPTION})')
 
+    def test_the_level_up_screen_never_cancels_the_rebirth(self):
+        # f25(23) stays 0 while the screen is open: a "closed" flag set on it undid every
+        # rebirth at once (1.9.5 betas: the reborn character then paid full price and kept it).
+        for data in talk_scripts().values():
+            parsed = esd.read(rebirth.doll_script(data))
+            for _gid, group in parsed.groups:
+                for state in group:
+                    for c in state.entry:
+                        if (c.bank, c.id) == (1, 11):
+                            self.assertNotEqual(esd.disassemble(c.args[0]), str(rebirth.CLOSED))
+
 
 
 @unittest.skipUnless((GAME / 'dvdroot_ps4/msg/engus').is_dir(), 'needs the game (BB_GAME_DIR)')

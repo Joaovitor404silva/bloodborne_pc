@@ -4,9 +4,10 @@
  * An attribute stays at what the equipped weapons need (BB_REBIRTH_WEAPONS, from rebirth.py):
  * the game never lets a weapon be used below its requirements, and doing it broke its attack
  * animations (a T-pose on a hit, Chikage below its Strength). Those points stay spent.
- * Leaving the level-up screen the rebirth opened without buying a level undoes it, Insight
- * included ("bb:e" when the Doll's script sees the screen closed): it is kept from the first
- * level bought on.
+ * A rebirth is kept: the levels not bought yet stay free for later. runtime_rebirth_closed
+ * ("bb:e") undoes one no level was bought after, but nothing calls it: the Doll's script can't
+ * see the level-up screen close (rebirth.py doll_script), and the 1.9.5 betas' try undid every
+ * rebirth the moment the screen opened.
  * No Blood Echoes are given back: a level costs nothing only below the level the character had
  * (its target), and no further.
  *
