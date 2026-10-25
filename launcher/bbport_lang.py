@@ -1240,8 +1240,14 @@ from bbport_lang_tls import TRANSLATIONS as TLS_TRANSLATIONS  # noqa: E402
 from bbport_lang_sharp_ui import TRANSLATIONS as SHARP_UI_TRANSLATIONS  # noqa: E402
 from bbport_fg401 import TRANSLATIONS as FG401_TRANSLATIONS  # noqa: E402
 from bbport_fsr411 import TRANSLATIONS as FSR411_SUPPORT_TRANSLATIONS
+from bbport_lang_trophies import TRANSLATIONS as TROPHY_TRANSLATIONS
 
 EXTRA_TRANSLATIONS = {
+    'zh': {
+        'Traditional Chinese': '繁體中文',
+        'Simplified Chinese': '简体中文',
+        'Korean': '韩语',
+    },
     'pt': {
         'Text language': 'Idioma dos textos',
         'Voice language': 'Idioma da dublagem',
@@ -1274,4 +1280,5 @@ def table(language):
         _tables[language].update(SHARP_UI_TRANSLATIONS.get(language, {}))
         _tables[language].update(FG401_TRANSLATIONS.get(language, {}))
         _tables[language].update(FSR411_SUPPORT_TRANSLATIONS.get(language, {}))
+        _tables[language].update(TROPHY_TRANSLATIONS.get(language, {}))
     return _tables[language]
