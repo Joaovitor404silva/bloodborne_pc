@@ -75,6 +75,8 @@ out/pyenv/Scripts/python.exe packaging/windows/prepare_fsr4vk.py --stage "$dest/
 # Legacy CPU (Intel 3rd generation and older): the translation plan scripts/cpu_compat.py applies.
 mkdir -p "$dest/tools" && cp tools/legacy-cpu-plan.json "$dest/tools/"
 cp run.py LICENSE README.md packaging/windows/README-Windows.txt "$dest/"
+bb_node="${BB_NODE_EXE:-out/bb-node/bb-node.exe}"
+if [[ -f "$bb_node" ]]; then mkdir -p "$dest/bb-node" && cp "$bb_node" "$dest/bb-node/"; fi
 if [[ -d fsr4_shaders ]]; then cp -r fsr4_shaders "$dest/"; fi
 # DLSS (NVIDIA RTX): the MSVC-built bridge and NVIDIA's runtime, next to bb-probe.exe
 # (packaging/windows/build_dlss.sh). Without them the DLSS option stays unavailable.

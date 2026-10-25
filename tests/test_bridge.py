@@ -52,5 +52,29 @@ class HuntersDreamTests(unittest.TestCase):
         self.assertNotIn('BB_NET_BACKEND', env)
 
 
+class PeerToPeerTests(unittest.TestCase):
+    def test_launcher_environment(self):
+        settings = {**launcher.APP_DEFAULTS, 'game_dir': 'x', 'online': True, 'online_pool': 'p2p',
+                    'online_npid': 'Hunter1'}
+        env = launcher.game_environment(settings)
+        self.assertEqual((env['BB_NET_BACKEND'], env['BB_SHADNET_SERVER'], env['BB_SHADNET_WEBAPI']),
+                         ('p2p', '127.0.0.1:31313', 'http://127.0.0.1:31315'))
+        self.assertEqual((env['BB_SHADNET_NPID'], env['BB_UPNP']), ('Hunter1', '0'))
+        self.assertNotIn('BB_THD_TOKEN', env)
+
+    def test_run_points_the_game_server_at_bb_node(self):
+        with tempfile.TemporaryDirectory() as temp:
+            env = {'BB_P2P_NODE': str(Path(temp) / 'missing.exe')}
+            listening, run.p2p_listening = run.p2p_listening, lambda: True
+            try:
+                self.assertIsNone(run.p2p_node(env, Path(temp)))
+            finally:
+                run.p2p_listening = listening
+            overrides = json.loads((Path(temp) / 'host_overrides.json').read_text(encoding='utf-8'))
+        self.assertEqual(overrides['https://ss4.scej-network.jp:20443'], 'http://127.0.0.1:31315')
+        self.assertEqual(overrides['https://bb-playlog-prod.s3.amazonaws.com:443'], 'http://127.0.0.1:31315')
+        self.assertEqual(env['BB_SHADNET_SERVER'], '127.0.0.1:31313')
+
+
 if __name__ == '__main__':
     unittest.main()

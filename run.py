@@ -80,6 +80,48 @@ def hunters_dream(env, user_dir):
     print(f"Co-op: The Hunter's Dream as {env['BB_THD_ONLINE_ID']} ({base})")
 
 
+P2P_WEBAPI = 'http://127.0.0.1:31315'
+P2P_SERVER = ('127.0.0.1', 31313)
+
+
+def p2p_listening():
+    import socket
+    try:
+        socket.create_connection(P2P_SERVER, timeout=0.5).close()
+        return True
+    except OSError:
+        return False
+
+
+def p2p_node(env, user_dir):
+    overrides = {GAME_SERVER: P2P_WEBAPI}
+    overrides.update({f'https://{host}:443': P2P_WEBAPI for host in PLAY_LOG_HOSTS})
+    path = user_dir / 'host_overrides.json'
+    path.write_text(json.dumps(overrides, indent=2) + '\n', encoding='utf-8')
+    env.update(SHADPS4_HTTP_HOST_OVERRIDES_JSON=str(path), BB_SHADNET_SERVER='%s:%d' % P2P_SERVER,
+               BB_SHADNET_WEBAPI=P2P_WEBAPI)
+    if p2p_listening():
+        print('Co-op: peer-to-peer, bb-node already running')
+        return None
+    node = Path(env.get('BB_P2P_NODE') or PORT / 'bb-node' / 'bb-node.exe')
+    if not node.exists():
+        fail(f'Peer-to-peer co-op: {node} is missing.')
+    data = user_dir / 'bb-p2p'
+    data.mkdir(parents=True, exist_ok=True)
+    log = open(data / 'bb-node.log', 'w', encoding='utf-8')
+    process = subprocess.Popen([str(node), '--key', str(data / 'node.key')], cwd=data, stdin=subprocess.DEVNULL,
+                               stdout=log, stderr=subprocess.STDOUT, creationflags=no_console(),
+                               env={**os.environ, 'RUST_LOG': env.get('BB_P2P_LOG', 'info')})
+    deadline = time.time() + 20
+    while not p2p_listening():
+        if process.poll() is not None or time.time() > deadline:
+            process.kill()
+            fail(f'Peer-to-peer co-op: bb-node did not start, see {data / "bb-node.log"}')
+        time.sleep(0.2)
+    print(f'Co-op: peer-to-peer as {env.get("BB_SHADNET_NPID", "")} (bb-node {process.pid})')
+    return process
+
+
 # The 1.09 executable with Lance McDonald's 60 fps patch applied to it, as some dumps ship it
 # (seen on US CUSA00900): one of its edits inverts a branch in the menu code (+0xf6d90d) and the
 # gestures menu crashes the game. The port has its own 60 fps; the clean 1.09 eboot.bin is needed.
@@ -522,8 +564,11 @@ def main():
         env.setdefault('BB_GPU_USER_DIR', str(user_dir))
         if env.get('BB_SAVE_BACKUPS') == '1' and not restarted:  # not again for an in-game restart
             backup_saves(user_dir)
+        p2p = None
         if env.get('BB_ONLINE') == '1' and env.get('BB_NET_BACKEND') == 'thd':
             hunters_dream(env, user_dir)
+        elif env.get('BB_ONLINE') == '1' and env.get('BB_NET_BACKEND') == 'p2p':
+            p2p = p2p_node(env, user_dir)
         elif env.get('BB_ONLINE') == '1':
             online_overrides(env, user_dir)
         this = ['--run'] if getattr(sys, 'frozen', False) else [str(Path(__file__).resolve())]
@@ -544,6 +589,9 @@ def main():
         finally:
             if game_over:
                 game_over.set()
+            if p2p:
+                p2p.kill()
+                p2p.wait()
     finally:
         if mod_view:
             # Read-only game files leave read-only links (mods.remove_overlay clears them).

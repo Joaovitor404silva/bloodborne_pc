@@ -141,6 +141,7 @@ import bbport_lang_help  # noqa: E402,F401 (the Help page's and the game tests' 
 import bbport_lang_ui  # noqa: E402,F401 (the regrouped pages, the side bar, the guide)
 import bbport_lang_world  # noqa: E402,F401 (the new texts in the other eleven languages)
 import bbport_lang_port  # noqa: E402,F401 (the 1.9.3 texts and the Controls page's key names)
+import bbport_lang_p2p
 import bbport_hardware as hardware  # noqa: E402
 import bbport_frame  # noqa: E402
 import bbport_display as display  # noqa: E402
@@ -584,6 +585,15 @@ def server_check(server, webapi, community):
 # protocol, from Awaken's port). BB_HUNTERS_DREAM=0 hides it.
 HUNTERS_DREAM_POOL = os.environ.get('BB_HUNTERS_DREAM', '1') != '0'
 
+P2P_SERVER = '127.0.0.1:31313'
+P2P_WEBAPI = 'http://127.0.0.1:31315'
+P2P_NODE = PORT_DIR / 'bb-node' / 'bb-node.exe'
+
+
+def p2p_check():
+    return (_('bb-node: ready ({0})').format(P2P_NODE) if P2P_NODE.exists() else
+            _('bb-node is missing: {0}').format(P2P_NODE))
+
 
 def thd_call(url, body):
     """A call to The Hunter's Dream's account service (bbhost's): its reply, or ValueError with
@@ -764,7 +774,11 @@ def game_environment(s, graphics=None):
         env['BB_SHADNET_PASSWORD'] = str(s['online_password'])
         env['BB_UPNP'] = '1' if s['online_upnp'] else '0'
         env['BB_COMMUNITY_SERVER'] = community_address(s['online_community'])
-        if s.get('online_pool') != 'shadnet' and HUNTERS_DREAM_POOL:  # also a pool the launcher no longer has
+        if s.get('online_pool') == 'p2p':
+            env.update(BB_NET_BACKEND='p2p', BB_SHADNET_SERVER=P2P_SERVER, BB_SHADNET_WEBAPI=P2P_WEBAPI,
+                       BB_SHADNET_PASSWORD='p2p', BB_UPNP='0')
+            env.pop('BB_COMMUNITY_SERVER', None)
+        elif s.get('online_pool') != 'shadnet' and HUNTERS_DREAM_POOL:  # also a pool the launcher no longer has
             # The engine's Hunter's Dream backend with the Discord-linked account (run.py sets
             # the game server and the backend's addresses).
             env['BB_NET_BACKEND'] = 'thd'
@@ -818,7 +832,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.root = root
         saved = load_json(CONFIG_FILE, {})
         self.app = {**APP_DEFAULTS, **saved}
-        if self.app.get('online_pool') not in ('huntersdream', 'shadnet'):  # SuperMedo Server left the launcher
+        if self.app.get('online_pool') not in ('huntersdream', 'shadnet', 'p2p'):  # SuperMedo Server left the launcher
             self.app['online_pool'] = 'huntersdream'
         for key in ('supermedo_user', 'supermedo_password'):  # its account, the password in plain text
             self.app.pop(key, None)
@@ -2340,7 +2354,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                             value='huntersdream').pack(side='left', padx=(0, 16))
         elif pool.get() == 'huntersdream':
             pool.set('shadnet')
-        ttk.Radiobutton(pools, text=_('shadNet server'), variable=pool, value='shadnet').pack(side='left')
+        ttk.Radiobutton(pools, text=_('shadNet server'), variable=pool, value='shadnet').pack(side='left', padx=(0, 16))
+        ttk.Radiobutton(pools, text=_('Peer-to-peer (no server)'), variable=pool, value='p2p').pack(side='left')
         pools.setting_key = 'online_pool'  # the search's words (bbport_search.WORDS)
         self.row(f, _('Play with'), pools,
                  _("The Hunter's Dream: co-op together with bbhost players, after a free sign-in with Discord. "
@@ -2417,6 +2432,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         credit.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(8, 0))
         credit.bind('<Button-1>', lambda _e: webbrowser.open('https://github.com/Awakenchan/BloodBorneButPc'))
         group('huntersdream')
+        self.section(f, _('Co-op without a server'))
+        self.row(f, _('Player name'), ttk.Entry(f, textvariable=self.var('online_npid', 'app'), width=40),
+                 _('The name other players see. Any name; no account is needed.'))
+        self.note(f, _('bb-node, which comes with the port, starts with the game. It finds the other players '
+                       'directly and keeps messages, bloodstains, ghosts and summon signs between them.'))
+        group('p2p')
         self.section(f, _('Account'))
         self.row(f, _('Online ID (NPID)'), ttk.Entry(f, textvariable=self.var('online_npid', 'app'), width=40),
                  _('Your shadNet account name, not your email. Register one at shadnet.shadps4.net, or ask the '
@@ -2465,7 +2486,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             result.configure(text=_('Checking…'))
 
             def work():
-                if hunters_dream:
+                if pool_name == 'p2p':
+                    text = p2p_check()
+                elif hunters_dream:
                     text = server_check_hunters_dream()
                     text += '\n' + (_('Signed in as {}').format(signed_in) if signed_in else
                                     _('Not signed in: use "Sign in with Discord" above.'))
@@ -2482,7 +2505,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.note(f, _('Everyone in a session needs the same game version (1.09) and the same server. '
                        'Cheats change the game for the other players too: turn them off when you play together.'))
         show_code()  # hidden until a sign-in shows one; its row stays reserved (rows are counted above)
-        shown = {'shadnet': {'shadnet', 'upnp'}, 'huntersdream': {'huntersdream', 'upnp'}}
+        shown = {'shadnet': {'shadnet', 'upnp'}, 'huntersdream': {'huntersdream', 'upnp'}, 'p2p': {'p2p'}}
 
         def show_pool(*_args):
             if pool.get() == 'huntersdream' and not HUNTERS_DREAM_POOL:
@@ -3922,6 +3945,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.show('online')
                 return
             online.set(False)
+        if online.get() and pool_name == 'p2p' and not npid.get().strip():
+            self.messagebox.showwarning('Bloodborne', _('Enter a player name for peer-to-peer co-op.'))
+            self.show('online')
+            return
         if online.get() and pool_name == 'shadnet' and '@' in npid.get():
             self.messagebox.showwarning(
                 'Bloodborne', _('The Online ID is the account name (NPID) you registered on the server, '
