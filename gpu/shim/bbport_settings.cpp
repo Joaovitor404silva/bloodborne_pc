@@ -21,9 +21,30 @@ float Clamp(float v, float lo, float hi) {
     return std::clamp(v, lo, hi);
 }
 
+/// The FPS overlay's readouts: key=0|1 each, in the order the menu lists them.
+struct Readout {
+    const char* key;
+    std::atomic<bool> Values::*member;
+};
+constexpr Readout Readouts[] = {
+    {"show_fps", &Values::show_fps},
+    {"show_frame_times", &Values::show_frame_times},
+    {"show_vram", &Values::show_vram},
+    {"show_gpu", &Values::show_gpu},
+    {"show_cpu", &Values::show_cpu},
+    {"show_ram", &Values::show_ram},
+    {"show_fps_graph", &Values::show_fps_graph},
+};
+
 void Set(Values& v, const std::string& key, const std::string& value) {
     const float f = float(std::atof(value.c_str()));
     const int i = std::atoi(value.c_str());
+    for (const Readout& readout : Readouts) {
+        if (key == readout.key) {
+            v.*readout.member = value != "0";
+            return;
+        }
+    }
     if (key == "upscaler") {
         for (int u = 0; u < UpscalerCount; ++u) {
             if (value == UpscalerName(u)) {
@@ -64,10 +85,6 @@ void Set(Values& v, const std::string& key, const std::string& value) {
         v.reactive_max = Clamp(f, 0.0f, 1.0f);
     } else if (key == "debug_view") {
         v.debug_view = std::clamp(i, 0, DebugViewCount - 1);
-    } else if (key == "show_fps") {
-        v.show_fps = i != 0;
-    } else if (key == "show_fps_graph") {
-        v.show_fps_graph = i != 0;
     } else if (key == "mute_unfocused") {
         v.mute_unfocused = i != 0;
     } else if (key == "button_prompts") {
@@ -296,14 +313,16 @@ void Save() {
                  "# bbport settings (in-game menu: Insert / L3+R3)\n"
                  "upscaler=%s\npreset=%d\nsharpen=%d\nsharpness=%.2f\njitter=%d\n"
                  "reactive=%d\nobject_motion=%d\nreactive_scale=%.2f\nreactive_threshold=%.2f\nreactive_max=%.2f\n"
-                 "debug_view=%d\nshow_fps=%d\nshow_fps_graph=%d\nfsr4_auto_exposure=%d\n"
-                 "fsr4_invert_jitter=%d\n",
+                 "debug_view=%d\nfsr4_auto_exposure=%d\nfsr4_invert_jitter=%d\n",
                  UpscalerName(v.upscaler), v.preset.load(), int(v.sharpen.load()),
                  v.sharpness.load(), int(v.jitter.load()), int(v.reactive.load()),
                  int(v.object_motion.load()),
                  v.reactive_scale.load(), v.reactive_threshold.load(), v.reactive_max.load(),
-                 v.debug_view.load(), int(v.show_fps.load()), int(v.show_fps_graph.load()),
-                 int(v.fsr4_auto_exposure.load()), int(v.fsr4_invert_jitter.load()));
+                 v.debug_view.load(), int(v.fsr4_auto_exposure.load()),
+                 int(v.fsr4_invert_jitter.load()));
+    for (const Readout& readout : Readouts) {
+        std::fprintf(file, "%s=%d\n", readout.key, int((v.*readout.member).load()));
+    }
     std::fprintf(file, "fsr411_backend=%s\nobject_motion_cache=%d\n",
                  v.fsr411_backend == Fsr411Dx12 ? "dx12" : "vk",
                  int(v.object_motion_cache.load()));

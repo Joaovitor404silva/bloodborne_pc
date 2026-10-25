@@ -12,7 +12,17 @@
 #include <cstdlib>
 #include <mutex>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <pdh.h>
+#include <pdhmsg.h>
+#include <cwchar>
+#include <thread>
+#include <vector>
+#endif
+
 #include <SDL3/SDL.h>
+#include "bbport_process_memory.h"
 #include "bbport_settings.h"
 #include "imgui.h"
 #include "imgui_impl_vulkan.h"
@@ -72,6 +82,96 @@ std::atomic<u64> vram_limit{0};
 std::atomic<u64> vram_pressure{0};
 std::atomic<u64> vram_critical{0};
 
+// CPU, GPU and RAM for the counter, sampled at a few Hz (the readings are syscalls, and none of
+// the numbers moves between two frames). Negative: not known (yet, or not available).
+struct SystemLoad {
+    std::atomic<float> cpu{-1.0f}; ///< this process, % of the machine (all cores = 100 %)
+    std::atomic<float> gpu{-1.0f}; ///< this process, % of the busiest 3D engine
+    std::atomic<u64> ram{0};       ///< this process's working set
+};
+// Leaked on purpose: the GPU sampler thread reads it while the process is shutting down.
+SystemLoad& Load() {
+    static SystemLoad* load = new SystemLoad;
+    return *load;
+}
+
+#ifdef _WIN32
+// This process's CPU time over wall time, as a share of the whole machine.
+void SampleCpu() {
+    FILETIME created{}, exited{}, kernel{}, user{};
+    if (!GetProcessTimes(GetCurrentProcess(), &created, &exited, &kernel, &user)) {
+        return;
+    }
+    const u64 ticks = (u64(kernel.dwHighDateTime) << 32 | kernel.dwLowDateTime) +
+                      (u64(user.dwHighDateTime) << 32 | user.dwLowDateTime);
+    static u64 last_ticks = 0;
+    static std::chrono::steady_clock::time_point last_time{};
+    const auto now = std::chrono::steady_clock::now();
+    if (last_ticks != 0 && now > last_time) {
+        const double wall_us = std::chrono::duration<double, std::micro>(now - last_time).count();
+        const double cpu_us = double(ticks - last_ticks) / 10.0; // FILETIME: 100 ns ticks
+        const unsigned cores = std::max(1u, std::thread::hardware_concurrency());
+        Load().cpu.store(float(100.0 * cpu_us / (wall_us * cores)), std::memory_order_relaxed);
+    }
+    last_ticks = ticks;
+    last_time = now;
+}
+
+// Windows' per-process GPU Engine counters (the number Task Manager shows), 3D engine only: the
+// one a game loads. Opening the query and enumerating the instances is not free, so this runs on
+// its own thread once a second, never on the present thread.
+float QueryGpuLoad() {
+    static PDH_HQUERY query{};
+    static PDH_HCOUNTER counter{};
+    static const bool ready = [&] {
+        return PdhOpenQueryW(nullptr, 0, &query) == ERROR_SUCCESS &&
+               PdhAddEnglishCounterW(query, L"\\GPU Engine(*)\\Utilization Percentage", 0,
+                                     &counter) == ERROR_SUCCESS;
+    }();
+    if (!ready || PdhCollectQueryData(query) != ERROR_SUCCESS) {
+        return -1.0f;
+    }
+    constexpr DWORD format = PDH_FMT_DOUBLE | PDH_FMT_NOCAP100;
+    DWORD bytes = 0, count = 0;
+    if (PdhGetFormattedCounterArrayW(counter, format, &bytes, &count, nullptr) != PDH_MORE_DATA) {
+        return -1.0f;
+    }
+    static std::vector<BYTE> buffer;
+    buffer.resize(bytes);
+    auto* items = reinterpret_cast<PDH_FMT_COUNTERVALUE_ITEM_W*>(buffer.data());
+    if (PdhGetFormattedCounterArrayW(counter, format, &bytes, &count, items) != ERROR_SUCCESS) {
+        return -1.0f;
+    }
+    const std::wstring mine = L"pid_" + std::to_wstring(GetCurrentProcessId()) + L"_";
+    double load = 0.0;
+    for (DWORD i = 0; i < count; ++i) {
+        if (!items[i].szName || !std::wcsstr(items[i].szName, L"engtype_3D") ||
+            std::wcsncmp(items[i].szName, mine.c_str(), mine.size()) != 0) {
+            continue;
+        }
+        load += items[i].FmtValue.doubleValue;
+    }
+    return float(std::min(load, 100.0));
+}
+
+void StartGpuSampler() {
+    static std::once_flag once;
+    std::call_once(once, [] {
+        // shortcut: runs until the process exits (nothing joins it), upgrade if the overlay ever
+        // needs an orderly shutdown.
+        std::thread([] {
+            for (;;) {
+                Load().gpu.store(QueryGpuLoad(), std::memory_order_relaxed);
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+        }).detach();
+    });
+}
+#else
+void SampleCpu() {}
+void StartGpuSampler() {}
+#endif
+
 // The frame-time graph (NotePresent writes, FpsCounter reads, both on the present thread).
 constexpr size_t FrameHistorySize = 240; ///< about four seconds at 60 Hz
 std::array<float, FrameHistorySize> frame_history{};
@@ -88,6 +188,17 @@ ImVec4 PaceColor(float frame_ms) {
         return ImVec4(1.00f, 0.82f, 0.45f, 1.0f);
     }
     return ImVec4(1.00f, 0.45f, 0.40f, 1.0f);
+}
+
+// A load in percent: amber from `amber`, red from `red`.
+ImVec4 LoadColor(float percent, float amber, float red) {
+    if (percent >= red) {
+        return ImVec4(1.00f, 0.45f, 0.40f, 1.0f);
+    }
+    if (percent >= amber) {
+        return ImVec4(1.00f, 0.82f, 0.45f, 1.0f);
+    }
+    return ImVec4(0.55f, 0.95f, 0.55f, 1.0f);
 }
 
 // Video memory against the collector's own marks: the colours then mean what the collector does
@@ -213,7 +324,7 @@ std::string FpsText() {
         std::snprintf(text, sizeof(text), "%.0f FPS (game %.0f, frame gen %dx)", shown,
                       s.game_fps.load(), int(shown / s.game_fps + 0.5f));
     } else {
-        std::snprintf(text, sizeof(text), "%.0f FPS  %.1f ms", shown, frame_ms_avg);
+        std::snprintf(text, sizeof(text), "%.0f FPS", shown);
     }
     return text;
 }
@@ -545,8 +656,17 @@ void Menu() {
     }
 
     ImGui::SeparatorText("Other");
-    Checkbox("Show FPS counter", s.show_fps);
+    ImGui::TextDisabled("Counter (top right), one switch per line it shows:");
+    Checkbox("FPS", s.show_fps);
     ImGui::SameLine();
+    Checkbox("Frame times", s.show_frame_times);
+    ImGui::SameLine();
+    Checkbox("VRAM", s.show_vram);
+    Checkbox("GPU usage", s.show_gpu);
+    ImGui::SameLine();
+    Checkbox("CPU usage", s.show_cpu);
+    ImGui::SameLine();
+    Checkbox("RAM usage", s.show_ram);
     Checkbox("Frame time graph", s.show_fps_graph);
     Checkbox("Mute when the game is in the background", s.mute_unfocused);
     static const char* prompt_modes[] = {"Follow the device in use", "PlayStation", "Keyboard and mouse", "Xbox",
@@ -676,20 +796,28 @@ void FpsCounter() {
                      ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoNav |
                      ImGuiWindowFlags_NoFocusOnAppearing);
     const auto& s = BbSettings::Get();
-    ImGui::PushStyleColor(ImGuiCol_Text, PaceColor(frame_ms_avg));
-    ImGui::Text("%s  %s", FpsText().c_str(),
-                s.upscaler == BbSettings::UpscalerFsr3   ? "FSR 3.1"
-                : s.upscaler == BbSettings::UpscalerFsr4 ? "FSR 4"
-                : s.upscaler == BbSettings::UpscalerFsr411 ? "FSR 4.1.1"
-                : s.upscaler == BbSettings::UpscalerTaa ? "TAA"
-                : s.upscaler == BbSettings::UpscalerDlss ? "DLSS"
-                                                         : "");
-    ImGui::PopStyleColor();
+    const ImVec4 pace = PaceColor(frame_ms_avg);
+    if (s.show_fps) {
+        ImGui::PushStyleColor(ImGuiCol_Text, pace);
+        ImGui::Text("%s  %s", FpsText().c_str(),
+                    s.upscaler == BbSettings::UpscalerFsr3   ? "FSR 3.1"
+                    : s.upscaler == BbSettings::UpscalerFsr4 ? "FSR 4"
+                    : s.upscaler == BbSettings::UpscalerFsr411 ? "FSR 4.1.1"
+                    : s.upscaler == BbSettings::UpscalerTaa ? "TAA"
+                    : s.upscaler == BbSettings::UpscalerDlss ? "DLSS"
+                                                             : "");
+        ImGui::PopStyleColor();
+    }
+    if (s.show_frame_times) {
+        ImGui::PushStyleColor(ImGuiCol_Text, pace);
+        ImGui::Text("%.1f ms", frame_ms_avg);
+        ImGui::PopStyleColor();
+    }
+    constexpr double gb = 1024.0 * 1024.0 * 1024.0;
     // Video memory in use, against the limit the collector holds itself to: the same numbers the
     // low-memory warning reports. 0, so nothing shown, until the first collector pass.
     const u64 used = vram_used.load(std::memory_order_relaxed);
-    if (used != 0) {
-        constexpr double gb = 1024.0 * 1024.0 * 1024.0;
+    if (s.show_vram && used != 0) {
         const u64 limit = vram_limit.load(std::memory_order_relaxed);
         ImGui::PushStyleColor(ImGuiCol_Text,
                              VramColor(used, vram_pressure.load(std::memory_order_relaxed),
@@ -700,6 +828,43 @@ void FpsCounter() {
             ImGui::Text("VRAM %.1f GB", double(used) / gb);
         }
         ImGui::PopStyleColor();
+    }
+    // GPU, CPU and RAM are what this game is using right now: one line, each part optional.
+    if (s.show_gpu || s.show_cpu || s.show_ram) {
+        bool first = true;
+        const auto gap = [&first] {
+            if (!first) {
+                ImGui::SameLine(0.0f, 12.0f * base_scale);
+            }
+            first = false;
+        };
+        if (s.show_gpu) {
+            gap();
+            const float gpu = Load().gpu.load(std::memory_order_relaxed);
+            if (gpu < 0.0f) {
+                ImGui::TextDisabled("GPU --");
+            } else {
+                ImGui::TextColored(LoadColor(gpu, 90.0f, 97.0f), "GPU %.0f%%", double(gpu));
+            }
+        }
+        if (s.show_cpu) {
+            gap();
+            const float cpu = Load().cpu.load(std::memory_order_relaxed);
+            if (cpu < 0.0f) {
+                ImGui::TextDisabled("CPU --");
+            } else {
+                ImGui::TextColored(LoadColor(cpu, 70.0f, 90.0f), "CPU %.0f%%", double(cpu));
+            }
+        }
+        if (s.show_ram) {
+            gap();
+            const u64 ram = Load().ram.load(std::memory_order_relaxed);
+            if (ram == 0) {
+                ImGui::TextDisabled("RAM --");
+            } else {
+                ImGui::Text("RAM %.1f GB", double(ram) / gb);
+            }
+        }
     }
     if (s.show_fps_graph && frame_history_count > 1) {
         FrameTimeGraph(frame_ms_avg);
@@ -926,9 +1091,16 @@ bool HandleEvent(const SDL_Event& event) {
     }
 }
 
+// Any of the counter's readouts asked for (the graph lives in the same window).
+bool ReadoutsOn() {
+    const auto& s = BbSettings::Get();
+    return s.show_fps || s.show_frame_times || s.show_vram || s.show_gpu || s.show_cpu ||
+           s.show_ram || s.show_fps_graph;
+}
+
 bool Visible() {
     return initialized &&
-           (menu_open || text_entry_active || BbSettings::Get().show_fps || WarningActive());
+           (menu_open || text_entry_active || WarningActive() || ReadoutsOn());
 }
 
 bool CapturesInput() {
@@ -968,6 +1140,17 @@ void NotePresent() {
         frame_history[frame_history_next] = ms;
         frame_history_next = (frame_history_next + 1) % FrameHistorySize;
         frame_history_count = std::min(frame_history_count + 1, FrameHistorySize);
+    }
+    // CPU and RAM at 4 Hz (syscalls, and neither changes between two frames); the GPU reading
+    // has its own thread, started the first time the readout is asked for.
+    static auto last_sample = now;
+    if (now - last_sample >= std::chrono::milliseconds(250)) {
+        last_sample = now;
+        SampleCpu();
+        Load().ram.store(BbProcessMemory::Get().working_set, std::memory_order_relaxed);
+        if (BbSettings::Get().show_gpu) {
+            StartGpuSampler();
+        }
     }
     // BB_FPS_LOG=1: presents per second and the slowest frame, every 5 seconds (test runs).
     static const bool fps_log = [] {
@@ -1013,7 +1196,7 @@ void Render(vk::CommandBuffer cmdbuf, vk::ImageView view, vk::Extent2D extent) {
     if (menu_open) {
         Menu();
     }
-    if (BbSettings::Get().show_fps && !menu_open) {
+    if (ReadoutsOn() && !menu_open) {
         FpsCounter();
     }
     if (text_entry_active) {
