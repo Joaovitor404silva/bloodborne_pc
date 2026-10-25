@@ -28,7 +28,7 @@ def _(*texts):
 # The players' words for a setting key, a page ('page:…') or a Help topic ('topic:…').
 WORDS = {
     'fullscreen': 'vollbild fenster fullscreen window borderless randlos',
-    'exclusive_fullscreen': 'exklusiv vollbild exclusive fullscreen display mode bildwiederholrate refresh',
+    'exclusive_fullscreen': 'exklusiv exclusive display mode bildwiederholrate refresh',
     'hdr': 'hdr helligkeit brightness',
     'fps_mode': 'fps bildrate framerate frame rate 30 60 120 unbegrenzt unlock flussig ruckelt lag',
     'frame_cap': 'begrenzen begrenzung maximal max limiter fps grenze limit cap 120 144 165 240',

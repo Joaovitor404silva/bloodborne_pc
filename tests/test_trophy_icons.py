@@ -1,6 +1,5 @@
 """Archive bounds, refreshes and actual Tk image/fallback rendering."""
 from paths import ROOT
-import importlib.util
 from io import BytesIO
 from pathlib import Path
 import struct
@@ -74,9 +73,10 @@ class TrophyIconRenderingTests(unittest.TestCase):
             raise unittest.SkipTest(str(error))
         cls.root.withdraw()
         cls.tk, cls.Image, cls.ImageTk = tk, Image, ImageTk
-        spec = importlib.util.spec_from_file_location('icon_launcher', ROOT / 'launcher/bbport_launcher_win.py')
-        cls.launcher = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(cls.launcher)
+        # The launcher itself, not a second copy: loading it again rebinds the modules it hands
+        # itself to (bbport_tls.bind), which other tests then patch in vain.
+        import bbport_launcher_win
+        cls.launcher = bbport_launcher_win
 
     @classmethod
     def tearDownClass(cls):

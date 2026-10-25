@@ -1,15 +1,14 @@
 """Exercise the achievement page and notification text without opening a Tk window."""
 from paths import ROOT
-import importlib.util
 import sys
 import time
 from types import SimpleNamespace
 import unittest
 
 sys.path.insert(0, str(ROOT / 'launcher'))
-spec = importlib.util.spec_from_file_location('trophy_launcher', ROOT / 'launcher/bbport_launcher_win.py')
-launcher = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(launcher)
+# The launcher itself, not a second copy: loading it again rebinds the modules it hands itself
+# to (bbport_tls.bind), which other tests then patch in vain.
+import bbport_launcher_win as launcher  # noqa: E402
 
 
 class Widget:

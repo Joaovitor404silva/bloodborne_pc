@@ -79,12 +79,10 @@ WindowSDL::WindowSDL(s32 width_, s32 height_, const char* title) : width{width_}
         // A window in fullscreen state is borderless until it is given a display mode.
         const SDL_DisplayMode* desktop = SDL_GetDesktopDisplayMode(SDL_GetDisplayForWindow(window));
         if (desktop && SDL_SetWindowFullscreenMode(window, desktop)) {
-            std::printf("Window: exclusive fullscreen, %dx%d @ %.0f Hz
-", desktop->w, desktop->h,
+            std::printf("Window: exclusive fullscreen, %dx%d @ %.0f Hz\n", desktop->w, desktop->h,
                         double(desktop->refresh_rate));
         } else {
-            std::printf("Window: exclusive fullscreen unavailable, borderless instead: %s
-", SDL_GetError());
+            std::printf("Window: exclusive fullscreen unavailable, borderless instead: %s\n", SDL_GetError());
         }
     }
 

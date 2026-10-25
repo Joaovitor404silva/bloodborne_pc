@@ -1248,6 +1248,8 @@ EXTRA_TRANSLATIONS = {
     'zh': {
         'Traditional Chinese': '繁體中文',
         'Simplified Chinese': '简体中文',
+        'Traditional Chinese (繁體中文)': '繁體中文',
+        'Simplified Chinese (简体中文)': '简体中文',
         'Korean': '韩语',
     },
     'pt': {

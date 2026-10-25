@@ -310,7 +310,8 @@ def eboot_state(folder):
         from patches import PATCH_GROUPS, eboot_bytes, matching_groups_of
         elf, _header, ph, _segments, _missing = parse_self(data)
     except ValueError as error:
-        if 'expected PS4 SELF' in str(error):  # another format (a converted ELF, another file)
+        # another format (another file, or an ELF that isn't the PS4's: a plain one is read)
+        if 'expected PS4 SELF' in str(error) or 'ELF' in str(error) or 'program headers' in str(error):
             return 'unreadable', len(data)
         return ('truncated' if 'out of bounds' in str(error) or len(data) < EBOOT_SIZE else 'unreadable'), len(data)
     except (ImportError, KeyError, IndexError, OSError):
