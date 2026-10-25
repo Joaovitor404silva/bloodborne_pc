@@ -614,6 +614,56 @@ void TextEntryBox() {
     ImGui::End();
 }
 
+// Frame-time graph: the last four seconds as a filled curve, with faint lines at 60 and 30 FPS so
+// a frame that misses one is visible at a glance. Drawn by hand instead of ImGui::PlotLines: the
+// gradient fill and the reference lines are what make the shape readable.
+void FrameTimeGraph(float average_ms) {
+    const float w = 220.0f * base_scale;
+    const float h = 56.0f * base_scale;
+    // 10 ms steps: the scale stays still while the scene does, and a spike widens it for a moment
+    // instead of flattening everything below it.
+    float top = 20.0f;
+    for (size_t i = 0; i < frame_history_count; ++i) {
+        top = std::max(top, frame_history[i]);
+    }
+    top = std::ceil(top / 10.0f) * 10.0f;
+
+    const ImVec2 origin = ImGui::GetCursorScreenPos();
+    const ImVec2 end{origin.x + w, origin.y + h};
+    ImGui::Dummy(ImVec2(w, h));
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    const ImVec4 tone = PaceColor(average_ms);
+    const ImU32 strong = ImGui::ColorConvertFloat4ToU32(tone);
+    const ImU32 faint = ImGui::ColorConvertFloat4ToU32(ImVec4(1.0f, 1.0f, 1.0f, 0.10f));
+    const ImU32 fill_top = ImGui::ColorConvertFloat4ToU32(ImVec4(tone.x, tone.y, tone.z, 0.38f));
+    const ImU32 fill_bottom = ImGui::ColorConvertFloat4ToU32(ImVec4(tone.x, tone.y, tone.z, 0.02f));
+    const float rounding = 4.0f * base_scale;
+
+    draw->AddRectFilled(origin, end, ImGui::ColorConvertFloat4ToU32(ImVec4(0, 0, 0, 0.30f)),
+                        rounding);
+    for (const float ms : {1000.0f / 60.0f, 1000.0f / 30.0f}) {
+        if (ms < top) {
+            const float y = end.y - h * (ms / top);
+            draw->AddLine(ImVec2(origin.x, y), ImVec2(end.x, y), faint, 1.0f);
+        }
+    }
+
+    const float step = w / float(FrameHistorySize);
+    ImVec2 points[FrameHistorySize];
+    for (size_t i = 0; i < frame_history_count; ++i) {
+        const size_t sample = (frame_history_next + i) % FrameHistorySize; // oldest first
+        const float x = origin.x + step * float(i + 1);
+        const float y = end.y - h * std::min(frame_history[sample] / top, 1.0f);
+        points[i] = ImVec2(x, y);
+        draw->AddRectFilledMultiColor(ImVec2(x - step, y), ImVec2(x, end.y), fill_top, fill_top,
+                                      fill_bottom, fill_bottom);
+    }
+    draw->AddPolyline(points, int(frame_history_count), strong, ImDrawFlags_None,
+                      1.6f * base_scale);
+    draw->AddCircleFilled(points[frame_history_count - 1], 2.4f * base_scale, strong);
+    draw->AddRect(origin, end, faint, rounding);
+}
+
 void FpsCounter() {
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     const float pad = 12.0f * base_scale;
@@ -652,20 +702,8 @@ void FpsCounter() {
         ImGui::PopStyleColor();
     }
     if (s.show_fps_graph && frame_history_count > 1) {
-        // 10 ms steps: the scale stays still while the scene does, and a spike widens it for a
-        // moment instead of flattening everything below it.
-        float top = 20.0f;
-        for (size_t i = 0; i < frame_history_count; ++i) {
-            top = std::max(top, frame_history[i]);
-        }
-        top = std::ceil(top / 10.0f) * 10.0f;
-        const int offset =
-            frame_history_count == FrameHistorySize ? int(frame_history_next) : 0;
-        ImGui::PushStyleColor(ImGuiCol_PlotLines, PaceColor(frame_ms_avg));
-        ImGui::PlotLines("##frame-time", frame_history.data(), int(frame_history_count), offset,
-                         nullptr, 0.0f, top, ImVec2(200.0f * base_scale, 42.0f * base_scale));
-        ImGui::PopStyleColor();
-        ImGui::TextDisabled("frame time  (0-%.0f ms, %.1f ms average)", top, frame_ms_avg);
+        FrameTimeGraph(frame_ms_avg);
+        ImGui::TextDisabled("%.1f ms average  |  lines at 60 and 30 FPS", frame_ms_avg);
     }
     ImGui::End();
 }
