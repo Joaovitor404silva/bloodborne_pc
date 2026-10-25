@@ -80,6 +80,16 @@ def parse_self(data):
     return elf, header, ph, segments, missing
 
 
+def system_folder(game):
+    """The dump's sce_sys folder (param.sfo). PKG tools such as PkgEditor name it Sc0, inside the game folder or
+    beside it (Image0 and Sc0 side by side); run.py maps that to sce_sys in the game view."""
+    game = Path(game)
+    for folder in (game / 'sce_sys', game / 'Sc0', game.parent / 'Sc0'):
+        if (folder / 'param.sfo').is_file():
+            return folder
+    return game / 'sce_sys'
+
+
 def sfo(data):
     magic, version, keys, values, count = unpack('<4sIIII', data, 0)
     if magic != b'\0PSF':

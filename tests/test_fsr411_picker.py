@@ -242,6 +242,7 @@ class ShortcutTests(unittest.TestCase):
                 return_value=({'upscaler':'fsr411', 'fsr411_backend':'vk'}, [])), \
              patch.object(support, 'query', return_value=READY), \
              patch.object(support, 'method_status', return_value=status), \
+             patch.object(launcher, 'game_underway', return_value=False), \
              patch.object(launcher.subprocess, 'Popen') as popen, \
              patch.object(launcher.ctypes.windll.user32, 'MessageBoxW') as popup, patch('builtins.print'):
             self.assertIsNone(launcher.play_without_window(launcher.APP_DEFAULTS))
@@ -252,12 +253,13 @@ class ShortcutTests(unittest.TestCase):
         import tkinter as tk
         with tempfile.TemporaryDirectory() as temp:
             (Path(temp)/'eboot.bin').touch()
+            for folder in ('sce_module', 'sce_sys'):  # a complete dump (launcher.start_problem)
+                (Path(temp)/folder).mkdir()
+            (Path(temp)/'sce_sys'/'param.sfo').touch()
             ui, root = Mock(), Mock()
             with patch.object(launcher.sys, 'argv', ['Bloodborne.exe', '--play']), \
                  patch.object(launcher, 'FROZEN', False), \
-                 patch.object(launcher, 'CONFIG_FILE', Path(temp)/'eboot.bin'), \
-                 patch.object(launcher, 'load_json', return_value={'game_dir':temp}), \
-                 patch.object(launcher, 'play_without_window', return_value=None), \
+                 patch.object(launcher, 'CONFIG_FILE', Path(temp)/'eboot.bin'),                  patch.object(launcher, 'load_settings', return_value={'game_dir':temp}),                  patch.object(launcher, 'play_without_window', return_value=None), \
                  patch.object(tk, 'Tk', return_value=root), \
                  patch.object(launcher, 'Launcher', return_value=ui):
                 launcher.main()

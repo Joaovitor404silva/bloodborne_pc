@@ -22,7 +22,7 @@ class RunScriptTimeoutTests(unittest.TestCase):
         self.assertIn('still running after 60 s', printed.call_args.args[0])
 
     def test_a_required_script_has_no_time_limit(self):
-        done = subprocess.CompletedProcess(['mods.py'], 0, stdout='view\n')
+        done = subprocess.CompletedProcess(['mods.py'], 0, stdout=b'view\n', stderr=b'')
         with mock.patch.object(run.subprocess, 'run', return_value=done) as started:
             self.assertEqual(run.run_script('mods.py', 'game', capture=True, timeout=60), 'view\n')
         self.assertIsNone(started.call_args.kwargs['timeout'])

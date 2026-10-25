@@ -360,11 +360,16 @@ def main():
         legacy = Path(str(args.game.resolve()) + '-mods')
         if legacy.is_dir():
             layers.append((legacy.name, legacy))
-        # A directly selected loose overlay is also accepted.
-        if child(args.mods_dir, 'dvdroot_ps4').is_dir():
-            layers.append((args.mods_dir.name, args.mods_dir))
+        # A directly selected loose overlay (a mods folder with a dvdroot_ps4 and no mod folders)
+        # is also accepted. Beside other mods a bare dvdroot_ps4 is one of them, with its switch
+        # and place in the order: as the whole overlay it left every other mod out.
+        loose = child(args.mods_dir, 'dvdroot_ps4')
+        names = selected(args.mods_dir, args.config)
+        if loose.is_dir() and set(discover(args.mods_dir)) <= {loose.name}:
+            if loose.name in names or not content_root(loose):
+                layers.append((args.mods_dir.name, args.mods_dir))
         else:
-            for name in selected(args.mods_dir, args.config):
+            for name in names:
                 layers.append((name, args.mods_dir / name))
     try:
         print(build_overlay(args.game, args.out, layers))

@@ -72,8 +72,8 @@ def game_app_version(game):
     Game of the Year discs (CUSA03173) ship the 1.09 code with APP_VER 01.00: a game whose
     eboot.bin has the 1.09 patch fingerprint is 01.09 whatever its param.sfo says."""
     try:
-        from prepare import sfo
-        version=sfo((Path(game) / 'sce_sys/param.sfo').read_bytes()).get('APP_VER')
+        from prepare import sfo, system_folder
+        version=sfo((system_folder(game) / 'param.sfo').read_bytes()).get('APP_VER')
     except (OSError, ValueError, ImportError):
         return None
     if version!='01.09':

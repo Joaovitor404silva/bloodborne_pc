@@ -150,8 +150,7 @@ class DetectionTests(unittest.TestCase):
         ui.messagebox = types.SimpleNamespace(showwarning=unittest.mock.Mock())
         status = dict(supported=False, reason='download', detail=support.DLL['vk'])
         ui.fsr41_status = lambda method: status
-        with patch.object(launcher.bbport_fsr41, 'query', return_value=READY), \
-             patch.object(launcher.subprocess, 'Popen') as popen:
+        with patch.object(launcher.bbport_fsr41, 'query', return_value=READY),              patch.object(launcher, 'game_underway', return_value=False),              patch.object(launcher.subprocess, 'Popen') as popen:
             ui.play()
         popen.assert_not_called()
         ui.show.assert_called_once_with('graphics')

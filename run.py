@@ -8,6 +8,7 @@ The in-game "Apply and restart" runs this script again through BB_RESTART_COMMAN
 `--after PID` waits for the previous game process to end first (its GPU device and memory).
 """
 import ctypes
+import io
 import json
 import os
 from pathlib import Path
@@ -181,6 +182,20 @@ def remove_stale_views(out, game):
         print(f'Mods: removed {removed} game view(s) an earlier game left behind')
 
 
+# Held while a start prepares and runs the game: the launcher and Play Bloodborne.exe bring that game's
+# window to the front instead of starting a second one (bbport_launcher_win.game_underway).
+GAME_MUTEX = 'Local\\bbport-game'
+
+
+def hold_game_mutex(name=GAME_MUTEX):
+    """Opens the game's named mutex for the rest of this process; False when another start has it."""
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel.CreateMutexW.restype = ctypes.c_void_p
+    global _GAME_MUTEX_HANDLE
+    _GAME_MUTEX_HANDLE = kernel.CreateMutexW(None, False, name)
+    return ctypes.get_last_error() != 183  # ERROR_ALREADY_EXISTS
+
+
 def no_console():
     """Started without a console (the launcher): console programs must not open their own."""
     return 0 if ctypes.windll.kernel32.GetConsoleWindow() else subprocess.CREATE_NO_WINDOW
@@ -208,29 +223,54 @@ def run_script(name, *args, capture=False, optional=False, timeout=None):
     # Inside the packaged Bloodborne.exe (PyInstaller) the executable runs scripts itself.
     script = ['--script'] if getattr(sys, 'frozen', False) else []
     command = [sys.executable, *script, str(PORT / 'scripts' / name), *map(str, args)]
-    if optional and not capture:
+    for attempt in range(1, LOCK_TRIES + 1):
+        # stdin given: the output handles are passed explicitly (a windowed Bloodborne.exe child would
+        # get none otherwise). The errors are read for a locked file, then passed on.
         try:
-            return subprocess.run(command, stdin=subprocess.DEVNULL, creationflags=no_console()).returncode == 0
-        except OSError:
-            return False
-    if capture:
-        try:
-            result = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, text=True,
-                                    creationflags=no_console(), timeout=timeout if optional else None)
-        except subprocess.TimeoutExpired:
+            result = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE if capture else None,
+                                    stderr=subprocess.PIPE, creationflags=no_console(),
+                                    timeout=timeout if capture and optional else None)
+        except subprocess.TimeoutExpired as expired:
+            echo_errors(expired.stderr or b'')
             print(f'{name}: still running after {timeout} s; stopped')
             return None
-        if result.returncode:
-            if optional:
-                return None
-            sys.exit(result.returncode)
-        return result.stdout
-    # stdin given: the output handles are passed explicitly (a windowed Bloodborne.exe child would
-    # get none otherwise).
-    result = subprocess.run(command, stdin=subprocess.DEVNULL, creationflags=no_console())
+        except OSError:
+            if optional and not capture:
+                return False
+            raise
+        echo_errors(result.stderr)
+        if not result.returncode or attempt == LOCK_TRIES or \
+                not LOCKED.search(result.stderr.decode('utf-8', errors='replace')):
+            break
+        print(f'{name}: a file was locked (an antivirus scanning it?); trying again', flush=True)
+        time.sleep(LOCK_WAIT)
+    if optional and not capture:
+        return result.returncode == 0
     if result.returncode:
+        if optional:
+            return None
         sys.exit(result.returncode)
-    return None
+    # Decoded as text=True did: the locale's encoding, universal newlines.
+    return io.TextIOWrapper(io.BytesIO(result.stdout)).read() if capture else None
+
+
+# An antivirus that scans a file the port has just written holds it for a moment, and opening it fails
+# ("[WinError 32]", "[WinError 5]", "[Errno 13] Permission denied"). run_script runs such a step again,
+# LOCK_TRIES times in all over about two seconds, before the start fails.
+LOCKED = re.compile(r'WinError (?:32|5)\b|PermissionError|Errno 13\b')
+LOCK_TRIES, LOCK_WAIT = 4, 0.6
+
+
+def echo_errors(data):
+    """A script's error output, passed on as it came."""
+    if not data:
+        return
+    try:
+        sys.stderr.flush()
+        sys.stderr.buffer.write(data)
+        sys.stderr.buffer.flush()
+    except (AttributeError, OSError, ValueError):
+        sys.stderr.write(data.decode('utf-8', errors='replace'))
 
 
 def auto_live_blurs_dof(output, config):
@@ -259,7 +299,7 @@ def refresh_shared_graphics(env, config):
         return  # direct engine/script experiments retain their explicit overrides
     values = {}
     try:
-        for line in Path(config).read_text(encoding='utf-8').splitlines():
+        for line in Path(config).read_text(encoding='utf-8-sig', errors='replace').splitlines():
             if '=' in line and not line.lstrip().startswith(('#', ';')):
                 key, value = line.split('=', 1)
                 values[key.strip()] = value.strip()
@@ -412,12 +452,89 @@ def backup_saves(user_dir, keep=SAVE_BACKUPS_KEPT, now=None):
     return target
 
 
+def system_view(game, view, system, out):
+    """The game view for a dump whose system folder a PKG tool named Sc0 (prepare.system_folder): the view
+    made for mods gets a sce_sys folder, or a view of its own is made (mod-game-*, removed after the game as a
+    view with mods is). Its sce_sys holds copies of the dump's own sce_sys files with Sc0's over them: a few
+    small files; the dump is never written to."""
+    import tempfile
+    from mods import make_link, remove_overlay
+    game, made = Path(game), view is None
+    if made:
+        place = Path(out).resolve()
+        if os.name == 'nt' and place.drive.casefold() != game.drive.casefold():
+            place = game.parent  # hard links reach one drive only (mods.build_overlay)
+        place.mkdir(parents=True, exist_ok=True)
+        view = Path(tempfile.mkdtemp(prefix='mod-game-', dir=place))
+    try:
+        if made:
+            for entry in game.iterdir():
+                if entry.name.casefold() not in ('sce_sys', 'sc0'):
+                    make_link(view / entry.name, entry)
+        target = view / 'sce_sys'
+        if os.path.lexists(target):
+            os.rmdir(target)  # the view's link to the dump's sce_sys; a folder with files is never removed
+        for source in (game / 'sce_sys', system):
+            if source.is_dir():
+                shutil.copytree(source, target, dirs_exist_ok=True)
+    except BaseException:
+        if made:
+            remove_overlay(view, game)
+        raise
+    print(f'Game files: {system} serves as sce_sys (a PKG tool\'s layout)')
+    return view
+
+
+def user_folders(env, data):
+    """The saves folder (BB_USER_DIR, else <data>/user), and BB_GPU_USER_DIR for the caches (beside the saves
+    unless set). The player's own saves folder is never made anew: on a drive that is not connected, or renamed,
+    an empty one would show no characters (the launcher says so before the start). A cache folder that cannot be
+    had (its drive is gone) gives way to the saves folder; caches are made again, nothing is lost."""
+    user_dir = Path(env.get('BB_USER_DIR', Path(data) / 'user')).resolve()
+    if env.get('BB_USER_DIR') and not user_dir.is_dir():
+        fail(f'The saves folder {user_dir} is not there: its drive is not connected, or the folder was renamed '
+             'or moved. Connect the drive, or choose the saves folder again in the launcher (Saves).')
+    user_dir.mkdir(parents=True, exist_ok=True)
+    cache_dir = env.get('BB_GPU_USER_DIR')
+    if cache_dir:
+        try:
+            Path(cache_dir).mkdir(parents=True, exist_ok=True)
+        except OSError as error:
+            print(f'Cache: {cache_dir} cannot be used ({error}); the caches go to {user_dir} this time')
+            env['BB_GPU_USER_DIR'] = str(user_dir)
+    env.setdefault('BB_GPU_USER_DIR', str(user_dir))
+    return user_dir
+
+
+def writable_saves(user_dir):
+    """Save files marked read-only (copied from a backup disc or another PC, or by hand): the game
+    cannot replace them, so every save fails while it ends with 0 (runtime_file.c commit_file).
+    The mark is cleared before each start; returns how many files had it."""
+    import stat
+    cleared = 0
+    for path in (Path(user_dir) / 'savedata').rglob('*'):
+        try:
+            if path.is_file() and not path.stat().st_mode & stat.S_IWRITE:
+                os.chmod(path, stat.S_IREAD | stat.S_IWRITE)
+                cleared += 1
+        except OSError as error:
+            print(f'Saves: {path} stays read-only: {error}')
+    if cleared:
+        print(f'Saves: {cleared} read-only save file(s) made writable')
+    return cleared
+
+
 def main():
     args = sys.argv[1:]
     restarted = len(args) >= 2 and args[0] == '--after'
     if restarted:
         wait_for(int(args[1]))
         args = args[2:]
+    # Two starts at once (a second click on Play Bloodborne.exe while the first is being prepared) would
+    # prepare the same files and share the saves. The in-game restart takes over from the game it replaces.
+    if not hold_game_mutex() and not restarted:
+        print('Start: another start of the game is being prepared or runs; this one ends')
+        return 0
     # As run.sh: relative paths (BB_GAME_DIR, BB_DATA_DIR, fsr4_shaders/) are from the port.
     os.chdir(PORT)
     env = os.environ
@@ -437,6 +554,11 @@ def main():
 
     probe = Path(env['BB_PROBE']) if env.get('BB_PROBE') else find_executable('bb-probe.exe')
     if not probe or not probe.is_file():
+        if getattr(sys, 'frozen', False):
+            # A packaged port always has it: an antivirus took it away (the launcher's Help names the fix).
+            fail(f'bb-probe.exe is missing from {PORT / "bin"}: an antivirus has probably moved it to its '
+                 'quarantine. Restore it there and add the port folder to the antivirus\'s exclusions, or '
+                 'extract the port\'s zip again.')
         fail('bb-probe.exe not found: build it with build.sh (MSYS2 CLANG64) or use a packaged build.')
     # Development builds run from the MSYS2 tree: its CLANG64 DLLs (SDL3, FFmpeg, ...).
     if not (probe.parent / 'SDL3.dll').is_file():
@@ -448,6 +570,16 @@ def main():
     if not (game / 'eboot.bin').is_file():
         fail(f'No eboot.bin in {game} (set BB_GAME_DIR).')
     original_game = game.resolve()
+    # Without them the start fails later with a path inside the game view. A PKG tool's Sc0 is the
+    # system folder too (prepare.system_folder); system_view maps it to sce_sys.
+    sys.path.insert(0, str(PORT / 'scripts'))
+    from prepare import system_folder
+    system = system_folder(game)
+    missing = [name for name, there in (('sce_module', (game / 'sce_module').is_dir()),
+                                        ('sce_sys', (system / 'param.sfo').is_file())) if not there]
+    if missing:
+        fail(f'The game folder {game} has no {" / ".join(missing)}: the game was not unpacked completely. '
+             'Unpack the base game into a new, empty folder again and copy the 1.09 update over it.')
     if env.get('BB_SKIP_GAME_CHECK') != '1':
         try:
             prepatched = image_sha256(game) == LANCE_60FPS_IMAGE
@@ -556,6 +688,8 @@ def main():
         view = run_script('mods.py', *mod_args, capture=True)
     game = Path(view.strip())
     mod_view = game if game.resolve() != original_game else None
+    if system.name != 'sce_sys':
+        game = mod_view = system_view(original_game, mod_view, system, out)
     try:
         run_script('prepare.py', game, '--out', out)
         run_script('link_libc.py', game, '--out', out)
@@ -655,10 +789,9 @@ def main():
 
         # The in-game restart starts this script again once this process is gone.
         # GPU caches (shaders, pipelines) beside the saves; read before main(), so set here.
-        user_dir = Path(env.get('BB_USER_DIR', data / 'user')).resolve()
-        user_dir.mkdir(parents=True, exist_ok=True)
-        env.setdefault('BB_GPU_USER_DIR', str(user_dir))
+        user_dir = user_folders(env, data)
         saves_dir = coop_user_dir(env, user_dir, original_game) if seamless_coop(env) else user_dir
+        writable_saves(saves_dir)
         if env.get('BB_SAVE_BACKUPS') == '1' and not restarted:  # not again for an in-game restart
             backup_saves(saves_dir)
         if env.get('BB_ONLINE') == '1' and env.get('BB_NET_BACKEND') == 'thd':
