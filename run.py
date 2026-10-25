@@ -30,7 +30,7 @@ def prepare_driver_environment(env):
 
 # Co-op: the community service that answers Bloodborne's own game-server requests
 # (messages, bloodstains, sign-in); summon requests go to the shadNet server instead.
-COMMUNITY_SERVER = 'https://thehuntersdream.com'
+COMMUNITY_SERVER = 'https://game.supermedo.com'
 GAME_SERVER = 'https://ss4.scej-network.jp:20443'
 # The server's ss.info sends the game to this port for its API (summons among them).
 COMMUNITY_API_PORT = 18671
