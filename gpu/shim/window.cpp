@@ -46,8 +46,13 @@ WindowSDL::WindowSDL(s32 width_, s32 height_, const char* title) : width{width_}
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
         UNREACHABLE_MSG("Failed to initialize SDL video: {}", SDL_GetError());
     }
+    // BB_FULLSCREEN=1: fullscreen at the desktop's display mode (borderless). BB_WINDOW_MODE=
+    // fullscreen makes it exclusive: the window takes the display mode itself (RafaelHGOliveira,
+    // PR #68). Windowed or borderless otherwise.
     const char* fullscreen = std::getenv("BB_FULLSCREEN");
-    const bool full = fullscreen && fullscreen[0] == '1';
+    const char* mode = std::getenv("BB_WINDOW_MODE");
+    const bool exclusive = mode && !std::strcmp(mode, "fullscreen");
+    const bool full = exclusive || (mode ? !std::strcmp(mode, "borderless") : fullscreen && fullscreen[0] == '1');
     // A window larger than the screen's free area (taskbar excluded) is made smaller, keeping
     // its aspect: the title bar stays reachable.
     SDL_Rect usable{};
@@ -70,6 +75,18 @@ WindowSDL::WindowSDL(s32 width_, s32 height_, const char* title) : width{width_}
     window = SDL_CreateWindowWithProperties(props);
     SDL_DestroyProperties(props);
     ASSERT_MSG(window, "Failed to create window: {}", SDL_GetError());
+    if (exclusive) {
+        // A window in fullscreen state is borderless until it is given a display mode.
+        const SDL_DisplayMode* desktop = SDL_GetDesktopDisplayMode(SDL_GetDisplayForWindow(window));
+        if (desktop && SDL_SetWindowFullscreenMode(window, desktop)) {
+            std::printf("Window: exclusive fullscreen, %dx%d @ %.0f Hz
+", desktop->w, desktop->h,
+                        double(desktop->refresh_rate));
+        } else {
+            std::printf("Window: exclusive fullscreen unavailable, borderless instead: %s
+", SDL_GetError());
+        }
+    }
 
     const char* driver = SDL_GetCurrentVideoDriver();
     const SDL_PropertiesID wp = SDL_GetWindowProperties(window);

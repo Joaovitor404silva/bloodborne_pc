@@ -1724,6 +1724,9 @@ class SetupMixin:
         self.section(f, _('Screen'))
         self.check(f, 'fullscreen', 'app', _('Fullscreen', 'Полноэкранный режим'),
                    _('Recommended: the game gets the display to itself (smoother, and 4K downsampling works).'))
+        self.check(f, 'exclusive_fullscreen', 'app', _('Exclusive fullscreen'),
+                   _('Fullscreen takes the display over instead of covering the desktop: frames can arrive more evenly, '
+                     'but switching to another window takes a moment. Only with Fullscreen on.'))
         self.row(f, _('Monitor'), self.choice(f, 'game_monitor', 'app', L.monitor_options(self.app.get('game_monitor'))),
                  _('Where the game opens, in a window and in fullscreen.'))
         self.row(f, _('Resolution'), self.output_choice(f),

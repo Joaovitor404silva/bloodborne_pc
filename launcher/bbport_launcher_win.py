@@ -353,7 +353,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'dlc_dir': '',
                 'mods_dir': '', 'mods_enabled': True, 'patches_dir': '', 'language': '1',
                 'voice_language': 'auto',
-                'player_name': '', 'fullscreen': False, 'hdr': False, 'present_mode': 'Mailbox',
+                'player_name': '', 'fullscreen': False, 'exclusive_fullscreen': False, 'hdr': False, 'present_mode': 'Mailbox',
                 'fps_mode': 'uncap', 'frame_cap': '', 'draw_pipe': '', 'readbacks': '', 'low_vram': '',
                 'frames_ahead': '', 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'extra_env': '', 'close_on_play': False,
@@ -1047,6 +1047,8 @@ def game_environment(s, graphics=None):
     if str(s['player_name']).strip():
         env['BB_USER_NAME'] = str(s['player_name']).strip()
     env['BB_FULLSCREEN'] = '1' if s['fullscreen'] else '0'
+    if s['fullscreen'] and s.get('exclusive_fullscreen'):
+        env['BB_WINDOW_MODE'] = 'fullscreen'  # gpu/shim/window.cpp: the display mode is the game's
     env['BB_PRESENT_MODE'] = s['present_mode']
     if s['hdr']:
         env['BB_HDR'] = '1'
