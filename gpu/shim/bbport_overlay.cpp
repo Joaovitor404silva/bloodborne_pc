@@ -158,10 +158,13 @@ void StartGpuSampler() {
     static std::once_flag once;
     std::call_once(once, [] {
         // shortcut: runs until the process exits (nothing joins it), upgrade if the overlay ever
-        // needs an orderly shutdown.
+        // needs an orderly shutdown. Idle while the readout is switched off, so it costs nothing
+        // for players who never enable it.
         std::thread([] {
             for (;;) {
-                Load().gpu.store(QueryGpuLoad(), std::memory_order_relaxed);
+                if (BbSettings::Get().show_gpu) {
+                    Load().gpu.store(QueryGpuLoad(), std::memory_order_relaxed);
+                }
                 std::this_thread::sleep_for(std::chrono::seconds(1));
             }
         }).detach();
@@ -745,8 +748,25 @@ const char* UpscalerLabel(int upscaler) {
     }
 }
 
-/// The processor name Windows shows in System settings, read once.
-std::string CpuName() {
+// The upscaler's vendor colour, as the vendors brand them.
+// TODO(port): Intel XeSS (blue, #0068B5) when it is implemented: add the enum value in
+// bbport_settings.h and a case here.
+ImVec4 UpscalerColor(int upscaler) {
+    switch (upscaler) {
+    case BbSettings::UpscalerDlss:
+        return ImVec4(0.55f, 0.90f, 0.30f, 1.0f); // NVIDIA green
+    case BbSettings::UpscalerFsr3:
+    case BbSettings::UpscalerFsr4:
+    case BbSettings::UpscalerFsr411:
+        return ImVec4(0.95f, 0.40f, 0.35f, 1.0f); // AMD red
+    default:
+        return ImVec4(0.75f, 0.75f, 0.75f, 1.0f); // TAA, off: no vendor
+    }
+}
+
+/// The processor name Windows shows in System settings, read once (a reference: the counter asks
+/// for it every frame).
+const std::string& CpuName() {
 #if defined(_WIN32)
     static const std::string name = [] {
         wchar_t buffer[256]{};
@@ -763,11 +783,13 @@ std::string CpuName() {
     }();
     return name;
 #else
-    return std::string{};
+    static const std::string name;
+    return name;
 #endif
 }
 
 std::string gpu_name; ///< the Vulkan device's model name, set in Init
+u32 output_width = 0, output_height = 0; ///< the presented size, set in Render
 
 // A dim label, with every value starting in the same column (the reference overlay's look).
 void Label(const char* text) {
@@ -867,15 +889,17 @@ void FpsCounter() {
         ImGui::Text("%.1f", double(rate));
         ImGui::PopStyleColor();
         ImGui::SameLine(0.0f, model_gap);
-        const int generated = s.frame_gen != BbSettings::FrameGenOff ? s.frame_gen_now.load() : 0;
         const int out = s.output_res;
+        ImGui::TextDisabled("|  %ux%u", output_width ? output_width : u32(BbSettings::OutputWidths[out]),
+                            output_height ? output_height : u32(BbSettings::OutputHeights[out]));
+        if (UpscalerLabel(s.upscaler)[0] != '\0') {
+            ImGui::SameLine(0.0f, 6.0f * base_scale);
+            ImGui::TextColored(UpscalerColor(s.upscaler), "%s", UpscalerLabel(s.upscaler));
+        }
+        const int generated = s.frame_gen != BbSettings::FrameGenOff ? s.frame_gen_now.load() : 0;
         if (generated > 0 && s.game_fps > 0.0f) {
-            ImGui::TextDisabled("|  %dx%d  %s  (game %.0f, %dx)",
-                                BbSettings::OutputWidths[out], BbSettings::OutputHeights[out],
-                                UpscalerLabel(s.upscaler), double(s.game_fps.load()), generated);
-        } else {
-            ImGui::TextDisabled("|  %dx%d  %s", BbSettings::OutputWidths[out],
-                                BbSettings::OutputHeights[out], UpscalerLabel(s.upscaler));
+            ImGui::SameLine(0.0f, 6.0f * base_scale);
+            ImGui::TextDisabled("(game %.0f, %dx)", double(s.game_fps.load()), generated);
         }
     }
     if (s.show_frame_times) {
@@ -921,7 +945,7 @@ void FpsCounter() {
         } else {
             ImGui::TextColored(LoadColor(cpu, 70.0f, 90.0f), "%.0f%%", double(cpu));
         }
-        const std::string model = CpuName();
+        const std::string& model = CpuName();
         if (!model.empty()) {
             ImGui::SameLine(0.0f, model_gap);
             ImGui::TextDisabled("%s", model.c_str());
@@ -1256,6 +1280,9 @@ void NotePresent() {
 
 void Render(vk::CommandBuffer cmdbuf, vk::ImageView view, vk::Extent2D extent) {
     const float ms = last_present_ms;
+    // What is actually presented: follows a window resize, unlike the configured output.
+    output_width = extent.width;
+    output_height = extent.height;
     if (!Visible()) {
         return;
     }
