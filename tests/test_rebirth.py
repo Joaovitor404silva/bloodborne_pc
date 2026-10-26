@@ -111,6 +111,16 @@ class TalkScriptTests(unittest.TestCase):
                         if (c.bank, c.id) == (1, 11):
                             self.assertNotEqual(esd.disassemble(c.args[0]), str(rebirth.CLOSED))
 
+    def test_every_way_out_of_the_list_says_the_screen_is_closed(self):
+        # The list's choices only pass once the level-up screen is gone: CLOSED goes there.
+        for data in talk_scripts().values():
+            for _group, _menu, choice in rebirth.doll_menus(esd.read(rebirth.doll_script(data))):
+                self.assertTrue(choice.conditions)
+                for condition in choice.conditions:
+                    first = condition.commands[0]
+                    self.assertEqual((first.bank, first.id), (1, 11))
+                    self.assertEqual([esd.disassemble(a) for a in first.args], [str(rebirth.CLOSED), '1'])
+
 
 
 @unittest.skipUnless((GAME / 'dvdroot_ps4/msg/engus').is_dir(), 'needs the game (BB_GAME_DIR)')
