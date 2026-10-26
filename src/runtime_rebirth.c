@@ -19,7 +19,9 @@
  * yet stay free after quitting. A rebirth whose target could not be saved is refused (it would
  * take the levels with nothing to regain them by), and the target last read or written is kept
  * in memory, so pricing a level does not open the file (an antivirus holding it made levels
- * cost Blood Echoes). */
+ * cost Blood Echoes). While a rebirth can still be undone, its line also holds the character as it
+ * was ("key target | attributes level insight reborn-level old-target"), so a game closed in the
+ * level-up screen undoes it at the next choice in the Doll's list. */
 #include "runtime.h"
 #include <inttypes.h>
 #include <pthread.h>
@@ -58,13 +60,15 @@ static struct { int valid; char key[96]; unsigned target; } known;
 /* What the last level priced came to, for the log (one line when it changes). */
 static struct { char key[96]; unsigned target; int free_level; } logged;
 
-/* The character as it was before the rebirth whose level-up screen is open. */
-static struct {
+/* The character as it was before the rebirth no level was bought after yet (its level-up screen
+ * open, or closed without a choice in the Doll's list since). */
+typedef struct {
     int active;
     char key[96];
     uint32_t attributes[6], level, insight, reborn_level;
     unsigned target;
-} before;
+} Before;
+static Before before;
 
 /* Each weapon's requirements (Strength, Skill, Bloodtinge, Arcane) by id, read once. */
 #define MAX_WEAPONS 2048
@@ -124,9 +128,9 @@ static void targets_path(char *out, size_t size) {
     snprintf(out, size, "%s/rebirth.txt", runtime_file_user_dir());
 }
 
-/* `key`'s line in the file at `path`: 1 and *target when there is one, 0 when not, -1 when the
- * file cannot be read. */
-static int read_line(const char *path, const char *key, unsigned *target) {
+/* `key`'s line in the file at `path`: 1 and *target (and *undo, when given, from its " | ..." part;
+ * active 0 without one) when there is one, 0 when not, -1 when the file cannot be read. */
+static int read_line(const char *path, const char *key, unsigned *target, Before *undo) {
     char line[256];
     FILE *f = fopen(path, "r");
     if (!f) return -1;
@@ -136,6 +140,18 @@ static int read_line(const char *path, const char *key, unsigned *target) {
         if (!strncmp(line, key, length) && line[length] == ' ') {
             *target = (unsigned)strtoul(line + length + 1, NULL, 10);
             found = 1;
+            if (!undo) continue;
+            Before b = {0};
+            const char *rest = strstr(line + length, " | ");
+            if (rest && sscanf(rest, " | %" SCNu32 " %" SCNu32 " %" SCNu32 " %" SCNu32 " %" SCNu32 " %" SCNu32
+                               " %" SCNu32 " %" SCNu32 " %" SCNu32 " %u",
+                               &b.attributes[0], &b.attributes[1], &b.attributes[2], &b.attributes[3],
+                               &b.attributes[4], &b.attributes[5], &b.level, &b.insight, &b.reborn_level,
+                               &b.target) == 10) {
+                b.active = 1;
+                snprintf(b.key, sizeof(b.key), "%s", key);
+            }
+            *undo = b;
         }
     }
     fclose(f);
@@ -150,7 +166,7 @@ static unsigned read_target(const char *key) {
     targets_path(path, sizeof(path));
     snprintf(temp, sizeof(temp), "%s.new", path);
     unsigned target = 0;
-    if (read_line(path, key, &target) < 0) read_line(temp, key, &target);
+    if (read_line(path, key, &target, NULL) < 0) read_line(temp, key, &target, NULL);
     known.valid = 1;
     snprintf(known.key, sizeof(known.key), "%s", key);
     known.target = target;
@@ -171,9 +187,20 @@ static int replace_file(const char *temp, const char *path) {
     return 0;
 }
 
-/* Sets (or with 0 removes) `key`'s target; the other characters' lines are kept. 0: it could not
- * be saved (the file is unchanged). */
-static int write_target(const char *key, unsigned target) {
+/* The rebirth of `key` that can still be undone, from rebirth.txt (active 0: none). */
+static Before read_undo(const char *key) {
+    char path[4096], temp[4200];
+    targets_path(path, sizeof(path));
+    snprintf(temp, sizeof(temp), "%s.new", path);
+    unsigned target = 0;
+    Before undo = {0};
+    if (read_line(path, key, &target, &undo) < 0) read_line(temp, key, &target, &undo);
+    return undo;
+}
+
+/* Sets (or with 0 removes) `key`'s target, with `undo` (when given) the rebirth that can still be
+ * undone; the other characters' lines are kept. 0: it could not be saved (the file is unchanged). */
+static int write_line(const char *key, unsigned target, const Before *undo) {
     char path[4096], temp[4200], line[256];
     targets_path(path, sizeof(path));
     snprintf(temp, sizeof(temp), "%s.new", path);
@@ -196,7 +223,14 @@ static int write_target(const char *key, unsigned target) {
     int ok = out != NULL;
     if (out) {
         if (used) ok &= fwrite(lines, 1, used, out) == used;
-        if (target) ok &= fprintf(out, "%s %u\n", key, target) > 0;
+        if (target && undo)
+            ok &= fprintf(out, "%s %u | %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32
+                          " %" PRIu32 " %" PRIu32 " %" PRIu32 " %u\n", key, target,
+                          undo->attributes[0], undo->attributes[1], undo->attributes[2], undo->attributes[3],
+                          undo->attributes[4], undo->attributes[5], undo->level, undo->insight,
+                          undo->reborn_level, undo->target) > 0;
+        else if (target)
+            ok &= fprintf(out, "%s %u\n", key, target) > 0;
         ok &= fflush(out) == 0;
         ok &= fclose(out) == 0;
     }
@@ -212,6 +246,8 @@ static int write_target(const char *key, unsigned target) {
     known.target = target;
     return 1;
 }
+
+static int write_target(const char *key, unsigned target) { return write_line(key, target, NULL); }
 
 /* 1: open the level-up screen (reborn now, or levels still to regain from an earlier rebirth,
  * which costs nothing more); 2: nothing to reset (already the origin's level); 0: not enough
@@ -248,17 +284,20 @@ int runtime_rebirth(void) {
                 result = 2;
             } else if (insight < REBIRTH_INSIGHT) {
                 printf("Runtime: rebirth refused: Insight %" PRIu32 " (needs %d)\n", insight, REBIRTH_INSIGHT);
-            } else if (!write_target(key, target > level ? target : level)) {
-                /* Without its target the levels could not be regained: no rebirth. */
-                printf("Runtime: rebirth refused: its free levels could not be saved\n");
             } else {
-                before.active = 1;
-                snprintf(before.key, sizeof(before.key), "%s", key);
-                for (int i = 0; i < 6; ++i) before.attributes[i] = get32(p, ATTRIBUTE[i]);
-                before.level = level;
-                before.insight = insight;
-                before.reborn_level = new_level;
-                before.target = target;
+                Before undo = {.active = 1, .level = level, .insight = insight, .reborn_level = new_level,
+                               .target = target};
+                snprintf(undo.key, sizeof(undo.key), "%s", key);
+                for (int i = 0; i < 6; ++i) undo.attributes[i] = get32(p, ATTRIBUTE[i]);
+                /* Without its line the levels could not be regained, nor the rebirth undone after a
+                 * restart: no rebirth then. */
+                if (!write_line(key, target > level ? target : level, &undo)) {
+                    printf("Runtime: rebirth refused: its free levels could not be saved\n");
+                    pthread_mutex_unlock(&lock);
+                    fflush(stdout);
+                    return 0;
+                }
+                before = undo;
                 for (int i = 0; i < 6; ++i) put32(p, ATTRIBUTE[i], reborn[i]);
                 put32(p, LEVEL, new_level);
                 put32(p, INSIGHT, insight - REBIRTH_INSIGHT);
@@ -274,22 +313,32 @@ int runtime_rebirth(void) {
     return result;
 }
 
-/* The level-up screen a rebirth opened was closed: no level bought means no rebirth. */
+/* A choice in the Doll's list (the level-up screen a rebirth opened is closed by then): no level
+ * bought means no rebirth, as when backing out of DS3's. The rebirth may be from before a restart
+ * (rebirth.txt). */
 void runtime_rebirth_closed(void) {
     pthread_mutex_lock(&lock);
     unsigned char *p = player();
-    if (before.active && p) {
+    if (p) {
         char key[96];
         character_key(p, key, sizeof(key));
+        if (!before.active || strcmp(key, before.key)) before = read_undo(key);
         const uint32_t level = get32(p, LEVEL);
-        if (!strcmp(key, before.key) && level == before.reborn_level) {
+        if (!before.active) {
+            /* no rebirth to undo */
+        } else if (level == before.reborn_level) {
+            /* The Insight spent comes back (Insight gained or used since stays so). */
+            const uint32_t insight = get32(p, INSIGHT) + REBIRTH_INSIGHT;
             for (int i = 0; i < 6; ++i) put32(p, ATTRIBUTE[i], before.attributes[i]);
             put32(p, LEVEL, before.level);
-            put32(p, INSIGHT, before.insight);
+            put32(p, INSIGHT, insight);
             write_target(key, before.target);
-            printf("Runtime: rebirth cancelled (no level bought): level %" PRIu32 " and Insight %" PRIu32 " back\n",
-                   before.level, before.insight);
+            printf("Runtime: rebirth cancelled (no level bought): level %" PRIu32 " back, Insight %" PRIu32 "\n",
+                   before.level, insight);
         } else {
+            /* A level was bought (the rebirth stays; its free levels too), or the save is from
+             * before the rebirth: nothing to undo any more. */
+            write_target(key, read_target(key));
             printf("Runtime: rebirth kept (level %" PRIu32 ")\n", level);
         }
     }
