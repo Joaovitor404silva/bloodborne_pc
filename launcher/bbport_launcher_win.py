@@ -2922,7 +2922,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.ui_calls.put(lambda: (npid_var.set(npid), password_var.set(password),
                                            discord_line.configure(text=''), self.collect()))
             threading.Thread(target=work, daemon=True).start()
-        self.row(f, _('Account'), signed)
+        self.row(f, _('Account'), signed, key='online_npid')
         buttons = ttk.Frame(f)
         ttk.Button(buttons, text=_('Sign in with Discord'), command=sign_in_discord).pack(side='left')
         ttk.Button(buttons, text=_('Sign out'), command=sign_out).pack(side='left', padx=(14, 0))
@@ -2953,10 +2953,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                            sign_up.configure(text=text), self.collect()))
             threading.Thread(target=work, daemon=True).start()
         self.row(f, _('New Online ID'), ttk.Entry(f, textvariable=new_npid, width=40),
-                 _('1 to 16 letters, numbers, _ or -. Other players see this name.'))
-        self.row(f, _('New password'), ttk.Entry(f, textvariable=new_password, width=40, show='•'))
+                 _('1 to 16 letters, numbers, _ or -. Other players see this name.'), key='online_npid')
+        self.row(f, _('New password'), ttk.Entry(f, textvariable=new_password, width=40, show='•'), key='online_npid')
         self.row(f, _('Email address'), ttk.Entry(f, textvariable=email, width=40),
-                 _('Only to make the account.'))
+                 _('Only to make the account.'), key='online_npid')
         self.row(f, '', ttk.Button(f, text=_('Create account'), command=create_account))
         sign_up.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
         group('supermedo')

@@ -48,7 +48,7 @@ class SignInTests(unittest.TestCase):
 
     def test_the_account_service_is_asked_through_it(self):
         with answer({'ResKind': 0, 'DeviceCode': 'd', 'UserCode': 'U'}) as urlopen:
-            reply = L.thd_call(L.COMMUNITY_SERVER + '/auth/device/start', {'DeviceName': 'bbport on PC'})
+            reply = L.thd_call(L.HUNTERS_DREAM_SERVER + '/auth/device/start', {'DeviceName': 'bbport on PC'})
         self.assertEqual(reply['UserCode'], 'U')
         request = urlopen.call_args.args[0]
         self.assertEqual((request.full_url, request.get_method()),
@@ -67,22 +67,21 @@ class PoolTests(unittest.TestCase):
     """The co-op pools: The Hunter's Dream by default, a shadNet server of the player's choice; SuperMedo
     Server is no longer in the launcher."""
 
-    def test_the_hunters_dream_by_default(self):
-        self.assertEqual(L.APP_DEFAULTS['online_pool'], 'huntersdream')
-        self.assertFalse([key for key in L.APP_DEFAULTS if 'supermedo' in key])
+    def test_supermedo_server_by_default(self):
+        self.assertEqual(L.APP_DEFAULTS['online_pool'], 'supermedo')
+        self.assertFalse(L.HUNTERS_DREAM_POOL)
 
-    def test_a_saved_supermedo_pool_plays_on_the_hunters_dream(self):
+    def test_the_supermedo_pool_plays_on_supermedo_server(self):
         settings = {**L.APP_DEFAULTS, 'online': True, 'online_pool': 'supermedo', 'thd_online_id': 'Hunter',
                     'thd_token': 't'}
         with mock.patch.object(L, 'HUNTERS_DREAM_POOL', True):
             env = L.game_environment(settings)
-        self.assertEqual(env.get('BB_NET_BACKEND'), 'thd')
-        self.assertNotIn('supermedo', env.get('BB_SHADNET_SERVER', '').lower())
+        self.assertNotEqual(env.get('BB_NET_BACKEND'), 'thd')
+        self.assertEqual((env['BB_SHADNET_SERVER'], env['BB_COMMUNITY_SERVER']), (L.SUPERMEDO_SERVER, L.COMMUNITY_SERVER))
 
-    def test_no_supermedo_server_left(self):
-        source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8').lower()
-        self.assertNotIn('supermedo.com', source)
-        self.assertNotIn("value='supermedo'", source)
+    def test_the_hunters_dream_has_its_own_address(self):
+        self.assertIn('supermedo.com', L.COMMUNITY_SERVER)
+        self.assertEqual(L.HUNTERS_DREAM_SERVER, 'https://thehuntersdream.com')
 
 
 class GameServerTests(unittest.TestCase):
@@ -100,7 +99,7 @@ class GameServerTests(unittest.TestCase):
     def test_the_hunters_dream_plays_on_its_own_server(self):
         for custom in (False, True):
             env = self.environment(online_pool='huntersdream', online_custom_servers=custom)
-            self.assertEqual(env['BB_COMMUNITY_SERVER'], L.COMMUNITY_SERVER)
+            self.assertEqual(env['BB_COMMUNITY_SERVER'], L.HUNTERS_DREAM_SERVER)
 
     def test_shadnet_uses_the_field_only_with_own_servers(self):
         self.assertEqual(self.environment(online_pool='shadnet')['BB_COMMUNITY_SERVER'], L.COMMUNITY_SERVER)
@@ -127,7 +126,7 @@ class GameServerTests(unittest.TestCase):
                 {'Status': 'approved', 'OnlineId': 'Hunter', 'Token': 't'}
         with mock.patch.object(L, 'thd_call', call), mock.patch.object(L.time, 'sleep'):
             self.assertEqual(L.thd_sign_in(lambda page, code: None), ('Hunter', 't'))
-        self.assertTrue(asked and all(url.startswith(L.COMMUNITY_SERVER + '/auth/') for url in asked))
+        self.assertTrue(asked and all(url.startswith(L.HUNTERS_DREAM_SERVER + '/auth/') for url in asked))
 
     def server(self, *answers):
         """thd_open answering in turn: (status, body) or an exception; the calls are counted."""
@@ -149,14 +148,14 @@ class GameServerTests(unittest.TestCase):
         calls, opened = self.server((502, b'<html>Bad gateway</html>'), TimeoutError('timed out'),
                                     (200, b'{"ResKind": 0, "DeviceCode": "d"}'))
         with opened, mock.patch.object(L.time, 'sleep') as slept:
-            self.assertEqual(L.thd_call(L.COMMUNITY_SERVER + '/auth/device/start', {})['DeviceCode'], 'd')
+            self.assertEqual(L.thd_call(L.HUNTERS_DREAM_SERVER + '/auth/device/start', {})['DeviceCode'], 'd')
         self.assertEqual(len(calls), 3)
         self.assertEqual([c.args[0] for c in slept.call_args_list], [1, 2])
 
     def test_a_server_that_keeps_stumbling_says_so(self):
         calls, opened = self.server(*[(503, b'<html>down</html>')] * 3)
         with opened, mock.patch.object(L.time, 'sleep'), self.assertRaises(ValueError) as caught:
-            L.thd_call(L.COMMUNITY_SERVER + '/auth/device/start', {})
+            L.thd_call(L.HUNTERS_DREAM_SERVER + '/auth/device/start', {})
         self.assertEqual(len(calls), 3)
         self.assertEqual(str(caught.exception), 'thehuntersdream.com did not answer properly (HTTP 503); '
                                                 'try again in a minute')
@@ -164,7 +163,7 @@ class GameServerTests(unittest.TestCase):
     def test_the_services_own_refusal_is_not_asked_again(self):
         calls, opened = self.server((200, b'{"ResKind": 3, "Message": "unknown device"}'))
         with opened, mock.patch.object(L.time, 'sleep'), self.assertRaises(ValueError) as caught:
-            L.thd_call(L.COMMUNITY_SERVER + '/auth/device/poll', {})
+            L.thd_call(L.HUNTERS_DREAM_SERVER + '/auth/device/poll', {})
         self.assertEqual((len(calls), str(caught.exception)), (1, 'unknown device'))
 
     def test_a_connection_that_keeps_failing_shows_its_reason(self):
@@ -172,7 +171,7 @@ class GameServerTests(unittest.TestCase):
         error = urllib.error.URLError('certificate verify failed: certificate has expired')
         calls, opened = self.server(error, error, error)
         with opened, mock.patch.object(L.time, 'sleep'), self.assertRaises(urllib.error.URLError) as caught:
-            L.thd_call(L.COMMUNITY_SERVER + '/auth/device/start', {})
+            L.thd_call(L.HUNTERS_DREAM_SERVER + '/auth/device/start', {})
         self.assertEqual(len(calls), 3)
         self.assertIn('certificate has expired', str(caught.exception))
 
