@@ -611,6 +611,17 @@ def main():
             names.append('Steady cloth')
         except ValueError as error:
             print(f'Patches: {error}; steady cloth skipped')
+    if os.environ.get('BB_AIR_DRAG')!='0':
+        # Jumps as at 30 FPS at any frame rate (air_drag.py: the air drag per second of 30 FPS).
+        sys.path.insert(0,str(Path(__file__).resolve().parent))
+        import air_drag
+        elf=(a.out/'eboot.elf').read_bytes()
+        try:
+            air_drag.check_original(lambda start,end: eboot_bytes(elf,start,end))
+            writes+=air_drag.code_writes()
+            names.append('Jumps as at 30 FPS')
+        except ValueError as error:
+            print(f'Patches: {error}; jumps as at 30 FPS skipped')
     if os.environ.get('BB_CRASH_GUARDS')!='0':
         # Crash guards (crash_guards.py): the game's own unchecked pointers that crashed players.
         sys.path.insert(0,str(Path(__file__).resolve().parent))
