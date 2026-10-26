@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 """PC Settings in the game's own System menu (bbport.ini pc_menu, game version 01.09).
 
-The System menu gets three lines after Language (or Quit to Desktop, quit_menu.py): PC Graphics,
-PC Effects and PC Options. Where the menu's builder goes on after that line, with the line list
-in r13, the patched code asks the port for the lines ("bb:o" through the browser import,
+The System menu gets three lines before Exit Game (and Quit to Desktop, quit_menu.py, after it):
+PC Graphics, PC Effects and PC Options. Where the menu's builder is about to add Exit Game, with
+the line list in r12, the patched code asks the port for the lines ("bb:o" through the browser import,
 src/runtime_services.c), passing where r13 is kept. The port (gpu/shim/bbport_pc_menu.cpp) adds
 them with the game's own calls. Each opens a page of the game's settings screen built with the
 game's choice lines, whose values the port applies and keeps in bbport.ini.
@@ -25,8 +25,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import quit_menu  # noqa: E402
 from quit_menu import swf  # noqa: E402
 
-SYSTEM_KEEP = quit_menu.SYSTEM_KEEP  # after the Language / Quit to Desktop line (r13: the lines)
-SYSTEM_NEXT = SYSTEM_KEEP + 7        # after the instruction the jump replaces
+EXIT_LINE = 0x1BB4313                # before Exit Game's line (r12: the lines; both ways here have them)
+EXIT_NEXT = EXIT_LINE + 7            # after the instruction the jump replaces
 PAGE_TABLE = 0x1B20987               # the page opener: lea rax, [rip + its six page names]
 PAGE_COUNT = 0x1B20E1E               # ... cmp rdx, 6
 HIDE_PAGES = 0x1BDACF2               # where the movie's setup has hidden the game's pages (r15:
@@ -40,7 +40,7 @@ DEFAULTS_QUESTION = 0x1B24887        # mov edx, 40300 (esi 204; r13: the page)
 DEFAULTS_YES = 0x1B24C10             # the Yes callback (rdi: the callback, [rdi+8] the page)
 CAVE = 0x50D9B00                     # past Rebirth's code (0x50D9900) in the last code page
 ORIGINAL = {
-    SYSTEM_KEEP: '488bbd90dfffff',   # mov rdi, [rbp-0x2070]
+    EXIT_LINE: '488d9d50e0ffff',     # lea rbx, [rbp-0x1fb0] (Exit Game's texts)
     PAGE_TABLE: '488d05228f8103',    # lea rax, [rip + 0x3818f22] (0x53398B0)
     PAGE_COUNT: '4883fa06',          # cmp rdx, 6
     HIDE_PAGES: '488d15bd93d502',    # lea rdx, [rip + 0x2d593bd] ("Top")
@@ -139,16 +139,16 @@ def code_writes():
     """(offset, bytes) writes: the cave code and table, the jump to it, the opener's table."""
     cave = quit_menu.Code(CAVE)
     line = cave.here
-    cave.raw('4155')            # push r13 (the line list; the port may replace it)
+    cave.raw('4154')            # push r12 (the line list; the port may replace it)
     cave.raw('4889e6')          # mov rsi, rsp
     cave.raw('4883ec08')        # sub rsp, 8 (16-byte aligned call)
     message_at = len(cave.data)
     cave.raw('488d3d00000000')  # lea rdi, [rip + "bb:o"]
     cave.call(quit_menu.BROWSER)
     cave.raw('4883c408')        # add rsp, 8
-    cave.raw('415d')            # pop r13
-    cave.raw(ORIGINAL[SYSTEM_KEEP])  # the replaced instruction
-    cave.jmp(SYSTEM_NEXT)
+    cave.raw('415c')            # pop r12
+    cave.raw(ORIGINAL[EXIT_LINE])  # the replaced instruction
+    cave.jmp(EXIT_NEXT)
     # The movie's setup: the PC pages hidden as the game's own ("bb:h" with the movie).
     hide = cave.here
     hide_message_at = len(cave.data)
@@ -213,7 +213,7 @@ def code_writes():
         cave.data += struct.pack('<Q', offset)
     if cave.here > quit_menu.CAVE_END:
         raise ValueError('PC Settings code does not fit')
-    keep = quit_menu.Code(SYSTEM_KEEP)
+    keep = quit_menu.Code(EXIT_LINE)
     keep.jmp(line)
     keep.raw('9090')
     opener = quit_menu.Code(PAGE_TABLE)
