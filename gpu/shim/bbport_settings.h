@@ -59,6 +59,7 @@ inline constexpr Effect Effects[] = {
     {"tweak_ragdoll", "Dark Souls-style ragdoll physics", false},
     {"tweak_circle_confirm", "Japanese/Asian buttons (Circle confirms)", false},
     {"quit_to_desktop", "Quit to Desktop in the title and System menus", true},
+    {"pc_menu", "PC Settings in the System menu", true},
     {"rebirth", "Rebirth at the Doll (5 Insight)", true},
     {"steady_cloth", "Cloth as on PS4 (30 FPS)", true},
 };
@@ -78,6 +79,16 @@ inline bool Ultrawide(int output) {
 enum Prompts : int {
     PromptsAuto = 0, PromptsPlayStation = 1, PromptsKeyboard = 2, PromptsXbox = 3, PromptsSwitch = 4, PromptsCount
 };
+
+/// Frame rate mode (patches.py FPS_PRESETS, bbport.ini fps_mode): the community patches applied
+/// at start. The launcher and the PC Settings page share it.
+enum FpsMode : int { Fps30 = 0, Fps60 = 1, Fps90 = 2, FpsUncap = 3, FpsModeCount };
+inline constexpr const char* FpsModeNames[FpsModeCount] = {"30", "60", "90", "uncap"};
+/// Frame cap of the unlocked mode (bbport.ini frame_cap, BB_FPS_LIMIT): -1 the port's own (the
+/// display refresh, at most 120), 0 none. Applied at start.
+inline constexpr int FrameCapAuto = -1;
+inline constexpr int FrameCaps[] = {FrameCapAuto, 60, 90, 120, 144, 165, 240, 0};
+inline constexpr int FrameCapCount = int(sizeof(FrameCaps) / sizeof(FrameCaps[0]));
 
 /// Field of view (fov.py): the game's camera has 43 degrees.
 inline constexpr int FovDefault = 43, FovMin = 30, FovMax = 90;
@@ -138,6 +149,9 @@ struct Values {
     std::atomic<bool> sharp_ui{false};
     /// Vertical field of view in degrees, 43 the game's (run.py, fov.py at start).
     std::atomic<int> fov{FovDefault};
+    /// FpsMode and frame cap (run.py at start; the launcher passes the same).
+    std::atomic<int> fps_mode{FpsUncap};
+    std::atomic<int> frame_cap{FrameCapAuto};
     /// Live resolution and preset changes (run.sh): 0 off by default (startup patch, fastest
     /// on the Steam Deck and older GPUs), -1 auto (strong discrete GPUs), 1 on. On restart.
     std::atomic<int> live_resolution{0};
@@ -200,6 +214,8 @@ struct Values {
     int startup_output_res = OutputDefault;
     int startup_hud_position = 100;
     int startup_fov = FovDefault;
+    int startup_fps_mode = FpsUncap;
+    int startup_frame_cap = FrameCapAuto;
     int startup_live_resolution = 0;
 };
 

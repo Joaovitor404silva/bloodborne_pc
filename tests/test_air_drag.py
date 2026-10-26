@@ -7,17 +7,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import air_drag  # noqa: E402
 import cloth  # noqa: E402
-import rebirth  # noqa: E402
+import pc_menu  # noqa: E402
 
 
 class AirDragTest(unittest.TestCase):
-    def test_the_code_fits_between_rebirth_and_cloth(self):
+    def test_the_code_fits_between_pc_settings_and_cloth(self):
         (cave, code), _site = air_drag.code_writes()
         self.assertEqual(cave, air_drag.CAVE)
         self.assertEqual(cave + len(code), air_drag.CAVE_END)
         self.assertEqual(air_drag.CAVE_END, cloth.CAVE)
-        rebirth_cave, rebirth_code = next(w for w in rebirth.code_writes() if w[0] == rebirth.CAVE)
-        self.assertLessEqual(rebirth_cave + len(rebirth_code), cave)
+        menu_cave, menu_code = next(w for w in pc_menu.code_writes() if w[0] == pc_menu.CAVE)
+        self.assertLessEqual(menu_cave + len(menu_code), cave)
         constants = code[-4 * len(air_drag.CONSTANTS):]
         self.assertEqual(struct.unpack(f'<{len(air_drag.CONSTANTS)}f', constants),
                          tuple(struct.unpack('<f', struct.pack('<f', c))[0] for c in air_drag.CONSTANTS))

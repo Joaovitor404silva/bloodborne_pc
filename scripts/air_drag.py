@@ -26,8 +26,8 @@ SITE = 0x1A4ABCA              # vmulps xmm0, xmm0, [0x490B5B0]  (0.95 in four la
 DRAG_CONSTANT = 0x490B5B0
 SITE_BYTES = bytes.fromhex('c5f85905') + struct.pack('<i', DRAG_CONSTANT - (SITE + 8))
 STEP = -0x988                 # [rbp-0x988]: the step's time, s
-CAVE = 0x50D9B60              # past Rebirth's code (it ends at 0x50D9A6D), before the cloth cave
-CAVE_END = 0x50D9C00
+CAVE = 0x50D9C60              # past PC Settings' page table (it ends at 0x50D9C48), up to the cloth cave
+CAVE_END = 0x50D9D00
 CONSTANTS = (0.95, 30.0, 0.0, 4.0)
 
 

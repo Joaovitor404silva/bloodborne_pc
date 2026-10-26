@@ -386,8 +386,9 @@ def rebuild_bnd4(data, replace):
     return bytes(out)
 
 
-def menu_texts(archive, texts):
-    """menu.msgbnd.dcx with the Quit to Desktop strings."""
+def menu_texts(archive, texts, extra=None):
+    """menu.msgbnd.dcx with the Quit to Desktop strings, and `extra` ({FMG id: {text id: text}},
+    PC Settings') when given."""
     name, title_help, system_help, question = texts
     bnd = unpack_dcx(archive)
     files = {file_id: bnd[offset:offset + length] for _, offset, length, file_id in bnd4_files(bnd)}
@@ -399,6 +400,7 @@ def menu_texts(archive, texts):
                              (204, {DIALOG_ID: question})):
         strings = read_fmg(files[file_id])
         strings.update(changes)
+        strings.update((extra or {}).get(file_id, {}))
         replace[file_id] = write_fmg(files[file_id], strings)
     return pack_dcx(archive, rebuild_bnd4(bnd, replace))
 
@@ -450,12 +452,18 @@ def shift_depth(data, timeline, depth, dy, edits):
                 edits[body] = moved(swf.read_matrix(data, span[0])[0], dy)
 
 
+def row_count(rows):
+    return next(n for n in range(64) if f'Item_{n}_0' not in rows)
+
+
 def add_row(data, timeline, rows, inserts, after):
-    """A sixth Item_5_0 after Item_4_0 in `timeline` (start, end): its first placement and its
-    animation (each later Item_4_0 keyframe, one row lower) at a free depth below it. Returns
-    the row step in twips."""
-    code, body, length, _, matrix = rows['Item_4_0']
-    step = matrix[2][1] - rows['Item_3_0'][4][2][1]
+    """A next row (Item_5_0 after Item_4_0, ...) in `timeline` (start, end): its first placement
+    and its animation (each later keyframe of the last row, one row lower) at a free depth below
+    it. Returns the row step in twips."""
+    last = row_count(rows) - 1
+    name, new = f'Item_{last}_0\0'.encode(), f'Item_{last + 1}_0\0'.encode()
+    code, body, length, _, matrix = rows[f'Item_{last}_0']
+    step = matrix[2][1] - rows[f'Item_{last - 1}_0'][4][2][1]
     depth = depth_of(data, body, code)
     used = {depth_of(data, b, c) for c, _, b, _ in swf.tags(data, *timeline) if c in (26, 70)}
     free = next(d for d in range(depth + 1, depth + 64) if d not in used)
@@ -467,9 +475,9 @@ def add_row(data, timeline, rows, inserts, after):
         if span:
             matrix = swf.read_matrix(data, span[0])[0]
             record = record[:span[0] - body] + swf.write_matrix(moved(matrix, step)) + record[span[1] - body:]
-        return swf.tag(code, bytes(record).replace(b'Item_4_0\0', b'Item_5_0\0'))
+        return swf.tag(code, bytes(record).replace(name, new))
     first = copy(code, body, length)
-    if b'Item_5_0\0' not in first:
+    if new not in first:
         raise ValueError('unexpected list row')
     inserts[timeline[0]] = inserts.get(timeline[0], b'') + first
     for c, _, b, n in swf.tags(data, *timeline):
@@ -496,17 +504,17 @@ def taller_title(data):
     return rebuild(data, {}, inserts, after)
 
 
-def taller_list(data, panel=SYSTEM_PANEL):
-    """The System menu panel: a sixth row, what sits below the rows (frame edge, separator, help
-    and button guide) one row lower, the panel half a row higher to stay centred. The panel
-    animates as it opens: the moves apply to every frame."""
+def taller_list(data, panel=SYSTEM_PANEL, rows_wanted=6):
+    """The System menu panel: one more row (None once it has `rows_wanted`), what sits below the
+    rows (frame edge, separator, help and button guide) one row lower, the panel half a row
+    higher to stay centred. The panel animates as it opens: the moves apply to every frame."""
     _, sprites, _ = swf.definitions(data)
     start = swf.stage_start(data)
     root = placements_in(data, start, len(data))
     code, body, _, character, _ = root[panel['list']]
     timeline = sprites[character]
     rows = placements_in(data, *timeline)
-    if 'Item_5_0' in rows:
+    if row_count(rows) >= rows_wanted:
         return None
     dim, frame_place = rows.get(panel['dim']), rows.get(panel['frame'])
     if not dim or not frame_place or 'StatusBar' not in rows or frame_place[3] not in sprites:
@@ -576,31 +584,45 @@ def rebuild(data, edits, inserts, after=None):
     return out[:4] + struct.pack('<I', len(out)) + out[8:]
 
 
-def write_row_layer(game, out):
+def write_row_layer(game, out, quit=True, pc=False):
+    """The title menu's sixth row (Quit to Desktop) and the System menu's rows: five, one more
+    for Quit to Desktop and three for the PC pages, which the settings screen gets too."""
     menu = game / 'dvdroot_ps4' / 'menu'
     target = out / 'dvdroot_ps4' / 'menu'
     target.mkdir(parents=True, exist_ok=True)
-    for name, grow in [(n, taller_title) for n in TITLE_MOVIES] + [(SYSTEM_MOVIE, taller_list)]:
+    system_rows = 5 + quit + 3 * pc
+    movies = ([(n, taller_title) for n in TITLE_MOVIES] if quit else []) + \
+        [(SYSTEM_MOVIE, lambda data: taller_list(data, rows_wanted=system_rows))]
+    for name, grow in movies:
         source = menu / name
         if not source.is_file():
             continue
+        data, grown = source.read_bytes(), False
         try:
-            data = grow(source.read_bytes())
+            while (taller := grow(data)) is not None:
+                data, grown = taller, True
         except (ValueError, KeyError, IndexError, StopIteration, struct.error) as error:
             print(f'Quit to Desktop: {name}: {error}; the list keeps five rows', file=sys.stderr)
             continue
-        if data:
+        if pc and name == SYSTEM_MOVIE:
+            import pc_menu
+            try:
+                data, grown = pc_menu.pc_pages(data) or data, True
+            except (ValueError, KeyError, IndexError, StopIteration, struct.error) as error:
+                print(f'PC Settings: {name}: {error}', file=sys.stderr)
+        if grown:
             (target / name).write_bytes(data)
-    print('Quit to Desktop: title and System menus with six rows')
+    print(f'Quit to Desktop: title and System menus with six rows' if quit and not pc else
+          f'Menus: System menu with {system_rows} rows')
 
 
-def write_text_layer(game, out):
+def write_text_layer(game, out, extra=None):
     msg = game / 'dvdroot_ps4' / 'msg'
     sources = [folder / 'menu.msgbnd.dcx' for folder in sorted(p for p in msg.iterdir() if p.is_dir())]
     sources = [source for source in sources if source.is_file()]
 
     def texts_for(source):
-        return menu_texts(source.read_bytes(), TEXTS.get(source.parent.name.casefold(), TEXTS['engus']))
+        return menu_texts(source.read_bytes(), TEXTS.get(source.parent.name.casefold(), TEXTS['engus']), extra)
     written = 0
     for archive, source in zip(in_parallel(texts_for, sources), sources):
         target = out / 'dvdroot_ps4' / 'msg' / source.parent.name / source.name
@@ -614,9 +636,15 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('game', type=Path, help='game folder (with dvdroot_ps4)')
     p.add_argument('--out', type=Path, required=True, help='mod layer folder to write')
+    p.add_argument('--no-quit', action='store_true', help='without the Quit to Desktop rows')
+    p.add_argument('--pc', action='store_true', help='with the PC Settings texts and System row')
     a = p.parse_args()
-    write_text_layer(a.game, a.out)
-    write_row_layer(a.game, a.out)
+    extra = None
+    if a.pc:
+        import pc_menu
+        extra = pc_menu.texts()
+    write_text_layer(a.game, a.out, extra)
+    write_row_layer(a.game, a.out, quit=not a.no_quit, pc=a.pc)
 
 
 if __name__ == '__main__':

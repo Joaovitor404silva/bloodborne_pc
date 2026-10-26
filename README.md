@@ -98,7 +98,9 @@ dump, also dump your add-ons: each is a folder named like `SPEXPANSIONDLC03` wit
 it as **DLC folder** on **Game & effects**, or copy them to `user\addcont\<title id>\` (the
 layout shadPS4 and bbport use).
 
-In the game, **Insert** (or **L3+R3** on a controller) opens the settings menu.
+In the game, **Insert** (or **L3+R3** on a controller) opens the settings menu. The game's own
+**System** menu also has **PC Graphics**, **PC Effects** and **PC Options**: the main settings on
+the game's settings screen (bbport.ini `pc_menu=0` removes them).
 Keyboard: WASD move, arrows camera, Space Cross, Left Shift Circle, E Square, V Triangle,
 1/3 L1/R1, R/F L2/R2, Z L3, Q/C R3 (lock-on), I/K/J/L d-pad, Enter Options, Tab / Backspace
 left / right touchpad half. Xbox controllers: Back + d-pad left / right clicks the left / right
