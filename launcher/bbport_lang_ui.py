@@ -282,7 +282,7 @@ UI = {'de': {
     'Movement and camera': 'Bewegung und Kamera', 'Move forward': 'Vorwärts', 'Move back': 'Rückwärts',
     'Move left': 'Links', 'Move right': 'Rechts', 'Walk (hold)': 'Gehen (halten)',
     'Dodge / dash (hold); back in menus (Circle)': 'Ausweichen / Sprinten (halten); zurück in Menüs (Kreis)',
-    'Jump while dashing (L3)': 'Springen beim Sprinten (L3)', 'Lock on / reset camera (R3)': 'Anvisieren / Kamera zurücksetzen (R3)',
+    'Left stick click (L3)': 'Linken Stick drücken (L3)', 'Lock on / reset camera (R3)': 'Anvisieren / Kamera zurücksetzen (R3)',
     'Camera up': 'Kamera hoch', 'Camera down': 'Kamera runter', 'Camera left': 'Kamera links', 'Camera right': 'Kamera rechts',
     'Combat': 'Kampf', 'Attack (R1)': 'Angriff (R1)', 'Strong attack (R2)': 'Starker Angriff (R2)',
     'Transform weapon (L1)': 'Waffe verwandeln (L1)', 'Firearm (L2)': 'Schusswaffe (L2)', 'Items and menus': 'Gegenstände und Menüs',

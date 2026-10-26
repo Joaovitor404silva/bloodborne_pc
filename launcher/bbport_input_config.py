@@ -57,7 +57,7 @@ ACTION_GROUPS = [
         ('leftjoystick_halfmode', ('Walk (hold)', 'Шаг (удерживать)')),
         ('circle', ('Dodge / dash (hold); back in menus (Circle)',
                     'Уклонение / бег (удерживать); назад в меню (Круг)')),
-        ('l3', ('Jump while dashing (L3)', 'Прыжок во время бега (L3)')),
+        ('l3', ('Left stick click (L3)', 'Нажатие левого стика (L3)')),
         ('r3', ('Lock on / reset camera (R3)', 'Захват цели / сброс камеры (R3)')),
         ('axis_right_y_minus', ('Camera up', 'Камера вверх')),
         ('axis_right_y_plus', ('Camera down', 'Камера вниз')),

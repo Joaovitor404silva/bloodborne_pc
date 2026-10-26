@@ -2148,8 +2148,8 @@ WORLD = {
             'الأغراض والقوائم',
         'Its level, weapons and bosses cannot be read from this save.':
             'لا يمكن قراءة المستوى والأسلحة والزعماء من ملف الحفظ هذا.',
-        'Jump while dashing (L3)':
-            'القفز أثناء الاندفاع (L3)',
+        'Left stick click (L3)':
+            'الضغط على العصا اليسرى (L3)',
         'Keyboard and mouse':
             'لوحة المفاتيح والماوس',
         'Keyboard and mouse bindings, up to three per action. The controller keeps working side by side; edit its lines in input.ini directly — see docs/INPUT.md.':
@@ -3820,8 +3820,8 @@ WORLD = {
             'Objetos y menús',
         'Its level, weapons and bosses cannot be read from this save.':
             'No se pueden leer su nivel, sus armas ni sus jefes de esta partida.',
-        'Jump while dashing (L3)':
-            'Saltar al correr (L3)',
+        'Left stick click (L3)':
+            'Pulsar el stick izquierdo (L3)',
         'Keyboard and mouse':
             'Teclado y ratón',
         'Keyboard and mouse bindings, up to three per action. The controller keeps working side by side; edit its lines in input.ini directly — see docs/INPUT.md.':
@@ -5498,8 +5498,8 @@ WORLD = {
             'Itens e menus',
         'Its level, weapons and bosses cannot be read from this save.':
             'Não é possível ler o nível, as armas e os chefes deste save.',
-        'Jump while dashing (L3)':
-            'Pular ao correr (L3)',
+        'Left stick click (L3)':
+            'Pressionar o analógico esquerdo (L3)',
         'Keyboard and mouse':
             'Teclado e mouse',
         'Keyboard and mouse bindings, up to three per action. The controller keeps working side by side; edit its lines in input.ini directly — see docs/INPUT.md.':
@@ -7172,8 +7172,8 @@ WORLD = {
             'Objets et menus',
         'Its level, weapons and bosses cannot be read from this save.':
             'Son niveau, ses armes et ses boss ne peuvent pas être lus dans cette sauvegarde.',
-        'Jump while dashing (L3)':
-            'Sauter en sprintant (L3)',
+        'Left stick click (L3)':
+            'Clic du joystick gauche (L3)',
         'Keyboard and mouse':
             'Clavier et souris',
         'Keyboard and mouse bindings, up to three per action. The controller keeps working side by side; edit its lines in input.ini directly — see docs/INPUT.md.':
@@ -8854,8 +8854,8 @@ WORLD = {
             'Oggetti e menu',
         'Its level, weapons and bosses cannot be read from this save.':
             'Livello, armi e boss non si possono leggere da questo salvataggio.',
-        'Jump while dashing (L3)':
-            'Salto durante lo scatto (L3)',
+        'Left stick click (L3)':
+            'Pressione della levetta sinistra (L3)',
         'Keyboard and mouse':
             'Tastiera e mouse',
         'Keyboard and mouse bindings, up to three per action. The controller keeps working side by side; edit its lines in input.ini directly — see docs/INPUT.md.':
@@ -10533,8 +10533,8 @@ WORLD = {
             'Przedmioty i menu',
         'Its level, weapons and bosses cannot be read from this save.':
             'Z tego zapisu nie da się odczytać poziomu, broni ani bossów.',
-        'Jump while dashing (L3)':
-            'Skok podczas sprintu (L3)',
+        'Left stick click (L3)':
+            'Wciśnięcie lewej gałki (L3)',
         'Keyboard and mouse':
             'Klawiatura i mysz',
         'Keyboard and mouse bindings, up to three per action. The controller keeps working side by side; edit its lines in input.ini directly — see docs/INPUT.md.':
@@ -12208,8 +12208,8 @@ WORLD = {
             'Eşyalar ve menüler',
         'Its level, weapons and bosses cannot be read from this save.':
             'Bu kayıttan seviye, silahlar ve boss’lar okunamıyor.',
-        'Jump while dashing (L3)':
-            'Koşarken zıpla (L3)',
+        'Left stick click (L3)':
+            'Sol çubuğa basma (L3)',
         'Keyboard and mouse':
             'Klavye ve fare',
         'Keyboard and mouse bindings, up to three per action. The controller keeps working side by side; edit its lines in input.ini directly — see docs/INPUT.md.':
@@ -13878,8 +13878,8 @@ WORLD = {
             '道具与菜单',
         'Its level, weapons and bosses cannot be read from this save.':
             '无法从此存档读取等级、武器和 Boss。',
-        'Jump while dashing (L3)':
-            '冲刺时跳跃（L3）',
+        'Left stick click (L3)':
+            '按下左摇杆（L3）',
         'Keyboard and mouse':
             '键盘和鼠标',
         'Keyboard and mouse bindings, up to three per action. The controller keeps working side by side; edit its lines in input.ini directly — see docs/INPUT.md.':
@@ -15533,8 +15533,8 @@ WORLD = {
             'アイテムとメニュー',
         'Its level, weapons and bosses cannot be read from this save.':
             'このセーブデータからはレベル、武器、ボスを読み取れません。',
-        'Jump while dashing (L3)':
-            'ダッシュ中にジャンプ (L3)',
+        'Left stick click (L3)':
+            '左スティック押し込み (L3)',
         'Keyboard and mouse':
             'キーボードとマウス',
         'Keyboard and mouse bindings, up to three per action. The controller keeps working side by side; edit its lines in input.ini directly — see docs/INPUT.md.':
@@ -17191,8 +17191,8 @@ WORLD = {
             '아이템 및 메뉴',
         'Its level, weapons and bosses cannot be read from this save.':
             '이 세이브에서는 레벨, 무기, 보스를 읽을 수 없습니다.',
-        'Jump while dashing (L3)':
-            '달리는 중 점프 (L3)',
+        'Left stick click (L3)':
+            '왼쪽 스틱 누르기 (L3)',
         'Keyboard and mouse':
             '키보드 및 마우스',
         'Keyboard and mouse bindings, up to three per action. The controller keeps working side by side; edit its lines in input.ini directly — see docs/INPUT.md.':
