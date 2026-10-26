@@ -13,8 +13,8 @@ class SteadyClothTest(unittest.TestCase):
     def test_the_code_fits_its_cave(self):
         (cave, code), (site, jump), *bends = cloth.code_writes()
         self.assertEqual(cave, cloth.CAVE)
-        self.assertEqual(len(code), 0x400)
-        self.assertLessEqual(cave + len(code), quit_menu.CAVE_END)
+        self.assertEqual(cave + len(code), quit_menu.CAVE_END)
+        self.assertGreaterEqual(cave, 0x50D9C48)  # past PC Settings' page table (pc_menu.py)
         self.assertEqual(struct.unpack(f'<{len(cloth.CONSTANTS)}f', code[-4 * len(cloth.CONSTANTS):]), cloth.CONSTANTS)
 
     def test_the_site_jumps_to_the_cave_and_keeps_its_length(self):

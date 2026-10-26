@@ -42,7 +42,11 @@ SITE_BYTES = bytes.fromhex('c4c27918850c010000')
 RETURN = SITE + len(SITE_BYTES)
 FRAME_TIMER = 0x55404F8       # the frame timer (a pointer): +0x260 frame count, +0x264 frame time, s
 FRAME_COUNT, FRAME_TIME = 0x260, 0x264
-CAVE = 0x50D9C00              # past Rebirth's code (rebirth.CAVE + up to 0x300) in the last code page
+# In the code segment's last page, past the port's other code there: Quit to Desktop 0x50D9700,
+# crash guards 0x50D98C0, Rebirth 0x50D9900, PC Settings 0x50D9B00 (pc_menu.py; its page table up to
+# 0x50D9C48 is rewritten by the port when the game loads: a cave at 0x50D9C00 had its first
+# instructions overwritten with addresses, and the first cloth step crashed). The constants end the page.
+CAVE = 0x50D9D00
 STATE = 0x56D3F80             # the data segment's unused tail (past its size, in its last page):
 LAST_FRAME, LAST_TIME, RATIO, SOFTEN = STATE, STATE + 4, STATE + 8, STATE + 12   # 0 until set
 CALLERS = ((0x76EC70, -0x18), (0x76EE10, -0x20))   # return address, its step number's save slot
@@ -63,7 +67,7 @@ def rip(code, opcode, target):
 
 def code_writes():
     cave = quit_menu.Code(CAVE)
-    constants = CAVE + 0x400 - 4 * len(CONSTANTS)
+    constants = quit_menu.CAVE_END - 4 * len(CONSTANTS)
     zero, half, one, two, reference, most, damping = (constants + 4 * i for i in range(len(CONSTANTS)))
     labels, jumps = {}, []
 
