@@ -572,7 +572,8 @@ class RefusedSignInTests(unittest.TestCase):
         self.user = self.folder / 'user'
         self.user.mkdir()
         patch = mock.patch.multiple(L, CONFIG_DIR=self.folder / 'launcher',
-                                    CONFIG_FILE=self.folder / 'launcher' / 'settings.json')
+                                    CONFIG_FILE=self.folder / 'launcher' / 'settings.json',
+                                    HUNTERS_DREAM_POOL=True)  # off by default since SuperMedo Server
         patch.start()
         self.addCleanup(patch.stop)
         self.settings = dict(L.APP_DEFAULTS, user_dir=str(self.user), online=True, online_pool='huntersdream',

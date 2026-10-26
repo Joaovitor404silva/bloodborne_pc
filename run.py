@@ -31,6 +31,7 @@ def prepare_driver_environment(env):
 # Co-op: the community service that answers Bloodborne's own game-server requests
 # (messages, bloodstains, sign-in); summon requests go to the shadNet server instead.
 COMMUNITY_SERVER = 'https://game.supermedo.com'
+HUNTERS_DREAM_SERVER = 'https://thehuntersdream.com'  # The Hunter's Dream pool's own (BB_HUNTERS_DREAM=1)
 GAME_SERVER = 'https://ss4.scej-network.jp:20443'
 # The server's ss.info sends the game to this port for its API (summons among them).
 COMMUNITY_API_PORT = 18671
@@ -91,7 +92,7 @@ PLAY_LOG_HOSTS = ('bb-playlog-prod.s3.amazonaws.com', 'bb-playlog-test.s3.amazon
 def hunters_dream(env, user_dir):
     if not env.get('BB_THD_TOKEN') or not env.get('BB_THD_ONLINE_ID'):
         fail("The Hunter's Dream: not signed in. Sign in with Discord on the launcher's Online page.")
-    community = (env.get('BB_COMMUNITY_SERVER') or COMMUNITY_SERVER).rstrip('/')
+    community = (env.get('BB_COMMUNITY_SERVER') or HUNTERS_DREAM_SERVER).rstrip('/')
     if '://' not in community:
         community = 'https://' + community
     base = community
