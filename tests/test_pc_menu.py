@@ -27,13 +27,31 @@ class PcMenuTests(unittest.TestCase):
         writes = dict(pc_menu.code_writes())
         cave = writes[pc_menu.CAVE]
         at = cave.index(pc_menu.TABLE_MAGIC) + 8
-        count = len(pc_menu.GAME_PAGES) + len(pc_menu.PAGES)
+        count = len(pc_menu.GAME_PAGES) + 1
         offsets = struct.unpack_from(f'<{count}Q', cave, at)
         self.assertEqual(list(offsets[:6]), pc_menu.GAME_PAGES)
-        for (name, _), offset in zip(pc_menu.PAGES, offsets[6:]):
-            start = offset - pc_menu.CAVE
-            self.assertEqual(cave[start:start + len(name) + 1], name.encode() + b'\0')
+        start = offsets[6] - pc_menu.CAVE
+        self.assertEqual(cave[start:start + len(pc_menu.PAGE) + 1], pc_menu.PAGE.encode() + b'\0')
         self.assertEqual(writes[pc_menu.PAGE_COUNT], bytes.fromhex('4883fa') + bytes([count]))
+
+    def test_one_page_with_a_title_per_line(self):
+        """The three System lines share one page (each page's rows cost menu memory at every
+        settings open), with the three titles as named instances the port switches."""
+        source = (ROOT / 'gpu/shim/bbport_pc_menu.cpp').read_text(encoding='utf-8')
+        self.assertIn(f'PageName = "{pc_menu.PAGE}"', source)
+        titles = re.search(r'TitleNames\[PageCount\] = \{(.*?)\}', source).group(1)
+        self.assertEqual(re.findall(r'"(\w+)"', titles),
+                         [f'{pc_menu.TITLE_NAME}{n}' for n in range(len(pc_menu.TITLES))])
+        self.assertEqual(pc_menu.TITLES, [119001, 119002, 119003])  # the System lines' names
+
+    def test_a_name_goes_where_the_format_puts_it(self):
+        # PlaceObject3 with a character and a matrix (no scale or rotation, translation 0/0)
+        body = bytearray([0x06, 0x00, 117, 0, 137, 0, 0x00])
+        out = pc_menu.named(70, body, 'PcTitle_0')
+        self.assertEqual(out[0], 0x26)
+        self.assertEqual(quit_menu.swf.place_fields(bytes(out), 0, 70), (137, (6, 7), 'PcTitle_0'))
+        with self.assertRaises(ValueError):
+            pc_menu.named(70, out, 'again')
 
     def test_texts_match_the_port(self):
         source = (ROOT / 'gpu/shim/bbport_pc_menu.cpp').read_text(encoding='utf-8')
@@ -43,8 +61,6 @@ class PcMenuTests(unittest.TestCase):
                          len(pc_menu.LINES))
         for constant, value in re.findall(r'(\w+_TEXT) = (\d+)', source):
             self.assertIn(int(value), names, constant)
-        pages = re.search(r'PageNames\[PageCount\] = \{(.*?)\}', source).group(1)
-        self.assertEqual(re.findall(r'"(\w+)"', pages), [name for name, _ in pc_menu.PAGES])
 
 
 if __name__ == '__main__':

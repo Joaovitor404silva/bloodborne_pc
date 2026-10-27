@@ -586,7 +586,7 @@ def rebuild(data, edits, inserts, after=None):
 
 def write_row_layer(game, out, quit=True, pc=False):
     """The title menu's sixth row (Quit to Desktop) and the System menu's rows: five, one more
-    for Quit to Desktop and three for the PC pages, which the settings screen gets too."""
+    for Quit to Desktop and three for PC Settings' lines, whose page the settings screen gets too."""
     menu = game / 'dvdroot_ps4' / 'menu'
     target = out / 'dvdroot_ps4' / 'menu'
     target.mkdir(parents=True, exist_ok=True)

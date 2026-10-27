@@ -6,13 +6,17 @@ The System menu gets three lines before Exit Game (and Quit to Desktop, quit_men
 PC Graphics, PC Effects and PC Options. Where the menu's builder is about to add Exit Game, with
 the line list in r12, the patched code asks the port for the lines ("bb:o" through the browser import,
 src/runtime_services.c), passing where r13 is kept. The port (gpu/shim/bbport_pc_menu.cpp) adds
-them with the game's own calls. Each opens a page of the game's settings screen built with the
-game's choice lines, whose values the port applies and keeps in bbport.ini.
+them with the game's own calls. Each opens the PC page of the game's settings screen, built with
+the game's choice lines of its kind, whose values the port applies and keeps in bbport.ini.
 
 The settings screen (optionsetting.gfx) has one page per name, and the game's page opener finds
-a page among six names. The PC pages are new pages of the movie (`pc_pages`: copies of the
-Controls page with nine value rows and their own titles), and the opener reads its names from a
-table of nine here, which the port fills when it loads the game (bbgpu_pc_menu_prepare).
+a page among six names. The three lines share one new page of the movie (`pc_pages`: a copy of the
+Controls page with nine value rows and the three lines' titles, of which the port shows the one
+opened), and the opener reads its names from a table of seven here, which the port fills when it
+loads the game (bbgpu_pc_menu_prepare). One page, not one per line: the screen loads all its
+pages whenever any settings page opens, and each page's rows took ~3.4 MiB of the menus' 34 MiB
+Scaleform pool; with three, an open left ~1.8 MiB, and late in an online session the menus ran out
+(write to 0 at 0xd67bb or 0x64466).
 
 The texts (`texts()`, the same ids as bbport_pc_menu.cpp) and the movie go into the Quit to
 Desktop layer (quit_menu.py --pc), which also gives the System menu three more rows.
@@ -32,7 +36,7 @@ PAGE_COUNT = 0x1B20E1E               # ... cmp rdx, 6
 HIDE_PAGES = 0x1BDACF2               # where the movie's setup has hidden the game's pages (r15:
                                      # the movie, [rbp-0x90]); next: lea rdx, [rip + "Top"]
 # Every settings page ends with the opener's Defaults button (r12: the page), whose Yes/No
-# dialog's Yes restores the page's defaults. On the PC pages it is Restart Game: its name, help
+# dialog's Yes restores the page's defaults. On the PC page it is Restart Game: its name, help
 # and question are the port's texts, and Yes restarts the game instead.
 DEFAULTS_NAME = 0x1B20CB8            # mov edx, 40330 (esi 200 set before)
 DEFAULTS_HELP = 0x1B20CD1            # mov edx, 40330 (after mov esi, 201)
@@ -53,7 +57,9 @@ ORIGINAL = {
 GAME_PAGES = [0x49340B6, 0x4934055, 0x4934065, 0x4934075, 0x4934088, 0x493409A]
 TABLE_MAGIC = b'bbPCpag\0'           # bbgpu_pc_menu_prepare checks it before the table
 
-PAGES = [('PcGraphics', 119001), ('PcEffects', 119002), ('PcOptions', 119003)]
+PAGE = 'PcSettings'                  # the PC page's name in optionsetting.gfx
+TITLES = [119001, 119002, 119003]    # its titles, the System lines' names: instances PcTitle_<n>
+TITLE_NAME = 'PcTitle_'
 LINE_BASE = 119010
 
 # The pages' lines (bbport_pc_menu.cpp's Line order): name, one-line help.
@@ -149,7 +155,7 @@ def code_writes():
     cave.raw('415c')            # pop r12
     cave.raw(ORIGINAL[EXIT_LINE])  # the replaced instruction
     cave.jmp(EXIT_NEXT)
-    # The movie's setup: the PC pages hidden as the game's own ("bb:h" with the movie).
+    # The movie's setup: the PC page hidden as the game's own ("bb:h" with the movie).
     hide = cave.here
     hide_message_at = len(cave.data)
     cave.raw('488d3d00000000')  # lea rdi, [rip + "bb:h"]
@@ -199,16 +205,12 @@ def code_writes():
             if name_ == message:
                 cave.data[offset + 3:offset + 7] = quit_menu.rel32(CAVE + offset, 7, at)
     # The page names: image offsets here, made addresses by the port when it loads the game.
-    names = cave.here
-    for name, _ in PAGES:
-        cave.data += name.encode() + b'\0'
+    name = cave.here
+    cave.data += PAGE.encode() + b'\0'
     cave.data += b'\0' * (-len(cave.data) % 8)
     cave.data += TABLE_MAGIC
     table = cave.here
-    offsets, at = list(GAME_PAGES), names
-    for name, _ in PAGES:
-        offsets.append(at)
-        at += len(name) + 1
+    offsets = GAME_PAGES + [name]
     for offset in offsets:
         cave.data += struct.pack('<Q', offset)
     if cave.here > quit_menu.CAVE_END:
@@ -233,16 +235,17 @@ def code_writes():
     return [(c.offset, bytes(c.data)) for c in (cave, keep, opener, count, hidden, *hooks)]
 
 
-# ---- optionsetting.gfx: the PC pages ------------------------------------------------------------
-# Each page is a copy of the Controls page (sprite CONTROLS) with value rows only: its button row
+# ---- optionsetting.gfx: the PC page -------------------------------------------------------------
+# The page is a copy of the Controls page (sprite CONTROLS) with value rows only: its button row
 # (Item_6_0) removed, rows added below Item_5_0 up to ROWS, the frame (a copy of FRAME) and the
-# help bar where the button row was, and its own title (a copy of TITLE whose text field is
-# StaticText_<title id>). The root places each page under its name, as the game's own pages.
+# help bar where the button row was, and a title per System line (copies of TITLE whose text
+# field is StaticText_<title id>, placed as the Controls page's title and named PcTitle_<n>). The
+# root places the page under its name, as the game's own pages.
 CONTROLS, FRAME, TITLE = 138, 135, 137
 CONTROLS_NAME, TITLE_FIELD = b'ControllSetting\0', b'StaticText_113020\0'
 ROWS = 9
 ROW_STEP = 1143                      # twips between the Controls page's rows
-BUTTON_ROW_DEPTH, LAST_ROW_DEPTH, STATUS_DEPTH = 110, 101, 53
+BUTTON_ROW_DEPTH, LAST_ROW_DEPTH, STATUS_DEPTH, TITLE_DEPTH = 110, 101, 53, 117
 FRAME_ROWS_END = (14, 25)            # in the frame: the side ornament and separator under the rows
 FRAME_BOTTOM = (33, 49)              # ... the lower separator and bottom ornament
 FRAME_BACKGROUND = 41
@@ -290,6 +293,28 @@ def set_place(code, body, depth=None, character=None, dy=0, matrix=None):
     return out
 
 
+def named(code, body, name):
+    """A PlaceObject2/3 body without an instance name, with `name` as its name."""
+    data = bytes(body)
+    if data[0] & 0x20:
+        raise ValueError('the placement has a name already')
+    i = 1 + (code == 70) + 2
+    if code == 70 and data[1] & 8:
+        i = data.index(0, i) + 1   # class name
+    if data[0] & 2:
+        i += 2                     # character
+    if data[0] & 4:
+        _, i = swf.read_matrix(data, i)
+    if data[0] & 8:                # CXFORMWITHALPHA
+        r = swf.Reader(data, i)
+        add, mult = r.unsigned(1), r.unsigned(1)
+        r.bit += r.unsigned(4) * 4 * (add + mult)
+        i = r.end()
+    if data[0] & 16:
+        i += 2                     # ratio
+    return bytearray(bytes([data[0] | 0x20]) + data[1:i] + name.encode() + b'\0' + data[i:])
+
+
 def shift(items, depth, dy):
     for code, body in items:
         if is_place(code) and place_depth(code, body) == depth:
@@ -305,15 +330,17 @@ def define_sprite(character, frames, items):
     return [39, bytearray(struct.pack('<HH', character, frames) + serialize(items))]
 
 
-def page_sprites(data, sprites, ids, title_id):
-    """[DefineSprite] of one PC page: its title, frame and page."""
-    title_char, frame_char, page_char = ids
+def page_sprites(data, sprites, title_chars, frame_char, page_char, title_ids):
+    """[DefineSprite] of the PC page: its titles, frame and page."""
     extra = (ROWS - 6) * ROW_STEP
     grown = extra - BUTTON_BAND        # what the panel grows by: more rows, no button row
-    title = sprite_items(data, sprites, TITLE)
-    for code, body in title:
-        if is_place(code) and TITLE_FIELD in body:
-            body[:] = body.replace(TITLE_FIELD, f'StaticText_{title_id}\0'.encode())
+    titles = []
+    for title_id in title_ids:
+        title = sprite_items(data, sprites, TITLE)
+        for code, body in title:
+            if is_place(code) and TITLE_FIELD in body:
+                body[:] = body.replace(TITLE_FIELD, f'StaticText_{title_id}\0'.encode())
+        titles.append(title)
     frame = sprite_items(data, sprites, FRAME)
     for depth in FRAME_ROWS_END:
         shift(frame, depth, extra)
@@ -343,8 +370,6 @@ def page_sprites(data, sprites, ids, title_id):
             char, _, _ = swf.place_fields(bytes(body), 0, code)
             if char == FRAME:
                 body[:] = set_place(code, body, character=frame_char)
-            elif char == TITLE:
-                body[:] = set_place(code, body, character=title_char)
     shift(page, STATUS_DEPTH, grown)
     used = {place_depth(code, body) for code, body in page if is_place(code)}
     free = iter(d for d in range(LAST_ROW_DEPTH + 1, 1000) if d not in used)
@@ -360,6 +385,22 @@ def page_sprites(data, sprites, ids, title_id):
             elif code == 28 and struct.unpack_from('<H', body, 0)[0] == LAST_ROW_DEPTH:
                 out.append([28, bytearray(struct.pack('<H', depth))])
         page = out
+    # The titles: each where the Controls page has its title, frame by frame (its fade), the first
+    # at the title's own depth, the others just above it; the port shows one (bbport_pc_menu.cpp).
+    used = {place_depth(code, body) for code, body in page if is_place(code)}
+    depths = [TITLE_DEPTH] + [max(used) + n for n in range(1, len(title_chars))]
+    out = []
+    for code, body in page:
+        if is_place(code) and place_depth(code, body) == TITLE_DEPTH:
+            first = swf.place_fields(bytes(body), 0, code)[0] is not None
+            for n, (char, depth) in enumerate(zip(title_chars, depths)):
+                copy = set_place(code, body, depth=depth, character=char)
+                out.append([code, named(code, copy, f'{TITLE_NAME}{n}') if first else copy])
+        elif code == 28 and struct.unpack_from('<H', body, 0)[0] == TITLE_DEPTH:
+            out += [[28, bytearray(struct.pack('<H', depth))] for depth in depths]
+        else:
+            out.append([code, body])
+    page = out
     # A dropdown opens downward from its row: the rows above draw over the rows below, else the
     # rows under an open list showed through it (the game's pages have no value rows under one).
     rows = {}
@@ -376,35 +417,31 @@ def page_sprites(data, sprites, ids, title_id):
             body[:] = set_place(code, body, depth=remap[place_depth(code, body)])
         elif code == 28 and struct.unpack_from('<H', body, 0)[0] in remap:
             struct.pack_into('<H', body, 0, remap[struct.unpack_from('<H', body, 0)[0]])
-    return [define_sprite(title_char, 1, title), define_sprite(frame_char, 1, frame),
-            define_sprite(page_char, frames, page)]
+    return [*(define_sprite(char, 1, title) for char, title in zip(title_chars, titles)),
+            define_sprite(frame_char, 1, frame), define_sprite(page_char, frames, page)]
 
 
-def pc_pages(data, pages=PAGES):
-    """optionsetting.gfx with the PC pages (`pages`: [(instance name, title text id)]), or None
-    when it has them."""
+def pc_pages(data, page=PAGE, titles=TITLES):
+    """optionsetting.gfx with the PC page (instance name `page`, one title per text id in
+    `titles`), or None when it has it."""
     _, sprites, _ = swf.definitions(data)
     start = swf.stage_start(data)
     root = parse(data[start:])
-    if any(is_place(code) and name.encode() + b'\0' in body for name, _ in pages for code, body in root):
+    if any(is_place(code) and page.encode() + b'\0' in body for code, body in root):
         return None
     next_id = 1 + max(struct.unpack_from('<H', body, 0)[0] for code, body in root
                       if code in DEFINING and len(body) >= 2)
     controls = next(i for i, (code, body) in enumerate(root) if is_place(code) and CONTROLS_NAME in body)
     depth = 1 + max(place_depth(code, body) for code, body in root if is_place(code))
     grown = (ROWS - 6) * ROW_STEP - BUTTON_BAND
-    definitions, placements, pages_ids = [], [], []
-    for name, title_id in pages:
-        ids = (next_id, next_id + 1, next_id + 2)
-        pages_ids.append(ids[2])
-        next_id += 3
-        definitions += page_sprites(data, sprites, ids, title_id)
-        code, body = root[controls]
-        placed = set_place(code, body, depth=depth, character=ids[2], dy=-grown / 2)
-        placements.append([code, bytearray(bytes(placed).replace(CONTROLS_NAME, name.encode() + b'\0'))])
-        depth += 1
-    # The pages play as the Controls page: its script class (frame scripts that stop the fade in
-    # and out), else their timelines looped and the pages flashed.
+    title_chars = list(range(next_id, next_id + len(titles)))
+    frame_char, page_char = next_id + len(titles), next_id + len(titles) + 1
+    definitions = page_sprites(data, sprites, title_chars, frame_char, page_char, titles)
+    code, body = root[controls]
+    placed = set_place(code, body, depth=depth, character=page_char, dy=-grown / 2)
+    placements = [[code, bytearray(bytes(placed).replace(CONTROLS_NAME, page.encode() + b'\0'))]]
+    # The page plays as the Controls page: its script class (frame scripts that stop the fade in
+    # and out), else its timeline looped and the page flashed.
     for code, body in root:
         if code == 76:  # SymbolClass
             count, = struct.unpack_from('<H', body, 0)
@@ -414,8 +451,7 @@ def pc_pages(data, pages=PAGES):
                 end = body.index(0, at + 2)
                 links[character] = bytes(body[at + 2:end + 1])
                 at = end + 1
-            added = [struct.pack('<H', page) + links[CONTROLS] for page in pages_ids]
-            body[:] = struct.pack('<H', count + len(added)) + body[2:] + b''.join(added)
+            body[:] = struct.pack('<H', count + 1) + body[2:] + struct.pack('<H', page_char) + links[CONTROLS]
     # The dropdown list's background (95% opaque): opaque, over the rows under the list.
     for code, body in root:
         if code == 39 and struct.unpack_from('<H', body, 0)[0] == DROPDOWN_BACK:
