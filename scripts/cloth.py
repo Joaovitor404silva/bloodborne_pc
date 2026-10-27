@@ -24,24 +24,20 @@ then pulls groups of 4 particles back toward the cloth's modelled shape by a fra
   (uncapped they differ 0.8 to 2x from one to the next) the cloth's speed jumps with them.
   Time-corrected Verlet: x frame time / previous frame time (0.5..2), on a frame's first step.
 
-Frame times are uneven (a stutter, a burst of short frames), and the raw ones kicked the cloth:
-a long frame nearly doubled its speed for a step, and bends and damping jumped between frames, so
-capes and dresses spazzed out now and then even standing still. So: a frame's time counts as 1 to
-50 ms (a stall as 50 ms); bends and damping follow a smoothed frame time (each frame moves it 20%
-of the way); and the time correction never makes a step carry more speed than without damping
-(D x ratio at most max(D, 1)): a hitch can only calm the cloth.
-
 At 30 FPS and below all three are unchanged; damping is also unchanged at 60. Measured (hem
 width, the widest row): 342 px at 30 FPS; stock 357 at 60 and 398 at 120; with it 344 at 60, and
 at 120 the hem hangs below that row. The per-frame values (ratio, r - 1) are worked out once per
-frame (the frame timer's ring index, +0x260, changes) by the first cloth job to see the new frame. Our own code; the frame
-timer is the game's (0x55404F8: +0x260 frames, +0x264 the last frame's time in seconds).
+frame (the frame timer's ring index, +0x260, changes) by the first cloth job to see the new frame. The frame's
+time is the cloth's steady one (cloth_time.py: it follows the frame's at most 5% a frame, so a stutter is
+no kick), the time the cloth itself steps with; this patch is only applied with that one. Our own code; the
+frame timer is the game's (0x55404F8: +0x260 frames).
 """
 import struct
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import cloth_time  # noqa: E402
 import quit_menu  # noqa: E402
 
 SITE = 0x773E77               # vbroadcastss xmm0, [r13+0x10c] in the Verlet step (0x773DF0)
@@ -56,7 +52,6 @@ FRAME_COUNT, FRAME_TIME = 0x260, 0x264
 CAVE = 0x50D9D00
 STATE = 0x56D3F80             # the data segment's unused tail (past its size, in its last page):
 LAST_FRAME, LAST_TIME, RATIO, SOFTEN = STATE, STATE + 4, STATE + 8, STATE + 12   # 0 until set
-SMOOTH = STATE + 16           # the smoothed frame time, s (0 until set)
 CALLERS = ((0x76EC70, -0x18), (0x76EE10, -0x20))   # return address, its step number's save slot
 BEND = 0x7387F4               # vbroadcastss xmm0, [rcx-0xe]; vmulps xmm0, xmm8, xmm0: a bend
 BEND_BYTES = bytes.fromhex('c4e2791841f2c5b859c0')  # constraint's stiffness x the operator's strength
@@ -64,10 +59,7 @@ BATCH = 0x738645              # vmovss xmm6, [rcx-0xe]; vmulss xmm6, xmm6, [r8]:
 BATCH_BYTES = bytes.fromhex('c5fa1071f2c4c14a5930')  # batched solver (0x7384F0) bend operators use
 REFERENCE = 30.0             # the PS4's frame rate, the cloth's tuning
 DAMPING_REFERENCE = 60.0      # damping per second as at 60 FPS (as at 30, long coats and skirts swung on)
-SHORTEST, LONGEST = 0.001, 0.05   # a frame's time counts as 1..50 ms (a stall as 50 ms)
-SMOOTHING = 0.2               # each frame moves the smoothed frame time this part of the way
-CONSTANTS = (0.0, 0.5, 1.0, 2.0, REFERENCE, 3.0, DAMPING_REFERENCE, SHORTEST, LONGEST, SMOOTHING,
-             1.0 - SMOOTHING)
+CONSTANTS = (0.0, 0.5, 1.0, 2.0, REFERENCE, 3.0, DAMPING_REFERENCE)
 
 
 def rip(code, opcode, target):
@@ -79,8 +71,7 @@ def rip(code, opcode, target):
 def code_writes():
     cave = quit_menu.Code(CAVE)
     constants = quit_menu.CAVE_END - 4 * len(CONSTANTS)
-    zero, half, one, two, reference, most, damping, shortest, longest, smoothing, keep = (
-        constants + 4 * i for i in range(len(CONSTANTS)))
+    zero, half, one, two, reference, most, damping = (constants + 4 * i for i in range(len(CONSTANTS)))
     labels, jumps = {}, []
 
     def jump(opcode, name):   # the rel32 form of a short jump's opcode, fixed up at the end
@@ -102,12 +93,11 @@ def code_writes():
     # Damping per second as at 60 FPS: D^k, k = min(1, 60 x frame time), for 0 < D < 1 (the frame's,
     # not this step's: a cloth with two steps a frame keeps its damping per frame). Unchanged at 60 FPS
     # and below: as at 30 FPS (less damping at 60), long coats and skirts were "jumpy" in the beta.
-    # The smoothed frame time (0 until the first frame: unchanged).
     rip(cave, bytes.fromhex('c5f82f05'), one)         # vcomiss xmm0, [1]
     jump('73', 'ratio')                        # D >= 1: nothing to scale
     rip(cave, bytes.fromhex('c5f82f05'), zero)        # vcomiss xmm0, [0]
     jump('76', 'ratio')                        # D <= 0
-    rip(cave, bytes.fromhex('c5fa100d'), SMOOTH)      # vmovss xmm1, [smooth]
+    rip(cave, bytes.fromhex('c5fa100d'), cloth_time.STEADY_TIME)   # vmovss xmm1, [steady time]
     rip(cave, bytes.fromhex('c5f2590d'), damping)     # vmulss xmm1, xmm1, [60]
     rip(cave, bytes.fromhex('c5f25d0d'), one)         # vminss xmm1, xmm1, [1]
     rip(cave, bytes.fromhex('c5f82f0d'), zero)        # vcomiss xmm1, [0]
@@ -129,8 +119,7 @@ def code_writes():
     cave.raw('d95c2424')                       # fstp dword [rsp+36]       (x87 stack empty again)
     cave.raw('c5fa10442424')                   # vmovss xmm0, [rsp+36]
     label('ratio')
-    # Once per frame: the frame time held to 1..50 ms; SMOOTH moves toward it; RATIO = frame time /
-    # previous frame time (0.5..2; 1 for the first).
+    # Once per frame: RATIO = frame time / previous frame time (0.5..2; 1 for the first).
     cave.raw('8b88' + struct.pack('<I', FRAME_COUNT).hex())   # mov ecx, [rax+0x260]
     rip(cave, bytes.fromhex('3b0d'), LAST_FRAME)      # cmp ecx, [last frame]
     jump('74', 'apply')
@@ -139,22 +128,7 @@ def code_writes():
     rip(cave, bytes.fromhex('f00fb10d'), LAST_FRAME)  # lock cmpxchg [last frame], ecx
     cave.raw('58')                             # pop rax (flags kept)
     jump('75', 'apply')                        # another cloth job took this frame
-    cave.raw('c5fa1088' + struct.pack('<I', FRAME_TIME).hex())   # vmovss xmm1, [rax+0x264]
-    rip(cave, bytes.fromhex('c5f25f0d'), shortest)    # vmaxss xmm1, xmm1, [0.001]
-    rip(cave, bytes.fromhex('c5f25d0d'), longest)     # vminss xmm1, xmm1, [0.05]
-    rip(cave, bytes.fromhex('c5fa1015'), SMOOTH)      # vmovss xmm2, [smooth]
-    rip(cave, bytes.fromhex('c5f82f15'), zero)        # vcomiss xmm2, [0]
-    jump('76', 'smooth first')
-    cave.raw('c5fa114c2420')                   # vmovss [rsp+32], xmm1  (the frame time)
-    rip(cave, bytes.fromhex('c5ea5915'), keep)        # vmulss xmm2, xmm2, [0.8]
-    rip(cave, bytes.fromhex('c5f2590d'), smoothing)   # vmulss xmm1, xmm1, [0.2]
-    cave.raw('c5ea58d1')                       # vaddss xmm2, xmm2, xmm1
-    rip(cave, bytes.fromhex('c5fa1115'), SMOOTH)      # vmovss [smooth], xmm2
-    cave.raw('c5fa104c2420')                   # vmovss xmm1, [rsp+32]
-    jump('eb', 'smoothed')
-    label('smooth first')
-    rip(cave, bytes.fromhex('c5fa110d'), SMOOTH)      # vmovss [smooth], xmm1
-    label('smoothed')
+    rip(cave, bytes.fromhex('c5fa100d'), cloth_time.STEADY_TIME)   # vmovss xmm1, [steady time]
     rip(cave, bytes.fromhex('c5fa1015'), LAST_TIME)   # vmovss xmm2, [last time]
     rip(cave, bytes.fromhex('c5fa110d'), LAST_TIME)   # vmovss [last time], xmm1
     rip(cave, bytes.fromhex('c5f82f15'), zero)        # vcomiss xmm2, [0]
@@ -170,8 +144,7 @@ def code_writes():
     # And SOFTEN = r - 1, r = frame time at 30 FPS / frame time: 0 at 30 FPS and below, at most 3 (as at
     # 120 FPS). Half the full correction (its square root): with the square, long coats and skirts were
     # "too relaxed" in the beta, going wild in motion, and a kilt stuck out; a cape folded up at 240.
-    # The smoothed frame time: one short frame no longer softens the cloth for that frame.
-    rip(cave, bytes.fromhex('c5fa100d'), SMOOTH)      # vmovss xmm1, [smooth]
+    rip(cave, bytes.fromhex('c5fa100d'), cloth_time.STEADY_TIME)   # vmovss xmm1, [steady time]
     rip(cave, bytes.fromhex('c5f2590d'), reference)   # vmulss xmm1, xmm1, [30]
     rip(cave, bytes.fromhex('c5fa1015'), one)         # vmovss xmm2, [1]
     cave.raw('c5ea5ed1')                       # vdivss xmm2, xmm2, xmm1
@@ -196,9 +169,7 @@ def code_writes():
     rip(cave, bytes.fromhex('c5fa100d'), RATIO)       # vmovss xmm1, [ratio]
     rip(cave, bytes.fromhex('c5f82f0d'), zero)        # vcomiss xmm1, [0]
     jump('76', 'broadcast')                    # not set yet
-    rip(cave, bytes.fromhex('c5fa5f15'), one)         # vmaxss xmm2, xmm0, [1]  (the most: max(D, 1))
     cave.raw('c5fa59c1')                       # vmulss xmm0, xmm0, xmm1
-    cave.raw('c5fa5dc2')                       # vminss xmm0, xmm0, xmm2  (a long frame adds no speed)
     label('broadcast')
     cave.raw('c5f8c6c000')                     # vshufps xmm0, xmm0, xmm0, 0  (the site's broadcast)
     cave.raw('c5f8100c24')                     # vmovups xmm1, [rsp]

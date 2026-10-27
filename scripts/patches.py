@@ -610,7 +610,21 @@ def main():
             names.append('Rebirth')
         except ValueError as error:
             print(f'Patches: {error}; Rebirth skipped')
-    if read_settings(a.settings).get('steady_cloth','1')!='0' and os.environ.get('BB_STEADY_CLOTH')!='0':
+    cloth_time_on=False
+    if os.environ.get('BB_CLOTH_TIME')!='0':
+        # A steady time step for the cloth (cloth_time.py: a stutter is no kick to capes and dresses).
+        sys.path.insert(0,str(Path(__file__).resolve().parent))
+        import cloth_time
+        elf=(a.out/'eboot.elf').read_bytes()
+        try:
+            cloth_time.check_original(lambda start,end: eboot_bytes(elf,start,end))
+            writes+=cloth_time.code_writes()
+            names.append('Steady cloth time')
+            cloth_time_on=True
+        except ValueError as error:
+            print(f'Patches: {error}; steady cloth time skipped')
+    # Cloth as on PS4 steps with the steady time (cloth.py reads it): only with that one.
+    if cloth_time_on and read_settings(a.settings).get('steady_cloth','1')!='0' and os.environ.get('BB_STEADY_CLOTH')!='0':
         # Cloth as at 30 FPS at any frame rate (cloth.py: time-corrected Verlet, damping and bend
         # stiffness per second as at 30 FPS, the PS4's).
         sys.path.insert(0,str(Path(__file__).resolve().parent))
