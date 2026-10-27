@@ -50,7 +50,7 @@ VERSION_TEXT = f'{VERSION} beta {BETA}' if BETA else VERSION
 BETA_PAGE = 'https://github.com/emurphy04/bloodborne_pc/releases/tag/v1.9.5-beta.9'
 # The port's Discord application (discord.com/developers: its Application ID; an art asset named
 # "bloodborne" is the picture). Empty: no Discord status, and its setting is not shown.
-DISCORD_APPLICATION_ID = ''
+DISCORD_APPLICATION_ID = '1563260197835907232'
 # Co-op: the community server that answers the game's own server requests.
 COMMUNITY_SERVER = 'https://game.supermedo.com'
 # The Hunter's Dream, for its own pool (for the time being; BB_HUNTERS_DREAM=0 hides it): its sign-in, player
