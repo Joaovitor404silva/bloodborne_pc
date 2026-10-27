@@ -242,6 +242,7 @@ import bbport_lang_port  # noqa: E402,F401 (the 1.9.3 texts and the Controls pag
 import bbport_lang_195  # noqa: E402,F401 (the 1.9.5 texts: the shadNet server that turns the port away)
 import bbport_lang_pools  # noqa: E402,F401 (the co-op pools' texts with The Hunter's Dream back)
 import bbport_lang_mistakes  # noqa: E402,F401 (the repairs of player mistakes, in the other eleven languages)
+import bbport_lang_vram  # noqa: E402,F401 (the video memory warning's switch)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
 # EXTRA_TRANSLATIONS after it would not be in them.
 import bbport_fsr41_translations  # noqa: E402,F401
@@ -363,7 +364,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'mods_dir': '', 'mods_enabled': True, 'patches_dir': '', 'language': '1',
                 'voice_language': 'auto',
                 'player_name': '', 'fullscreen': False, 'exclusive_fullscreen': False, 'hdr': False, 'present_mode': 'Mailbox',
-                'fps_mode': 'uncap', 'frame_cap': '', 'draw_pipe': '', 'readbacks': '', 'low_vram': '',
+                'fps_mode': 'uncap', 'frame_cap': '', 'draw_pipe': '', 'readbacks': '', 'low_vram': '', 'vram_warning': True,
                 'frames_ahead': '', 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'extra_env': '', 'close_on_play': False,
                 'on_play': 'stay', 'reopen_after_game': False, 'minimize_to_tray': False, 'discord_status': True,
@@ -498,7 +499,7 @@ MENU_PADS = [('l3+r3', ('L3 + R3 (press both sticks)',)), ('back+start', ('Selec
 # What the launcher does when the game starts (close_on_play of earlier launchers: 'close').
 ON_PLAY = [('stay', ('Keep it open',)), ('minimize', ('Minimize it',)), ('close', ('Close it',))]
 # BB_LOW_VRAM (run.py's low-VRAM profile): '' leaves it to the card's memory.
-LOW_VRAM = [('', ('Auto (4 GB cards)', 'Авто (карты на 4 ГБ)')), ('1', ('On', 'Включён')),
+LOW_VRAM = [('', ('Auto (cards up to 6 GB)', 'Авто (карты до 6 ГБ)')), ('1', ('On', 'Включён')),
             ('0', ('Off', 'Выключен'))]
 # Frame cap of the unlocked mode (BB_FPS_LIMIT). '' leaves the port's own: the display refresh,
 # at most 120, because the game's movement timing breaks above about 120 FPS.
@@ -1199,6 +1200,8 @@ def game_environment(s, graphics=None):
                       ('low_vram', 'BB_LOW_VRAM')):
         if s[key]:
             env[name] = s[key]
+    if not s.get('vram_warning', True):
+        env['BB_VRAM_WARN_MB'] = '0'  # texture_cache.cpp: no "Video memory is running low" banner
     for key, name in (('frame_stats', 'BB_FRAME_STATS'), ('gpu_profile', 'BB_GPU_PROFILE'),
                       ('vk_validation', 'BB_VK_VALIDATION')):
         if s[key]:
@@ -4018,6 +4021,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    '(preset changes then need a restart).',
                    'Больший бюджет текстур и, при 1080p с апскейлером, уменьшенная сцена с запуска '
                    '(смена пресета тогда требует перезапуска).'))
+        self.check(f, 'vram_warning', 'app', _('Warn when video memory runs low',
+                                               'Предупреждать о нехватке видеопамяти'),
+                   _('Off: no "Video memory is running low" banner in the game. Memory is freed as before; the log '
+                     'still says when it ran short.',
+                     'Выкл.: в игре нет баннера «Видеопамять заканчивается». Память освобождается как прежде; журнал '
+                     'по-прежнему сообщает, когда её не хватило.'))
         ttk.Label(f, text=_('Low-VRAM profile by fixdag and bashiku.',
                             'Профиль для малого объёма видеопамяти: fixdag и bashiku.'),
                   style='Muted.TLabel').grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(8, 0))

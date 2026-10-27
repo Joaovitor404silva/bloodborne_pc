@@ -30,6 +30,7 @@ WORDS = {
     'fullscreen': 'vollbild fenster fullscreen window borderless randlos',
     'exclusive_fullscreen': 'exklusiv exclusive display mode bildwiederholrate refresh',
     'hdr': 'hdr helligkeit brightness',
+    'vram_warning': 'vram videospeicher grafikspeicher warnung warning popup banner meldung hinweis',
     'fps_mode': 'fps bildrate framerate frame rate 30 60 120 unbegrenzt unlock flussig ruckelt lag',
     'frame_cap': 'begrenzen begrenzung maximal max limiter fps grenze limit cap 120 144 165 240',
     'frames_ahead': 'latenz input lag ruckelt stutter',

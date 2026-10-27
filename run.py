@@ -336,7 +336,7 @@ def find_executable(name):
 # again ~30 textures a second with 2.7 GB in use, and the live path's native-size game targets
 # cost ~700 MiB more than the startup patch (2.8 GB at 640x360 against 2.1 GB at 960x540).
 # Discrete GPUs up to LOW_VRAM_MB; BB_LOW_VRAM=1 forces the profile, 0 turns it off.
-LOW_VRAM_MB = 4608
+LOW_VRAM_MB = 6656  # 4 and 6 GB cards (6144 MiB with room for what a driver reports), not 8 GB
 # Left to the desktop, browsers and the driver.
 VRAM_RESERVE_MB = 600
 
