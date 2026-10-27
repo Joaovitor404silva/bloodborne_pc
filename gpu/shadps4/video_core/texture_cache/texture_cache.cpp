@@ -10,6 +10,7 @@
 #include "bbport_process_memory.h"
 #include "bbport_prompts.h"
 #include "bbport_toggles.h"
+#include "bbport_vram_warning.h"
 #include "common/assert.h"
 #include "common/debug.h"
 #include "common/div_ceil.h"
@@ -1195,9 +1196,10 @@ void TextureCache::GarbageCollectImages() {
             }
         }
         // bbport: tell the player before the card is full, 1.5 GB ahead by default
-        // (BB_VRAM_WARN_MB, 0 turns it off), again each 256 MiB closer. Nothing is blocked: the
-        // game still closes when it runs out, but the player has time to save. Discrete cards
-        // only - an integrated GPU's limit is the system's memory, which is not this crash.
+        // (BB_VRAM_WARN_MB, 0 turns it off) but not before the critical mark, again each 256 MiB
+        // closer (bbport_vram_warning.h). Nothing is blocked: the game still closes when it runs
+        // out, but the player has time to save. Discrete cards only - an integrated GPU's limit
+        // is the system's memory, which is not this crash.
         static const u64 warn_mb = [] {
             const char* env = std::getenv("BB_VRAM_WARN_MB");
             return env ? std::strtoull(env, nullptr, 10) : 1536;
@@ -1210,13 +1212,9 @@ void TextureCache::GarbageCollectImages() {
                                 critical_gc_memory, card_free);
         if (warn_mb != 0 && !instance.IsIntegrated()) {
             const u64 free = limit > total_used_memory ? limit - total_used_memory : 0;
-            constexpr u64 warn_step = 256_MB;
-            const u64 warn_at = warn_mb << 20;
-            static u64 warned_free = ~0ULL; // armed; free bytes at the last warning otherwise
-            if (free >= warn_at) {
-                warned_free = ~0ULL;
-            } else if (warned_free == ~0ULL || free + warn_step <= warned_free) {
-                warned_free = free;
+            static BbVramWarning::State warning;
+            if (warning.Check(free,
+                              BbVramWarning::Margin(limit, critical_gc_memory, warn_mb << 20))) {
                 // MB below a gigabyte: "780 MB" is more use near the end than "0.8 GB".
                 const auto size = [](u64 bytes) {
                     return bytes >= 1_GB ? fmt::format("{:.1f} GB", double(bytes) / double(1_GB))

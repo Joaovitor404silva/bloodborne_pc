@@ -414,6 +414,12 @@ add_executable(pad-use-test EXCLUDE_FROM_ALL ../tests/test_pad_use.cpp)
 target_include_directories(pad-use-test PRIVATE shim)
 target_compile_options(pad-use-test PRIVATE -UNDEBUG)
 
+# bbport: when the video memory banner comes up: ninja -C out/gpu vram-warning-test, then run it.
+# No GPU.
+add_executable(vram-warning-test EXCLUDE_FROM_ALL ../tests/test_vram_warning.cpp)
+target_include_directories(vram-warning-test PRIVATE shim)
+target_compile_options(vram-warning-test PRIVATE -UNDEBUG)
+
 # bbport: keyboard and mouse button prompt icons: ninja -C out/gpu prompt-icons-test, then run it
 # (with a folder argument it writes each icon drawn and encoded, for viewing).
 add_executable(prompt-icons-test EXCLUDE_FROM_ALL ../tests/test_prompt_icons.cpp shim/bbport_prompt_icons.cpp)
