@@ -92,6 +92,25 @@ class PoolTests(unittest.TestCase):
         with mock.patch.object(L, 'HUNTERS_DREAM_POOL', True):
             self.assertEqual(L.settled_pool({**L.APP_DEFAULTS, 'online_pool': 'huntersdream'}), 'huntersdream')
 
+    def test_a_start_without_the_window_settles_the_same(self):
+        """--play (Steam, a shortcut) never builds the window: settled_online gives it the same pool, also for
+        settings saved before the "Use my own servers" box."""
+        old_public = {'online': True, 'online_pool': 'shadnet', 'online_server': L.APP_DEFAULTS['online_server']}
+        self.assertEqual(L.settled_online({**L.APP_DEFAULTS, **old_public}, old_public),
+                         {'online_custom_servers': False, 'online_pool': 'supermedo'})
+        seamless = {'online': True, 'online_pool': 'shadnet', 'online_server': 'play.seamlesshunt.com:31313'}
+        self.assertEqual(L.settled_online({**L.APP_DEFAULTS, **seamless}, seamless),
+                         {'online_custom_servers': True, 'online_pool': 'shadnet'})
+        boxed = {**seamless, 'online_custom_servers': False}  # the box saved off: the player's choice
+        self.assertEqual(L.settled_online({**L.APP_DEFAULTS, **boxed}, boxed)['online_pool'], 'supermedo')
+
+    def test_only_the_hunters_dream_asks_for_its_sign_in(self):
+        """With The Hunter's Dream turned on (BB_HUNTERS_DREAM=1) SuperMedo Server needed its sign-in too."""
+        with mock.patch.object(L, 'HUNTERS_DREAM_POOL', True):
+            self.assertTrue(L.needs_sign_in({'online': True, 'online_pool': 'huntersdream'}))
+            self.assertFalse(L.needs_sign_in({'online': True, 'online_pool': 'supermedo'}))
+            self.assertFalse(L.needs_sign_in({'online': True, 'online_pool': 'huntersdream', 'thd_token': 't'}))
+
     def test_a_start_keeps_shadnet_with_own_servers(self):
         """A private server or a co-op tool's (Seamless co-op: play.seamlesshunt.com) stays on shadNet."""
         own = {**L.APP_DEFAULTS, 'online_pool': 'shadnet', 'online_server': 'play.seamlesshunt.com:31313'}

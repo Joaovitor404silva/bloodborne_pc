@@ -826,6 +826,14 @@ def settled_pool(s):
     return pool
 
 
+def settled_online(app, saved):
+    """The online settings a start keeps, in the launcher window and in a start without it (--play: Steam, a
+    shortcut, where the window's settled pool never ran): "Use my own servers" on for settings from before that
+    box when they hold other addresses, then the co-op pool (settled_pool)."""
+    custom = saved['online_custom_servers'] if 'online_custom_servers' in saved else has_own_servers(app)
+    return {'online_custom_servers': custom, 'online_pool': settled_pool({**app, 'online_custom_servers': custom})}
+
+
 def webapi_setting(s):
     """The WebAPI field, unless it holds the game server's address (a common mix-up): then the
     co-op server's own WebAPI is used."""
@@ -1245,11 +1253,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.app = {**APP_DEFAULTS, **saved}
         if 'thehuntersdream' in str(self.app.get('online_community', '')):  # the game server is supermedo.com's
             self.app['online_community'] = COMMUNITY_SERVER
-        if 'online_custom_servers' not in saved:
-            self.app['online_custom_servers'] = has_own_servers(self.app)
         if self.app.get('readbacks') == '0':  # Off left the launcher (READBACKS)
             self.app['readbacks'] = ''
-        self.app['online_pool'] = settled_pool(self.app)  # dead ends to SuperMedo Server
+        self.app.update(settled_online(self.app, saved))  # dead ends to SuperMedo Server
         for key in ('supermedo_user', 'supermedo_password'):  # its account, the password in plain text
             self.app.pop(key, None)
         if self.app.get('ui_mode') not in ('simple', 'expert'):
@@ -2900,8 +2906,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                        'under Use my own servers.'), top=0)
         group('public_shadnet')
         self.row(f, _('Online ID (NPID)'), ttk.Entry(f, textvariable=self.var('online_npid', 'app'), width=40),
-                 _('Your shadNet account name, not your email. Register one at shadnet.shadps4.net, or ask the '
-                   'owner of a private server.'))
+                 _('Your shadNet account name, not your email.'))
         self.row(f, _('Password'), ttk.Entry(f, textvariable=self.var('online_password', 'app'), width=40, show='•'),
                  _('Saved on this PC with the other launcher settings.'))
         # The servers' addresses only for those who play on their own (a private server, a friend's):
@@ -2961,15 +2966,17 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         new_npid, new_password, email = (self.tk.StringVar(value='') for _n in range(3))
 
         def create_account():
-            npid, password = new_npid.get().strip(), new_password.get()
-            if not npid or not password or '@' not in email.get():
+            # All three read here: a Tk variable read in the worker thread raised there (no account, and
+            # "Creating the account…" stayed).
+            npid, password, mail = new_npid.get().strip(), new_password.get(), email.get().strip()
+            if not npid or not password or '@' not in mail:
                 sign_up.configure(text=_('Enter a new Online ID, a password and your email address.'))
                 return
             sign_up.configure(text=_('Creating the account…'))
 
             def work():
                 try:
-                    problem = shadnet_register(SUPERMEDO_SERVER, npid, password, email.get().strip())
+                    problem = shadnet_register(SUPERMEDO_SERVER, npid, password, mail)
                 except OSError as error:
                     problem = _('SuperMedo Server could not be reached: {}').format(error)
                 if problem:
@@ -5304,8 +5311,8 @@ def forget_sign_in():
 
 def needs_sign_in(settings):
     """Online with The Hunter's Dream without a sign-in: run.py would stop the start (game_environment)."""
-    return bool(settings.get('online')) and settings.get('online_pool') != 'shadnet' and HUNTERS_DREAM_POOL and \
-        not settings.get('thd_token')
+    return bool(settings.get('online')) and settings.get('online_pool') == 'huntersdream' and HUNTERS_DREAM_POOL \
+        and not settings.get('thd_token')
 
 
 def custom_output(size, settings):
@@ -5611,7 +5618,9 @@ def main():
     if args[:1] == ['--after'] and len(args) >= 2:
         wait_for_exit(args[1])
         args = args[2:]
-    settings = {**APP_DEFAULTS, **load_settings()}
+    saved = load_settings()
+    settings = {**APP_DEFAULTS, **saved}
+    settings.update(settled_online(settings, saved))  # also for --play: Steam and shortcuts skip the window
     LANG = settings.get('ui_language') or windows_language()
     saves.WORDS.update({key: _(text) for key, text in saves.REASONS.items()})  # backup file names
     if args[:1] == ['--install-update'] and len(args) == 3:
