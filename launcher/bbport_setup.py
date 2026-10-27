@@ -1981,6 +1981,9 @@ class SetupMixin:
         import os
         import subprocess
         import sys
+        guide = getattr(self, 'guide', None)
+        if guide and not guide.closed:  # the setup comes back where it was, in the new language
+            self.app['setup_resume'] = {'step': guide.step, 'origin': guide.origin.get()}
         self.collect()
         command = [sys.executable] if L.FROZEN else [sys.executable, str(Path(L.__file__).resolve())]
         # The new one waits until this one has closed: only one launcher window at a time (one_launcher).
@@ -1990,10 +1993,11 @@ class SetupMixin:
     # ---- the setup guide ----------------------------------------------------------------------------
     def maybe_open_setup(self):
         """At start: the guide for a new installation. A launcher set up before the guide existed
-        (saved settings and a game folder) counts as set up."""
+        (saved settings and a game folder) counts as set up; one restarted by its language change does not."""
         if self.var('setup_done', 'app').get():
             return
-        if L.CONFIG_FILE.exists() and L.game_info(self.var('game_dir', 'app').get()):
+        if not self.app.get('setup_resume') and L.CONFIG_FILE.exists() and \
+                L.game_info(self.var('game_dir', 'app').get()):
             self.var('setup_done', 'app').set(True)
             return
         self.open_setup()
@@ -2089,7 +2093,8 @@ class SetupGuide:
         self.frame_gen = tk.BooleanVar(value=False)
         self.fullscreen_offered = False  # the picture step turns fullscreen on once (its default)
         self.online_offered = False  # the online step turns online play on once (its default)
-        self.origin = tk.StringVar(value='new')  # where the player comes from (step I)
+        resume = app.app.pop('setup_resume', None) or {}  # after the launcher's language changed (relaunch)
+        self.origin = tk.StringVar(value=resume.get('origin') or 'new')  # where the player comes from (step I)
         self.mode = tk.StringVar(value=app.app.get('ui_mode') or 'simple')  # the launcher's view (step V)
         # Repeated from Help: the player's own choices (online, fullscreen, key bindings) are only
         # changed when they say so; the first setup sets the defaults.
@@ -2153,7 +2158,7 @@ class SetupGuide:
         root.bind_all('<Return>', lambda _e: self.next())
         root.bind_all('<Escape>', lambda _e: self.back())
         self.wave_until = 0.0
-        self.show(0)
+        self.show(min(int(resume.get('step') or 0), len(STEPS) - 1))
 
     # -- frame --
     def wheel(self, event):
