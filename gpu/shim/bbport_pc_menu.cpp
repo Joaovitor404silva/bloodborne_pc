@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// bbport: the PC pages in the game's own System menu (game 1.09; scripts/pc_menu.py patches the
-// menu and the page opener, adds the pages to optionsetting.gfx and the texts to the Quit to
+// bbport: PC Settings in the game's own System menu (game 1.09; scripts/pc_menu.py patches the
+// menu and the page opener, adds the PC page to optionsetting.gfx and the texts to the Quit to
 // Desktop text layer). Each page is the game's own settings screen built with the game's own
 // choice lines, whose values are ints here. A thread applies what changes to the port's settings
 // (bbport_settings.h) and saves bbport.ini, as the Insert menu does.
 //
 // The game calls in twice: the System menu's builder asks for the lines ("bb:o" through the
-// browser import, runtime_services.c), and a line's handler opens its page, whose builder is
-// Build<page> below. Everything else is the game's own code, called with its calling convention.
+// browser import, runtime_services.c), and a line's handler opens the PC page, whose builder is
+// Build<line> below. The three lines share that one page (pc_menu.py): each builds its own
+// lines and shows its own title. Everything else is the game's own code, called with its
+// calling convention.
 
 #include "bbport_settings.h"
 #include "../bbgpu.h"
@@ -42,18 +44,19 @@ constexpr uint32_t SWITCH_LINE = 0x1B2A100;   // On / Off line(page, texts, byte
 constexpr uint32_t CHILD = 0x1ADB220;         // a movie child's object(out 0x60 bytes, parent, name, ...)
 constexpr uint32_t LINE_FUNCTION = 0x533D120; // __func vtable of the System menu lines' handlers
 constexpr uint32_t PAGE_FUNCTION = 0x5343880; // __func vtable of the pages' factories
+constexpr uint32_t PAGE_CLIP = 0xDF0;         // a page's movie clip (its rows' parent, 0x1B2BA20)
 // pc_menu.py's page name table (in the code segment's last page, after its magic): image
-// offsets of the game's six names and the PC pages', made addresses when the game is loaded.
+// offsets of the game's six names and the PC page's, made addresses when the game is loaded.
 constexpr uint32_t CAVE = 0x50D9B00, CAVE_END = 0x50DA000;
 constexpr char TABLE_MAGIC[8] = {'b', 'b', 'P', 'C', 'p', 'a', 'g', 0};
-constexpr int TABLE_NAMES = 6 + 3;
+constexpr int TABLE_NAMES = 6 + 1;
 constexpr int NAMES = 200, HELP = 201;        // menu.msgbnd.dcx FMGs: item names, one-line help
 constexpr int ON = 40300, OFF = 40301;        // the game's own On / Off
 
 // Text ids (scripts/pc_menu.py writes the same): the pages (System line, title, help), each
 // line (name and help), then each line's choice labels.
 constexpr int PAGE_TEXT = 119001, LINE_BASE = 119010;
-// The opener's Defaults button and its question (the game's), Restart Game on the PC pages.
+// The opener's Defaults button and its question (the game's), Restart Game on the PC page.
 constexpr int DEFAULTS = 40330, DEFAULTS_QUESTION = 40300, RESTART = 119009;
 constexpr int UPSCALER_TEXT = 119100, PRESET_TEXT = 119110, SHARPNESS_TEXT = 119120,
               FRAME_GEN_TEXT = 119140, MULTIPLIER_TEXT = 119150, OUTPUT_TEXT = 119160,
@@ -66,10 +69,11 @@ enum Line : int {
     Chromatic, Fov, CameraDistance, CameraRotation, HudPosition, ShowFps, Prompts, Mute,
     SkipIntro, Restart, LineCount
 };
-// The pages (pc_menu.py PAGES: their names in optionsetting.gfx) and their lines; the ninth row
-// is the opener's button, Restart Game here.
+// The PC page (pc_menu.py PAGE, its name in optionsetting.gfx), its titles (TITLE_NAME), and
+// each System line's lines on it; the ninth row is the opener's button, Restart Game here.
 constexpr int PageCount = 3, PageLines = 8;
-constexpr const char* PageNames[PageCount] = {"PcGraphics", "PcEffects", "PcOptions"};
+constexpr const char* PageName = "PcSettings";
+constexpr const char* TitleNames[PageCount] = {"PcTitle_0", "PcTitle_1", "PcTitle_2"};
 constexpr Line Pages[PageCount][PageLines] = {
     {Upscaler, Quality, Sharpness, FrameGen, Multiplier, Output, FrameRate, FrameCap},
     {ModelDetail, AmbientOcclusion, Shadows, Reflections, GameAa, MotionBlur, DepthOfField, Chromatic},
@@ -406,7 +410,23 @@ void LineChoices(Line line, const int32_t* now, Choices& c) {
     }
 }
 
-// A page's builder (the game calls it as a member function: page, settings copy).
+// Shows or hides the movie clip `name` under `parent` (a child object: slot 1 is its visibility),
+// then lets the child object go as the game does (the managed value it holds).
+void SetVisible(void* parent, const char* name, bool visible) {
+    alignas(16) unsigned char child[0x60] = {};
+    reinterpret_cast<void(SYSV*)(void*, void*, const char*, ...)>(image + CHILD)(child, parent, name);
+    auto* vtable = *reinterpret_cast<uintptr_t* const*>(child);
+    if (!vtable) return;
+    reinterpret_cast<void(SYSV*)(void*, int)>(vtable[1])(child, visible);
+    if (child[0x48] & 0x40) {
+        auto* value = reinterpret_cast<void*>(Read64(child + 0x40));
+        auto* value_vtable = *reinterpret_cast<uintptr_t* const*>(value);
+        reinterpret_cast<void(SYSV*)(void*, void*, uint64_t)>(value_vtable[3])(value, child + 0x30,
+                                                                                  Read64(child + 0x50));
+    }
+}
+
+// A line's page builder (the game calls it as a member function: page, settings copy).
 template <int P>
 SYSV void Build(void* page, void*) {
     building_page = page;
@@ -425,6 +445,9 @@ SYSV void Build(void* page, void*) {
         SetValue(line, now[line]);
         applied[line] = now[line];
     }
+    // Its own title of the three.
+    auto* clip = static_cast<unsigned char*>(page) + PAGE_CLIP;
+    for (int p = 0; p < PageCount; ++p) SetVisible(clip, TitleNames[p], p == P);
     for (Line line : Pages[P]) {
         alignas(16) unsigned char texts[0x80];
         LookUp(texts, NAMES, LINE_BASE + line);
@@ -445,13 +468,13 @@ SYSV void Build(void* page, void*) {
     }
 }
 
-// A page's factory (std::function<...(a, b)>, as the Environment line's).
+// A line's page factory (std::function<...(a, b)>, as the Environment line's).
 template <int P>
 SYSV void* Factory(void* a, void* b) {
-    return Guest<void*>(PAGE, a, b, PageNames[P], reinterpret_cast<uintptr_t>(&Build<P>), uintptr_t(0), 0);
+    return Guest<void*>(PAGE, a, b, PageName, reinterpret_cast<uintptr_t>(&Build<P>), uintptr_t(0), 0);
 }
 
-// A System line's handler (as Environment's): opens its page.
+// A System line's handler (as Environment's): opens the PC page with its lines.
 template <int P>
 SYSV void* Handler(void* out, void* context) {
     alignas(16) unsigned char factory[0x30] = {};
@@ -502,23 +525,10 @@ extern "C" void bbgpu_pc_menu_prepare(unsigned char* base) {
 }
 
 // "bb:h" (runtime_services.c): the menu movie is set up and has hidden the game's pages (each
-// child's slot 1 with false); `movie` is its root. The PC pages are hidden the same way, else
-// they showed unset over the System menu until a page was opened.
+// child's slot 1 with false); `movie` is its root. The PC page is hidden the same way, else it
+// showed unset over the System menu until a page was opened.
 extern "C" int bbgpu_pc_menu_hide(void* movie) {
-    if (!image || !movie) return 0;
-    for (const char* name : PageNames) {
-        alignas(16) unsigned char child[0x60] = {};
-        reinterpret_cast<void(SYSV*)(void*, void*, const char*, ...)>(image + CHILD)(child, movie, name);
-        auto* vtable = *reinterpret_cast<uintptr_t* const*>(child);
-        if (!vtable) continue;
-        reinterpret_cast<void(SYSV*)(void*, int)>(vtable[1])(child, 0);
-        if (child[0x48] & 0x40) { // the managed value it holds
-            auto* value = reinterpret_cast<void*>(Read64(child + 0x40));
-            auto* value_vtable = *reinterpret_cast<uintptr_t* const*>(value);
-            reinterpret_cast<void(SYSV*)(void*, void*, uint64_t)>(value_vtable[3])(value, child + 0x30,
-                                                                                      Read64(child + 0x50));
-        }
-    }
+    if (image && movie) SetVisible(movie, PageName, false);
     return 0;
 }
 

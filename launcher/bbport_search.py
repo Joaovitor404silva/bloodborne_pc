@@ -72,6 +72,7 @@ WORDS = {
     'button:port_folder': 'ordner port folder installation explorer',
     'button:updates': 'update updates aktualisieren neue version',
     'button:report': 'bericht report support zip discord fehler',
+    'button:discord': 'discord community gemeinschaft server einladung invite hilfe forum chat',
     'button:benchmark': 'benchmark test messen route kathedrale cathedral fps tester',
     'button:shader_cache': 'shader cache leeren loschen clear schwarz schwarzer bildschirm black screen '
                            'grafikfehler treiber driver',

@@ -190,6 +190,37 @@ class LiveTests(unittest.TestCase):
                     self.pump(0.3)
                     self.assertEqual(self.app.current_page, name)
 
+    def test_an_own_server_instead_of_the_public_shadnet_server(self):
+        """shadPS4's public shadNet server turned the port away and is no choice any more: the third pool is an own
+        server (Seamless co-op's, a friend's), always with its addresses, and no note or box sends anyone to the
+        public one."""
+        self.app.expert_var.set(True)
+        self.app.toggle_mode()
+        self.app.show('online')
+        self.pump(0.3)
+
+        def texts(widget):
+            found = []
+            for child in widget.winfo_children():
+                try:
+                    if child.winfo_ismapped():
+                        found.append(str(child.cget('text')))
+                except Exception:  # a widget without text
+                    pass
+                found += texts(child)
+            return found
+        pool = self.app.var('online_pool', 'app')
+        pool.set('shadnet')
+        self.pump(0.3)
+        shown = texts(self.root)
+        self.assertIn(self.L._("Own server (Seamless co-op, a friend's)"), shown)
+        self.assertIn(self.L._('Server address'), shown)
+        self.assertTrue(self.app.var('online_custom_servers', 'app').get())
+        self.assertFalse([t for t in shown if "public shadNet server doesn't accept" in t or t == 'Use my own servers'])
+        pool.set('supermedo')
+        self.pump(0.3)
+        self.assertNotIn(self.L._('Server address'), texts(self.root))
+
     def test_the_update_notice_shows(self):
         self.app.offer_update('99.0', 'https://example.invalid/update.zip', 'https://example.invalid/')
         self.pump(0.3)
