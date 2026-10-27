@@ -53,7 +53,8 @@ BETA_PAGE = 'https://github.com/emurphy04/bloodborne_pc/releases/tag/v1.9.5-beta
 DISCORD_APPLICATION_ID = ''
 # Co-op: the community server that answers the game's own server requests.
 COMMUNITY_SERVER = 'https://game.supermedo.com'
-# The Hunter's Dream, for its own pool (off unless BB_HUNTERS_DREAM=1): its sign-in, player count and game server.
+# The Hunter's Dream, for its own pool (for the time being; BB_HUNTERS_DREAM=0 hides it): its sign-in, player
+# count and game server.
 HUNTERS_DREAM_SERVER = 'https://thehuntersdream.com'
 # SuperMedo Server: the shadNet server (accounts, bells and summons) and the game server above,
 # both supermedo.com's own.
@@ -239,6 +240,7 @@ import bbport_lang_ui  # noqa: E402,F401 (the regrouped pages, the side bar, the
 import bbport_lang_world  # noqa: E402,F401 (the new texts in the other eleven languages)
 import bbport_lang_port  # noqa: E402,F401 (the 1.9.3 texts and the Controls page's key names)
 import bbport_lang_195  # noqa: E402,F401 (the 1.9.5 texts: the shadNet server that turns the port away)
+import bbport_lang_pools  # noqa: E402,F401 (the co-op pools' texts with The Hunter's Dream back)
 import bbport_lang_mistakes  # noqa: E402,F401 (the repairs of player mistakes, in the other eleven languages)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
 # EXTRA_TRANSLATIONS after it would not be in them.
@@ -368,7 +370,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'menu_key': 'Insert', 'menu_pad': 'l3+r3',
                 'check_updates': True, 'save_backups': False, 'online': False, 'online_server': 'srv.shadps4.net:31313',
                 'online_webapi': '', 'online_npid': '', 'online_password': '', 'online_upnp': True,
-                'online_custom_servers': False,
+                'online_custom_servers': False, 'supermedo_npid': '', 'supermedo_pass': '',
                 'online_community': COMMUNITY_SERVER, 'online_pool': 'supermedo', 'bridge_live_map': False,
                 'thd_online_id': '', 'thd_token': '',
                 # The setup guide ran (or the launcher was set up before it existed); a graphics card
@@ -783,8 +785,8 @@ def community_address(value):
 
 
 def game_server(s):
-    """The game server the game uses: the address field only where the Online page shows it (shadNet with
-    "Use my own servers"), The Hunter's Dream for its own pool, the SuperMedo game server otherwise. The Hunter's
+    """The game server the game uses: the address field only where the Online page shows it (Own server,
+    online_custom_servers), The Hunter's Dream for its own pool, the SuperMedo game server otherwise. The Hunter's
     Dream's sign-in and backend exist on The Hunter's Dream
     only, and other tools write their own address into the field (a co-op tool's: "has no account
     service" at the sign-in)."""
@@ -796,8 +798,8 @@ def game_server(s):
 
 
 def shadnet_servers(s):
-    """(server, WebAPI) of shadNet the game uses: the address fields only with "Use my own servers" (the Online
-    page shows them only then), the public server otherwise. A field another tool or an earlier setup left behind
+    """(server, WebAPI) of shadNet the game uses: the address fields only with own servers (online_custom_servers:
+    the Own server pool, where the Online page shows them), the public server otherwise. A field another tool or an earlier setup left behind
     (a WebAPI with https://, where shadNet speaks http) then cannot break the public one."""
     if s.get('online_custom_servers'):
         return str(s.get('online_server', '')).strip() or APP_DEFAULTS['online_server'], webapi_setting(s)
@@ -806,7 +808,7 @@ def shadnet_servers(s):
 
 
 def has_own_servers(s):
-    """For settings saved before "Use my own servers" existed: on when they hold other addresses (a
+    """For settings saved before online_custom_servers existed: on when they hold other addresses (a
     private server, a friend's), which the game used then."""
     return any(str(s.get(key, '')).strip() not in ('', APP_DEFAULTS[key])
                for key in ('online_server', 'online_webapi', 'online_community'))
@@ -814,8 +816,8 @@ def has_own_servers(s):
 
 def settled_pool(s):
     """The co-op pool a launcher start keeps (online_custom_servers already settled). SuperMedo Server for a
-    pool the launcher no longer has, The Hunter's Dream while it is off, and shadNet without "Use my own
-    servers": that is shadPS4's public server, which refuses the port, and an earlier launcher's setting
+    pool the launcher no longer has, The Hunter's Dream while it is off, and shadNet without own servers
+    (online_custom_servers): that is shadPS4's public server, which refuses the port, and an earlier launcher's setting
     left beta testers unable to play online. shadNet with own servers (a private one, a co-op tool's)
     stays."""
     pool = s.get('online_pool')
@@ -828,10 +830,42 @@ def settled_pool(s):
 
 def settled_online(app, saved):
     """The online settings a start keeps, in the launcher window and in a start without it (--play: Steam, a
-    shortcut, where the window's settled pool never ran): "Use my own servers" on for settings from before that
-    box when they hold other addresses, then the co-op pool (settled_pool)."""
+    shortcut, where the window's settled pool never ran): own servers (online_custom_servers) on for settings
+    from before that setting when they hold other addresses, then the co-op pool (settled_pool). Up to 1.9.5 beta 8 SuperMedo
+    Server's account was in the shadNet boxes, which a co-op tool writes too: one saved on SuperMedo Server
+    becomes its own account, and the boxes stay shadNet's."""
     custom = saved['online_custom_servers'] if 'online_custom_servers' in saved else has_own_servers(app)
-    return {'online_custom_servers': custom, 'online_pool': settled_pool({**app, 'online_custom_servers': custom})}
+    settled = {'online_custom_servers': custom, 'online_pool': settled_pool({**app, 'online_custom_servers': custom})}
+    if 'supermedo_npid' not in saved and saved.get('online_pool') == 'supermedo':
+        settled.update(supermedo_npid=app.get('online_npid', ''), supermedo_pass=app.get('online_password', ''))
+    return settled
+
+
+def pool_account(s):
+    """The account the game signs in with on the chosen pool, '' without one. Each pool keeps its own, so a
+    change of pool (or a co-op tool writing the shadNet boxes) never signs another one out: SuperMedo Server's
+    account, The Hunter's Dream's Discord sign-in, the shadNet boxes."""
+    pool = s.get('online_pool', 'supermedo')
+    if pool == 'huntersdream':
+        return str(s.get('thd_online_id', '')).strip() if s.get('thd_token') else ''
+    if pool == 'supermedo':
+        return str(s.get('supermedo_npid', '')).strip() if s.get('supermedo_pass') else ''
+    return str(s.get('online_npid', '')).strip()
+
+
+# The Online page's settings in settings.json. A co-op tool (Seamless co-op) writes shadNet's there; the pool and
+# the SuperMedo Server and The Hunter's Dream sign-ins are the launcher's own.
+SHADNET_KEYS = ('online_server', 'online_webapi', 'online_community', 'online_npid', 'online_password',
+                'online_custom_servers')
+OWN_ONLINE_KEYS = ('online_pool', 'supermedo_npid', 'supermedo_pass', 'thd_online_id', 'thd_token')
+
+
+def outside_online_changes(written, on_disk):
+    """What another program changed in settings.json since the launcher read or wrote it (`written`): the
+    shadNet settings it set ({key: value}, taken), and the launcher's own it changed ([key], kept as they were)."""
+    taken = {key: on_disk[key] for key in SHADNET_KEYS if key in on_disk and on_disk[key] != written.get(key)}
+    kept = [key for key in OWN_ONLINE_KEYS if key in on_disk and on_disk[key] != written.get(key)]
+    return taken, kept
 
 
 def webapi_setting(s):
@@ -871,8 +905,8 @@ def server_check(server, webapi, community):
 
 
 # The Hunter's Dream pool: the engine's own backend for it (BB_NET_BACKEND=thd, bbhost's
-# protocol, from Awaken's port). BB_HUNTERS_DREAM=0 hides it.
-HUNTERS_DREAM_POOL = os.environ.get('BB_HUNTERS_DREAM', '0') == '1'
+# protocol, from Awaken's port). For the time being, after SuperMedo Server; BB_HUNTERS_DREAM=0 hides it.
+HUNTERS_DREAM_POOL = os.environ.get('BB_HUNTERS_DREAM', '1') != '0'
 
 
 SHADNET_ERRORS = {3: 'The name or the email address is not valid.', 4: 'Too soon: try again in a minute.',
@@ -1190,9 +1224,11 @@ def game_environment(s, graphics=None):
         env['BB_SHADNET_PASSWORD'] = str(s['online_password'])
         env['BB_UPNP'] = '1' if s['online_upnp'] else '0'
         env['BB_COMMUNITY_SERVER'] = game_server(s)
-        if s.get('online_pool', 'supermedo') == 'supermedo':  # SuperMedo Server: its own addresses
+        if s.get('online_pool', 'supermedo') == 'supermedo':  # SuperMedo Server: its own addresses and account
             env['BB_SHADNET_SERVER'] = SUPERMEDO_SERVER
             env['BB_SHADNET_WEBAPI'] = SUPERMEDO_WEBAPI
+            env['BB_SHADNET_NPID'] = str(s.get('supermedo_npid', '')).strip()
+            env['BB_SHADNET_PASSWORD'] = str(s.get('supermedo_pass', ''))
         if s.get('online_pool') == 'huntersdream' and HUNTERS_DREAM_POOL:
             # The engine's Hunter's Dream backend with the Discord-linked account (run.py sets
             # the game server and the backend's addresses).
@@ -1256,7 +1292,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if self.app.get('readbacks') == '0':  # Off left the launcher (READBACKS)
             self.app['readbacks'] = ''
         self.app.update(settled_online(self.app, saved))  # dead ends to SuperMedo Server
-        for key in ('supermedo_user', 'supermedo_password'):  # its account, the password in plain text
+        self.online_written = {key: saved.get(key) for key in SHADNET_KEYS + OWN_ONLINE_KEYS}
+        for key in ('supermedo_user', 'supermedo_password'):  # 1.9.2's account, the password in plain text
             self.app.pop(key, None)
         if self.app.get('ui_mode') not in ('simple', 'expert'):
             # Set up with an earlier launcher: every page as before (expert). New: the simple view.
@@ -2207,6 +2244,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if self.page_wanted and self.page_wanted != name:
             self.show(self.page_wanted)
             return
+        if name == 'online':
+            self.check_online_routes()
         if name == 'controls':  # SDL starts after the page is there (it takes a moment)
             self.root.after(60, lambda: self.pad_start() if self.current_page == 'controls' else None)
 
@@ -2269,7 +2308,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         ttk.Label(info, text=_('Ready check', 'Проверка'), style='Card.Section.TLabel').pack(anchor='w', pady=(0, px(8)))
         # One line per thing that matters; a line that is not fine leads to its fix with a click.
         self.checks, self.check_lines, self.check_targets = {}, {}, {}
-        for key in ('news', 'system', 'gpu', 'settings', 'game', 'saves', 'online', 'cheats', 'fsr4'):
+        for key in ('news', 'system', 'gpu', 'settings', 'game', 'saves', 'online', 'pool', 'cheats', 'fsr4'):
             line = ttk.Frame(info, style='Inner.TFrame')
             line.pack(fill='x', pady=px(4))
             icon = tk.Label(line, text='', bg=CARD, fg=MUTED, font=(theme.ICONS, 11))
@@ -2813,19 +2852,25 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.section(f, _('Co-op pool'))
         pool = self.var('online_pool', 'app')
         pool.trace_add('write', lambda *_a: (self.refresh_status(), self.root.after_idle(self.ask_hunters)))
+        # SuperMedo Server first (the default), The Hunter's Dream (the previous server) for the time being, then
+        # an own server (Seamless co-op's, a friend's). shadPS4's public shadNet server turned the port away and is no
+        # choice any more. Each keeps its own account (pool_account): switching back and forth signs none out.
         pools = ttk.Frame(f)
+        ttk.Radiobutton(pools, text=_('SuperMedo Server (recommended)') if HUNTERS_DREAM_POOL else
+                        _('SuperMedo Server'), variable=pool, value='supermedo').pack(side='left', padx=(0, 16))
         if HUNTERS_DREAM_POOL:
-            ttk.Radiobutton(pools, text=_("The Hunter's Dream (with bbhost players)"), variable=pool,
+            ttk.Radiobutton(pools, text=_("The Hunter's Dream (previous server)"), variable=pool,
                             value='huntersdream').pack(side='left', padx=(0, 16))
         elif pool.get() == 'huntersdream':
             pool.set('supermedo')
-        ttk.Radiobutton(pools, text=_('SuperMedo Server'), variable=pool, value='supermedo').pack(side='left',
-                                                                                                padx=(0, 16))
-        ttk.Radiobutton(pools, text=_('shadNet server'), variable=pool, value='shadnet').pack(side='left')
+        ttk.Radiobutton(pools, text=_("Own server (Seamless co-op, a friend's)"), variable=pool,
+                        value='shadnet').pack(side='left')
         pools.setting_key = 'online_pool'  # the search's words (bbport_search.WORDS)
-        self.row(f, _('Play with'), pools,
-                 _('SuperMedo Server: supermedo.com\'s own servers, with a free account made below. '
-                   'shadNet: a shadNet server of your choice and its account.'))
+        self.row(f, _('Play with'), pools, ' '.join(
+            [_("SuperMedo Server (recommended): supermedo.com's own servers, with a free account made below.")] +
+            ([_("The Hunter's Dream: the previous server, still here for now; connections there often drop.")]
+             if HUNTERS_DREAM_POOL else []) +
+            [_("Own server: Seamless co-op's or a friend's private server, with its address and account.")]))
         self.hunters_line = ttk.Label(f, text='', style='Muted.TLabel')
         self.hunters_line.grid(row=self.next_row(f), column=1, sticky='w', pady=(2, 0))
         # Each pool shows only its own settings (show_pool below).
@@ -2839,6 +2884,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             before = now
 
         self.section(f, _("The Hunter's Dream account"))
+        # The previous server, for the time being: its players lose the connection often, so the page sends
+        # them on to SuperMedo Server.
+        self.note(f, _("The Hunter's Dream is the previous server and stays only for the time being. Connections "
+                       'there often drop, so SuperMedo Server is recommended. Your sign-ins on both stay when you '
+                       'switch.'), top=0)
+        self.row(f, '', ttk.Button(f, text=_('Switch to SuperMedo Server'), style='Accent.TButton',
+                                   command=lambda: (pool.set('supermedo'), self.collect())))
         account = ttk.Label(f, text='', justify='left')
 
         thd_id, thd_token = self.var('thd_online_id', 'app'), self.var('thd_token', 'app')
@@ -2900,25 +2952,18 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         group('huntersdream')
         self.section(f, _('Account'))
         group('account')
-        # Only for shadNet: on SuperMedo Server it read as if online play failed there too.
-        self.note(f, _("shadPS4's public shadNet server doesn't accept this port's version at the moment, so online "
-                       'play there fails. Play with SuperMedo Server, or a shadNet server that accepts the port '
-                       'under Use my own servers.'), top=0)
-        group('public_shadnet')
         self.row(f, _('Online ID (NPID)'), ttk.Entry(f, textvariable=self.var('online_npid', 'app'), width=40),
-                 _('Your shadNet account name, not your email.'))
+                 _('Your account name on that server, not your email.'))
         self.row(f, _('Password'), ttk.Entry(f, textvariable=self.var('online_password', 'app'), width=40, show='•'),
                  _('Saved on this PC with the other launcher settings.'))
-        # The servers' addresses only for those who play on their own (a private server, a friend's):
-        # everyone else plays on the public ones and never needs to see a port number.
+        # The own server's addresses below always count on its pool (online_custom_servers on): the public
+        # shadNet server, the only other one, turned the port away.
         custom = self.var('online_custom_servers', 'app')
-        self.check(f, 'online_custom_servers', 'app', _('Use my own servers'),
-                   _('Off: the public servers. On: a private server, with the addresses from the person who '
-                     'runs it.'))
         group('shadnet')
         # SuperMedo Server: the account in use (Sign out empties it), and a new account made on the
-        # server from here with its own boxes; once made, it is the account in use.
-        npid_var, password_var = self.var('online_npid', 'app'), self.var('online_password', 'app')
+        # server from here with its own boxes; once made, it is the account in use. Its own settings,
+        # not the shadNet boxes (a co-op tool writes those).
+        npid_var, password_var = self.var('supermedo_npid', 'app'), self.var('supermedo_pass', 'app')
         self.section(f, _('SuperMedo account'))
         signed = ttk.Label(f, text='', justify='left')
 
@@ -2954,7 +2999,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.ui_calls.put(lambda: (npid_var.set(npid), password_var.set(password),
                                            discord_line.configure(text=''), self.collect()))
             threading.Thread(target=work, daemon=True).start()
-        self.row(f, _('Account'), signed, key='online_npid')
+        self.row(f, _('Account'), signed, key='supermedo_npid')
         buttons = ttk.Frame(f)
         ttk.Button(buttons, text=_('Sign in with Discord'), command=sign_in_discord).pack(side='left')
         ttk.Button(buttons, text=_('Sign out'), command=sign_out).pack(side='left', padx=(14, 0))
@@ -2987,10 +3032,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                            sign_up.configure(text=text), self.collect()))
             threading.Thread(target=work, daemon=True).start()
         self.row(f, _('New Online ID'), ttk.Entry(f, textvariable=new_npid, width=40),
-                 _('1 to 16 letters, numbers, _ or -. Other players see this name.'), key='online_npid')
-        self.row(f, _('New password'), ttk.Entry(f, textvariable=new_password, width=40, show='•'), key='online_npid')
+                 _('1 to 16 letters, numbers, _ or -. Other players see this name.'), key='supermedo_npid')
+        self.row(f, _('New password'), ttk.Entry(f, textvariable=new_password, width=40, show='•'),
+                 key='supermedo_npid')
         self.row(f, _('Email address'), ttk.Entry(f, textvariable=email, width=40),
-                 _('Only to make the account.'), key='online_npid')
+                 _('Only to make the account.'), key='supermedo_npid')
         self.row(f, '', ttk.Button(f, text=_('Create account'), command=create_account))
         sign_up.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
         group('supermedo')
@@ -3001,8 +3047,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.section(f, _('Co-op server (bells and summons)'))
         server = self.var('online_server', 'app')
         self.row(f, _('Server address'), ttk.Entry(f, textvariable=server, width=40),
-                 _('srv.shadps4.net:31313 is the public shadPS4 server. For a private server, enter '
-                   'host:port from the person who runs it.'))
+                 _('host:port from the person who runs the server (Seamless co-op: its own address).'))
         self.row(f, _('WebAPI address'), ttk.Entry(f, textvariable=self.var('online_webapi', 'app'), width=40),
                  _('Of the shadNet server, not the game server. Leave empty: the server address with '
                    'port 31315 is used.'))
@@ -3019,8 +3064,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             online_on = self.var('online', 'app').get()
             pool_name = pool.get()
             own = custom.get()
-            address, webapi = shadnet_servers({**values, 'online_custom_servers': own})
+            address, webapi = (SUPERMEDO_SERVER, SUPERMEDO_WEBAPI) if pool_name == 'supermedo' else \
+                shadnet_servers({**values, 'online_custom_servers': own})
             game = game_server({**values, 'online_pool': pool_name, 'online_custom_servers': own})
+            supermedo_name = npid_var.get().strip() if password_var.get() else ''
             hunters_dream = pool_name == 'huntersdream'
             signed_in = thd_id.get() if thd_token.get() else ''
             result.configure(text=_('Checking…'))
@@ -3032,6 +3079,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                     _('Not signed in: use "Sign in with Discord" above.'))
                 else:
                     text = server_check(address, webapi, game)
+                if pool_name == 'supermedo':
+                    text += '\n' + (_('Signed in as {}').format(supermedo_name) if supermedo_name else
+                                    _('Not signed in: sign in with Discord, or create an account below.'))
                 if pool_name == 'shadnet' and own and values['online_webapi'].strip() \
                         and values['online_webapi'].strip() != webapi:
                     text += '\n' + _('The WebAPI box holds the game server address; it is ignored.')
@@ -3044,17 +3094,19 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.note(f, _('Everyone in a session needs the same game version (1.09) and the same server. '
                        'Cheats change the game for the other players too: turn them off when you play together.'))
         show_code()  # hidden until a sign-in shows one; its row stays reserved (rows are counted above)
-        shown = {'shadnet': {'account', 'public_shadnet', 'shadnet', 'upnp'},
+        shown = {'shadnet': {'account', 'shadnet', 'servers', 'upnp'},
                  'huntersdream': {'huntersdream', 'upnp'},
-                 'supermedo': {'account', 'shadnet', 'supermedo', 'upnp'}}
+                 'supermedo': {'supermedo', 'upnp'}}
 
         def show_pool(*_args):
             if pool.get() == 'huntersdream' and not HUNTERS_DREAM_POOL:
                 pool.set('supermedo')  # runs show_pool again
                 return
             want = set(shown.get(pool.get(), shown['shadnet']))
-            if pool.get() == 'shadnet' and custom.get():
-                want.add('servers')
+            if pool.get() == 'shadnet' and not custom.get():
+                custom.set(True)  # an own server: its addresses count
+                if server.get().strip() == APP_DEFAULTS['online_server']:
+                    server.set('')  # shadPS4's public one, which turns the port away: to be filled in
             for name, widgets in groups.items():
                 for widget in widgets:
                     if widget is not code_box:
@@ -4150,13 +4202,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             fsr411_ready = status['supported']
             self.check_line('fsr4', '' if fsr411_ready else '• FSR 4.1.1: ' + bbport_fsr411.hint(status, _),
                             lambda: self.show('graphics'))
-        online, pool = self.var('online', 'app').get(), self.var('online_pool', 'app').get()
-        signed_in = (bool(self.var('thd_token', 'app').get()) if pool == 'huntersdream' else
-                     bool(self.var('online_npid', 'app').get().strip()))
+        online = self.var('online', 'app').get()
+        name = self.account_name()
+        signed_in = bool(name)
         self.check_line('online', ('⚠ ' + _('Online is on, but you are not signed in yet: sign in now')
                                    if online and not signed_in else ''), lambda: self.show('online'))
+        previous = online and self.var('online_pool', 'app').get() == 'huntersdream'  # nudged to SuperMedo Server
+        self.check_line('pool', '• ' + _("The Hunter's Dream is the previous server, and connections there often "
+                                         'drop: switch to SuperMedo Server') if previous else '',
+                        lambda: self.show('online'))
         if getattr(self, 'online_note', None):
-            name = self.var('thd_online_id', 'app').get() if pool == 'huntersdream' else ''
             self.online_note.configure(text=(_('signed in as {}').format(name) if online and signed_in and name else
                                              _('not signed in ›') if online and not signed_in else ''),
                                        fg=MUTED if signed_in else theme.AMBER)
@@ -4179,6 +4234,33 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.status.configure(text=bbport_fsr411.hint(status, _) if info and not fsr411_ready else
                                   self.summary() if info else _('Choose the game folder first.',
                                                                 'Сначала выберите папку игры.'), fg=MUTED)
+
+    def check_online_routes(self):
+        """The Online page opened: settings.json again, in case another program wrote it meanwhile (Seamless
+        co-op writes its server). The shadNet settings it set are taken; the pool and the SuperMedo Server and The
+        Hunter's Dream sign-ins stay as the launcher has them, settled again (settled_pool), and are written
+        back, so the page and the next start use the right sign-in."""
+        written = getattr(self, 'online_written', None)
+        if written is None or not CONFIG_FILE.exists():
+            return
+        taken, kept = outside_online_changes(written, load_settings())
+        if not taken and not kept:
+            return
+        for key, value in taken.items():
+            self.var(key, 'app').set(value)
+        pool = self.var('online_pool', 'app')
+        settled = settled_pool({'online_pool': pool.get(),
+                                'online_custom_servers': self.var('online_custom_servers', 'app').get()})
+        if settled != pool.get():
+            pool.set(settled)
+        self.collect()
+        self.append(_('Online: another program changed the online settings (a co-op tool?). Its shadNet '
+                      'settings are used; your service and sign-ins stay as they were.') + '\n')
+
+    def account_name(self):
+        """The chosen pool's account (pool_account) as the page shows it now."""
+        return pool_account({key: self.var(key, 'app').get() for key in (
+            'online_pool', 'thd_online_id', 'thd_token', 'supermedo_npid', 'supermedo_pass', 'online_npid')})
 
     def poll_hunters(self):
         """Every minute: the count of The Hunter's Dream again when it is the chosen pool, the window is
@@ -4571,6 +4653,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                     f"written {INI_DEFAULTS['output_res']})")
         self.app['output_custom'] = custom_output(self.ini.get('output_res'), self.app)
         write_settings(self.app)
+        self.online_written = {key: self.app.get(key) for key in SHADNET_KEYS + OWN_ONLINE_KEYS}
         save_ini({**{key: self.ini[key] for key in INI_DEFAULTS},
                   **{key: str(self.app.get(key, APP_DEFAULTS[key])) for key in MIRRORED_KEYS}}, self.ini_lines)
         self.ini, self.ini_lines = load_ini()
@@ -4617,7 +4700,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.status.configure(text=_('The game is running.', 'Игра запущена.'), fg=GOLD)
             return
         online, npid = self.var('online', 'app'), self.var('online_npid', 'app')
-        if not online.get() and npid.get().strip():
+        if not online.get() and self.account_name():
             choice = self.messagebox.askyesnocancel(
                 'Bloodborne', _('An online account is filled in, but "Play online" is off.\n\n'
                                 'Yes: play online.   No: play offline.'))
@@ -4630,6 +4713,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             if self.messagebox.askyesno(
                     'Bloodborne', _("To play online with The Hunter's Dream, sign in with Discord first.") + '\n\n' +
                     _('Sign in now? (No: play offline this time.)')):
+                self.show('online')
+                return
+            online.set(False)
+        if online.get() and pool_name == 'supermedo' and not self.account_name():
+            # Online without an account was offline without a word (a new player, the setup's default).
+            if self.messagebox.askyesno(
+                    'Bloodborne', _('To play online with SuperMedo Server, sign in with Discord or make a free '
+                                    'account first.') + '\n\n' + _('Sign in now? (No: play offline this time.)')):
                 self.show('online')
                 return
             online.set(False)
@@ -4844,6 +4935,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.app['thd_token'] = ''
         try:
             forget_sign_in()
+            if getattr(self, 'online_written', None) is not None:
+                self.online_written['thd_token'] = ''  # the launcher's own write, not another program's
         except OSError:
             pass  # saved with the other settings later
         self.append(_("The Hunter's Dream refused this PC's sign-in: sign in again on the Online page.",
@@ -5310,9 +5403,12 @@ def forget_sign_in():
 
 
 def needs_sign_in(settings):
-    """Online with The Hunter's Dream without a sign-in: run.py would stop the start (game_environment)."""
-    return bool(settings.get('online')) and settings.get('online_pool') == 'huntersdream' and HUNTERS_DREAM_POOL \
-        and not settings.get('thd_token')
+    """Online with The Hunter's Dream or SuperMedo Server without its account: run.py would stop the start, or the
+    game would stay offline without a word. A start from Steam or a shortcut opens the launcher, whose Play asks."""
+    if not settings.get('online') or pool_account(settings):
+        return False
+    pool = settings.get('online_pool', 'supermedo')
+    return pool == 'supermedo' or (pool == 'huntersdream' and HUNTERS_DREAM_POOL)
 
 
 def custom_output(size, settings):

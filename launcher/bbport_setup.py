@@ -2611,18 +2611,59 @@ class SetupGuide:
         played.pack_options = {'fill': 'x', 'pady': (0, px(14))}
         if origin != 'new':
             played.pack(fill='x', pady=(0, px(14)))
-        if not self.online_offered and self.first:  # on by default (The Hunter's Dream), once
+        if not self.online_offered and self.first:  # on by default (SuperMedo Server), once
             self.online_offered = True
             app.var('online', 'app').set(True)
-            if L.HUNTERS_DREAM_POOL:
-                app.var('online_pool', 'app').set('huntersdream')
+            app.var('online_pool', 'app').set('supermedo')
         online = self.card(body)
         played.pack_options['before'] = online.master  # found later: above the online card
         self.heading(online, _('Play with others'))
         ttk.Checkbutton(online, text=_('Play online: messages, bloodstains, summons and co-op'),
                         variable=app.var('online', 'app'), style='Card.TCheckbutton').pack(anchor='w')
         pool = app.var('online_pool', 'app')
-        if L.HUNTERS_DREAM_POOL and pool.get() == 'huntersdream':
+        if pool.get() == 'supermedo':
+            # Its Discord sign-in here: online on without an account stayed offline without a word.
+            tk.Label(online, text=_('With SuperMedo Server. Sign in once with Discord (free): your account is '
+                                    'made for you.'), bg=theme.CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9),
+                     justify='left', wraplength=px(660)).pack(anchor='w', pady=(px(6), 0))
+            status = tk.Label(online, text='', bg=theme.CARD, fg=theme.GOLD_LIGHT, font=(theme.BODY_SEMI, 10))
+            status.pack(anchor='w', pady=(px(8), 0))
+            row = tk.Frame(online, bg=theme.CARD)
+            row.pack(anchor='w', pady=(px(8), 0))
+            npid, password = app.var('supermedo_npid', 'app'), app.var('supermedo_pass', 'app')
+
+            def show_supermedo():
+                if status.winfo_exists():
+                    signed = npid.get().strip() and password.get()
+                    status.configure(text=_('Signed in as {}').format(npid.get().strip()) if signed else
+                                     _('Not signed in yet'), fg=theme.GOLD_LIGHT if signed else theme.AMBER)
+                    button.configure(text=_('Sign in again') if signed else _('Sign in with Discord'),
+                                     style='Card.TButton' if signed else 'Card.Accent.TButton')
+
+            def sign_in_supermedo():
+                status.configure(text=_('Starting the sign-in…'), fg=theme.MUTED)
+
+                def on_page(page):
+                    import webbrowser
+                    webbrowser.open(page)
+                    app.ui_calls.put(lambda: status.configure(
+                        text=_('Sign in with Discord in the page that opened, then come back here.'), fg=theme.TEXT))
+
+                def work():
+                    try:
+                        name, secret = L.discord_sign_in(L.COMMUNITY_SERVER, on_page)
+                    except (OSError, ValueError, KeyError) as error:
+                        app.ui_calls.put(lambda e=error: status.configure(
+                            text=_('Sign-in failed: {}').format(e), fg=theme.BLOOD_LIGHT))
+                        return
+                    app.ui_calls.put(lambda: (npid.set(name), password.set(secret), show_supermedo(), app.collect()))
+                import threading
+                threading.Thread(target=work, daemon=True).start()
+            button = ttk.Button(row, text=_('Sign in with Discord'), style='Card.Accent.TButton',
+                                command=sign_in_supermedo)
+            button.pack(side='left')
+            show_supermedo()
+        elif L.HUNTERS_DREAM_POOL and pool.get() == 'huntersdream':
             tk.Label(online, text=_("With The Hunter's Dream, together with bbhost players. It needs a free sign-in "
                                     'with Discord, once.'), bg=theme.CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9),
                      justify='left', wraplength=px(660)).pack(anchor='w', pady=(px(6), 0))
@@ -2664,8 +2705,10 @@ class SetupGuide:
             button = ttk.Button(row, text=_('Sign in with Discord'), style='Card.Accent.TButton', command=sign_in)
             button.pack(side='left')
             show()
-        tk.Label(online, text=_('A shadNet server instead, and every option: the Online play page. Offline needs '
-                                'nothing: untick it.'), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9),
+        tk.Label(online, text=_("The Hunter's Dream (the previous server), your own server, and every option: the "
+                                'Online play page. Offline needs nothing: untick it.') if L.HUNTERS_DREAM_POOL else
+                 _('A shadNet server instead, and every option: the Online play page. Offline needs '
+                   'nothing: untick it.'), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9),
                  justify='left', wraplength=px(660)).pack(anchor='w', pady=(px(10), 0))
 
     # -- V: ready --
@@ -2682,8 +2725,9 @@ class SetupGuide:
         preset = dict(L.PRESETS).get(get('preset', 'ini'), ('',))[0].split(' (')[0]
         fps = dict(L.FPS_MODES).get(get('fps_mode', 'app'), ('?',))
         goal = app.goal_name(get('goal', 'app'))
-        online = (_('On, signed in as {}').format(get('thd_online_id', 'app')) if get('online', 'app') and
-                  get('thd_token', 'app') else _('On, sign-in still missing') if get('online', 'app') else _('Off'))
+        account = app.account_name()
+        online = (_('On, signed in as {}').format(account) if get('online', 'app') and account else
+                  _('On, sign-in still missing') if get('online', 'app') else _('Off'))
         rows = [(theme.ICON['folder'], _('Game'), (_('{} · version {}').format(get('game_dir', 'app'), info[1])
                                                    if info else _('not set')), None),
                 (theme.ICON['display'], _('Picture'), '  ·  '.join(
@@ -2691,7 +2735,7 @@ class SetupGuide:
                      upscaler + (f' {preset}' if get('upscaler', 'ini') not in ('off', 'taa') else ''),
                      _(*fps), _('Fullscreen', 'Полный экран') if get('fullscreen', 'app') else _('Window')]), None),
                 (theme.ICON['online'], _('Online'), online, theme.AMBER if get('online', 'app') and not
-                 get('thd_token', 'app') and get('online_pool', 'app') == 'huntersdream' else None)]
+                 account else None)]
         expected = app.expectation()
         if expected:
             rows.append((theme.ICON['system'], _('Expected'), after_colon(expected[0]), expected[1]))

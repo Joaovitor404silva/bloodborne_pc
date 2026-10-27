@@ -190,8 +190,8 @@ TOPICS = {
         "shadPS4's public shadNet server checks which program connects and doesn't accept this port's version at the "
         'moment. The game then plays offline. Your account and your settings are fine.',
         ['Online play: Play with SuperMedo Server, then Sign in with Discord.',
-         'Or a shadNet server that accepts the port: Use my own servers, with the addresses from the person who runs '
-         'it.']),
+         "Or your own server (Seamless co-op, a friend's): choose Own server there, with the address from the "
+         'person who runs it.']),
     'steam_layout': (
         'Steam turns the controller into a mouse and keyboard',
         "With Steam open, its Desktop Layout sends mouse movement and key presses for a controller it manages, on "

@@ -64,12 +64,20 @@ class SignInTests(unittest.TestCase):
 
 
 class PoolTests(unittest.TestCase):
-    """The co-op pools: SuperMedo Server by default, a shadNet server of the player's choice; The Hunter's
-    Dream is off."""
+    """The co-op pools: SuperMedo Server first and by default, The Hunter's Dream (the previous server) for the
+    time being, a shadNet server of the player's choice."""
 
     def test_supermedo_server_by_default(self):
         self.assertEqual(L.APP_DEFAULTS['online_pool'], 'supermedo')
-        self.assertFalse(L.HUNTERS_DREAM_POOL)
+        self.assertTrue(L.HUNTERS_DREAM_POOL)
+
+    def test_supermedo_server_first_and_the_hunters_dream_the_previous_server(self):
+        source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
+        page = source[source.index('    def build_online(self):'):source.index('    def build_mods(self):')]
+        self.assertLess(page.index("value='supermedo'"), page.index("value='huntersdream'"))
+        self.assertLess(page.index("value='huntersdream'"), page.index("value='shadnet'"))
+        self.assertIn('_("The Hunter\'s Dream (previous server)")', page)
+        self.assertIn("_('Switch to SuperMedo Server')", page)
 
     def test_the_supermedo_pool_plays_on_supermedo_server(self):
         settings = {**L.APP_DEFAULTS, 'online': True, 'online_pool': 'supermedo', 'thd_online_id': 'Hunter',
@@ -86,11 +94,12 @@ class PoolTests(unittest.TestCase):
     def test_a_start_moves_dead_ends_to_supermedo_server(self):
         """Beta 8 testers could not play online: an earlier launcher left them on shadNet without own servers,
         shadPS4's public server, which refuses the port. The Hunter's Dream (off) and unknown pools too."""
-        for pool in ('shadnet', 'huntersdream', 'gone', None):
+        for pool in ('shadnet', 'gone', None):
             self.assertEqual(L.settled_pool({**L.APP_DEFAULTS, 'online_pool': pool,
                                              'online_custom_servers': False}), 'supermedo', pool)
-        with mock.patch.object(L, 'HUNTERS_DREAM_POOL', True):
-            self.assertEqual(L.settled_pool({**L.APP_DEFAULTS, 'online_pool': 'huntersdream'}), 'huntersdream')
+        self.assertEqual(L.settled_pool({**L.APP_DEFAULTS, 'online_pool': 'huntersdream'}), 'huntersdream')
+        with mock.patch.object(L, 'HUNTERS_DREAM_POOL', False):  # BB_HUNTERS_DREAM=0
+            self.assertEqual(L.settled_pool({**L.APP_DEFAULTS, 'online_pool': 'huntersdream'}), 'supermedo')
 
     def test_a_start_without_the_window_settles_the_same(self):
         """--play (Steam, a shortcut) never builds the window: settled_online gives it the same pool, also for
@@ -104,12 +113,59 @@ class PoolTests(unittest.TestCase):
         boxed = {**seamless, 'online_custom_servers': False}  # the box saved off: the player's choice
         self.assertEqual(L.settled_online({**L.APP_DEFAULTS, **boxed}, boxed)['online_pool'], 'supermedo')
 
-    def test_only_the_hunters_dream_asks_for_its_sign_in(self):
-        """With The Hunter's Dream turned on (BB_HUNTERS_DREAM=1) SuperMedo Server needed its sign-in too."""
-        with mock.patch.object(L, 'HUNTERS_DREAM_POOL', True):
-            self.assertTrue(L.needs_sign_in({'online': True, 'online_pool': 'huntersdream'}))
-            self.assertFalse(L.needs_sign_in({'online': True, 'online_pool': 'supermedo'}))
-            self.assertFalse(L.needs_sign_in({'online': True, 'online_pool': 'huntersdream', 'thd_token': 't'}))
+    def test_a_service_without_its_own_account_asks(self):
+        """A start from Steam or a shortcut opens the launcher, whose Play asks: online on SuperMedo Server without
+        its account stayed offline without a word (a new player). Another pool's sign-in does not count."""
+        cases = [({'online_pool': 'huntersdream'}, True), ({'online_pool': 'huntersdream', 'thd_token': 't',
+                                                            'thd_online_id': 'h'}, False),
+                 ({'online_pool': 'supermedo'}, True), ({'online_pool': 'supermedo', 'thd_token': 't',
+                                                         'thd_online_id': 'h', 'online_npid': 'n'}, True),
+                 ({'online_pool': 'supermedo', 'supermedo_npid': 'n', 'supermedo_pass': 'p'}, False),
+                 ({'online_pool': 'shadnet'}, False)]
+        for settings, asks in cases:
+            self.assertEqual(L.needs_sign_in({'online': True, **settings}), asks, settings)
+            self.assertFalse(L.needs_sign_in({'online': False, **settings}))
+
+    def test_each_service_keeps_its_own_account(self):
+        """SuperMedo Server's account was in the shadNet boxes, which Seamless co-op writes too: one overwrote the
+        other. Each pool signs in with its own now."""
+        settings = {**L.APP_DEFAULTS, 'online': True, 'supermedo_npid': 'medo', 'supermedo_pass': 'mp',
+                    'thd_online_id': 'hunter', 'thd_token': 't', 'online_npid': 'seamless', 'online_password': 'sp',
+                    'online_custom_servers': True, 'online_server': 'play.seamlesshunt.com:31313'}
+        env = L.game_environment({**settings, 'online_pool': 'supermedo'})
+        self.assertEqual((env['BB_SHADNET_SERVER'], env['BB_SHADNET_NPID'], env['BB_SHADNET_PASSWORD']),
+                         (L.SUPERMEDO_SERVER, 'medo', 'mp'))
+        env = L.game_environment({**settings, 'online_pool': 'shadnet'})
+        self.assertEqual((env['BB_SHADNET_SERVER'], env['BB_SHADNET_NPID'], env['BB_SHADNET_PASSWORD']),
+                         ('play.seamlesshunt.com:31313', 'seamless', 'sp'))
+        env = L.game_environment({**settings, 'online_pool': 'huntersdream'})
+        self.assertEqual((env['BB_NET_BACKEND'], env['BB_THD_ONLINE_ID']), ('thd', 'hunter'))
+        self.assertNotIn('BB_SHADNET_NPID', env)
+        for pool, name in (('supermedo', 'medo'), ('huntersdream', 'hunter'), ('shadnet', 'seamless')):
+            self.assertEqual(L.pool_account({**settings, 'online_pool': pool}), name)
+        self.assertEqual(L.pool_account({**L.APP_DEFAULTS, 'online_npid': 'seamless'}), '')
+
+    def test_the_supermedo_account_leaves_the_shadnet_boxes_once(self):
+        """Saved on SuperMedo Server up to beta 8: its account was in the shadNet boxes. Other pools' boxes are
+        shadNet's (a public or a co-op server's account) and stay there."""
+        beta8 = {'online_pool': 'supermedo', 'online_npid': 'medo', 'online_password': 'mp'}
+        self.assertEqual(L.settled_online({**L.APP_DEFAULTS, **beta8}, beta8)['supermedo_npid'], 'medo')
+        self.assertEqual(L.settled_online({**L.APP_DEFAULTS, **beta8}, beta8)['supermedo_pass'], 'mp')
+        for saved in ({**beta8, 'supermedo_npid': 'other'}, {**beta8, 'online_pool': 'shadnet'},
+                      {**beta8, 'online_pool': 'huntersdream'}):
+            self.assertNotIn('supermedo_npid', L.settled_online({**L.APP_DEFAULTS, **saved}, saved))
+
+    def test_another_programs_writes(self):
+        """Seamless co-op writes settings.json from outside: its shadNet settings are taken, the pool and the
+        SuperMedo Server and The Hunter's Dream sign-ins stay the launcher's (the Online page writes them back)."""
+        written = {**{key: L.APP_DEFAULTS[key] for key in L.SHADNET_KEYS + L.OWN_ONLINE_KEYS},
+                   'supermedo_npid': 'medo', 'thd_token': 't'}
+        self.assertEqual(L.outside_online_changes(written, dict(written)), ({}, []))
+        on_disk = {**written, 'online_server': 'bbsc.example:31313', 'online_npid': 'bbsc',
+                   'online_pool': 'shadnet', 'supermedo_npid': '', 'thd_token': ''}
+        taken, kept = L.outside_online_changes(written, on_disk)
+        self.assertEqual(taken, {'online_server': 'bbsc.example:31313', 'online_npid': 'bbsc'})
+        self.assertEqual(sorted(kept), ['online_pool', 'supermedo_npid', 'thd_token'])
 
     def test_a_start_keeps_shadnet_with_own_servers(self):
         """A private server or a co-op tool's (Seamless co-op: play.seamlesshunt.com) stays on shadNet."""
