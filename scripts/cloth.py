@@ -48,8 +48,10 @@ FRAME_COUNT, FRAME_TIME = 0x260, 0x264
 # In the code segment's last page, past the port's other code there: Quit to Desktop 0x50D9700,
 # crash guards 0x50D98C0, Rebirth 0x50D9900, PC Settings 0x50D9B00 (pc_menu.py; its page table up to
 # 0x50D9C48 is rewritten by the port when the game loads: a cave at 0x50D9C00 had its first
-# instructions overwritten with addresses, and the first cloth step crashed). The constants end the page.
+# instructions overwritten with addresses, and the first cloth step crashed). The constants end the page;
+# between the code (up to CODE_END) and them lies foliage_time.py's code.
 CAVE = 0x50D9D00
+CODE_END = 0x50D9F50
 STATE = 0x56D3F80             # the data segment's unused tail (past its size, in its last page):
 LAST_FRAME, LAST_TIME, RATIO, SOFTEN = STATE, STATE + 4, STATE + 8, STATE + 12   # 0 until set
 CALLERS = ((0x76EC70, -0x18), (0x76EE10, -0x20))   # return address, its step number's save slot
@@ -207,12 +209,9 @@ def code_writes():
     cave.jmp(BATCH + len(BATCH_BYTES))
     for at, name in jumps:
         cave.data[at:at + 4] = struct.pack('<i', labels[name] - (at + 4))
-    if cave.here > constants:
+    if cave.here > CODE_END:
         raise ValueError('steady cloth code does not fit')
-    cave.data += b'\xcc' * (constants - cave.here) + struct.pack(f'<{len(CONSTANTS)}f', *CONSTANTS)
-    if cave.here > quit_menu.CAVE_END:
-        raise ValueError('steady cloth code runs past the code segment')
-    writes = [(cave.offset, bytes(cave.data))]
+    writes = [(cave.offset, bytes(cave.data)), (constants, struct.pack(f'<{len(CONSTANTS)}f', *CONSTANTS))]
     for at, original, target in ((SITE, SITE_BYTES, CAVE), (BEND, BEND_BYTES, bend), (BATCH, BATCH_BYTES, batch)):
         site = quit_menu.Code(at)
         site.jmp(target)

@@ -11,14 +11,15 @@ import quit_menu  # noqa: E402
 
 class SteadyClothTest(unittest.TestCase):
     def test_the_code_fits_its_cave(self):
-        (cave, code), (site, jump), *bends = cloth.code_writes()
+        (cave, code), (constants, values), (site, jump), *bends = cloth.code_writes()
         self.assertEqual(cave, cloth.CAVE)
-        self.assertEqual(cave + len(code), quit_menu.CAVE_END)
+        self.assertLessEqual(cave + len(code), cloth.CODE_END)  # foliage_time.py's code follows
         self.assertGreaterEqual(cave, 0x50D9C48)  # past PC Settings' page table (pc_menu.py)
-        self.assertEqual(struct.unpack(f'<{len(cloth.CONSTANTS)}f', code[-4 * len(cloth.CONSTANTS):]), cloth.CONSTANTS)
+        self.assertEqual(constants + len(values), quit_menu.CAVE_END)
+        self.assertEqual(struct.unpack(f'<{len(cloth.CONSTANTS)}f', values), cloth.CONSTANTS)
 
     def test_the_site_jumps_to_the_cave_and_keeps_its_length(self):
-        (cave, code), (site, jump), *bends = cloth.code_writes()
+        (cave, code), _constants, (site, jump), *bends = cloth.code_writes()
         self.assertEqual(site, cloth.SITE)
         self.assertEqual(len(jump), len(cloth.SITE_BYTES))
         self.assertEqual(jump[0], 0xE9)
@@ -33,7 +34,7 @@ class SteadyClothTest(unittest.TestCase):
     def test_the_bend_sites_jump_to_their_detours(self):
         writes = cloth.code_writes()
         cave, code = writes[0]
-        for (site, jump), original in zip(writes[2:], (cloth.BEND_BYTES, cloth.BATCH_BYTES)):
+        for (site, jump), original in zip(writes[3:], (cloth.BEND_BYTES, cloth.BATCH_BYTES)):
             self.assertEqual(len(jump), len(original))
             target = site + 5 + struct.unpack_from('<i', jump, 1)[0]
             self.assertEqual(code[target - cave:target - cave + len(original)], original)

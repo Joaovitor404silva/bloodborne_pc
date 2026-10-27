@@ -5,6 +5,7 @@ Two caves at the same addresses merge without a conflict in git, and one's code 
 other's bytes (Steady cloth at 0x50D9C00 under PC Settings' page table: a crash at the first cloth
 step). Every script with a CAVE and code_writes() is checked, so a cave added later is too."""
 import importlib
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -19,7 +20,7 @@ def cave_writes():
     found = []
     for path in sorted(SCRIPTS.glob('*.py')):
         text = path.read_text(encoding='utf-8')
-        if '\nCAVE = ' not in text or '\ndef code_writes(' not in text:
+        if not re.search(r'^CAVE\b', text, re.M) or '\ndef code_writes(' not in text:  # CAVE = or CAVE, CAVE_END =
             continue
         module = importlib.import_module(path.stem)
         for at, data in module.code_writes():

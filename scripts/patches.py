@@ -636,6 +636,18 @@ def main():
             names.append('Steady cloth')
         except ValueError as error:
             print(f'Patches: {error}; steady cloth skipped')
+    if os.environ.get('BB_FOLIAGE_TIME')!='0':
+        # Plants sway with the frame's time (foliage_time.py: the steady time of cloth_time.py, not a
+        # step a frame: no faster sway at high frame rates, no jolts when frame times swing).
+        sys.path.insert(0,str(Path(__file__).resolve().parent))
+        import foliage_time
+        elf=(a.out/'eboot.elf').read_bytes()
+        try:
+            foliage_time.check_original(lambda start,end: eboot_bytes(elf,start,end))
+            writes+=foliage_time.code_writes()
+            names.append('Plant sway time')
+        except ValueError as error:
+            print(f'Patches: {error}; plant sway time skipped')
     if os.environ.get('BB_AIR_DRAG')!='0':
         # Jumps as at 30 FPS at any frame rate (air_drag.py: the air drag per second of 30 FPS).
         sys.path.insert(0,str(Path(__file__).resolve().parent))
