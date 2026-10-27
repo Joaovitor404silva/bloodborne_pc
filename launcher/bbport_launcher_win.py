@@ -812,6 +812,20 @@ def has_own_servers(s):
                for key in ('online_server', 'online_webapi', 'online_community'))
 
 
+def settled_pool(s):
+    """The co-op pool a launcher start keeps (online_custom_servers already settled). SuperMedo Server for a
+    pool the launcher no longer has, The Hunter's Dream while it is off, and shadNet without "Use my own
+    servers": that is shadPS4's public server, which refuses the port, and an earlier launcher's setting
+    left beta testers unable to play online. shadNet with own servers (a private one, a co-op tool's)
+    stays."""
+    pool = s.get('online_pool')
+    if pool not in ('supermedo', 'shadnet', 'huntersdream') or (pool == 'huntersdream' and not HUNTERS_DREAM_POOL):
+        return 'supermedo'
+    if pool == 'shadnet' and not s.get('online_custom_servers'):
+        return 'supermedo'
+    return pool
+
+
 def webapi_setting(s):
     """The WebAPI field, unless it holds the game server's address (a common mix-up): then the
     co-op server's own WebAPI is used."""
@@ -1235,9 +1249,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.app['online_custom_servers'] = has_own_servers(self.app)
         if self.app.get('readbacks') == '0':  # Off left the launcher (READBACKS)
             self.app['readbacks'] = ''
-        if self.app.get('online_pool') not in ('supermedo', 'shadnet', 'huntersdream') or \
-                (self.app.get('online_pool') == 'huntersdream' and not HUNTERS_DREAM_POOL):
-            self.app['online_pool'] = 'supermedo'  # The Hunter's Dream is off: SuperMedo Server
+        self.app['online_pool'] = settled_pool(self.app)  # dead ends to SuperMedo Server
         for key in ('supermedo_user', 'supermedo_password'):  # its account, the password in plain text
             self.app.pop(key, None)
         if self.app.get('ui_mode') not in ('simple', 'expert'):

@@ -64,8 +64,8 @@ class SignInTests(unittest.TestCase):
 
 
 class PoolTests(unittest.TestCase):
-    """The co-op pools: The Hunter's Dream by default, a shadNet server of the player's choice; SuperMedo
-    Server is no longer in the launcher."""
+    """The co-op pools: SuperMedo Server by default, a shadNet server of the player's choice; The Hunter's
+    Dream is off."""
 
     def test_supermedo_server_by_default(self):
         self.assertEqual(L.APP_DEFAULTS['online_pool'], 'supermedo')
@@ -82,6 +82,21 @@ class PoolTests(unittest.TestCase):
     def test_the_hunters_dream_has_its_own_address(self):
         self.assertIn('supermedo.com', L.COMMUNITY_SERVER)
         self.assertEqual(L.HUNTERS_DREAM_SERVER, 'https://thehuntersdream.com')
+
+    def test_a_start_moves_dead_ends_to_supermedo_server(self):
+        """Beta 8 testers could not play online: an earlier launcher left them on shadNet without own servers,
+        shadPS4's public server, which refuses the port. The Hunter's Dream (off) and unknown pools too."""
+        for pool in ('shadnet', 'huntersdream', 'gone', None):
+            self.assertEqual(L.settled_pool({**L.APP_DEFAULTS, 'online_pool': pool,
+                                             'online_custom_servers': False}), 'supermedo', pool)
+        with mock.patch.object(L, 'HUNTERS_DREAM_POOL', True):
+            self.assertEqual(L.settled_pool({**L.APP_DEFAULTS, 'online_pool': 'huntersdream'}), 'huntersdream')
+
+    def test_a_start_keeps_shadnet_with_own_servers(self):
+        """A private server or a co-op tool's (Seamless co-op: play.seamlesshunt.com) stays on shadNet."""
+        own = {**L.APP_DEFAULTS, 'online_pool': 'shadnet', 'online_server': 'play.seamlesshunt.com:31313'}
+        self.assertEqual(L.settled_pool({**own, 'online_custom_servers': L.has_own_servers(own)}), 'shadnet')
+        self.assertEqual(L.settled_pool({**L.APP_DEFAULTS, 'online_pool': 'supermedo'}), 'supermedo')
 
 
 class GameServerTests(unittest.TestCase):
