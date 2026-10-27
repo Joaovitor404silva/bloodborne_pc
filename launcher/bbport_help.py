@@ -579,8 +579,10 @@ class HelpMixin:
         self.index_entry(button, _('Save a report'), key='button:report')
         ttk.Button(row, text=_('Copy a summary'), style='Card.TButton', command=self.copy_diagnostics).pack(
             side='left', padx=(px(8), 0))
-        ttk.Button(row, text=_('Open the Discord'), style='Card.TButton',
-                   command=lambda: webbrowser.open(DISCORD)).pack(side='left', padx=(px(8), 0))
+        discord = ttk.Button(row, text=_('Open the Discord'), style='Card.TButton',
+                             command=lambda: webbrowser.open(DISCORD))
+        discord.pack(side='left', padx=(px(8), 0))
+        self.index_entry(discord, _('Open the Discord'), key='button:discord')
         more = tk.Frame(last, bg=theme.CARD)
         more.pack(anchor='w', pady=(px(8), 0))
         ttk.Button(more, text=_('Show the log'), style='Card.TButton', command=lambda: self.show('log')).pack(

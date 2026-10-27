@@ -1841,16 +1841,21 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.expert_var = expert
         # Packed ahead of the search and the entries: the switch and the link stay at the bottom
         # however short the window gets (the entries get flatter instead, fit_nav).
-        site = tk.Label(side, text=COMMUNITY_SITE.split('//')[1].strip('/') + '  \u2197', bg=BG, fg=GOLD,
-                        font=(theme.BODY_MEDIUM, 9), cursor='hand2')
-        site.pack(side='bottom', anchor='w', padx=px(22), pady=(0, px(16)), before=self.search_box)
+        # The community site and its Discord side by side (the Discord was only at the end of Help).
+        links = tk.Frame(side, bg=BG)
+        links.pack(side='bottom', anchor='w', padx=px(22), pady=(0, px(16)), before=self.search_box)
+        site = COMMUNITY_SITE.split('//')[1].strip('/')
+        for text, url in ((site, COMMUNITY_SITE), ('Discord', bbport_help.DISCORD)):
+            link = tk.Label(links, text=text + '  \u2197', bg=BG, fg=GOLD, font=(theme.BODY_MEDIUM, 9),
+                            cursor='hand2')
+            link.pack(side='left', padx=(0, px(16)))
+            link.bind('<Button-1>', lambda _e, u=url: webbrowser.open(u))
+            link.bind('<Enter>', lambda _e, w=link: w.configure(fg=theme.TEXT_STRONG))
+            link.bind('<Leave>', lambda _e, w=link: w.configure(fg=GOLD))
         self.mode_switch = ttk.Checkbutton(side, text=_('Expert view'), variable=expert, command=self.toggle_mode,
                                            style='Bar.TCheckbutton')  # drawn on the side bar's colour
         self.mode_switch.pack(side='bottom', anchor='w', padx=px(22), pady=(px(4), px(6)), before=self.search_box)
         side.bind('<Configure>', lambda _e: self.root.after_idle(self.fit_nav))
-        site.bind('<Button-1>', lambda _e: webbrowser.open(COMMUNITY_SITE))
-        site.bind('<Enter>', lambda _e: site.configure(fg=theme.TEXT_STRONG))
-        site.bind('<Leave>', lambda _e: site.configure(fg=GOLD))
         self.apply_mode()
 
         right = tk.Frame(self.root, bg=PANEL)
