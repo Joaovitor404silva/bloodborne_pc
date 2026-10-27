@@ -189,7 +189,7 @@ TOPICS = {
         'The shadNet server turned this port away',
         "shadPS4's public shadNet server checks which program connects and doesn't accept this port's version at the "
         'moment. The game then plays offline. Your account and your settings are fine.',
-        ["Online play: Play with The Hunter's Dream, then Sign in with Discord.",
+        ['Online play: Play with SuperMedo Server, then Sign in with Discord.',
          'Or a shadNet server that accepts the port: Use my own servers, with the addresses from the person who runs '
          'it.']),
     'steam_layout': (

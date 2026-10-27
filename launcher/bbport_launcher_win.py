@@ -2807,7 +2807,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             ttk.Radiobutton(pools, text=_("The Hunter's Dream (with bbhost players)"), variable=pool,
                             value='huntersdream').pack(side='left', padx=(0, 16))
         elif pool.get() == 'huntersdream':
-            pool.set('shadnet')
+            pool.set('supermedo')
         ttk.Radiobutton(pools, text=_('SuperMedo Server'), variable=pool, value='supermedo').pack(side='left',
                                                                                                 padx=(0, 16))
         ttk.Radiobutton(pools, text=_('shadNet server'), variable=pool, value='shadnet').pack(side='left')
@@ -2888,9 +2888,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         credit.bind('<Button-1>', lambda _e: webbrowser.open('https://github.com/Awakenchan/BloodBorneButPc'))
         group('huntersdream')
         self.section(f, _('Account'))
+        group('account')
+        # Only for shadNet: on SuperMedo Server it read as if online play failed there too.
         self.note(f, _("shadPS4's public shadNet server doesn't accept this port's version at the moment, so online "
-                       "play there fails. Play with The Hunter's Dream, or a shadNet server that accepts the port "
+                       'play there fails. Play with SuperMedo Server, or a shadNet server that accepts the port '
                        'under Use my own servers.'), top=0)
+        group('public_shadnet')
         self.row(f, _('Online ID (NPID)'), ttk.Entry(f, textvariable=self.var('online_npid', 'app'), width=40),
                  _('Your shadNet account name, not your email. Register one at shadnet.shadps4.net, or ask the '
                    'owner of a private server.'))
@@ -3029,12 +3032,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.note(f, _('Everyone in a session needs the same game version (1.09) and the same server. '
                        'Cheats change the game for the other players too: turn them off when you play together.'))
         show_code()  # hidden until a sign-in shows one; its row stays reserved (rows are counted above)
-        shown = {'shadnet': {'shadnet', 'upnp'}, 'huntersdream': {'huntersdream', 'upnp'},
-                 'supermedo': {'shadnet', 'supermedo', 'upnp'}}
+        shown = {'shadnet': {'account', 'public_shadnet', 'shadnet', 'upnp'},
+                 'huntersdream': {'huntersdream', 'upnp'},
+                 'supermedo': {'account', 'shadnet', 'supermedo', 'upnp'}}
 
         def show_pool(*_args):
             if pool.get() == 'huntersdream' and not HUNTERS_DREAM_POOL:
-                pool.set('shadnet')  # runs show_pool again
+                pool.set('supermedo')  # runs show_pool again
                 return
             want = set(shown.get(pool.get(), shown['shadnet']))
             if pool.get() == 'shadnet' and custom.get():

@@ -190,6 +190,34 @@ class LiveTests(unittest.TestCase):
                     self.pump(0.3)
                     self.assertEqual(self.app.current_page, name)
 
+    def test_the_public_shadnet_note_only_on_shadnet(self):
+        """"shadPS4's public shadNet server doesn't accept this port" showed on SuperMedo Server too, where it read
+        as if online play failed there as well (beta 8 testers); it names SuperMedo Server, not The Hunter's
+        Dream, which is off."""
+        self.app.expert_var.set(True)
+        self.app.toggle_mode()
+        self.app.show('online')
+        self.pump(0.3)
+
+        def notes(widget):
+            found = []
+            for child in widget.winfo_children():
+                try:
+                    if str(child.cget('text')).startswith("shadPS4's public shadNet server doesn't accept"):
+                        found.append(child)
+                except Exception:  # a widget without text
+                    pass
+                found += notes(child)
+            return found
+        note, = notes(self.root)
+        self.assertIn('SuperMedo Server', note.cget('text'))
+        self.assertNotIn("Hunter's Dream", note.cget('text'))
+        pool = self.app.var('online_pool', 'app')
+        for name, shown in (('supermedo', False), ('shadnet', True), ('supermedo', False)):
+            pool.set(name)
+            self.pump(0.2)
+            self.assertEqual(note.winfo_manager() == 'grid', shown, name)
+
     def test_the_update_notice_shows(self):
         self.app.offer_update('99.0', 'https://example.invalid/update.zip', 'https://example.invalid/')
         self.pump(0.3)
