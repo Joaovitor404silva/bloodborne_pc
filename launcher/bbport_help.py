@@ -851,27 +851,32 @@ class HelpMixin:
                                     '\n\n' + _('Show the fix?')):
             self.open_topic(topics[0])
 
-    def save_report(self):
+    def save_report(self, button=None, note=None):
         """The BB Report Tool's zip, the one the Discord helpers ask for: run without its window into
         <bbport>/reports, then shown selected in Explorer with its summary in the clipboard for the #help
-        post. Without the tool (a build from the sources): the launcher's own zip on the desktop."""
+        post. Without the tool (a build from the sources): the launcher's own zip on the desktop. `button` and
+        `note`: where it was asked for (Help's, or the Report button beside Play and the status line). The tool
+        gets this port folder and the log this launcher wrote (<saves folder>/last_run.log): on its own it took
+        the newest log of any installation it found."""
         import subprocess
         import time
+        button, note = button or self.report_button, note or self.report_note
         tool = report_tool()
         if not tool:
-            return self.save_own_report()
+            return self.save_own_report(note)
         self.collect()  # the tool reads the settings from the files
         folder = L.DATA_DIR / 'reports'
         try:
             folder.mkdir(parents=True, exist_ok=True)
         except OSError as error:
-            self.report_note.configure(text=_('Could not save it: {}').format(error), fg=theme.BLOOD_LIGHT)
+            note.configure(text=_('Could not save it: {}').format(error), fg=theme.BLOOD_LIGHT)
             return
-        self.report_button.state(['disabled'])
-        self.report_note.configure(text=_('Collecting the report… (up to a minute)'), fg=theme.MUTED)
-        # BBTOOL_*: the port, its settings and version, and the folder for the zip; it asks nothing then.
+        button.state(['disabled'])
+        note.configure(text=_('Collecting the report… (up to a minute)'), fg=theme.MUTED)
+        # BBTOOL_*: the port, its settings, version and log, and the folder for the zip; it asks nothing then.
         env = {**os.environ, 'BBTOOL': str(tool), 'BBTOOL_PORT': str(L.PORT_DIR),
-               'BBTOOL_SETTINGS': str(L.CONFIG_FILE), 'BBTOOL_VERSION': L.VERSION_TEXT, 'BBTOOL_OUT': str(folder)}
+               'BBTOOL_SETTINGS': str(L.CONFIG_FILE), 'BBTOOL_VERSION': L.VERSION_TEXT, 'BBTOOL_OUT': str(folder),
+               'BBTOOL_LOG': str(L.saves_folder(self.app) / 'last_run.log')}
         started = time.time()
 
         def work():
@@ -884,17 +889,18 @@ class HelpMixin:
                 error = failure
             made = sorted((p for p in folder.glob('BB-Report-*.zip') if p.stat().st_mtime >= started - 2),
                           key=lambda p: p.stat().st_mtime)
-            self.ui_calls.put(lambda: self.report_done(made[-1] if made else None, error))
+            self.ui_calls.put(lambda: self.report_done(made[-1] if made else None, error, button, note))
         threading.Thread(target=work, daemon=True).start()
 
-    def report_done(self, archive, error=None):
+    def report_done(self, archive, error=None, button=None, note=None):
         """The report is there (or not): Explorer with it selected, its summary in the clipboard."""
         import subprocess
         import zipfile
-        self.report_button.state(['!disabled'])
+        button, note = button or self.report_button, note or self.report_note
+        button.state(['!disabled'])
         if archive is None:
             why = error or _('The BB Report Tool made no zip.')
-            self.report_note.configure(text=_('Could not save it: {}').format(why), fg=theme.BLOOD_LIGHT)
+            note.configure(text=_('Could not save it: {}').format(why), fg=theme.BLOOD_LIGHT)
             return
         text = _('Saved: {}').format(archive)
         try:
@@ -905,15 +911,16 @@ class HelpMixin:
             text += '\n' + _('Its summary is in the clipboard: paste it into your #help post, then attach the zip.')
         except (OSError, KeyError, zipfile.BadZipFile):
             pass
-        self.report_note.configure(text=text, fg=theme.GOLD_LIGHT)
+        note.configure(text=text, fg=theme.GOLD_LIGHT)
         try:
             subprocess.Popen(['explorer', '/select,', str(archive)])
         except OSError:
             pass
 
-    def save_own_report(self):
+    def save_own_report(self, note=None):
         """A zip on the desktop for asking for help: the log, the settings without passwords, this PC
         and the checks."""
+        note = note or self.report_note
         import json
         import platform
         import time
@@ -933,9 +940,9 @@ class HelpMixin:
                 for name in ('last_run.log',):
                     if (user / name).is_file():
                         z.write(user / name, name)
-            self.report_note.configure(text=_('Saved: {}').format(target), fg=theme.GOLD_LIGHT)
+            note.configure(text=_('Saved: {}').format(target), fg=theme.GOLD_LIGHT)
         except OSError as error:
-            self.report_note.configure(text=_('Could not save it: {}').format(error), fg=theme.BLOOD_LIGHT)
+            note.configure(text=_('Could not save it: {}').format(error), fg=theme.BLOOD_LIGHT)
 
 
 def report_tool():

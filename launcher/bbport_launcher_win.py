@@ -1912,8 +1912,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         # Stop only while the game runs (beside Play, game_running): a greyed-out button the rest of the time
         self.stop_button = ttk.Button(bar, text=_('Stop', 'Остановить'), style='Bar.TButton', command=self.stop,
                                       state='disabled')
-        ttk.Button(bar, text=_('Log', 'Журнал'), style='Bar.TButton', command=lambda: self.show('log')).pack(
-            side='right', padx=(0, px(8)))
+        # The BB Report Tool's zip (Help > Save a report) right here, with this port folder's log; the log
+        # itself is on Help > Show the log.
+        self.bar_report = ttk.Button(bar, text=_('Report'), style='Bar.TButton',
+                                     command=lambda: self.save_report(self.bar_report, self.status))
+        self.bar_report.pack(side='right', padx=(0, px(8)))
         self.status = tk.Label(bar, text='', bg=BG, fg=MUTED, font=(theme.BODY, 9), anchor='w', justify='left')
         self.status.pack(side='left', fill='x', expand=True, padx=(px(28), px(16)))
         self.status.bind('<Configure>', lambda e: self.status.configure(wraplength=max(px(120), e.width)))

@@ -32,6 +32,7 @@ class ReportTests(unittest.TestCase):
         root = Path(self.tmp.name)
         (root / 'BB-Report-Tool.bat').write_text('<# tool #>')
         launcher = types.SimpleNamespace(PORT_DIR=root, DATA_DIR=root, CONFIG_FILE=root / 'settings.json',
+                                         saves_folder=lambda s: Path(s.get('user_dir') or root / 'user'),
                                          VERSION='1.9.4', VERSION_TEXT='1.9.4', NO_WINDOW=0, _=lambda *texts: texts[0],
                                          renamed=lambda text: text)
         saved, help_.L = help_.L, launcher
@@ -58,6 +59,7 @@ class ReportTests(unittest.TestCase):
             def collect(self):
                 pass
         self.window = Window()
+        self.window.app = {'user_dir': str(root / 'saves')}
         self.window.report_button, self.window.report_note, self.window.root = Widget(), Widget(), Widget()
         self.window.ui_calls = queue.Queue()
 
@@ -90,10 +92,31 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(env['BBTOOL'], str(self.root / 'BB-Report-Tool.bat'))
         self.assertEqual(env['BBTOOL_OUT'], str(self.root / 'reports'))  # it then asks nothing, opens nothing
         self.assertEqual(env['BBTOOL_VERSION'], '1.9.4')
+        # this launcher's own log (its saves folder), not the newest of any installation the tool finds
+        self.assertEqual(env['BBTOOL_LOG'], str(self.root / 'saves' / 'last_run.log'))
         archive = self.root / 'reports' / 'BB-Report-20261022-120000.zip'
         self.assertEqual(opened, [['explorer', '/select,', str(archive)]])
         self.assertIn('BB Report Tool 1.7.7', self.window.root.clip)
         self.assertEqual(self.window.report_button.states, ['disabled', '!disabled'])
+
+    def test_the_report_button_beside_play(self):
+        """The bar's Report button (instead of Log) makes the same zip and says how it went in the status line."""
+        status, button = self.window.report_note.__class__(), self.window.report_button.__class__()
+        self.window.report_note = self.window.report_button = None  # the Help page not built yet
+
+        def save():
+            with mock.patch('subprocess.run', lambda c, env=None, **o: zipfile.ZipFile(
+                    Path(env['BBTOOL_OUT']) / 'BB-Report-20261022-130000.zip', 'w').close()),                     mock.patch('subprocess.Popen', lambda c: None),                     mock.patch.object(help_.threading, 'Thread', type('Thread', (), {
+                        '__init__': lambda s, target, daemon=None: setattr(s, 't', target),
+                        'start': lambda s: s.t()})):
+                self.window.save_report(button, status)
+                self.window.ui_calls.get_nowait()()
+        save()
+        self.assertEqual(button.states, ['disabled', '!disabled'])
+        self.assertIn('BB-Report-20261022-130000.zip', status.text)
+        source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
+        self.assertIn("self.save_report(self.bar_report, self.status)", source)
+        self.assertNotIn("command=lambda: self.show('log')).pack(", source)
 
     def test_no_zip_says_so(self):
         _commands, opened = self.save(tool_makes_zip=False)
@@ -105,7 +128,7 @@ class ReportTests(unittest.TestCase):
         package = (ROOT / 'packaging' / 'windows' / 'package.sh').read_text(encoding='utf-8')
         self.assertIn('cp packaging/windows/BB-Report-Tool.bat "$dest/"', package)
         tool = (ROOT / 'packaging' / 'windows' / 'BB-Report-Tool.bat').read_text(encoding='utf-8')
-        for name in ('BBTOOL_PORT', 'BBTOOL_SETTINGS', 'BBTOOL_VERSION', 'BBTOOL_OUT'):
+        for name in ('BBTOOL_PORT', 'BBTOOL_SETTINGS', 'BBTOOL_VERSION', 'BBTOOL_OUT', 'BBTOOL_LOG'):
             self.assertIn(f'$env:{name}', tool)  # what save_report sets, so it asks nothing
 
 

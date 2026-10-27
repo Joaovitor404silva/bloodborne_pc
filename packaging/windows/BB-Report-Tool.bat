@@ -22,7 +22,7 @@ exit /b
 # ------------------------------------------------------------------------------------------
 $ErrorActionPreference = 'SilentlyContinue'
 [Threading.Thread]::CurrentThread.CurrentCulture = [Globalization.CultureInfo]::InvariantCulture
-$ToolVersion = '1.7.7'
+$ToolVersion = '1.7.8'
 Add-Type -AssemblyName System.Windows.Forms
 
 $secrets = New-Object System.Collections.ArrayList
@@ -154,11 +154,12 @@ function Setting($key) { if ($settings) { $settings.$key } }
 # --- The port that really ran -------------------------------------------------------------
 # Every log names it ('Output: <port>\out'). When the saves folder points into another install
 # (an old copy, a fork), the newest log sits there and the search above picks the wrong port.
+# Run from the launcher (BBTOOL_LOG), the port and the log are the launcher's own: nothing to guess.
 $firstUser = Setting 'user_dir'
 if (-not $firstUser -and $portOk) { $firstUser = Join-Path $port 'user' }
 $firstLog = @(@((Join-Path "$firstUser" 'last_run.log'), $(if ($portOk) { Join-Path $port 'last_run.log' })) |
     Where-Object { $_ -and (Test-Path $_) } | ForEach-Object { Get-Item $_ } | Sort-Object LastWriteTime -Descending) | Select-Object -First 1
-if ($firstLog) {
+if ($firstLog -and -not $env:BBTOOL_LOG) {
     $outLine = Select-String -Path $firstLog.FullName -Pattern '^Output: (.+)\\out\s*$' | Select-Object -Last 1
     if ($outLine) {
         $ran = $outLine.Matches[0].Groups[1].Value
@@ -348,10 +349,21 @@ $overlayLine = if ($overlays) { $overlays -join ', ' } else { 'none found' }
 $userDir = Setting 'user_dir'
 if (-not $userDir -and $portOk) { $userDir = Join-Path $port 'user' }
 $logs = @()
-foreach ($candidate in @((Join-Path $userDir 'last_run.log'), $(if ($portOk) { Join-Path $port 'last_run.log' }))) {
+# From the launcher: the log it wrote for this port folder (<saves folder>\last_run.log), never another
+# install's newer one.
+$logCandidates = if ($env:BBTOOL_LOG) { @($env:BBTOOL_LOG) } else {
+    @((Join-Path $userDir 'last_run.log'), $(if ($portOk) { Join-Path $port 'last_run.log' })) }
+foreach ($candidate in $logCandidates) {
     if ($candidate -and (Test-Path $candidate)) { $logs += Get-Item $candidate }
 }
 $log = $logs | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$logOtherPort = $null  # the port folder the log names, when it is not this one (a shared saves folder)
+if ($log -and $env:BBTOOL_LOG -and $port) {
+    $outLine = Select-String -Path $log.FullName -Pattern '^Output: (.+)\\out\s*$' | Select-Object -Last 1
+    if ($outLine -and $outLine.Matches[0].Groups[1].Value.TrimEnd('\') -ne "$port".TrimEnd('\')) {
+        $logOtherPort = $outLine.Matches[0].Groups[1].Value
+    }
+}
 $logLine = 'not found (start the game once, then run this tool again)'
 $errorLine = '-'
 $logText = $null
@@ -463,6 +475,7 @@ if ($log) {
 # file that is clearly off, 3 = general advice. The summary shows the three best.
 $hints = New-Object System.Collections.ArrayList
 function Hint([string]$text, [int]$rank = 3) { [void]$hints.Add([pscustomobject]@{ Rank = $rank; Order = $hints.Count; Text = $text }) }
+if ($logOtherPort) { Hint "last_run.log was written by another port folder ($(Hide-Private $logOtherPort)), which shares this one's saves folder: start the game from this launcher once, then make the report again." 2 }
 function LogHas([string]$pattern) { [bool]($logText -and $logText -match $pattern) }
 $newest = '1.9.1'  # newest port version; BB Helper fills in the current one when it hands out the tool
 try { if ($portVersion -match '^\d' -and [version]$portVersion -lt [version]$newest) {
