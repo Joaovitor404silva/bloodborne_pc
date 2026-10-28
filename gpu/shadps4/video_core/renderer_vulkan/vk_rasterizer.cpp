@@ -927,6 +927,7 @@ bool Rasterizer::FilterDrawPasses() const {
 
 void Rasterizer::Draw(bool is_indexed, u32 index_offset, const PreparedDraw* prepared) {
     RENDERER_TRACE;
+    MaybeSubmitEarly();
     BbStats::draws.fetch_add(1, std::memory_order_relaxed);
 
     // bbport: with the draw pipeline this thread only selects the pipeline and hands the draw
@@ -1170,6 +1171,7 @@ void Rasterizer::DrawIndirect(bool is_indexed, VAddr arg_address, u32 offset, u3
                               u32 max_count, VAddr count_address, u16 vertex_sgpr_offset,
                               u16 instance_sgpr_offset) {
     RENDERER_TRACE;
+    MaybeSubmitEarly();
     // bbport: like direct draws, handed to the recording thread after the pipeline selection
     // (else the GPU thread waited here for a whole frame of queued draws).
     const bool pipelined = UseDrawPipe() && FilterDrawPasses() &&
@@ -1412,7 +1414,31 @@ void Rasterizer::DispatchIndirectRecord(const ComputePipeline* pipeline, VAddr a
     scheduler.KickRecording();
 }
 
+void Rasterizer::MaybeSubmitEarly() {
+    static const bool enabled = [] {
+        const char* env = std::getenv("BB_EARLY_SUBMIT");
+        return env && env[0] == '1';
+    }();
+    if (!enabled) {
+        return;
+    }
+    // At least a millisecond of recording and a few draws per part: each submission waits for
+    // the recording thread (Scheduler::SubmitExecution), so many small ones would cost more
+    // than the GPU gains by starting early.
+    constexpr u32 MinDraws = 48;
+    constexpr auto MinTime = std::chrono::microseconds(1000);
+    if (++draws_since_submit < MinDraws) {
+        return;
+    }
+    if (std::chrono::steady_clock::now() - last_submit < MinTime) {
+        return;
+    }
+    Flush();
+}
+
 u64 Rasterizer::Flush() {
+    draws_since_submit = 0;
+    last_submit = std::chrono::steady_clock::now();
     DrainDrawPipe();
     const u64 current_tick = scheduler.CurrentTick();
     SubmitInfo info{};

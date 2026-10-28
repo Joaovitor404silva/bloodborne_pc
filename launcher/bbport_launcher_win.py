@@ -365,7 +365,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'voice_language': 'auto',
                 'player_name': '', 'fullscreen': False, 'exclusive_fullscreen': False, 'hdr': False, 'present_mode': 'Mailbox',
                 'fps_mode': 'uncap', 'frame_cap': '', 'draw_pipe': '', 'readbacks': '', 'low_vram': '', 'vram_warning': True,
-                'frames_ahead': '', 'frame_stats': False, 'gpu_profile': False,
+                'frames_ahead': '', 'low_latency': 'off', 'async_pipelines': '', 'vrr': '', 'early_submit': '', 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'extra_env': '', 'close_on_play': False,
                 'on_play': 'stay', 'reopen_after_game': False, 'minimize_to_tray': False, 'discord_status': True,
                 'menu_key': 'Insert', 'menu_pad': 'l3+r3',
@@ -507,6 +507,15 @@ FRAME_CAPS = [('', ('Auto: display refresh, max 120 (recommended)', 'Авто: �
               ('60', ('60',)), ('90', ('90',)), ('120', ('120',)), ('144', ('144  ⚠',)), ('165', ('165  ⚠',)),
               ('240', ('240  ⚠',)), ('0', ('No limit  ⚠', 'Без ограничения  ⚠'))]
 FRAMES_AHEAD = [('', ('1 (default)', '1 (по умолчанию)')), ('2', ('2',)), ('0', ('Unbounded', 'Без ограничения'))]
+# gpu/shadps4/video_core/renderer_vulkan/vk_low_latency.cpp: NVIDIA Reflex or AMD Anti-Lag 2.
+LOW_LATENCY = [('off', ('Off', 'Выкл.')), ('on', ('On', 'Вкл.')), ('boost', ('On + Boost', 'Вкл. + Boost'))]
+# vk_pipeline_cache.cpp BB_ASYNC_PIPELINES: new pipelines built on worker threads, their draws skipped meanwhile.
+# gpu/shim/core/emulator_settings.h BB_VRR: V-Sync (FIFO) and a frame cap just below the refresh rate.
+VRR_MODES = [('', ('Off', 'Выкл.')), ('1', ('On (G-Sync / FreeSync)', 'Вкл. (G-Sync / FreeSync)'))]
+# vk_rasterizer.cpp BB_EARLY_SUBMIT: the frame goes to the GPU in parts while it is prepared.
+EARLY_SUBMIT = [('', ('Off', 'Выкл.')), ('1', ('On (about 2 ms less lag)', 'Вкл. (примерно на 2 мс меньше задержка)'))]
+ASYNC_PIPELINES = [('', ('Wait for each (exact)', 'Ждать каждый (точно)')),
+                   ('1', ('In the background (no stutter)', 'В фоне (без фризов)'))]
 UI_LANGUAGES = bbport_lang.LANGUAGE_NAMES
 
 FSR4_COMMIT = 'ae8d628fae208813172446d1e49ed94150b04658'
@@ -1197,7 +1206,9 @@ def game_environment(s, graphics=None):
     if s.get('frame_cap', ''):
         env['BB_FPS_LIMIT'] = s['frame_cap']
     for key, name in (('draw_pipe', 'BB_DRAW_PIPE'), ('readbacks', 'BB_READBACKS'), ('frames_ahead', 'BB_FRAMES_AHEAD'),
-                      ('low_vram', 'BB_LOW_VRAM')):
+                      ('low_vram', 'BB_LOW_VRAM'), ('low_latency', 'BB_LOW_LATENCY'),
+                      ('async_pipelines', 'BB_ASYNC_PIPELINES'), ('vrr', 'BB_VRR'),
+                      ('early_submit', 'BB_EARLY_SUBMIT')):
         if s[key]:
             env[name] = s[key]
     if not s.get('vram_warning', True):
@@ -2553,6 +2564,38 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                  _('1 keeps frame pacing even; more can raise FPS when the graphics card is the limit.',
                    '1 — ровная подача кадров; больше может поднять FPS, если упирается в видеокарту.'))
         self.row(f, _('Presentation', 'Режим показа кадров'), self.choice(f, 'present_mode', 'app', PRESENT_MODES))
+        self.row(f, _('Low latency (Reflex / Anti-Lag 2)', 'Низкая задержка (Reflex / Anti-Lag 2)'),
+                 self.choice(f, 'low_latency', 'app', LOW_LATENCY),
+                 _('Less input lag: the game starts each frame just in time instead of queuing frames for the '
+                   'display. NVIDIA Reflex on GeForce, AMD Anti-Lag 2 on Radeon (current drivers); other GPUs ignore '
+                   'it. Boost keeps the GPU clocks up.',
+                   'Меньше задержка ввода: игра начинает кадр вовремя, а не копит кадры в очереди. NVIDIA Reflex на '
+                   'GeForce, AMD Anti-Lag 2 на Radeon (свежие драйверы); на других GPU не действует. Boost держит '
+                   'частоты GPU высокими.'))
+        self.row(f, _('Send frames to the GPU in parts', 'Отправлять кадр в GPU частями'),
+                 self.choice(f, 'early_submit', 'app', EARLY_SUBMIT),
+                 _('The graphics card starts drawing a frame while the rest of it is still being prepared, '
+                   'so it is finished about 2 ms sooner. Uses a little more CPU. New: turn it off if you see '
+                   'flickering or missing objects.',
+                   'Видеокарта начинает рисовать кадр, пока остальное ещё готовится, и заканчивает примерно на '
+                   '2 мс раньше. Немного больше нагрузка на CPU. Новое: выключите, если видите мерцание или '
+                   'пропавшие объекты.'))
+        self.row(f, _('Variable refresh rate (VRR)', 'Переменная частота (VRR)'),
+                 self.choice(f, 'vrr', 'app', VRR_MODES),
+                 _('For a G-Sync or FreeSync display: the display follows the frames of the game, without tearing '
+                   'and without the lag of V-Sync. Uses V-Sync (Presentation is ignored) and keeps the frame rate a '
+                   'little below the refresh rate (117 FPS at 120 Hz, at most 120). Turn on G-Sync/FreeSync in '
+                   'the NVIDIA/AMD control panel; fullscreen works best.',
+                   'Для мониторов G-Sync/FreeSync: монитор следует за кадрами игры, без разрывов и без задержки '
+                   'V-Sync. Использует V-Sync (режим показа игнорируется) и держит FPS чуть ниже частоты (117 '
+                   'при 120 Гц, максимум 120). Включите G-Sync/FreeSync в панели NVIDIA/AMD; лучше в полноэкранном '
+                   'режиме.'))
+        self.row(f, _('New shaders while playing', 'Новые шейдеры во время игры'),
+                 self.choice(f, 'async_pipelines', 'app', ASYNC_PIPELINES),
+                 _('In the background: a place seen for the first time does not stutter while its shaders are '
+                   'compiled; things drawn with them appear a moment later instead. Each is compiled once and kept.',
+                   'В фоне: новое место не подтормаживает при компиляции шейдеров, зато объекты с ними появляются '
+                   'чуть позже. Каждый шейдер компилируется один раз и сохраняется.'))
         self.section(f, _('Frame generation', 'Генерация кадров'))
         self.row(f, _('Frame generation', 'Генерация кадров'),
                  self.fg401_choice(f),

@@ -1,7 +1,12 @@
 // SPDX-FileCopyrightText: Copyright 2025-2026 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <cstdio>
+#include <cstdlib>
+#include <thread>
 
 #include "common/serdes.h"
 #include "core/emulator_settings.h"
@@ -160,6 +165,20 @@ bool ComputePipeline::SerializationSupport::Deserialize(Serialization::Archive& 
     return true;
 }
 
+struct PipelineCache::PreloadJob {
+    bool compute{};
+    ComputePipelineKey compute_key{};
+    GraphicsPipelineKey graphics_key{};
+    std::array<const Shader::Info*, MaxShaderStages> infos{};
+    std::array<Shader::RuntimeInfo, MaxShaderStages> runtime_infos{};
+    std::array<vk::ShaderModule, MaxShaderStages> modules{};
+    std::optional<Shader::Gcn::FetchShaderData> fetch_shader{};
+    GraphicsPipeline::SerializationSupport graphics_sdata{};
+    ComputePipeline::SerializationSupport compute_sdata{};
+    std::unique_ptr<GraphicsPipeline> graphics;
+    std::unique_ptr<ComputePipeline> compute_pipeline;
+};
+
 bool PipelineCache::LoadComputePipeline(Serialization::Archive& ar) {
     compute_key.Deserialize(ar);
 
@@ -181,6 +200,17 @@ bool PipelineCache::LoadComputePipeline(Serialization::Archive& ar) {
 
     const auto [it, is_new] = compute_pipelines.try_emplace(compute_key);
     ASSERT(is_new);
+
+    if (preload_jobs) {
+        auto& job = preload_jobs->emplace_back();
+        job.compute = true;
+        job.compute_key = compute_key;
+        job.infos = sel.infos;
+        job.modules = sel.modules;
+        sel.infos.fill(nullptr);
+        sel.modules.fill(nullptr);
+        return true;
+    }
 
     it.value() =
         std::make_unique<ComputePipeline>(instance, scheduler, desc_heap, profile, *pipeline_cache,
@@ -280,6 +310,20 @@ bool PipelineCache::LoadGraphicsPipeline(Serialization::Archive& ar) {
 
     const auto [it, is_new] = graphics_pipelines.try_emplace(sel.graphics_key);
     ASSERT(is_new);
+
+    if (preload_jobs) {
+        auto& job = preload_jobs->emplace_back();
+        job.graphics_key = sel.graphics_key;
+        job.infos = sel.infos;
+        job.runtime_infos = sel.runtime_infos;
+        job.modules = sel.modules;
+        job.fetch_shader = sel.fetch_shader;
+        job.graphics_sdata = sdata;
+        sel.infos.fill(nullptr);
+        sel.modules.fill(nullptr);
+        sel.fetch_shader.reset();
+        return true;
+    }
 
     it.value() = std::make_unique<GraphicsPipeline>(
         instance, scheduler, desc_heap, profile, sel.graphics_key, *pipeline_cache, sel.infos,
@@ -416,6 +460,11 @@ void PipelineCache::WarmUp() {
     u32 num_pipelines{};
     u32 num_total_pipelines{};
 
+    // bbport: the stages are read here, one after the other; the pipelines are then built on
+    // all CPU cores (BuildPreloaded), where the driver spends nearly all of the preload's time.
+    const auto preload_start = std::chrono::steady_clock::now();
+    std::vector<PreloadJob> jobs;
+    preload_jobs = &jobs;
     Storage::DataBase::Instance().ForEachBlob(
         Storage::BlobType::PipelineKey, [&](std::vector<u8>&& data) {
             ++num_total_pipelines;
@@ -444,6 +493,13 @@ void PipelineCache::WarmUp() {
             }
         });
 
+    preload_jobs = nullptr;
+    num_pipelines -= BuildPreloaded(jobs);
+    driver_cache_changes += num_pipelines;
+    std::printf("Pipeline cache: preload took %.1f s\n",
+                std::chrono::duration<double>(std::chrono::steady_clock::now() - preload_start)
+                    .count());
+
     LOG_INFO(Render, "Preloaded {} pipelines", num_pipelines);
     std::printf("Pipeline cache: %u of %u pipelines preloaded (shader build %s)\n", num_pipelines,
                 num_total_pipelines, BB_SHADER_BUILD);
@@ -453,6 +509,64 @@ void PipelineCache::WarmUp() {
     }
 
     Storage::DataBase::Instance().FinishPreload();
+}
+
+// The pipelines only use the device while they are built for the preload (no guest memory, no
+// command buffers), and the driver's pipeline cache is synchronized by the driver.
+u32 PipelineCache::BuildPreloaded(std::vector<PreloadJob>& jobs) {
+    if (jobs.empty()) {
+        return 0;
+    }
+    // One core is left to the rest of the start; BB_PRELOAD_THREADS=1 builds them one by one.
+    u32 threads = std::clamp(std::thread::hardware_concurrency(), 2u, 17u) - 1;
+    if (const char* env = std::getenv("BB_PRELOAD_THREADS"); env && *env) {
+        threads = std::clamp<u32>(u32(std::strtoul(env, nullptr, 10)), 1u, 64u);
+    }
+    threads = std::min<u32>(threads, u32(jobs.size()));
+
+    std::atomic<size_t> next{0};
+    const auto build = [&] {
+        for (size_t i; (i = next.fetch_add(1, std::memory_order_relaxed)) < jobs.size();) {
+            auto& job = jobs[i];
+            if (job.compute) {
+                job.compute_pipeline = std::make_unique<ComputePipeline>(
+                    instance, scheduler, desc_heap, profile, *pipeline_cache, job.compute_key,
+                    *job.infos[0], job.modules[0], job.compute_sdata, true);
+            } else {
+                job.graphics = std::make_unique<GraphicsPipeline>(
+                    instance, scheduler, desc_heap, profile, job.graphics_key, *pipeline_cache,
+                    job.infos, job.runtime_infos, job.fetch_shader, job.modules,
+                    job.graphics_sdata, true);
+            }
+        }
+    };
+    {
+        std::vector<std::jthread> pool;
+        for (u32 t = 1; t < threads; ++t) {
+            pool.emplace_back(build);
+        }
+        build();
+    }
+
+    // As before: a pipeline the driver could not build is left to compile at first use.
+    u32 failed = 0;
+    for (auto& job : jobs) {
+        if (job.compute) {
+            if (job.compute_pipeline && job.compute_pipeline->IsValid()) {
+                compute_pipelines[job.compute_key] = std::move(job.compute_pipeline);
+            } else {
+                compute_pipelines.erase(job.compute_key);
+                ++failed;
+            }
+        } else if (job.graphics && job.graphics->IsValid()) {
+            graphics_pipelines[job.graphics_key] = std::move(job.graphics);
+        } else {
+            graphics_pipelines.erase(job.graphics_key);
+            ++failed;
+        }
+    }
+    std::printf("Pipeline cache: %zu pipelines built on %u threads\n", jobs.size(), threads);
+    return failed;
 }
 
 void PipelineCache::Sync() {

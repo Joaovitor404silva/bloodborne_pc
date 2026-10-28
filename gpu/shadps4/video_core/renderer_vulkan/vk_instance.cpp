@@ -26,6 +26,7 @@
 #include "fg401_support.h"
 #include "fsr411_support.h"
 #include "fsr411_vulkan_support.h"
+#include "video_core/renderer_vulkan/vk_low_latency.h"
 #endif
 
 namespace Vulkan {
@@ -285,7 +286,8 @@ bool Instance::CreateDevice() {
         vk::PhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE,
         vk::PhysicalDeviceMutableDescriptorTypeFeaturesEXT,
         vk::PhysicalDeviceDescriptorBufferFeaturesEXT,
-        vk::PhysicalDeviceFaultFeaturesEXT>();
+        vk::PhysicalDeviceFaultFeaturesEXT, vk::PhysicalDevicePresentIdFeaturesKHR,
+        vk::PhysicalDeviceAntiLagFeaturesAMD>();
     features = feature_chain.get().features;
 
     const vk::StructureChain properties_chain = physical_device.getProperties2<
@@ -475,6 +477,18 @@ bool Instance::CreateDevice() {
         shader_clock_features = feature_chain.get<vk::PhysicalDeviceShaderClockFeaturesKHR>();
         LOG_INFO(Render_Vulkan, "- shaderSubgroupClock: {}",
                  shader_clock_features.shaderSubgroupClock);
+    }
+    // bbport: low latency (BB_LOW_LATENCY=on or boost): NVIDIA Reflex, else AMD Anti-Lag 2.
+    // Only enabled when chosen; see vk_low_latency.cpp.
+    if (LowLatency::Wanted()) {
+        present_id = feature_chain.get<vk::PhysicalDevicePresentIdFeaturesKHR>().presentId &&
+                     add_extension(VK_KHR_PRESENT_ID_EXTENSION_NAME);
+        nv_low_latency = present_id &&
+                         feature_chain.get<vk::PhysicalDeviceVulkan12Features>().timelineSemaphore &&
+                         add_extension(VK_NV_LOW_LATENCY_2_EXTENSION_NAME);
+        amd_anti_lag = !nv_low_latency &&
+                       feature_chain.get<vk::PhysicalDeviceAntiLagFeaturesAMD>().antiLag &&
+                       add_extension(VK_AMD_ANTI_LAG_EXTENSION_NAME);
     }
     const bool calibrated_timestamps =
         TRACY_GPU_ENABLED ? add_extension(VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME) : false;
@@ -721,6 +735,12 @@ bool Instance::CreateDevice() {
         vk::PhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE{
             .shaderMixedFloatDotProductFloat16AccFloat32 = true,
         },
+        vk::PhysicalDevicePresentIdFeaturesKHR{
+            .presentId = true,
+        },
+        vk::PhysicalDeviceAntiLagFeaturesAMD{
+            .antiLag = true,
+        },
     };
 
     if (!fsr4vk) {
@@ -785,6 +805,12 @@ bool Instance::CreateDevice() {
     if (!mixed_float_dot_product) {
         device_chain.unlink<vk::PhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE>();
     }
+    if (!present_id) {
+        device_chain.unlink<vk::PhysicalDevicePresentIdFeaturesKHR>();
+    }
+    if (!amd_anti_lag) {
+        device_chain.unlink<vk::PhysicalDeviceAntiLagFeaturesAMD>();
+    }
 
     auto [device_result, dev] = physical_device.createDeviceUnique(device_chain.get());
     if (device_result != vk::Result::eSuccess && enabled_extensions.size() > renderer_extension_count) {
@@ -811,6 +837,7 @@ bool Instance::CreateDevice() {
     device = std::move(dev);
 
     VULKAN_HPP_DEFAULT_DISPATCHER.init(*device);
+    LowLatency::Init(*this);
     if (Dlss* dlss = Dlss::Get()) {
         dlss->Initialize(*instance, physical_device, *device);
     }

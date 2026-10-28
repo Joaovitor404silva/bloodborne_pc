@@ -620,6 +620,9 @@ static void sample_host(PadData *d) {
     d->connected=1; d->connected_count=connected_count ? connected_count : 1;
     d->timestamp=now_us();
     SDL_Gamepad *g=current_gamepad();
+    /* The controller as it is now, not as the window thread last took its events (up to a
+     * millisecond or two before): SDL locks its joysticks for this itself. */
+    if (g) SDL_UpdateGamepads();
     if (bbgpu_overlay_captures_input()) return; /* settings menu open: neutral input */
     const InputConfig *cfg=active_config();
     BbMouseInput mouse; bbgpu_mouse_take(&mouse); /* MOU-008: drains dx/dy; buttons/wheel persist */
@@ -887,7 +890,9 @@ static void touch_ids(PadData *d) {
     else if (!since) since=d->timestamp;
     d->touch_held_time=d->touch_count ? (uint32_t)(d->timestamp-since) : 0;
 }
+void bbgpu_input_note_read(void); /* gpu/shim/bbgpu.cpp: input freshness log */
 static void sample(PadData *d) {
+    bbgpu_input_note_read();
     reload_config_if_requested();
     sample_host(d);
     if (bbgpu_overlay_captures_input()) { hold_after_capture=1; return; }
