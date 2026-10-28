@@ -118,3 +118,6 @@ Credits
 - bbport (the Linux port this is built on): https://github.com/deadinside28/bloodborne_pc
 - Windows port: https://github.com/Supermedo/bloodborne_pc
 - The full list of projects and patch authors is in README.md (Credits and licenses).
+- License: the port's own code is GPL-2.0-or-later; with its GPL-3.0-or-later parts (the online
+  code from bbhost, the FSR 4.1 launcher files) the program as distributed is GPL-3.0-or-later
+  (licenses\GPL-3.0-bbhost-online-code.txt).

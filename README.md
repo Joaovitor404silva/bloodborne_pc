@@ -189,5 +189,9 @@ artwork.
 
 ## License
 
-GNU GPL v2 or later ([LICENSE](LICENSE)). Third-party components keep their own licenses
-(see `licenses\` in the download).
+The port's own code is GNU GPL v2 or later ([LICENSE](LICENSE)). Some parts are GPL v3 or later:
+The Hunter's Dream online code (`gpu/bbnet/thd/`, from droogie's bbhost) and the FSR 4.1 launcher files
+(`launcher/bbport_fsr41*.py`, `launcher/bbport_fsr412.py`, `launcher/bbport_driver_runtime.py`). The
+program built from them together is therefore distributed under the GNU GPL v3 or later
+(`licenses\GPL-3.0-bbhost-online-code.txt` in the download). Third-party components keep their own
+licenses (see `licenses\` in the download).
