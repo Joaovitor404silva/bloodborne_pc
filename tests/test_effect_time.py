@@ -74,6 +74,16 @@ class EffectTimeTest(unittest.TestCase):
         self.assertEqual(rel8(self.branch, code, 9), effect_time.AFTER)
         self.assertEqual(self.branch + len(code), effect_time.CALL)
 
+    def test_with_90_fps_the_presets_fixed_step_is_accumulated(self):
+        (site, code), (cave, cave_code), branch = effect_time.code_writes(measured=False)
+        self.assertEqual(code[4:8], bytes.fromhex('c5fa100d'))           # vmovss xmm1, [fixed step]
+        self.assertEqual(rel32(site, code, 8), effect_time.FIXED_STEP)
+        self.assertEqual(rel32(site, code, 16), effect_time.ACCUMULATED)
+        self.assertEqual(code[20], 0xE9)
+        self.assertEqual(rel32(site, code, 21), cave)
+        self.assertEqual((cave, cave_code), (self.cave, self.cave_code))  # the same steps, the same skip
+        self.assertEqual(branch, (self.branch, self.branch_code))
+
     def test_the_arithmetic(self):
         # What the cave computes, frame by frame: at 144 FPS the steps come every 2-3 frames, and
         # over a second they add up to the real time within one step.

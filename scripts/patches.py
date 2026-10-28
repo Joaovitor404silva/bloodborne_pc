@@ -659,15 +659,15 @@ def main():
             names.append('Jumps as at 30 FPS')
         except ValueError as error:
             print(f'Patches: {error}; jumps as at 30 FPS skipped')
-    if 'Uncap FPS++' in names and os.environ.get('BB_EFFECT_TIME')!='0':
-        # Effects in whole 1/60 s steps (effect_time.py): Uncap FPS++'s measured time below 1/60 a
-        # frame let particles pile up (Ebrietas' fight down to 45 FPS until the map unloaded).
+    if ('Uncap FPS++' in names or '90 FPS++' in names) and os.environ.get('BB_EFFECT_TIME')!='0':
+        # Effects in whole 1/60 s steps (effect_time.py): updated more than 60 times a second, with
+        # steps below 1/60, particles pile up (Ebrietas' fight down to 45 FPS uncapped, 30 at 90 FPS++).
         sys.path.insert(0,str(Path(__file__).resolve().parent))
         import effect_time
         elf=(a.out/'eboot.elf').read_bytes()
         try:
             effect_time.check_original(lambda start,end: eboot_bytes(elf,start,end))
-            writes+=effect_time.code_writes()
+            writes+=effect_time.code_writes(measured='Uncap FPS++' in names)
             names.append('Effects in 1/60 s steps')
         except ValueError as error:
             print(f'Patches: {error}; effect time skipped')
