@@ -48,6 +48,7 @@ NOTES = {
             'millisecond (Medo).',
             'Online: only SuperMedo Server and The Hunter\'s Dream to choose from.',
             'This window: what has changed, at the first start of each new version.',
+            'Our Discord and website: two buttons at the bottom of the side bar. Come say hi!',
             'The low latency options in every launcher language.',
         ])]),
 }
