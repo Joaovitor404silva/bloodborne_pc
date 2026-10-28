@@ -1299,6 +1299,7 @@ def game_environment(s, graphics=None):
 # The colours of bbport_theme (bbport.de): BG is the side bar, PANEL the pages.
 BG, PANEL, CARD, LINE = theme.DEEP, theme.BG, theme.CARD, theme.BORDER
 TEXT, MUTED, GOLD, BLOOD, BLOOD_HI = theme.TEXT, theme.MUTED, theme.GOLD_LIGHT, theme.BLOOD, theme.BLOOD_HOVER
+DISCORD_BLURPLE, DISCORD_BLURPLE_HOVER = '#5865f2', '#4752c4'  # Discord's own colour: the button stands out
 # Trophy glyphs only: the grade colours of the console, toned to the launcher's palette.
 TROPHY_COLORS = {trophies.PLATINUM: '#c4ccd8', trophies.GOLD: GOLD, trophies.SILVER: '#adb1b7',
                  trophies.BRONZE: '#b0774f'}
@@ -1940,17 +1941,28 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.expert_var = expert
         # Packed ahead of the search and the entries: the switch and the link stay at the bottom
         # however short the window gets (the entries get flatter instead, fit_nav).
-        # The community site and its Discord side by side (the Discord was only at the end of Help).
-        links = tk.Frame(side, bg=BG)
-        links.pack(side='bottom', anchor='w', padx=px(22), pady=(0, px(16)), before=self.search_box)
+        # The community's Discord and website as two buttons in the corner (they were small gold links, and
+        # most players never found the Discord): the Discord in its own blurple, the site as a card.
         site = COMMUNITY_SITE.split('//')[1].strip('/')
-        for text, url in ((site, COMMUNITY_SITE), ('Discord', bbport_help.DISCORD)):
-            link = tk.Label(links, text=text + '  \u2197', bg=BG, fg=GOLD, font=(theme.BODY_MEDIUM, 9),
-                            cursor='hand2')
-            link.pack(side='left', padx=(0, px(16)))
-            link.bind('<Button-1>', lambda _e, u=url: webbrowser.open(u))
-            link.bind('<Enter>', lambda _e, w=link: w.configure(fg=theme.TEXT_STRONG))
-            link.bind('<Leave>', lambda _e, w=link: w.configure(fg=GOLD))
+        self.community_buttons = []
+        for icon, text, url, fill, hover, outline, colour in (
+                ('\ue8f2', _('Join our Discord'), bbport_help.DISCORD, DISCORD_BLURPLE, DISCORD_BLURPLE_HOVER,
+                 None, '#ffffff'),
+                ('\ue774', site, COMMUNITY_SITE, CARD, theme.SURFACE, LINE, TEXT)):
+            pills = (self.theme.box(224, 36, 8, fill, outline, bg=BG), self.theme.box(224, 36, 8, hover, outline, bg=BG))
+            c = tk.Canvas(side, width=px(224), height=px(36), bg=BG, highlightthickness=0, bd=0, cursor='hand2')
+            c.create_image(0, 0, anchor='nw', image=pills[0], tags='pill')
+            c.create_text(px(20), px(18), text=icon, fill=colour, font=(theme.ICONS, 11))
+            c.create_text(px(40), px(18), text=text, fill=colour, anchor='w', font=(theme.BODY_SEMI, 10))
+            c.create_text(px(208), px(18), text='\u2197', fill=colour, font=(theme.BODY, 10))
+            c.bind('<Button-1>', lambda _e, u=url: webbrowser.open(u))
+            c.bind('<Enter>', lambda _e, c=c, p=pills[1]: c.itemconfigure('pill', image=p))
+            c.bind('<Leave>', lambda _e, c=c, p=pills[0]: c.itemconfigure('pill', image=p))
+            c.pills = pills  # kept: Tk does not hold the images
+            self.community_buttons.append(c)
+        # Packed from the bottom: the site last, the Discord above it.
+        self.community_buttons[1].pack(side='bottom', padx=px(12), pady=(px(4), px(14)), before=self.search_box)
+        self.community_buttons[0].pack(side='bottom', padx=px(12), pady=(px(6), 0), before=self.search_box)
         self.mode_switch = ttk.Checkbutton(side, text=_('Expert view'), variable=expert, command=self.toggle_mode,
                                            style='Bar.TCheckbutton')  # drawn on the side bar's colour
         self.mode_switch.pack(side='bottom', anchor='w', padx=px(22), pady=(px(4), px(6)), before=self.search_box)
