@@ -408,6 +408,18 @@ target_compile_options(camera-motion-test PRIVATE -UNDEBUG -fPIC)
 target_link_libraries(camera-motion-test PRIVATE bbgpu)
 add_dependencies(camera-motion-test host_shaders)
 
+# bbport: the generated SRT walker with tables that change between draws (null and bad pointers):
+# ninja -C out/gpu srt-walker-test, then run it. No GPU.
+add_executable(srt-walker-test EXCLUDE_FROM_ALL ../tests/test_srt_walker.cpp ../tests/test_gpu_runtime_stubs.cpp)
+target_include_directories(srt-walker-test PRIVATE shim shadps4 ${SHADER_INCLUDE} third_party/gcn/include)
+target_compile_options(srt-walker-test PRIVATE -UNDEBUG -fPIC)
+set_source_files_properties(../tests/test_srt_walker.cpp PROPERTIES
+    COMPILE_OPTIONS "-fvisibility=hidden;-fvisibility-inlines-hidden")
+target_link_libraries(srt-walker-test PRIVATE bbgpu)
+if (WIN32)
+    target_link_libraries(srt-walker-test PRIVATE onecore)
+endif()
+
 # bbport: which mouse input is the controller's (a mapping program's): ninja -C out/gpu pad-use-test,
 # then run it. No SDL, no GPU.
 add_executable(pad-use-test EXCLUDE_FROM_ALL ../tests/test_pad_use.cpp)
