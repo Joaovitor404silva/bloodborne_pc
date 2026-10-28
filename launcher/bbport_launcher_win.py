@@ -45,7 +45,7 @@ NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 VERSION = '1.9.5'
 # A beta of VERSION (its number), or 0: shown as 'v1.9.5 beta 1', and the release of VERSION itself is
 # offered as its update.
-BETA = 10
+BETA = 0
 VERSION_TEXT = f'{VERSION} beta {BETA}' if BETA else VERSION
 BETA_PAGE = 'https://github.com/emurphy04/bloodborne_pc/releases/tag/v1.9.5-beta.10'
 # The port's Discord application (discord.com/developers: its Application ID; an art asset named
@@ -852,9 +852,18 @@ def settled_pool(s, env=None):
     pool = s.get('online_pool')
     if pool == 'huntersdream' and HUNTERS_DREAM_POOL:
         return pool
-    if pool == 'shadnet' and s.get('online_custom_servers') and started_by_bbsc(env):
-        return pool
+    if started_by_bbsc(env) and ((pool == 'shadnet' and s.get('online_custom_servers')) or bbsc_server_saved(s, env)):
+        return 'shadnet'
     return 'supermedo'
+
+
+def bbsc_server_saved(s, env=None):
+    """BBSC's start names the server its script saved in the shadNet boxes (BB_SHADNET_SERVER = online_server):
+    its pool again, though a normal launcher start since moved the pool to SuperMedo Server and saved that."""
+    env = os.environ if env is None else env
+    theirs = env.get('BB_SHADNET_SERVER', '').strip().partition(':')[0].lower()
+    ours = str(s.get('online_server', '')).strip().partition(':')[0].lower()
+    return bool(theirs) and theirs == ours
 
 
 def settled_online(app, saved):
@@ -864,7 +873,8 @@ def settled_online(app, saved):
     Server's account was in the shadNet boxes, which a co-op tool writes too: one saved on SuperMedo Server
     becomes its own account, and the boxes stay shadNet's."""
     custom = saved['online_custom_servers'] if 'online_custom_servers' in saved else has_own_servers(app)
-    settled = {'online_custom_servers': custom, 'online_pool': settled_pool({**app, 'online_custom_servers': custom})}
+    pool = settled_pool({**app, 'online_custom_servers': custom})
+    settled = {'online_custom_servers': custom or pool == 'shadnet', 'online_pool': pool}  # BBSC's server counts
     if 'supermedo_npid' not in saved and saved.get('online_pool') == 'supermedo':
         settled.update(supermedo_npid=app.get('online_npid', ''), supermedo_pass=app.get('online_password', ''))
     return settled
@@ -1110,6 +1120,15 @@ def motion_cache_available(graphics, unavailable=''):
     return not unavailable and \
         graphics.get('upscaler', INI_DEFAULTS['upscaler']) in ('fsr3', 'fsr4', 'fsr411', 'fsr412') and \
         graphics.get('object_motion', INI_DEFAULTS['object_motion']) in ('1', True)
+
+
+def early_submit_unavailable(vendor, extra_env=''):
+    """Why sending frames in parts is off on this card whatever the setting (vk_rasterizer.cpp: slower on AMD,
+    BB_EARLY_SUBMIT=force overrides it); '' when the setting decides."""
+    if vendor == 0x1002 and 'BB_EARLY_SUBMIT=force' not in str(extra_env).split():
+        return _('Not available on AMD Radeon: there it adds lag and costs FPS.',
+                 'Недоступно на AMD Radeon: там добавляет задержку и снижает FPS.')
+    return ''
 
 
 def object_motion_unavailable(gpu, gpu_line, extra_env=''):
@@ -1745,6 +1764,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.note(f, _('One box per line of the counter in the top right; also in the in-game menu. Render '
                        'latency is the time from the game starting a frame to it being shown, which Low latency '
                        'lowers; frame time is the time between two frames.'), top=6)
+
+    def detected_vendor(self):
+        """The graphics card's PCI vendor id (bb-gpu-capabilities), None until the check answered."""
+        support = getattr(self, 'fsr411_support', None) or {}
+        return (support.get('gpu') or {}).get('vendor_id')
 
     def motion_unavailable(self):
         support = getattr(self, 'fsr411_support', None) or {}
@@ -2665,7 +2689,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'Меньше задержка ввода: игра начинает кадр вовремя, а не копит кадры в очереди. NVIDIA Reflex на '
                    'GeForce, AMD Anti-Lag 2 на Radeon (свежие драйверы); на других GPU не действует. Boost держит '
                    'частоты GPU высокими.'))
-        self.row(f, _('Send frames to the GPU in parts', 'Отправлять кадр в GPU частями'),
+        early = self.row(f, _('Send frames to the GPU in parts', 'Отправлять кадр в GPU частями'),
                  self.choice(f, 'early_submit', 'app', EARLY_SUBMIT),
                  _('The graphics card starts drawing a frame while the rest of it is still being prepared, '
                    'so it is finished about 2 ms sooner. Uses a little more CPU. New: turn it off if you see '
@@ -2673,6 +2697,19 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'Видеокарта начинает рисовать кадр, пока остальное ещё готовится, и заканчивает примерно на '
                    '2 мс раньше. Немного больше нагрузка на CPU. Новое: выключите, если видите мерцание или '
                    'пропавшие объекты.'))
+        # Off on Radeon cards whatever the box says (vk_rasterizer.cpp MaybeSubmitEarly): greyed out, with why.
+        early_reason = self.ttk.Label(f, style='Muted.TLabel', wraplength=self.px(560), justify='left')
+        early_reason.grid(row=self.next_row(f), column=1, sticky='w', pady=(0, 2))
+
+        def refresh_early():
+            if not early.winfo_exists():
+                return
+            why = early_submit_unavailable(self.detected_vendor(), self.app.get('extra_env', ''))
+            early.state(['disabled' if why else '!disabled'])
+            early_reason.configure(text=why)
+            early_reason.grid() if why else early_reason.grid_remove()
+        self.motion_refreshers.append(refresh_early)
+        refresh_early()
         self.row(f, _('Variable refresh rate (VRR)', 'Переменная частота (VRR)'),
                  self.choice(f, 'vrr', 'app', VRR_MODES),
                  _('For a G-Sync or FreeSync display: the display follows the frames of the game, without tearing '
@@ -2770,6 +2807,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                               font=(theme.BODY_MEDIUM, 9))
         label.pack(side='left', padx=(8, 0))
         label.bind('<Button-1>', lambda _e: command() if command else self.show(page))
+        return label
 
     def build_game(self):
         """Expert: the game folder and the DLC folder (set once, usually by the setup guide)."""
@@ -4402,7 +4440,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         for key, value in taken.items():
             self.var(key, 'app').set(value)
         pool = self.var('online_pool', 'app')
-        settled = settled_pool({'online_pool': pool.get(),
+        settled = settled_pool({'online_pool': pool.get(), 'online_server': self.var('online_server', 'app').get(),
                                 'online_custom_servers': self.var('online_custom_servers', 'app').get()})
         if settled != pool.get():
             pool.set(settled)

@@ -1415,9 +1415,21 @@ void Rasterizer::DispatchIndirectRecord(const ComputePipeline* pipeline, VAddr a
 }
 
 void Rasterizer::MaybeSubmitEarly() {
-    static const bool enabled = [] {
+    static const bool enabled = [this] {
         const char* env = std::getenv("BB_EARLY_SUBMIT");
-        return env && env[0] == '1';
+        if (!env || (env[0] != '1' && std::strcmp(env, "force") != 0)) {
+            return false;
+        }
+        // bbport: slower on AMD (RX 9070 XT, Ebrietas at 144 FPS: render latency 13 -> 19-23 ms,
+        // walking 106 -> 90 FPS), where the driver's own submission already overlaps: off there
+        // unless BB_EARLY_SUBMIT=force.
+        if (instance.GetPhysicalDevice().getProperties().vendorID == 0x1002 &&
+            std::strcmp(env, "force") != 0) {
+            std::printf("Early submit: off on AMD (slower there; BB_EARLY_SUBMIT=force turns it on)\n");
+            return false;
+        }
+        std::printf("Early submit: on\n");
+        return true;
     }();
     if (!enabled) {
         return;

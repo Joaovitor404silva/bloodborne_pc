@@ -21,6 +21,7 @@ KEYS = [
     'New shaders while playing',
     'In the background: a place seen for the first time does not stutter while its shaders are '
     'compiled; things drawn with them appear a moment later instead. Each is compiled once and kept.',
+    'Not available on AMD Radeon: there it adds lag and costs FPS.',
 ]
 TEXTS = {
     'ar': [
@@ -38,6 +39,7 @@ TEXTS = {
         'المظللات الجديدة أثناء اللعب',
         'في الخلفية: لا يتقطع المكان الذي يُرى لأول مرة أثناء تجميع مظللاته؛ بل تظهر الأشياء المرسومة بها بعد لحظة. '
         'يُجمَّع كل منها مرة واحدة ويُحفظ.',
+        'غير متاح على AMD Radeon: هناك يزيد التأخير ويخفض الإطارات.',
     ],
     'es': [
         'Baja latencia (Reflex / Anti-Lag 2)',
@@ -55,6 +57,7 @@ TEXTS = {
         'Shaders nuevos durante la partida',
         'En segundo plano: un lugar visto por primera vez no da tirones mientras se compilan sus shaders; lo que se '
         'dibuja con ellos aparece un momento después. Cada uno se compila una vez y se guarda.',
+        'No disponible en AMD Radeon: allí añade retraso y cuesta FPS.',
     ],
     'pt': [
         'Baixa latência (Reflex / Anti-Lag 2)',
@@ -71,6 +74,7 @@ TEXTS = {
         'Shaders novos durante o jogo',
         'Em segundo plano: um lugar visto pela primeira vez não engasga enquanto seus shaders são compilados; o que '
         'é desenhado com eles aparece um instante depois. Cada um é compilado uma vez e guardado.',
+        'Indisponível em AMD Radeon: lá aumenta o atraso e custa FPS.',
     ],
     'fr': [
         'Faible latence (Reflex / Anti-Lag 2)',
@@ -89,6 +93,7 @@ TEXTS = {
         'Nouveaux shaders en jeu',
         'En arrière-plan : un lieu vu pour la première fois ne saccade pas pendant la compilation de ses shaders ; '
         'ce qu’ils dessinent apparaît un instant plus tard. Chacun est compilé une fois et conservé.',
+        'Indisponible sur AMD Radeon : il y ajoute de la latence et coûte des FPS.',
     ],
     'de': [
         'Niedrige Latenz (Reflex / Anti-Lag 2)',
@@ -106,6 +111,7 @@ TEXTS = {
         'Neue Shader beim Spielen',
         'Im Hintergrund: Ein zum ersten Mal gesehener Ort ruckelt nicht, während seine Shader kompiliert werden; was '
         'damit gezeichnet wird, erscheint einen Moment später. Jeder wird einmal kompiliert und behalten.',
+        'Auf AMD Radeon nicht verfügbar: Dort erhöht es die Latenz und kostet FPS.',
     ],
     'it': [
         'Bassa latenza (Reflex / Anti-Lag 2)',
@@ -123,6 +129,7 @@ TEXTS = {
         'Nuovi shader durante il gioco',
         'In background: un luogo visto per la prima volta non scatta mentre i suoi shader vengono compilati; ciò '
         'che disegnano appare un attimo dopo. Ognuno viene compilato una volta e conservato.',
+        'Non disponibile su AMD Radeon: lì aggiunge ritardo e costa FPS.',
     ],
     'pl': [
         'Niskie opóźnienie (Reflex / Anti-Lag 2)',
@@ -140,6 +147,7 @@ TEXTS = {
         'Nowe shadery podczas gry',
         'W tle: miejsce widziane po raz pierwszy nie przycina podczas kompilacji shaderów; to, co nimi rysowane, '
         'pojawia się chwilę później. Każdy jest kompilowany raz i zachowywany.',
+        'Niedostępne na AMD Radeon: tam zwiększa opóźnienie i obniża FPS.',
     ],
     'tr': [
         'Düşük gecikme (Reflex / Anti-Lag 2)',
@@ -156,6 +164,7 @@ TEXTS = {
         'Oyun sırasında yeni gölgelendiriciler',
         'Arka planda: ilk kez görülen bir yer, gölgelendiricileri derlenirken takılmaz; onlarla çizilenler bir an '
         'sonra görünür. Her biri bir kez derlenir ve saklanır.',
+        'AMD Radeon’da kullanılamaz: orada gecikmeyi artırır ve FPS düşürür.',
     ],
     'zh': [
         '低延迟（Reflex / Anti-Lag 2）',
@@ -168,6 +177,7 @@ TEXTS = {
         '并让帧率略低于刷新率（120 Hz 时为 117 FPS，最高 120）。请在 NVIDIA/AMD 控制面板中开启 G-Sync/FreeSync；全屏效果最佳。',
         '游戏中的新着色器',
         '在后台进行：首次看到的地方在编译着色器时不会卡顿；用这些着色器绘制的物体会稍晚出现。每个着色器只编译一次并保存。',
+        '在 AMD Radeon 上不可用：会增加延迟并降低帧率。',
     ],
     'ja': [
         '低遅延（Reflex / Anti-Lag 2）',
@@ -185,6 +195,7 @@ TEXTS = {
         'プレイ中の新しいシェーダー',
         'バックグラウンドで処理：初めて訪れた場所でシェーダーのコンパイル中にカクつきません。その代わり、それで描かれる物は'
         '少し遅れて表示されます。各シェーダーは一度だけコンパイルされ保存されます。',
+        'AMD Radeon では使用できません：遅延が増え、FPS が下がります。',
     ],
     'ko': [
         '낮은 지연 시간 (Reflex / Anti-Lag 2)',
@@ -201,6 +212,7 @@ TEXTS = {
         '플레이 중 새 셰이더',
         '백그라운드에서: 처음 보는 장소에서 셰이더를 컴파일하는 동안 끊기지 않으며, 그 셰이더로 그리는 물체는 잠시 '
         '후에 나타납니다. 각 셰이더는 한 번 컴파일되어 저장됩니다.',
+        'AMD Radeon에서는 사용할 수 없습니다: 지연이 늘고 FPS가 떨어집니다.',
     ],
 }
 
