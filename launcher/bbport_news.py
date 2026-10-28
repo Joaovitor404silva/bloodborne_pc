@@ -34,50 +34,50 @@ NOTES = {
         servers_notice,
         [('Online', [
             'SuperMedo Server, our own online servers, is the default: sign in with Discord or make a free '
-            "account on the Online page. The Hunter's Dream stays available (Medo, Nick).",
+            "account on the Online page. The Hunter's Dream stays available.",
             'Co-op through a relay when routers block a direct connection, and over the LAN for players behind '
-            'the same connection (Medo).',
+            'the same connection.',
         ]), ('Gameplay at any frame rate', [
             'Capes and cloth hang as on the PS4 and no longer spaz out when the frame rate stutters.',
             "Plants sway with the time that passed: no more jolting or rushing grass (Hemwick's lavender).",
             'Jumps go as far at any frame rate as on the PS4.',
             "Ebrietas: no more particle pile-up above 60 FPS, and her arena no longer loses its map and "
-            'textures (Nick).',
+            'textures.',
         ]), ('Crashes and fixes', [
-            'The most common random crash (ucrtbase.dll, often after about an hour) is fixed (DarkSpartan, Nick).',
+            'The most common random crash (ucrtbase.dll, often after about an hour) is fixed.',
             'Error 21 at start (memory in use by another program) no longer stops the game.',
             'Rebirth at the Doll: no T-pose, free levels again, and leaving the level-up screen undoes it.',
             'Common mistakes repaired for you: read-only saves, saves in the wrong folder, antivirus locks, '
-            'game files from a PKG tool (Nick).',
+            'game files from a PKG tool.',
         ]), ('New', [
-            "PC Settings in the game's own System menu, for the controller (Medo).",
+            "PC Settings in the game's own System menu, for the controller.",
             'Low latency (Reflex, Anti-Lag 2), VRR, and new shaders built in the background: All graphics > '
-            'Frame rate (Medo).',
+            'Frame rate.',
             'FPS counter: choose its lines and colours (All graphics > FPS counter).',
             'Discord status with your area, boss and level; Discord and website buttons in the side bar.',
-            'FSR 4.1.2 and ML frame generation 4.0.2 on AMD (experimental; rattensuppe).',
+            'FSR 4.1.2 and ML frame generation 4.0.2 on AMD (experimental).',
             "This window: Help > What's new opens it again.",
         ])]),
     '1.9.5 beta 10': (
         servers_notice,
         [('Fixes', [
             'Ebrietas: the big frame drops in her fight are gone. Above 60 FPS (Uncap FPS++ and 90 FPS++), '
-            'effects now step in whole 1/60 s, so her particles no longer pile up (Nick).',
+            'effects now step in whole 1/60 s, so her particles no longer pile up.',
             'Ebrietas: her arena no longer loses its map and textures until a restart, when the game leaves '
-            'a table empty for a moment (Nick).',
-            'Launcher: opening it from the tray no longer closes it (Nick).',
+            'a table empty for a moment.',
+            'Launcher: opening it from the tray no longer closes it.',
             'Object motion vectors: shown as unavailable, with the reason, on RX 6000 and older Radeons and on '
             'cards under 6 GB, where the game runs without them anyway.',
-        ]), ('New options (All graphics > Frame rate, all off by default; Medo)', [
+        ]), ('New options (All graphics > Frame rate, all off by default)', [
             'Low latency: NVIDIA Reflex on GeForce, AMD Anti-Lag 2 on Radeon.',
             'Variable refresh rate for G-Sync and FreeSync displays.',
             'Send frames to the GPU in parts: about 2 ms less lag (not on AMD Radeon, where it is slower).',
             'New shaders while playing: built in the background, without stutter.',
         ]), ('Also', [
             'Faster starts: saved shaders are built on all CPU cores, and the driver keeps its own compiled '
-            'shaders between starts (Medo).',
+            'shaders between starts.',
             'Fresher input: the controller is read as the game asks for it, keyboard and mouse every '
-            'millisecond (Medo).',
+            'millisecond.',
             'FPS counter: choose its lines (FPS, frame time, render latency, VRAM, GPU, CPU, RAM, graph) in All '
             'graphics > FPS counter or the in-game menu. Render latency has its own line, off by default. '
             'Value colours: colour-coded (green, orange, red) or plain grey.',
