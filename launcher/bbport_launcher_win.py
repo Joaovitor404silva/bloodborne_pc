@@ -2192,9 +2192,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         try:
             if self.tray is None:
                 self.tray = bbport_tray.Tray(PORT_DIR / 'launcher' / 'bloodborne.ico', 'Bloodborne',
-                                             lambda: self.root.after(0, self.bring_back),
-                                             lambda: self.root.after(0, self.quit_from_tray),
-                                             (_('Open'), _('Quit')))
+                                             self.bring_back, self.quit_from_tray, (_('Open'), _('Quit')),
+                                             root=self.root)
             if self.tray.show():
                 self.root.withdraw()
         except OSError:

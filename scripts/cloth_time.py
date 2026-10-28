@@ -37,7 +37,7 @@ FRAME_TIMER = 0x55404F8       # the frame timer (a pointer): +0x260 frame count,
 FRAME_COUNT, FRAME_TIME = 0x260, 0x264
 # Two gaps in the code segment's last page: after Quit to Desktop's code (it ends at 0x50D9826, crash
 # guards start at 0x50D98C0) and after Rebirth's (it ends at 0x50D9A6D, PC Settings at 0x50D9B00).
-CAVE, CAVE_END = 0x50D9830, 0x50D98C0
+CAVE, CAVE_END = 0x50D9830, 0x50D9894   # effect_time.py has the rest, up to 0x50D98C0
 MORE, MORE_END = 0x50D9A70, 0x50D9B00
 STEADY = 0x56D3F98            # the data segment's unused tail (cloth.py's state ends at +0x18): 8 bytes
 STEADY_TIME = STEADY + 4
