@@ -219,6 +219,22 @@ private:
     std::condition_variable_any driver_cache_cv;
     std::jthread driver_cache_saver;
 
+    /// bbport: BB_ASYNC_PIPELINES=1: a new graphics pipeline is set up on the GPU thread and
+    /// built by the driver on worker threads; its draws are skipped until it is ready (no
+    /// stutter, objects can appear a moment late). GPU thread only, except the counter.
+    struct AsyncBuild {
+        GraphicsPipelineKey key;
+        u64 hash;
+        GraphicsPipeline::SerializationSupport sdata;
+        GraphicsPipeline* pipeline;
+    };
+    std::vector<AsyncBuild> async_builds;
+    std::atomic<u32> async_done{};
+    u32 async_seen{};
+    void FinishAsyncBuilds();
+    struct BuildWorkers;
+    std::unique_ptr<BuildWorkers> build_workers; ///< last: stopped before the pipelines go
+
     // Only if Config::collectShadersForDebug()
     tsl::robin_map<vk::ShaderModule,
                    std::vector<std::variant<GraphicsPipelineKey, ComputePipelineKey>>>

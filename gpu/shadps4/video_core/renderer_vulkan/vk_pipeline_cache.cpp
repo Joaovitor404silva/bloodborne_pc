@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: Copyright 2024-2026 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <deque>
 #include <fstream>
 #include <mutex>
 #include <ranges>
@@ -14,6 +16,7 @@
 #include "common/hash.h"
 #include "common/io_file.h"
 #include "common/path_util.h"
+#include "common/polyfill_thread.h"
 #include "common/thread.h"
 #include "core/debug_state.h"
 #include "core/emulator_settings.h"
@@ -279,6 +282,46 @@ const Shader::RuntimeInfo& PipelineCache::BuildRuntimeInfo(PipelineSelection& se
     return info;
 }
 
+struct PipelineCache::BuildWorkers {
+    std::mutex mutex;
+    std::condition_variable_any cv;
+    std::deque<GraphicsPipeline*> queue;
+    std::vector<std::jthread> threads;
+
+    explicit BuildWorkers(std::atomic<u32>& done) {
+        // A few cores: the game's own threads and the GPU thread keep the rest.
+        const u32 count = std::clamp(std::thread::hardware_concurrency() / 4, 1u, 4u);
+        for (u32 i = 0; i < count; ++i) {
+            threads.emplace_back([this, &done](std::stop_token token) {
+                Common::SetCurrentThreadName("bbport:PipelineBuild");
+                while (true) {
+                    GraphicsPipeline* pipeline;
+                    {
+                        std::unique_lock lock{mutex};
+                        Common::CondvarWait(cv, lock, token, [this] { return !queue.empty(); });
+                        if (token.stop_requested()) {
+                            return;
+                        }
+                        pipeline = queue.front();
+                        queue.pop_front();
+                    }
+                    pipeline->BuildDeferred();
+                    done.fetch_add(1, std::memory_order_release);
+                }
+            });
+        }
+        std::printf("Pipelines: built in the background on %u threads\n", count);
+    }
+
+    void Submit(GraphicsPipeline* pipeline) {
+        {
+            std::scoped_lock lock{mutex};
+            queue.push_back(pipeline);
+        }
+        cv.notify_one();
+    }
+};
+
 PipelineCache::PipelineCache(const Instance& instance_, Scheduler& scheduler_,
                              AmdGpu::Liverpool* liverpool_, u32 sparse_page_shift)
     : instance{instance_}, scheduler{scheduler_}, liverpool{liverpool_},
@@ -356,7 +399,41 @@ PipelineCache::PipelineCache(const Instance& instance_, Scheduler& scheduler_,
     WarmUp();
 }
 
+namespace {
+bool AsyncPipelines() {
+    static const bool value = [] {
+        const char* env = std::getenv("BB_ASYNC_PIPELINES");
+        return env && env[0] == '1' && !EmulatorSettings.IsShaderCollect();
+    }();
+    return value;
+}
+
+// A pipeline the draw can use now: built (not still in the background) and valid.
+const GraphicsPipeline* Usable(const GraphicsPipeline* pipeline) {
+    return pipeline && pipeline->IsBuilt() && pipeline->IsValid() ? pipeline : nullptr;
+}
+} // namespace
+
+void PipelineCache::FinishAsyncBuilds() {
+    async_seen = async_done.load(std::memory_order_acquire);
+    std::erase_if(async_builds, [this](AsyncBuild& build) {
+        if (!build.pipeline->IsBuilt()) {
+            return false;
+        }
+        if (build.pipeline->IsValid()) {
+            RegisterPipelineData(build.key, build.hash, build.sdata);
+            ++num_new_pipelines;
+            ++driver_cache_changes;
+        } else {
+            // As for one built at once: kept empty, skipped, not compiled again.
+            graphics_pipelines[build.key].reset();
+        }
+        return true;
+    });
+}
+
 PipelineCache::~PipelineCache() {
+    build_workers.reset();       // waits for a build in progress
     driver_cache_saver = {}; // stops and joins it
     if (!driver_cache_file.empty() && driver_cache_changes.load() != 0) {
         SaveDriverCache();
@@ -520,12 +597,15 @@ const GraphicsPipeline* PipelineCache::TryPreparedPipeline(const PreparedDraw& p
         }
     }
     const auto it = graphics_pipelines.find(prepared.key);
-    return it != graphics_pipelines.end() ? it->second.get() : nullptr;
+    return it != graphics_pipelines.end() ? Usable(it->second.get()) : nullptr;
 }
 
 const GraphicsPipeline* PipelineCache::GetGraphicsPipeline(const DrawIndirectParams params,
                                                            const PreparedDraw* prepared) {
     used_prepared = nullptr;
+    if (!async_builds.empty() && async_done.load(std::memory_order_acquire) != async_seen) {
+        FinishAsyncBuilds();
+    }
     if (prepared) {
         if (const auto* pipeline = TryPreparedPipeline(*prepared)) {
             used_prepared = prepared;
@@ -543,9 +623,19 @@ const GraphicsPipeline* PipelineCache::GetGraphicsPipeline(const DrawIndirectPar
         CompileTimer timer;
 
         GraphicsPipeline::SerializationSupport sdata{};
+        const bool async = AsyncPipelines();
         it.value() = std::make_unique<GraphicsPipeline>(
             instance, scheduler, desc_heap, profile, sel.graphics_key, *pipeline_cache, sel.infos,
-            sel.runtime_infos, sel.fetch_shader, sel.modules, sdata, false);
+            sel.runtime_infos, sel.fetch_shader, sel.modules, sdata, false, async);
+        if (async) {
+            if (!build_workers) {
+                build_workers = std::make_unique<BuildWorkers>(async_done);
+            }
+            async_builds.push_back({sel.graphics_key, pipeline_hash, sdata, it.value().get()});
+            build_workers->Submit(it.value().get());
+            sel.fetch_shader.reset();
+            return nullptr;
+        }
         // bbport: the driver could not create it. An empty entry keeps the key from being
         // compiled again on every draw; it is not saved, so the next start does not load it.
         if (!it.value()->IsValid()) {
@@ -568,7 +658,7 @@ const GraphicsPipeline* PipelineCache::GetGraphicsPipeline(const DrawIndirectPar
         }
         sel.fetch_shader.reset();
     }
-    return it->second.get();
+    return Usable(it->second.get());
 }
 
 const ComputePipeline* PipelineCache::GetComputePipeline() {

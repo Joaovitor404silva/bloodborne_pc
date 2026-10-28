@@ -1,8 +1,11 @@
 // SPDX-FileCopyrightText: Copyright 2026 bbport contributors
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <array>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 #include <deque>
 #include <mutex>
 #include <string_view>
@@ -31,6 +34,15 @@ struct State {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_LATENCY_CREATE_INFO_NV,
         .latencyModeEnable = VK_TRUE,
     };
+
+    /// BB_FRAME_STATS=1 or BB_LATENCY_LOG=1: the time from the game starting a frame to its
+    /// present, every 5 seconds, also with low latency off (to compare).
+    bool measure = false;
+    std::mutex measure_mutex;
+    std::array<std::pair<u64, std::chrono::steady_clock::time_point>, 64> starts{};
+    std::chrono::steady_clock::time_point window{};
+    double latency_ms = 0.0, latency_max_ms = 0.0;
+    u32 latency_frames = 0;
 
     u64 frame = 1; ///< the frame the game works on (game render thread)
     std::mutex queue_mutex;
@@ -101,6 +113,26 @@ void ReflexSleep() {
     VULKAN_HPP_DEFAULT_DISPATCHER.vkWaitSemaphores(state.device, &wait, 100'000'000);
 }
 
+bool Active() {
+    return state.mode != Mode::Off || state.measure;
+}
+
+const char* ModeName() {
+    switch (state.mode) {
+    case Mode::Reflex:
+        return state.boost ? "NVIDIA Reflex + Boost" : "NVIDIA Reflex";
+    case Mode::AntiLag:
+        return "AMD Anti-Lag 2";
+    default:
+        return "low latency off";
+    }
+}
+
+bool Flag(const char* name) {
+    const char* env = std::getenv(name);
+    return env && env[0] == '1';
+}
+
 } // namespace
 
 bool Wanted() {
@@ -109,6 +141,7 @@ bool Wanted() {
 }
 
 void Init(const Instance& instance) {
+    state.measure = Flag("BB_FRAME_STATS") || Flag("BB_LATENCY_LOG");
     if (!Wanted()) {
         return;
     }
@@ -181,7 +214,7 @@ void OnSwapchain(vk::SwapchainKHR swapchain) {
 }
 
 void FrameSubmitted() {
-    if (state.mode == Mode::Off) {
+    if (!Active()) {
         return;
     }
     const u64 frame = state.frame;
@@ -203,13 +236,17 @@ void FrameSubmitted() {
         ReflexSleep();
         Marker(VK_LATENCY_MARKER_SIMULATION_START_NV, next);
         Marker(VK_LATENCY_MARKER_INPUT_SAMPLE_NV, next);
-    } else {
+    } else if (state.mode == Mode::AntiLag) {
         AntiLag(VK_ANTI_LAG_STAGE_INPUT_AMD, next); // waits in the driver
+    }
+    if (state.measure) {
+        std::scoped_lock lock{state.measure_mutex};
+        state.starts[next % state.starts.size()] = {next, std::chrono::steady_clock::now()};
     }
 }
 
 u64 RenderSubmitEnd() {
-    if (state.mode == Mode::Off) {
+    if (!Active()) {
         return 0;
     }
     u64 id = 0;
@@ -240,6 +277,32 @@ void PresentStart(u64 id) {
 void PresentEnd(u64 id) {
     if (id && state.mode == Mode::Reflex) {
         Marker(VK_LATENCY_MARKER_PRESENT_END_NV, id);
+    }
+    if (!id || !state.measure) {
+        return;
+    }
+    const auto now = std::chrono::steady_clock::now();
+    std::scoped_lock lock{state.measure_mutex};
+    const auto& [start_id, start] = state.starts[id % state.starts.size()];
+    if (start_id == id) {
+        const double ms = std::chrono::duration<double, std::milli>(now - start).count();
+        state.latency_ms += ms;
+        state.latency_max_ms = std::max(state.latency_max_ms, ms);
+        ++state.latency_frames;
+    }
+    if (state.window == std::chrono::steady_clock::time_point{}) {
+        state.window = now;
+    }
+    if (now - state.window >= std::chrono::seconds(5)) {
+        if (state.latency_frames) {
+            std::printf("Latency: %.1f ms from the game starting a frame to its present (worst "
+                        "%.1f ms, %u frames, %s)\n",
+                        state.latency_ms / state.latency_frames, state.latency_max_ms,
+                        state.latency_frames, ModeName());
+        }
+        state.window = now;
+        state.latency_ms = state.latency_max_ms = 0.0;
+        state.latency_frames = 0;
     }
 }
 

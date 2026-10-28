@@ -365,7 +365,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'voice_language': 'auto',
                 'player_name': '', 'fullscreen': False, 'exclusive_fullscreen': False, 'hdr': False, 'present_mode': 'Mailbox',
                 'fps_mode': 'uncap', 'frame_cap': '', 'draw_pipe': '', 'readbacks': '', 'low_vram': '', 'vram_warning': True,
-                'frames_ahead': '', 'low_latency': 'off', 'frame_stats': False, 'gpu_profile': False,
+                'frames_ahead': '', 'low_latency': 'off', 'async_pipelines': '', 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'extra_env': '', 'close_on_play': False,
                 'on_play': 'stay', 'reopen_after_game': False, 'minimize_to_tray': False, 'discord_status': True,
                 'menu_key': 'Insert', 'menu_pad': 'l3+r3',
@@ -509,6 +509,9 @@ FRAME_CAPS = [('', ('Auto: display refresh, max 120 (recommended)', 'Авто: �
 FRAMES_AHEAD = [('', ('1 (default)', '1 (по умолчанию)')), ('2', ('2',)), ('0', ('Unbounded', 'Без ограничения'))]
 # gpu/shadps4/video_core/renderer_vulkan/vk_low_latency.cpp: NVIDIA Reflex or AMD Anti-Lag 2.
 LOW_LATENCY = [('off', ('Off', 'Выкл.')), ('on', ('On', 'Вкл.')), ('boost', ('On + Boost', 'Вкл. + Boost'))]
+# vk_pipeline_cache.cpp BB_ASYNC_PIPELINES: new pipelines built on worker threads, their draws skipped meanwhile.
+ASYNC_PIPELINES = [('', ('Wait for each (exact)', 'Ждать каждый (точно)')),
+                   ('1', ('In the background (no stutter)', 'В фоне (без фризов)'))]
 UI_LANGUAGES = bbport_lang.LANGUAGE_NAMES
 
 FSR4_COMMIT = 'ae8d628fae208813172446d1e49ed94150b04658'
@@ -1199,7 +1202,8 @@ def game_environment(s, graphics=None):
     if s.get('frame_cap', ''):
         env['BB_FPS_LIMIT'] = s['frame_cap']
     for key, name in (('draw_pipe', 'BB_DRAW_PIPE'), ('readbacks', 'BB_READBACKS'), ('frames_ahead', 'BB_FRAMES_AHEAD'),
-                      ('low_vram', 'BB_LOW_VRAM'), ('low_latency', 'BB_LOW_LATENCY')):
+                      ('low_vram', 'BB_LOW_VRAM'), ('low_latency', 'BB_LOW_LATENCY'),
+                      ('async_pipelines', 'BB_ASYNC_PIPELINES')):
         if s[key]:
             env[name] = s[key]
     if not s.get('vram_warning', True):
@@ -2564,6 +2568,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'Меньше задержка ввода: игра начинает кадр вовремя, а не копит кадры в очереди. NVIDIA Reflex на '
                    'GeForce, AMD Anti-Lag 2 на Radeon (свежие драйверы); на других GPU не действует. Boost держит '
                    'частоты GPU высокими.'))
+        self.row(f, _('New shaders while playing', 'Новые шейдеры во время игры'),
+                 self.choice(f, 'async_pipelines', 'app', ASYNC_PIPELINES),
+                 _('In the background: a place seen for the first time does not stutter while its shaders are '
+                   'compiled; things drawn with them appear a moment later instead. Each is compiled once and kept.',
+                   'В фоне: новое место не подтормаживает при компиляции шейдеров, зато объекты с ними появляются '
+                   'чуть позже. Каждый шейдер компилируется один раз и сохраняется.'))
         self.section(f, _('Frame generation', 'Генерация кадров'))
         self.row(f, _('Frame generation', 'Генерация кадров'),
                  self.fg401_choice(f),
