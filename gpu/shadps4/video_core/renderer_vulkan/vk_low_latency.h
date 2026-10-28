@@ -34,6 +34,9 @@ const void* SwapchainCreateNext();
 
 /// Game render thread, after it submitted a frame with its flip.
 void FrameSubmitted();
+/// True when the frame limit is kept before the game starts a frame (low latency on with a
+/// limit): VideoOut then shows a finished frame at once instead of holding it for its slot.
+bool PacesFrames();
 /// GPU thread, at the flip of a submitted frame: the frame's id (0 for other flips).
 u64 RenderSubmitEnd();
 /// Presenter, around the present of a game frame (id 0: not a game frame, nothing is done).

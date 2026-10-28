@@ -199,7 +199,8 @@ struct Values {
     /// frame generation adds frames.
     std::atomic<float> game_fps{0.0f};
     /// The time from the game starting a frame to its present, smoothed (vk_low_latency.cpp),
-    /// and the low latency mode: 0 off, 1 Reflex, 2 Reflex + Boost, 3 Anti-Lag 2.
+    /// and the low latency mode: 0 off, 1 Reflex, 2 Reflex + Boost, 3 Anti-Lag 2,
+    /// 4 pacing only.
     std::atomic<float> latency_ms{0.0f};
     std::atomic<int> latency_mode{0};
     /// The game's frame rate cap frame generation needs (VideoOut applies it), 0 for none: with

@@ -11,6 +11,7 @@
 #include <string_view>
 #include "bbport_settings.h"
 #include "common/logging/log.h"
+#include "common/thread.h"
 #include "core/emulator_settings.h"
 #include "video_core/renderer_vulkan/vk_instance.h"
 #include "video_core/renderer_vulkan/vk_low_latency.h"
@@ -19,12 +20,15 @@ namespace Vulkan::LowLatency {
 
 namespace {
 
-enum class Mode { Off, Reflex, AntiLag };
+enum class Mode { Off, Reflex, AntiLag, Pacing }; // Pacing: no driver support, the limit only
 
 struct State {
     Mode mode = Mode::Off;
     bool boost = false;
-    u32 max_fps = 0; ///< the frame limit, also given to the driver (it waits before the frame)
+    /// The frame limit, kept here before each frame starts (FrameSubmitted). A frame held for
+    /// its slot after it was made waited there a frame or two: the latency doubled.
+    std::chrono::nanoseconds period{};
+    std::chrono::steady_clock::time_point next_start{};
     VkDevice device = VK_NULL_HANDLE;
 
     std::mutex mutex; ///< the swapchain against the markers and the sleep (other threads)
@@ -43,9 +47,16 @@ struct State {
     bool log = false;
     double smoothed_ms = 0.0;
     std::mutex measure_mutex;
-    std::array<std::pair<u64, std::chrono::steady_clock::time_point>, 64> starts{};
+    /// One frame's way: the game starts it, submits it, the GPU thread reaches its flip, the
+    /// presenter starts presenting it.
+    struct Times {
+        u64 id;
+        std::chrono::steady_clock::time_point start, submit, flip, present;
+    };
+    std::array<Times, 64> times{};
     std::chrono::steady_clock::time_point window{};
     double latency_ms = 0.0, latency_max_ms = 0.0;
+    std::array<double, 4> parts_ms{}; ///< game, GPU thread, waiting to present, present
     u32 latency_frames = 0;
 
     u64 frame = 1; ///< the frame the game works on (game render thread)
@@ -82,7 +93,7 @@ void AntiLag(VkAntiLagStageAMD stage, u64 id) {
     const VkAntiLagDataAMD data{
         .sType = VK_STRUCTURE_TYPE_ANTI_LAG_DATA_AMD,
         .mode = VK_ANTI_LAG_MODE_ON_AMD,
-        .maxFPS = state.max_fps,
+        .maxFPS = 0, // the limit is kept in FrameSubmitted
         .pPresentationInfo = &presentation,
     };
     VULKAN_HPP_DEFAULT_DISPATCHER.vkAntiLagUpdateAMD(state.device, &data);
@@ -127,6 +138,8 @@ const char* ModeName() {
         return state.boost ? "NVIDIA Reflex + Boost" : "NVIDIA Reflex";
     case Mode::AntiLag:
         return "AMD Anti-Lag 2";
+    case Mode::Pacing:
+        return "low latency pacing";
     default:
         return "low latency off";
     }
@@ -151,7 +164,9 @@ void Init(const Instance& instance) {
     }
     state.device = instance.GetDevice();
     state.boost = Setting() == "boost";
-    state.max_fps = EmulatorSettings.GetFrameLimit();
+    if (const u32 limit = EmulatorSettings.GetFrameLimit()) {
+        state.period = std::chrono::nanoseconds(1'000'000'000 / limit);
+    }
     if (instance.IsNvLowLatencyEnabled()) {
         const VkSemaphoreTypeCreateInfo type{
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
@@ -168,9 +183,12 @@ void Init(const Instance& instance) {
         }
     } else if (instance.IsAmdAntiLagEnabled()) {
         state.mode = Mode::AntiLag;
+    } else {
+        state.mode = Mode::Pacing;
     }
     BbSettings::Get().latency_mode.store(state.mode == Mode::Reflex    ? (state.boost ? 2 : 1)
                                          : state.mode == Mode::AntiLag ? 3
+                                         : state.mode == Mode::Pacing  ? 4
                                                                        : 0);
     switch (state.mode) {
     case Mode::Reflex:
@@ -179,9 +197,11 @@ void Init(const Instance& instance) {
     case Mode::AntiLag:
         std::printf("Low latency: AMD Anti-Lag 2\n");
         break;
+    case Mode::Pacing:
+        std::printf("Low latency: frame pacing only (this GPU or driver has neither NVIDIA Reflex, "
+                    "VK_NV_low_latency2, nor AMD Anti-Lag 2, VK_AMD_anti_lag)\n");
+        break;
     case Mode::Off:
-        std::printf("Low latency: not available with this GPU or driver (needs NVIDIA Reflex, "
-                    "VK_NV_low_latency2, or AMD Anti-Lag 2, VK_AMD_anti_lag)\n");
         break;
     }
 }
@@ -210,7 +230,7 @@ void OnSwapchain(vk::SwapchainKHR swapchain) {
         .sType = VK_STRUCTURE_TYPE_LATENCY_SLEEP_MODE_INFO_NV,
         .lowLatencyMode = VK_TRUE,
         .lowLatencyBoost = state.boost ? VK_TRUE : VK_FALSE,
-        .minimumIntervalUs = state.max_fps ? 1'000'000 / state.max_fps : 0,
+        .minimumIntervalUs = 0, // the limit is kept in FrameSubmitted
     };
     const auto result =
         VULKAN_HPP_DEFAULT_DISPATCHER.vkSetLatencySleepModeNV(state.device, swapchain, &mode);
@@ -225,6 +245,13 @@ void FrameSubmitted() {
         return;
     }
     const u64 frame = state.frame;
+    if (state.measure) {
+        std::scoped_lock lock{state.measure_mutex};
+        auto& times = state.times[frame % state.times.size()];
+        if (times.id == frame) {
+            times.submit = std::chrono::steady_clock::now();
+        }
+    }
     if (state.mode == Mode::Reflex) {
         Marker(VK_LATENCY_MARKER_SIMULATION_END_NV, frame);
         Marker(VK_LATENCY_MARKER_RENDERSUBMIT_START_NV, frame);
@@ -246,10 +273,27 @@ void FrameSubmitted() {
     } else if (state.mode == Mode::AntiLag) {
         AntiLag(VK_ANTI_LAG_STAGE_INPUT_AMD, next); // waits in the driver
     }
+    if (PacesFrames()) {
+        // As VideoOut's limiter did: the next start a period after the slot, but no earlier
+        // than a period minus a little after this one (a late frame does not make the next
+        // one early).
+        const auto now = std::chrono::steady_clock::now();
+        if (state.next_start > now) {
+            Common::PreciseSleepUntil(state.next_start);
+        }
+        const auto started = std::chrono::steady_clock::now();
+        state.next_start = std::max(state.next_start + state.period,
+                                    started + state.period - state.period / 16);
+    }
     if (state.measure) {
         std::scoped_lock lock{state.measure_mutex};
-        state.starts[next % state.starts.size()] = {next, std::chrono::steady_clock::now()};
+        const auto now = std::chrono::steady_clock::now();
+        state.times[next % state.times.size()] = {next, now, now, now, now};
     }
+}
+
+bool PacesFrames() {
+    return state.mode != Mode::Off && state.period.count() != 0;
 }
 
 u64 RenderSubmitEnd() {
@@ -267,12 +311,26 @@ u64 RenderSubmitEnd() {
     if (id && state.mode == Mode::Reflex) {
         Marker(VK_LATENCY_MARKER_RENDERSUBMIT_END_NV, id);
     }
+    if (id && state.measure) {
+        std::scoped_lock lock{state.measure_mutex};
+        auto& times = state.times[id % state.times.size()];
+        if (times.id == id) {
+            times.flip = std::chrono::steady_clock::now();
+        }
+    }
     return id;
 }
 
 void PresentStart(u64 id) {
     if (!id) {
         return;
+    }
+    if (state.measure) {
+        std::scoped_lock lock{state.measure_mutex};
+        auto& times = state.times[id % state.times.size()];
+        if (times.id == id) {
+            times.present = std::chrono::steady_clock::now();
+        }
     }
     if (state.mode == Mode::Reflex) {
         Marker(VK_LATENCY_MARKER_PRESENT_START_NV, id);
@@ -290,9 +348,16 @@ void PresentEnd(u64 id) {
     }
     const auto now = std::chrono::steady_clock::now();
     std::scoped_lock lock{state.measure_mutex};
-    const auto& [start_id, start] = state.starts[id % state.starts.size()];
-    if (start_id == id) {
-        const double ms = std::chrono::duration<double, std::milli>(now - start).count();
+    const auto& times = state.times[id % state.times.size()];
+    if (times.id == id) {
+        const auto span = [](auto from, auto to) {
+            return std::chrono::duration<double, std::milli>(to - from).count();
+        };
+        const double ms = span(times.start, now);
+        state.parts_ms[0] += span(times.start, times.submit);
+        state.parts_ms[1] += span(times.submit, times.flip);
+        state.parts_ms[2] += span(times.flip, times.present);
+        state.parts_ms[3] += span(times.present, now);
         state.latency_ms += ms;
         state.latency_max_ms = std::max(state.latency_max_ms, ms);
         ++state.latency_frames;
@@ -308,13 +373,17 @@ void PresentEnd(u64 id) {
     }
     if (now - state.window >= std::chrono::seconds(5)) {
         if (state.latency_frames && state.log) {
+            const double n = state.latency_frames;
             std::printf("Latency: %.1f ms from the game starting a frame to its present (worst "
-                        "%.1f ms, %u frames, %s)\n",
-                        state.latency_ms / state.latency_frames, state.latency_max_ms,
-                        state.latency_frames, ModeName());
+                        "%.1f ms, %u frames, %s): game %.1f, GPU thread %.1f, waiting to present "
+                        "%.1f, present %.1f ms\n",
+                        state.latency_ms / n, state.latency_max_ms, state.latency_frames,
+                        ModeName(), state.parts_ms[0] / n, state.parts_ms[1] / n,
+                        state.parts_ms[2] / n, state.parts_ms[3] / n);
         }
         state.window = now;
         state.latency_ms = state.latency_max_ms = 0.0;
+        state.parts_ms = {};
         state.latency_frames = 0;
     }
 }

@@ -1088,8 +1088,8 @@ void FpsCounter() {
         // From the game starting a frame to its present (vk_low_latency.cpp).
         if (const float latency = s.latency_ms.load(std::memory_order_relaxed); latency > 0.0f) {
             static const char* modes[] = {"Low latency off", "Reflex", "Reflex + Boost",
-                                          "Anti-Lag 2"};
-            const int mode = std::clamp(s.latency_mode.load(), 0, 3);
+                                          "Anti-Lag 2", "Low latency"};
+            const int mode = std::clamp(s.latency_mode.load(), 0, 4);
             Label("Latency:", column);
             ImGui::Text("%.1f ms", double(latency));
             ImGui::SameLine(0.0f, model_gap);
