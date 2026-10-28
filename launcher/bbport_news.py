@@ -25,9 +25,9 @@ def notes(version):
 NOTES = {
     '1.9.5 beta 10': (
         lambda: _('Online servers: the port now plays on its own servers. SuperMedo Server is the default and '
-                  "recommended; The Hunter's Dream stays available for now. Other servers can no longer be "
-                  'chosen: if you used one, you now play on SuperMedo Server. Sign in, or make a free account, '
-                  'on the Online page.'),
+                  "recommended; The Hunter's Dream stays available for any players who want to use their server. "
+                  'Other servers can no longer be chosen: if you used one, you now play on SuperMedo Server. Sign '
+                  'in, or make a free account, on the Online page.'),
         [('Fixes', [
             "Ebrietas: the big frame drops in her fight are gone. A table the game leaves empty for a moment "
             "no longer costs the area its textures until a restart (Nick).",

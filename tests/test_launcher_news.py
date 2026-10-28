@@ -1,14 +1,11 @@
 """What's new (launcher/bbport_news.py): notes for the version being built, so a version bump does not ship
 without them, and the window shown once per version (VERSION_TEXT: every beta counts)."""
 from paths import ROOT
-import importlib.util
 import sys
 import unittest
 
 sys.path.insert(0, str(ROOT / 'launcher'))
-spec = importlib.util.spec_from_file_location('bbport_launcher_news_test', ROOT / 'launcher' / 'bbport_launcher_win.py')
-L = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(L)
+import bbport_launcher_win as L  # noqa: E402  (one copy: a second would bind the shared modules to itself)
 import bbport_news  # noqa: E402
 
 
