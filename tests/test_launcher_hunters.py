@@ -4,6 +4,7 @@ from paths import ROOT
 import contextlib
 import io
 import json
+import os
 import sys
 import types
 import unittest
@@ -109,7 +110,10 @@ class PoolTests(unittest.TestCase):
                          {'online_custom_servers': False, 'online_pool': 'supermedo'})
         seamless = {'online': True, 'online_pool': 'shadnet', 'online_server': 'play.seamlesshunt.com:31313'}
         self.assertEqual(L.settled_online({**L.APP_DEFAULTS, **seamless}, seamless),
-                         {'online_custom_servers': True, 'online_pool': 'shadnet'})
+                         {'online_custom_servers': True, 'online_pool': 'supermedo'})
+        with mock.patch.dict(os.environ, {'BB_PROBE': r'C:\BBSC\bbsc-launch.exe'}):
+            self.assertEqual(L.settled_online({**L.APP_DEFAULTS, **seamless}, seamless),
+                             {'online_custom_servers': True, 'online_pool': 'shadnet'})
         boxed = {**seamless, 'online_custom_servers': False}  # the box saved off: the player's choice
         self.assertEqual(L.settled_online({**L.APP_DEFAULTS, **boxed}, boxed)['online_pool'], 'supermedo')
 
@@ -167,11 +171,16 @@ class PoolTests(unittest.TestCase):
         self.assertEqual(taken, {'online_server': 'bbsc.example:31313', 'online_npid': 'bbsc'})
         self.assertEqual(sorted(kept), ['online_pool', 'supermedo_npid', 'thd_token'])
 
-    def test_a_start_keeps_shadnet_with_own_servers(self):
-        """A private server or a co-op tool's (Seamless co-op: play.seamlesshunt.com) stays on shadNet."""
+    def test_only_seamless_coop_keeps_its_own_server(self):
+        """Since 1.9.5 beta 10 only SuperMedo Server and The Hunter's Dream: an own server moves to SuperMedo Server,
+        except under Seamless co-op's own start (bbsc-launch.exe the game program), whose server it is."""
         own = {**L.APP_DEFAULTS, 'online_pool': 'shadnet', 'online_server': 'play.seamlesshunt.com:31313'}
-        self.assertEqual(L.settled_pool({**own, 'online_custom_servers': L.has_own_servers(own)}), 'shadnet')
-        self.assertEqual(L.settled_pool({**L.APP_DEFAULTS, 'online_pool': 'supermedo'}), 'supermedo')
+        own['online_custom_servers'] = L.has_own_servers(own)
+        self.assertEqual(L.settled_pool(own, {}), 'supermedo')
+        self.assertEqual(L.settled_pool(own, {'BB_PROBE': r'C:\BBSC\bbsc-launch.exe'}), 'shadnet')
+        self.assertEqual(L.settled_pool({**own, 'online_custom_servers': False},
+                                        {'BB_PROBE': r'C:\BBSC\bbsc-launch.exe'}), 'supermedo')
+        self.assertEqual(L.settled_pool({**L.APP_DEFAULTS, 'online_pool': 'supermedo'}, {}), 'supermedo')
 
 
 class GameServerTests(unittest.TestCase):

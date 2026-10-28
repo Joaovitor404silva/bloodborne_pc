@@ -244,6 +244,7 @@ import bbport_lang_pools  # noqa: E402,F401 (the co-op pools' texts with The Hun
 import bbport_lang_mistakes  # noqa: E402,F401 (the repairs of player mistakes, in the other eleven languages)
 import bbport_lang_vram  # noqa: E402,F401 (the video memory warning's switch)
 import bbport_lang_latency  # noqa: E402,F401 (the low latency options)
+import bbport_lang_news  # noqa: E402,F401 (the What's new window)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
 # EXTRA_TRANSLATIONS after it would not be in them.
 import bbport_fsr41_translations  # noqa: E402,F401
@@ -257,6 +258,7 @@ import bbport_pad  # noqa: E402
 import bbport_help  # noqa: E402
 import bbport_search  # noqa: E402
 import bbport_setup  # noqa: E402
+import bbport_news  # noqa: E402
 import bbport_trophies as trophies  # noqa: E402
 import bbport_theme as theme  # noqa: E402
 import bbport_tls  # noqa: E402 (every HTTPS request: no expired certificates of the stores, Windows' trust)
@@ -403,7 +405,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'output_display': False,  # output resolution: the game monitor's own, set at every start
                 'auto_backup': True,  # the saves backed up before every start (bbport_saves.auto_backup)
                 'exit_backup': False,  # and after the game exits (run.py, bbport_exit_backup)
-                'seen_version': '',  # the version whose news the Play page has shown
+                'seen_version': '',  # the version (VERSION_TEXT) whose What's new was shown (bbport_news)
                 # Game tests (System & performance): the kind, the scenario, its options.
                 'test_mode': 'performance', 'test_scenario': 'hunters-view', 'test_compare': 'preset',
                 'test_repeats': '1', 'test_minutes': '10', 'test_saves': {}}  # the last check of eboot.bin (bbport_help), kept while the file is unchanged
@@ -825,18 +827,25 @@ def has_own_servers(s):
                for key in ('online_server', 'online_webapi', 'online_community'))
 
 
-def settled_pool(s):
-    """The co-op pool a launcher start keeps (online_custom_servers already settled). SuperMedo Server for a
-    pool the launcher no longer has, The Hunter's Dream while it is off, and shadNet without own servers
-    (online_custom_servers): that is shadPS4's public server, which refuses the port, and an earlier launcher's setting
-    left beta testers unable to play online. shadNet with own servers (a private one, a co-op tool's)
-    stays."""
+def started_by_bbsc(env=None):
+    """BBSC's own "OPEN BBPORT LAUNCHER + BBSC" (tools/play-bbport.ps1) opened this launcher, with its
+    bbsc-launch.exe as the game program (BB_PROBE) and its server in the shadNet boxes."""
+    env = os.environ if env is None else env
+    return Path(env.get('BB_PROBE', '')).name.lower() == 'bbsc-launch.exe'
+
+
+def settled_pool(s, env=None):
+    """The co-op pool a launcher start keeps (online_custom_servers already settled): SuperMedo Server (the
+    default) or The Hunter's Dream while it is on. Since 1.9.5 beta 10 the launcher offers no other server:
+    players who chose shadPS4's public one (which refuses the port) or another own server were confused
+    about where they played, so they move to SuperMedo Server. Only Seamless co-op's own start (started_by_bbsc)
+    keeps its shadNet server."""
     pool = s.get('online_pool')
-    if pool not in ('supermedo', 'shadnet', 'huntersdream') or (pool == 'huntersdream' and not HUNTERS_DREAM_POOL):
-        return 'supermedo'
-    if pool == 'shadnet' and not s.get('online_custom_servers'):
-        return 'supermedo'
-    return pool
+    if pool == 'huntersdream' and HUNTERS_DREAM_POOL:
+        return pool
+    if pool == 'shadnet' and s.get('online_custom_servers') and started_by_bbsc(env):
+        return pool
+    return 'supermedo'
 
 
 def settled_online(app, saved):
@@ -1183,7 +1192,7 @@ def game_environment(s, graphics=None):
     # BBSC's own "OPEN BBPORT LAUNCHER + BBSC" (tools/play-bbport.ps1) opens this launcher with
     # BBSC as the game program and its server: kept for a start on that server only (the shadNet
     # choice it points there). Offline, The Hunter's Dream or another server start without BBSC.
-    if Path(env.get('BB_PROBE', '')).name.lower() == 'bbsc-launch.exe':
+    if started_by_bbsc(env):
         theirs = env.get('BB_SHADNET_SERVER', '').strip().partition(':')[0].lower()
         ours = str(s.get('online_server', '')).strip().partition(':')[0].lower()
         if not (s.get('online') and s.get('online_pool') == 'shadnet' and theirs and theirs == ours):
@@ -1398,6 +1407,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.show('play')
         root.after(50, self.window_chrome)
         self.maybe_open_setup()
+        self.maybe_show_news()
         root.protocol('WM_DELETE_WINDOW', self.close)
         root.after(100, self.drain_output)
         root.after(300, self.poll_trophies)
@@ -2946,9 +2956,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.section(f, _('Co-op pool'))
         pool = self.var('online_pool', 'app')
         pool.trace_add('write', lambda *_a: (self.refresh_status(), self.root.after_idle(self.ask_hunters)))
-        # SuperMedo Server first (the default), The Hunter's Dream (the previous server) for the time being, then
-        # an own server (Seamless co-op's, a friend's). shadPS4's public shadNet server turned the port away and is no
-        # choice any more. Each keeps its own account (pool_account): switching back and forth signs none out.
+        # SuperMedo Server first (the default), The Hunter's Dream (the previous server) for the time being. An own
+        # server only for Seamless co-op's own start (settled_pool): other servers confused players about where
+        # they played. Each keeps its own account (pool_account): switching back and forth signs none out.
         pools = ttk.Frame(f)
         ttk.Radiobutton(pools, text=_('SuperMedo Server (recommended)') if HUNTERS_DREAM_POOL else
                         _('SuperMedo Server'), variable=pool, value='supermedo').pack(side='left', padx=(0, 16))
@@ -2957,14 +2967,19 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                             value='huntersdream').pack(side='left', padx=(0, 16))
         elif pool.get() == 'huntersdream':
             pool.set('supermedo')
-        ttk.Radiobutton(pools, text=_("Own server (Seamless co-op, a friend's)"), variable=pool,
-                        value='shadnet').pack(side='left')
+        bbsc = started_by_bbsc()
+        if bbsc:
+            ttk.Radiobutton(pools, text=_("Own server (Seamless co-op, a friend's)"), variable=pool,
+                            value='shadnet').pack(side='left')
+        elif pool.get() == 'shadnet':
+            pool.set('supermedo')
         pools.setting_key = 'online_pool'  # the search's words (bbport_search.WORDS)
         self.row(f, _('Play with'), pools, ' '.join(
             [_("SuperMedo Server (recommended): supermedo.com's own servers, with a free account made below.")] +
             ([_("The Hunter's Dream: the previous server, still here for now; connections there often drop.")]
              if HUNTERS_DREAM_POOL else []) +
-            [_("Own server: Seamless co-op's or a friend's private server, with its address and account.")]))
+            ([_("Own server: Seamless co-op's or a friend's private server, with its address and account.")]
+             if bbsc else [])))
         self.hunters_line = ttk.Label(f, text='', style='Muted.TLabel')
         self.hunters_line.grid(row=self.next_row(f), column=1, sticky='w', pady=(2, 0))
         # Each pool shows only its own settings (show_pool below).
@@ -4319,7 +4334,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         cheats = [_(*title) for key, title, _on in CHEATS if self.var(key, 'ini').get()]
         self.check_line('cheats', ('⚠ ' + _('Cheats on: {}').format(', '.join(t.split(' (')[0] for t in cheats))
                                    if cheats else ''), lambda: self.show('cheats'))
-        news = self.var('setup_done', 'app').get() and self.app.get('seen_version') != VERSION
+        news = self.var('setup_done', 'app').get() and self.app.get('seen_version') != VERSION_TEXT
         self.check_line('news', '• ' + _('New in version {}: what has changed').format(VERSION_TEXT) if news else '',
                         self.open_news)
         for label in getattr(self, 'warnings', []):
@@ -4393,10 +4408,25 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.hunters_line.configure(text=_("The Hunter's Dream: {} hunters online right now ({} bbhost · {} shadNet)")
                                         .format(*known) if known else '')
 
+    def maybe_show_news(self):
+        """At start: What's new, once per version (VERSION_TEXT: every beta counts). A new installation's
+        setup guide comes first and counts as seeing it."""
+        if self.app.get('seen_version') == VERSION_TEXT:
+            return
+        if getattr(self, 'guide', None):
+            self.app['seen_version'] = VERSION_TEXT
+            return
+        if bbport_news.notes(VERSION_TEXT) is not None:  # else the Play page's line links the release page
+            self.open_news()
+
     def open_news(self):
-        self.app['seen_version'] = VERSION
-        webbrowser.open(BETA_PAGE if BETA else RELEASES_PAGE)
-        self.refresh_status()
+        """The What's new window (bbport_news), or the release page for a version without notes."""
+        if bbport_news.notes(VERSION_TEXT) is None:
+            self.app['seen_version'] = VERSION_TEXT
+            webbrowser.open(BETA_PAGE if BETA else RELEASES_PAGE)
+            self.refresh_status()
+        elif not getattr(self, 'news_panel', None):
+            self.news_panel = bbport_news.NewsPanel(self, VERSION_TEXT)
 
     def summary(self):
         fps = dict(FPS_MODES).get(self.var('fps_mode', 'app').get(), ('?',))
@@ -5801,6 +5831,7 @@ class _ThisModule:
 
 
 bbport_setup.bind(_ThisModule())
+bbport_news.bind(_ThisModule())
 bbport_help.bind(_ThisModule())
 bbport_search.bind(_ThisModule())
 bbport_pad.bind(_ThisModule())
