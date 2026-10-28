@@ -1063,7 +1063,7 @@ void FpsCounter() {
     // One value column for the whole panel, as wide as the longest label it can show plus a gap.
     // Measured and constant, so values line up and never move when a switch is flipped.
     float column = 0.0f;
-    for (const char* label : {"FPS:", "Frame:", "VRAM:", "GPU:", "CPU:", "RAM:"}) {
+    for (const char* label : {"FPS:", "Latency:", "Frame:", "VRAM:", "GPU:", "CPU:", "RAM:"}) {
         column = std::max(column, ImGui::CalcTextSize(label).x);
     }
     column += 10.0f * base_scale;
@@ -1084,6 +1084,16 @@ void FpsCounter() {
         if (generated > 0 && s.game_fps > 0.0f) {
             ImGui::SameLine(0.0f, 6.0f * base_scale);
             ImGui::TextDisabled("(game %.0f, %dx)", double(s.game_fps.load()), generated);
+        }
+        // From the game starting a frame to its present (vk_low_latency.cpp).
+        if (const float latency = s.latency_ms.load(std::memory_order_relaxed); latency > 0.0f) {
+            static const char* modes[] = {"Low latency off", "Reflex", "Reflex + Boost",
+                                          "Anti-Lag 2"};
+            const int mode = std::clamp(s.latency_mode.load(), 0, 3);
+            Label("Latency:", column);
+            ImGui::Text("%.1f ms", double(latency));
+            ImGui::SameLine(0.0f, model_gap);
+            ImGui::TextDisabled("|  %s", modes[mode]);
         }
     }
     if (s.show_frame_times) {

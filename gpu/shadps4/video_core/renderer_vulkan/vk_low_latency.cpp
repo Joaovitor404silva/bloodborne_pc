@@ -9,6 +9,7 @@
 #include <deque>
 #include <mutex>
 #include <string_view>
+#include "bbport_settings.h"
 #include "common/logging/log.h"
 #include "core/emulator_settings.h"
 #include "video_core/renderer_vulkan/vk_instance.h"
@@ -35,9 +36,12 @@ struct State {
         .latencyModeEnable = VK_TRUE,
     };
 
-    /// BB_FRAME_STATS=1 or BB_LATENCY_LOG=1: the time from the game starting a frame to its
-    /// present, every 5 seconds, also with low latency off (to compare).
-    bool measure = false;
+    /// The time from the game starting a frame to its present, always measured (also with low
+    /// latency off, to compare): shown by the FPS counter (BbSettings::latency_ms), and with
+    /// BB_FRAME_STATS=1 or BB_LATENCY_LOG=1 logged every 5 seconds.
+    bool measure = true;
+    bool log = false;
+    double smoothed_ms = 0.0;
     std::mutex measure_mutex;
     std::array<std::pair<u64, std::chrono::steady_clock::time_point>, 64> starts{};
     std::chrono::steady_clock::time_point window{};
@@ -141,7 +145,7 @@ bool Wanted() {
 }
 
 void Init(const Instance& instance) {
-    state.measure = Flag("BB_FRAME_STATS") || Flag("BB_LATENCY_LOG");
+    state.log = Flag("BB_FRAME_STATS") || Flag("BB_LATENCY_LOG");
     if (!Wanted()) {
         return;
     }
@@ -165,6 +169,9 @@ void Init(const Instance& instance) {
     } else if (instance.IsAmdAntiLagEnabled()) {
         state.mode = Mode::AntiLag;
     }
+    BbSettings::Get().latency_mode.store(state.mode == Mode::Reflex    ? (state.boost ? 2 : 1)
+                                         : state.mode == Mode::AntiLag ? 3
+                                                                       : 0);
     switch (state.mode) {
     case Mode::Reflex:
         std::printf("Low latency: NVIDIA Reflex%s\n", state.boost ? " + Boost" : "");
@@ -289,12 +296,18 @@ void PresentEnd(u64 id) {
         state.latency_ms += ms;
         state.latency_max_ms = std::max(state.latency_max_ms, ms);
         ++state.latency_frames;
+        // Smoothed over about a second for the counter; loading hitches do not stick.
+        const double sample = std::min(ms, 250.0);
+        state.smoothed_ms = state.smoothed_ms == 0.0
+                                ? sample
+                                : state.smoothed_ms + (sample - state.smoothed_ms) * 0.02;
+        BbSettings::Get().latency_ms.store(float(state.smoothed_ms), std::memory_order_relaxed);
     }
     if (state.window == std::chrono::steady_clock::time_point{}) {
         state.window = now;
     }
     if (now - state.window >= std::chrono::seconds(5)) {
-        if (state.latency_frames) {
+        if (state.latency_frames && state.log) {
             std::printf("Latency: %.1f ms from the game starting a frame to its present (worst "
                         "%.1f ms, %u frames, %s)\n",
                         state.latency_ms / state.latency_frames, state.latency_max_ms,
