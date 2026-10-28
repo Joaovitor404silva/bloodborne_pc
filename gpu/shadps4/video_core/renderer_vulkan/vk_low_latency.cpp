@@ -159,14 +159,20 @@ bool Wanted() {
 
 void Init(const Instance& instance) {
     state.log = Flag("BB_FRAME_STATS") || Flag("BB_LATENCY_LOG");
+    if (const u32 limit = EmulatorSettings.GetFrameLimit()) {
+        state.period = std::chrono::nanoseconds(1'000'000'000 / limit);
+    }
     if (!Wanted()) {
+        // VRR with V-Sync: the frame is paced before it starts, or V-Sync and the limiter
+        // would each hold it (a frame or two of latency).
+        if (EmulatorSettings.IsVrr() && state.period.count()) {
+            state.mode = Mode::Pacing;
+            BbSettings::Get().latency_mode.store(4);
+        }
         return;
     }
     state.device = instance.GetDevice();
     state.boost = Setting() == "boost";
-    if (const u32 limit = EmulatorSettings.GetFrameLimit()) {
-        state.period = std::chrono::nanoseconds(1'000'000'000 / limit);
-    }
     if (instance.IsNvLowLatencyEnabled()) {
         const VkSemaphoreTypeCreateInfo type{
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,

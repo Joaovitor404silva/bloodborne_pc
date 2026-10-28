@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <algorithm>
+#include <cstdio>
+#include <string>
 #include <limits>
 #include "bbport_settings.h"
 #include "common/assert.h"
@@ -220,7 +222,14 @@ void Swapchain::FindPresentMode() {
         return;
     }
 
-    const auto requested_mode = EmulatorSettings.GetPresentMode();
+    // bbport: VRR needs V-Sync (FIFO): with Mailbox the display does not follow the game's
+    // frames on every driver. The frame cap keeps it below the refresh rate (GetFrameLimit).
+    const auto requested_mode =
+        EmulatorSettings.IsVrr() ? std::string{"Fifo"} : EmulatorSettings.GetPresentMode();
+    if (EmulatorSettings.IsVrr()) {
+        std::printf("VRR: V-Sync (FIFO), frame cap %u FPS (display %u Hz)\n",
+                    EmulatorSettings.GetFrameLimit(), BbDisplayRefreshHz());
+    }
     if (requested_mode == "Mailbox") {
         present_mode = vk::PresentModeKHR::eMailbox;
     } else if (requested_mode == "Fifo") {
