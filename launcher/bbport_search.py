@@ -45,6 +45,7 @@ WORDS = {
     'object_motion': 'ghosting schlieren nachziehen bewegungsvektoren',
     'model_lod': 'lod detail modelldetail details pop-in plopp modelle sichtweite',
     'show_fps': 'fps zahler counter anzeige overlay',
+    'button:news': 'news changelog patch notes release notes neuigkeiten anderungen whats new',
     'show_latency': 'latency latenz input lag eingabeverzogerung reflex anti-lag delay verzogerung',
     'show_frame_times': 'frametime frame time ms stutter ruckler',
     'frame_gen': 'framegen frame generation zwischenbilder dlss fsr fg',

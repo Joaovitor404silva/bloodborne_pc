@@ -24,7 +24,7 @@ class NewsTests(unittest.TestCase):
         self.assertTrue(notice is None or notice())
 
     def test_shown_once_per_version(self):
-        for seen, opened in (('1.9.5', 1), ('1.9.5 beta 9', 1), (L.VERSION_TEXT, 0)):
+        for seen, opened in (('1.9.4', 1), ('1.9.5 beta 9', 1), ('', 1), (L.VERSION_TEXT, 0)):
             app = FakeApp(seen)
             L.Launcher.maybe_show_news(app)
             self.assertEqual(app.opened, opened, seen)

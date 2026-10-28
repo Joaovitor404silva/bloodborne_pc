@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 """What's new: shown over the launcher at its first start in a new version (VERSION_TEXT, so every beta
-counts), and again from the Play page's "New in version" line. NOTES holds each version's notice (what
-players must know or do, in every language: bbport_lang_news) and its changes (in English, like the
+counts), and again from Help > What's new (and the Play page's "New in version" line until seen).
+NOTES holds each version's notice (what players must know or do, in every language: bbport_lang_news) and its changes (in English, like the
 release notes on GitHub). A version without notes shows nothing at start."""
 import bbport_theme as theme
 
@@ -22,24 +22,56 @@ def notes(version):
     return NOTES.get(version)
 
 
+def servers_notice():
+    return _('Online servers: the port now plays on its own servers. SuperMedo Server is the default and '
+             "recommended; The Hunter's Dream stays available for any players who want to use their server. "
+             'Other servers can no longer be chosen: if you used one, you now play on SuperMedo Server. Sign '
+             'in, or make a free account, on the Online page.')
+
+
 NOTES = {
+    '1.9.5': (
+        servers_notice,
+        [('Online', [
+            'SuperMedo Server, our own online servers, is the default: sign in with Discord or make a free '
+            "account on the Online page. The Hunter's Dream stays available (Medo, Nick).",
+            'Co-op through a relay when routers block a direct connection, and over the LAN for players behind '
+            'the same connection (Medo).',
+        ]), ('Gameplay at any frame rate', [
+            'Capes and cloth hang as on the PS4 and no longer spaz out when the frame rate stutters.',
+            "Plants sway with the time that passed: no more jolting or rushing grass (Hemwick's lavender).",
+            'Jumps go as far at any frame rate as on the PS4.',
+            "Ebrietas: no more particle pile-up above 60 FPS, and her arena no longer loses its map and "
+            'textures (Nick).',
+        ]), ('Crashes and fixes', [
+            'The most common random crash (ucrtbase.dll, often after about an hour) is fixed (DarkSpartan, Nick).',
+            'Error 21 at start (memory in use by another program) no longer stops the game.',
+            'Rebirth at the Doll: no T-pose, free levels again, and leaving the level-up screen undoes it.',
+            'Common mistakes repaired for you: read-only saves, saves in the wrong folder, antivirus locks, '
+            'game files from a PKG tool (Nick).',
+        ]), ('New', [
+            "PC Settings in the game's own System menu, for the controller (Medo).",
+            'Low latency (Reflex, Anti-Lag 2), VRR, and new shaders built in the background: All graphics > '
+            'Frame rate (Medo).',
+            'FPS counter: choose its lines and colours (All graphics > FPS counter).',
+            'Discord status with your area, boss and level; Discord and website buttons in the side bar.',
+            'FSR 4.1.2 and ML frame generation 4.0.2 on AMD (experimental; rattensuppe).',
+            "This window: Help > What's new opens it again.",
+        ])]),
     '1.9.5 beta 10': (
-        lambda: _('Online servers: the port now plays on its own servers. SuperMedo Server is the default and '
-                  "recommended; The Hunter's Dream stays available for any players who want to use their server. "
-                  'Other servers can no longer be chosen: if you used one, you now play on SuperMedo Server. Sign '
-                  'in, or make a free account, on the Online page.'),
+        servers_notice,
         [('Fixes', [
-            "Ebrietas: the big frame drops in her fight are gone. A table the game leaves empty for a moment "
-            "no longer costs the area its textures until a restart (Nick).",
-            'Above 60 FPS (Uncap FPS++ and 90 FPS++): effects step in whole 1/60 s, so particles no longer pile '
-            'up and slow the game down (Nick).',
+            'Ebrietas: the big frame drops in her fight are gone. Above 60 FPS (Uncap FPS++ and 90 FPS++), '
+            'effects now step in whole 1/60 s, so her particles no longer pile up (Nick).',
+            'Ebrietas: her arena no longer loses its map and textures until a restart, when the game leaves '
+            'a table empty for a moment (Nick).',
             'Launcher: opening it from the tray no longer closes it (Nick).',
             'Object motion vectors: shown as unavailable, with the reason, on RX 6000 and older Radeons and on '
             'cards under 6 GB, where the game runs without them anyway.',
         ]), ('New options (All graphics > Frame rate, all off by default; Medo)', [
             'Low latency: NVIDIA Reflex on GeForce, AMD Anti-Lag 2 on Radeon.',
             'Variable refresh rate for G-Sync and FreeSync displays.',
-            'Send frames to the GPU in parts: about 2 ms less lag.',
+            'Send frames to the GPU in parts: about 2 ms less lag (not on AMD Radeon, where it is slower).',
             'New shaders while playing: built in the background, without stutter.',
         ]), ('Also', [
             'Faster starts: saved shaders are built on all CPU cores, and the driver keeps its own compiled '
@@ -49,8 +81,9 @@ NOTES = {
             'FPS counter: choose its lines (FPS, frame time, render latency, VRAM, GPU, CPU, RAM, graph) in All '
             'graphics > FPS counter or the in-game menu. Render latency has its own line, off by default. '
             'Value colours: colour-coded (green, orange, red) or plain grey.',
-            'Online: only SuperMedo Server and The Hunter\'s Dream to choose from.',
-            'This window: what has changed, at the first start of each new version.',
+            "Online: only SuperMedo Server and The Hunter's Dream to choose from.",
+            "This window: what has changed, at the first start of each new version; Help > What's new opens "
+            'it again.',
             'Our Discord and website: two buttons at the bottom of the side bar. Come say hi!',
             'The low latency options in every launcher language.',
         ])]),

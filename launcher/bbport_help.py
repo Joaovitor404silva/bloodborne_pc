@@ -558,6 +558,10 @@ class HelpMixin:
         self.help_list = tk.Frame(card, bg=theme.CARD)
         self.help_list.pack(fill='x', pady=(px(10), 0))
         self.link_row(f, _('Set everything up again, step by step.'), None, _('Repeat the setup'), self.open_setup)
+        # What's new again, whenever: the Play page's line goes once it was seen (bbport_news).
+        news = self.link_row(f, _('What changed in this version, and what to know.'), None, _("What's new", 'Что нового'),
+                             self.open_news)
+        self.index_entry(news, _("What's new", 'Что нового'), key='button:news')
 
         self.section(f, _('Problems and their fixes'))
         self.help_topics = {}
