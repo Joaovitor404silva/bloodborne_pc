@@ -243,6 +243,7 @@ import bbport_lang_195  # noqa: E402,F401 (the 1.9.5 texts: the shadNet server t
 import bbport_lang_pools  # noqa: E402,F401 (the co-op pools' texts with The Hunter's Dream back)
 import bbport_lang_mistakes  # noqa: E402,F401 (the repairs of player mistakes, in the other eleven languages)
 import bbport_lang_vram  # noqa: E402,F401 (the video memory warning's switch)
+import bbport_lang_latency  # noqa: E402,F401 (the low latency options)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
 # EXTRA_TRANSLATIONS after it would not be in them.
 import bbport_fsr41_translations  # noqa: E402,F401
@@ -1087,9 +1088,28 @@ def vulkan_verdict(env):
             if crashed else None
 
 
-def motion_cache_available(graphics):
-    return graphics.get('upscaler', INI_DEFAULTS['upscaler']) in ('fsr3', 'fsr4', 'fsr411', 'fsr412') and \
+def motion_cache_available(graphics, unavailable=''):
+    return not unavailable and \
+        graphics.get('upscaler', INI_DEFAULTS['upscaler']) in ('fsr3', 'fsr4', 'fsr411', 'fsr412') and \
         graphics.get('object_motion', INI_DEFAULTS['object_motion']) in ('1', True)
+
+
+def object_motion_unavailable(gpu, gpu_line, extra_env=''):
+    """Why the game runs without object motion vectors on this card whatever the setting says, as
+    vk_object_motion.cpp decides (BB_OBJECT_MOTION=1 overrides it); '' when the setting decides.
+    gpu: bb-gpu-capabilities' 'gpu' entry; gpu_line: 'Name, discrete, 16304 MiB'."""
+    if 'BB_OBJECT_MOTION=1' in str(extra_env).split():
+        return ''
+    gpu = gpu or {}
+    if gpu.get('vendor_id') == 0x1002 and isinstance(gpu.get('device_id'), int) and gpu['device_id'] < 0x7440:
+        return _('Not available on RX 6000 and older Radeon cards: they lose the device with it.',
+                 'Недоступно на Radeon RX 6000 и более старых: с ним видеокарта теряет устройство.')
+    parts = [part.strip() for part in str(gpu_line or '').split(',')]
+    vram = next((int(m.group(1)) for part in parts for m in [re.match(r'(\d+) MiB', part)] if m), 0)
+    if 'discrete' in parts and 0 < vram < 6144 - 256:
+        return _('Not available under 6 GB of video memory: textures need it more.',
+                 'Недоступно при видеопамяти меньше 6 ГБ: она нужнее текстурам.')
+    return ''
 
 
 HUNTERS_ONLINE_EVERY = 600  # seconds between two looks at the count: the answer is about 140 KB
@@ -1334,6 +1354,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.fg401_support = None
         self.fsr411_support = None
         self.fsr411_refreshers = []
+        self.motion_refreshers = []  # the object motion boxes, greyed out on cards that run without it
         self.fsr411_upscaler_refreshers = []
         self.fg401_refreshers = []
         self.vars = {}
@@ -1689,6 +1710,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     backend.set('vk')
             self.download_fsr411(on_success=activate)
 
+    def motion_unavailable(self):
+        support = getattr(self, 'fsr411_support', None) or {}
+        return object_motion_unavailable(support.get('gpu'), getattr(self, 'gpu_line', ''),
+                                         self.app.get('extra_env', ''))
+
+    def refresh_motion(self):
+        for refresh in self.motion_refreshers:
+            refresh()
+
     def next_row(self, parent):
         return parent.grid_size()[1]
 
@@ -1707,8 +1737,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
         def refresh(*_args):
             available = motion_cache_available({'upscaler': upscaler.get(),
-                                                'object_motion': object_motion.get()})
+                                                'object_motion': object_motion.get()}, self.motion_unavailable())
             button.state(['!disabled' if available else 'disabled'])
+        button.refresh = refresh
 
         traces = [(var, var.trace_add('write', refresh)) for var in (upscaler, object_motion)]
 
@@ -1742,6 +1773,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if hint:
             ttk.Label(parent, text=hint, style='Muted.TLabel', wraplength=self.px(640), justify='left').grid(
                 row=r + 1, column=0, columnspan=2, sticky='w', padx=(26, 0))
+        return box
 
     def note(self, parent, text, top=12):
         self.ttk.Label(parent, text=text, style='Muted.TLabel', wraplength=self.px(680), justify='left').grid(
@@ -2537,10 +2569,24 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.vars['sharpness'].trace_add('write', show)
         show()
         self.row(f, _('Sharpness', 'Сила резкости'), holder)
-        self.check(f, 'object_motion', 'ini', _('Object motion vectors', 'Векторы движения объектов'),
-                   _('Less ghosting on characters, cloth and weapons; costs about 5–10% FPS.',
-                     'Меньше гостинга на персонажах и одежде; стоит около 5–10% FPS.'))
-        self.motion_cache_check(f)
+        motion = self.check(f, 'object_motion', 'ini', _('Object motion vectors', 'Векторы движения объектов'),
+                            _('Less ghosting on characters, cloth and weapons; costs about 5–10% FPS.',
+                              'Меньше гостинга на персонажах и одежде; стоит около 5–10% FPS.'))
+        # Off on some cards whatever the box says (vk_object_motion.cpp): greyed out, with the reason.
+        reason = self.ttk.Label(f, style='Muted.TLabel', wraplength=self.px(640), justify='left')
+        reason.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', padx=(26, 0))
+        cache = self.motion_cache_check(f)
+
+        def refresh_motion():
+            if not motion.winfo_exists():
+                return
+            why = self.motion_unavailable()
+            motion.state(['disabled' if why else '!disabled'])
+            reason.configure(text=why)
+            reason.grid() if why else reason.grid_remove()
+            cache.refresh()
+        self.motion_refreshers.append(refresh_motion)
+        refresh_motion()
         self.section(f, _('Effects', 'Эффекты'))
         for key, title, _on in EFFECTS:
             if key not in TASTE_EFFECTS:
@@ -4410,6 +4456,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.cpu_instructions = hardware.instructions()  # the System page's hard limits
         self.ui_calls.put(self.refresh_status)
         self.ui_calls.put(self.hardware_ready)
+        self.ui_calls.put(self.refresh_motion)
         self.ui_calls.put(self.refresh_fg401)
 
     def refresh_fsr4(self):

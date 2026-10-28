@@ -641,10 +641,17 @@ void Menu() {
     }
     ImGui::EndDisabled();
     ImGui::EndDisabled();
+    // Off on this GPU whatever the setting (vk_object_motion.cpp): greyed out, with the reason.
+    const char* motion_unavailable = s.object_motion_unavailable.load();
+    ImGui::BeginDisabled(motion_unavailable != nullptr);
     Checkbox("Object motion vectors", s.object_motion);
+    ImGui::EndDisabled();
+    if (motion_unavailable) {
+        ImGui::TextDisabled("%s", motion_unavailable);
+    }
     Hint("Accurate vectors for animated objects reduce breakup on clothing and weapons during movement. Static geometry receives no extra pass. Changes require a restart.");
 #ifdef _WIN32
-    const bool cache_available = s.object_motion &&
+    const bool cache_available = !motion_unavailable && s.object_motion &&
         (s.upscaler == BbSettings::UpscalerFsr3 || BbSettings::IsFsr4(s.upscaler));
     ImGui::BeginDisabled(!cache_available);
     Checkbox(Fsr41Ui::Text(Fsr41Ui::MotionCacheLabel), s.object_motion_cache);

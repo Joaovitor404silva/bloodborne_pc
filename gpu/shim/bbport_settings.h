@@ -207,6 +207,9 @@ struct Values {
     /// FIFO presentation (V-Sync; AMD has no Mailbox) at most refresh / (generated + 1), or each
     /// extra frame waits for the display and generation pauses.
     std::atomic<int> frame_gen_flip_limit{0};
+    /// Why this GPU runs without object motion vectors whatever the setting says (vk_object_motion.cpp:
+    /// RX 6000 and older, under 6 GB of VRAM), nullptr when the setting decides.
+    std::atomic<const char*> object_motion_unavailable{nullptr};
 
     /// Startup settings for the explicit BB_RENDER_RES compatibility patch only.
     int startup_preset = NativeAA;
