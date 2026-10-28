@@ -46,6 +46,8 @@ NOTES = {
             'shaders between starts (Medo).',
             'Fresher input: the controller is read as the game asks for it, keyboard and mouse every '
             'millisecond (Medo).',
+            'FPS counter: choose its lines (FPS, frame time, render latency, VRAM, GPU, CPU, RAM, graph) in All '
+            'graphics > FPS counter or the in-game menu. Render latency has its own line, off by default.',
             'Online: only SuperMedo Server and The Hunter\'s Dream to choose from.',
             'This window: what has changed, at the first start of each new version.',
             'Our Discord and website: two buttons at the bottom of the side bar. Come say hi!',

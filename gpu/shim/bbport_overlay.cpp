@@ -824,6 +824,8 @@ void Menu() {
     ImGui::SameLine();
     Checkbox("Frame times", s.show_frame_times);
     ImGui::SameLine();
+    Checkbox("Render latency", s.show_latency);
+    ImGui::SameLine();
     Checkbox("VRAM", s.show_vram);
     Checkbox("GPU usage", s.show_gpu);
     ImGui::SameLine();
@@ -1070,7 +1072,7 @@ void FpsCounter() {
     // One value column for the whole panel, as wide as the longest label it can show plus a gap.
     // Measured and constant, so values line up and never move when a switch is flipped.
     float column = 0.0f;
-    for (const char* label : {"FPS:", "Latency:", "Frame:", "VRAM:", "GPU:", "CPU:", "RAM:"}) {
+    for (const char* label : {"FPS:", "Frame:", "Latency:", "VRAM:", "GPU:", "CPU:", "RAM:"}) {
         column = std::max(column, ImGui::CalcTextSize(label).x);
     }
     column += 10.0f * base_scale;
@@ -1092,22 +1094,27 @@ void FpsCounter() {
             ImGui::SameLine(0.0f, 6.0f * base_scale);
             ImGui::TextDisabled("(game %.0f, %dx)", double(s.game_fps.load()), generated);
         }
-        // From the game starting a frame to its present (vk_low_latency.cpp).
-        if (const float latency = s.latency_ms.load(std::memory_order_relaxed); latency > 0.0f) {
-            static const char* modes[] = {"Low latency off", "Reflex", "Reflex + Boost",
-                                          "Anti-Lag 2", "Low latency"};
-            const int mode = std::clamp(s.latency_mode.load(), 0, 4);
-            Label("Latency:", column);
-            ImGui::Text("%.1f ms", double(latency));
-            ImGui::SameLine(0.0f, model_gap);
-            ImGui::TextDisabled("|  %s", modes[mode]);
-        }
     }
     if (s.show_frame_times) {
         Label("Frame:", column);
         ImGui::PushStyleColor(ImGuiCol_Text, pace);
         ImGui::Text("%.1f ms", frame_ms_avg);
         ImGui::PopStyleColor();
+    }
+    // Render latency, its own line (it sat under FPS, where players took it for the frame time):
+    // from the game starting a frame to its present (vk_low_latency.cpp), and the low latency mode.
+    if (s.show_latency) {
+        static const char* modes[] = {"Low latency off", "Reflex", "Reflex + Boost", "Anti-Lag 2",
+                                      "Low latency"};
+        const int mode = std::clamp(s.latency_mode.load(), 0, 4);
+        Label("Latency:", column);
+        if (const float latency = s.latency_ms.load(std::memory_order_relaxed); latency > 0.0f) {
+            ImGui::Text("%.1f ms", double(latency));
+        } else {
+            ImGui::TextDisabled("--");
+        }
+        ImGui::SameLine(0.0f, model_gap);
+        ImGui::TextDisabled("|  render latency, %s", modes[mode]);
     }
     // Video memory in use, against the limit the collector holds itself to: the same numbers the
     // low-memory warning reports. 0, so nothing shown, until the first collector pass.
@@ -1436,8 +1443,8 @@ bool HandleEvent(const SDL_Event& event) {
 // Any of the counter's readouts asked for (the graph lives in the same window).
 bool ReadoutsOn() {
     const auto& s = BbSettings::Get();
-    return s.show_fps || s.show_frame_times || s.show_vram || s.show_gpu || s.show_cpu ||
-           s.show_ram || s.show_fps_graph;
+    return s.show_fps || s.show_frame_times || s.show_latency || s.show_vram || s.show_gpu ||
+           s.show_cpu || s.show_ram || s.show_fps_graph;
 }
 
 bool Visible() {

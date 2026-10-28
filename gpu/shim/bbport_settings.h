@@ -121,9 +121,10 @@ struct Values {
     std::atomic<float> reactive_max{0.9f};
     std::atomic<int> debug_view{DebugNone};
     /// The FPS overlay's readouts, one toggle each (bbport.ini: show_fps, show_frame_times,
-    /// show_vram, show_gpu, show_cpu, show_ram, show_fps_graph).
+    /// show_latency, show_vram, show_gpu, show_cpu, show_ram, show_fps_graph).
     std::atomic<bool> show_fps{false};
     std::atomic<bool> show_frame_times{false};
+    std::atomic<bool> show_latency{false}; ///< render latency (vk_low_latency.cpp), not frame time
     std::atomic<bool> show_vram{false};
     std::atomic<bool> show_gpu{false};
     std::atomic<bool> show_cpu{false};

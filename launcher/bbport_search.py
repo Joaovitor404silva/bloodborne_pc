@@ -45,6 +45,8 @@ WORDS = {
     'object_motion': 'ghosting schlieren nachziehen bewegungsvektoren',
     'model_lod': 'lod detail modelldetail details pop-in plopp modelle sichtweite',
     'show_fps': 'fps zahler counter anzeige overlay',
+    'show_latency': 'latency latenz input lag eingabeverzogerung reflex anti-lag delay verzogerung',
+    'show_frame_times': 'frametime frame time ms stutter ruckler',
     'frame_gen': 'framegen frame generation zwischenbilder dlss fsr fg',
     'hud_position': 'hud ultrawide 21:9 32:9 interface',
     'sharp_ui': 'sharp ui interface hud menu text blurry crisp 1440p 4k scaleform',

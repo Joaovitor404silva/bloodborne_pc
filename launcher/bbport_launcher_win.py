@@ -245,6 +245,7 @@ import bbport_lang_mistakes  # noqa: E402,F401 (the repairs of player mistakes, 
 import bbport_lang_vram  # noqa: E402,F401 (the video memory warning's switch)
 import bbport_lang_latency  # noqa: E402,F401 (the low latency options)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
+import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
 # EXTRA_TRANSLATIONS after it would not be in them.
 import bbport_fsr41_translations  # noqa: E402,F401
@@ -350,13 +351,19 @@ TWEAKS = [
                  'Перерождение у Куклы: характеристики происхождения за 5 озарений, уровни возвращаются бесплатно'), True),
     ('steady_cloth', ('Cloth as on PS4 at higher frame rates: capes and coats hang and move as at 30 FPS',), True),
 ]
+# The FPS counter's lines (gpu/shim/bbport_overlay.cpp FpsCounter), one switch each in bbport.ini; FPS alone on
+# by default. Render latency is its own line: under FPS it was taken for the frame time.
+READOUTS = [('show_fps', ('FPS',)), ('show_frame_times', ('Frame time',)), ('show_latency', ('Render latency',)),
+            ('show_vram', ('Video memory (VRAM)',)), ('show_gpu', ('GPU usage',)), ('show_cpu', ('CPU usage',)),
+            ('show_ram', ('RAM usage',)), ('show_fps_graph', ('Frame time graph',))]
 # Effects that are taste, not performance: on Picture & performance (the others on All graphics).
 TASTE_EFFECTS = ('effect_chromatic_aberration', 'effect_dof', 'effect_motion_blur')
 INI_FLAGS = {'sharpen', 'object_motion', 'object_motion_cache', 'fsr_compatibility_options', 'show_fps', 'mute_unfocused', 'frame_gen_fit_display',
-             'sharp_ui',
+             'sharp_ui', *(key for key, _t in READOUTS),
              *(k for k, _t, _o in EFFECTS + EXTRAS + CHEATS + TWEAKS)}
 INI_DEFAULTS = {'upscaler': 'fsr3', 'preset': '1', 'sharpen': '1', 'sharpness': '0.50',
-                'object_motion': '1', 'show_fps': '1', 'output_res': '1920x1080', 'model_lod': '0',
+                'object_motion': '1', **{key: '0' for key, _t in READOUTS}, 'show_fps': '1',
+                'output_res': '1920x1080', 'model_lod': '0',
                 'fsr411_backend': 'vk', 'fsr41_version': 'fsr412', 'object_motion_cache': '0', 'fsr_compatibility_options': '0',
                 'live_resolution': 'auto', 'hud_position': '100', 'sharp_ui': '0', 'fov': '43', 'mute_unfocused': '0',
                 'button_prompts': 'auto',
@@ -1721,6 +1728,19 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     backend.set('vk')
             self.download_fsr411(on_success=activate)
 
+    def readouts_section(self, f):
+        """The FPS counter's lines, one box each in two columns (also in the in-game menu)."""
+        self.section(f, _('FPS counter'))
+        boxes = self.ttk.Frame(f)
+        boxes.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        for index, (key, title) in enumerate(READOUTS):
+            box = self.ttk.Checkbutton(boxes, text=_(*title), variable=self.var(key, 'ini'))
+            box.grid(row=index // 2, column=index % 2, sticky='w', padx=(0, self.px(32)), pady=(self.px(4), 0))
+            self.index_entry(box, _(*title), None, key)
+        self.note(f, _('One box per line of the counter in the top right; also in the in-game menu. Render '
+                       'latency is the time from the game starting a frame to it being shown, which Low latency '
+                       'lowers; frame time is the time between two frames.'), top=6)
+
     def motion_unavailable(self):
         support = getattr(self, 'fsr411_support', None) or {}
         return object_motion_unavailable(support.get('gpu'), getattr(self, 'gpu_line', ''),
@@ -2664,6 +2684,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'compiled; things drawn with them appear a moment later instead. Each is compiled once and kept.',
                    'В фоне: новое место не подтормаживает при компиляции шейдеров, зато объекты с ними появляются '
                    'чуть позже. Каждый шейдер компилируется один раз и сохраняется.'))
+        self.readouts_section(f)
         self.section(f, _('Frame generation', 'Генерация кадров'))
         self.row(f, _('Frame generation', 'Генерация кадров'),
                  self.fg401_choice(f),
