@@ -320,6 +320,21 @@ public:
         return shader_clock && shader_clock_features.shaderSubgroupClock;
     }
 
+    /// bbport: VK_KHR_present_id is enabled (present ids for the latency markers).
+    bool IsPresentIdEnabled() const {
+        return present_id;
+    }
+
+    /// bbport: NVIDIA Reflex (VK_NV_low_latency2) is enabled.
+    bool IsNvLowLatencyEnabled() const {
+        return nv_low_latency;
+    }
+
+    /// bbport: AMD Anti-Lag 2 (VK_AMD_anti_lag) is enabled.
+    bool IsAmdAntiLagEnabled() const {
+        return amd_anti_lag;
+    }
+
     /// Returns the vendor ID of the physical device
     u32 GetVendorID() const {
         return properties.vendorID;
@@ -593,6 +608,9 @@ private:
     bool image_2d_view_of_3d{};
     bool image_view_min_lod{};
     bool shader_clock{};
+    bool present_id{};
+    bool nv_low_latency{};
+    bool amd_anti_lag{};
     bool compute_shader_derivatives{};
     bool mixed_float_dot_product{}; // bbport: VK_VALVE_shader_mixed_float_dot_product (FSR 4.1.1)
     bool fsr4vk{};

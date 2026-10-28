@@ -3,6 +3,10 @@
 
 #pragma once
 
+#include <atomic>
+#include <condition_variable>
+#include <filesystem>
+#include <thread>
 #include <unordered_map>
 #include <shared_mutex>
 #include <variant>
@@ -123,6 +127,11 @@ public:
     void WarmUp();
     void Sync();
 
+    /// bbport: the driver's own pipeline cache (its compiled GPU code), kept on disk next to the
+    /// shader cache: a pipeline the driver built once is not compiled again on the next start.
+    void CreateDriverCache();
+    void SaveDriverCache();
+
     bool LoadComputePipeline(Serialization::Archive& ar);
     bool LoadGraphicsPipeline(Serialization::Archive& ar);
     bool LoadPipelineStage(Serialization::Archive& ar, size_t stage);
@@ -197,7 +206,18 @@ private:
     tsl::robin_map<GraphicsPipelineKey, std::unique_ptr<GraphicsPipeline>> graphics_pipelines;
     PipelineSelection sel{}; ///< GPU thread selection state
     ComputePipelineKey compute_key{};
-    u32 num_new_pipelines{}; // new pipelines added to the cache since the game start
+    std::atomic<u32> num_new_pipelines{}; // new pipelines added to the cache since the game start
+
+    /// bbport: preloaded pipelines are collected first and then built on all CPU cores.
+    struct PreloadJob;
+    std::vector<PreloadJob>* preload_jobs{};
+    u32 BuildPreloaded(std::vector<PreloadJob>& jobs); ///< the number that failed
+
+    std::filesystem::path driver_cache_file;
+    std::atomic<u32> driver_cache_changes{}; ///< pipelines made since the last save
+    std::mutex driver_cache_mutex;
+    std::condition_variable_any driver_cache_cv;
+    std::jthread driver_cache_saver;
 
     // Only if Config::collectShadersForDebug()
     tsl::robin_map<vk::ShaderModule,
