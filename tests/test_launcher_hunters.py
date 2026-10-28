@@ -182,6 +182,18 @@ class PoolTests(unittest.TestCase):
                                         {'BB_PROBE': r'C:\BBSC\bbsc-launch.exe'}), 'supermedo')
         self.assertEqual(L.settled_pool({**L.APP_DEFAULTS, 'online_pool': 'supermedo'}, {}), 'supermedo')
 
+    def test_seamless_coop_gets_its_server_back_after_a_normal_start(self):
+        """A normal start moved BBSC's pool to SuperMedo Server and saved it: BBSC's next start, naming the server
+        its script saved in the shadNet boxes, plays there again; another server does not count."""
+        bbsc = {'BB_PROBE': r'C:\\BBSC\\bbsc-launch.exe', 'BB_SHADNET_SERVER': 'play.seamlesshunt.com:31313'}
+        moved = {**L.APP_DEFAULTS, 'online_pool': 'supermedo', 'online_server': 'play.seamlesshunt.com:31313'}
+        self.assertEqual(L.settled_pool(moved, bbsc), 'shadnet')
+        self.assertEqual(L.settled_pool(moved, {}), 'supermedo')
+        self.assertEqual(L.settled_pool({**moved, 'online_server': 'friend.example:31313'}, bbsc), 'supermedo')
+        with mock.patch.dict(os.environ, bbsc):
+            self.assertEqual(L.settled_online(moved, {'online_custom_servers': False}),
+                             {'online_custom_servers': True, 'online_pool': 'shadnet'})
+
 
 class GameServerTests(unittest.TestCase):
     """The game server field counts only where the Online page shows it (shadNet with "Use my own servers").
