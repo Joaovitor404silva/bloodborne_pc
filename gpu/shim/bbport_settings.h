@@ -125,6 +125,9 @@ struct Values {
     std::atomic<bool> show_fps{false};
     std::atomic<bool> show_frame_times{false};
     std::atomic<bool> show_latency{false}; ///< render latency (vk_low_latency.cpp), not frame time
+    /// The counter's values green / amber / red by how they stand (bbport.ini counter_colors=1),
+    /// or all in plain grey (0).
+    std::atomic<bool> counter_colors{true};
     std::atomic<bool> show_vram{false};
     std::atomic<bool> show_gpu{false};
     std::atomic<bool> show_cpu{false};

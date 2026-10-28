@@ -229,9 +229,18 @@ std::array<float, FrameHistorySize> frame_history{};
 size_t frame_history_count = 0;
 size_t frame_history_next = 0;
 
+// The counter's values in plain grey when the player turned its colours off (counter_colors=0).
+constexpr ImVec4 PlainValue{0.80f, 0.80f, 0.80f, 1.0f};
+bool PlainCounter() {
+    return !BbSettings::Get().counter_colors.load(std::memory_order_relaxed);
+}
+
 // Green while the frame rate can keep up with a display, amber down to the game's 30 FPS floor,
 // red below it. The numbers mean the same thing however the game is capped.
 ImVec4 PaceColor(float frame_ms) {
+    if (PlainCounter()) {
+        return PlainValue;
+    }
     if (frame_ms <= 20.0f) {
         return ImVec4(0.55f, 0.95f, 0.55f, 1.0f);
     }
@@ -243,6 +252,9 @@ ImVec4 PaceColor(float frame_ms) {
 
 // A load in percent: amber from `amber`, red from `red`.
 ImVec4 LoadColor(float percent, float amber, float red) {
+    if (PlainCounter()) {
+        return PlainValue;
+    }
     if (percent >= red) {
         return ImVec4(1.00f, 0.45f, 0.40f, 1.0f);
     }
@@ -255,6 +267,9 @@ ImVec4 LoadColor(float percent, float amber, float red) {
 // Video memory against the collector's own marks: the colours then mean what the collector does
 // (green: room, amber: evicting, red: evicting aggressively).
 ImVec4 VramColor(u64 used, u64 pressure, u64 critical) {
+    if (PlainCounter()) {
+        return PlainValue;
+    }
     if (critical != 0 && used >= critical) {
         return ImVec4(1.00f, 0.45f, 0.40f, 1.0f);
     }
@@ -833,6 +848,8 @@ void Menu() {
     ImGui::SameLine();
     Checkbox("RAM usage", s.show_ram);
     Checkbox("Frame time graph", s.show_fps_graph);
+    ImGui::SameLine();
+    Checkbox("Colour-coded values", s.counter_colors);
     Checkbox("Mute when the game is in the background", s.mute_unfocused);
     static const char* prompt_modes[] = {"Follow the device in use", "PlayStation", "Keyboard and mouse", "Xbox",
                                          "Nintendo Switch"};
@@ -1021,8 +1038,9 @@ void FrameTimeGraph(float average_ms) {
     const ImU32 fill_top = ImGui::ColorConvertFloat4ToU32(ImVec4(tone.x, tone.y, tone.z, 0.35f));
     const ImU32 fill_bottom = ImGui::ColorConvertFloat4ToU32(ImVec4(tone.x, tone.y, tone.z, 0.02f));
     const ImU32 grid = ImGui::ColorConvertFloat4ToU32(ImVec4(1.0f, 1.0f, 1.0f, 0.08f));
-    const ImU32 ms_text = ImGui::ColorConvertFloat4ToU32(ImVec4(0.62f, 0.80f, 0.92f, 1.0f));
-    const ImU32 fps_text = ImGui::ColorConvertFloat4ToU32(ImVec4(0.55f, 0.95f, 0.55f, 1.0f));
+    const bool plain = PlainCounter();
+    const ImU32 ms_text = ImGui::ColorConvertFloat4ToU32(plain ? PlainValue : ImVec4(0.62f, 0.80f, 0.92f, 1.0f));
+    const ImU32 fps_text = ImGui::ColorConvertFloat4ToU32(plain ? PlainValue : ImVec4(0.55f, 0.95f, 0.55f, 1.0f));
 
     draw->AddRectFilled(origin, end, ImGui::ColorConvertFloat4ToU32(ImVec4(0, 0, 0, 0.42f)),
                         4.0f * base_scale);
@@ -1087,7 +1105,8 @@ void FpsCounter() {
                             output_height ? output_height : u32(BbSettings::OutputHeights[out]));
         if (UpscalerLabel(s.upscaler)[0] != '\0') {
             ImGui::SameLine(0.0f, 6.0f * base_scale);
-            ImGui::TextColored(UpscalerColor(s.upscaler), "%s", UpscalerLabel(s.upscaler));
+            ImGui::TextColored(PlainCounter() ? PlainValue : UpscalerColor(s.upscaler), "%s",
+                               UpscalerLabel(s.upscaler));
         }
         const int generated = s.frame_gen != BbSettings::FrameGenOff ? s.frame_gen_now.load() : 0;
         if (generated > 0 && s.game_fps > 0.0f) {

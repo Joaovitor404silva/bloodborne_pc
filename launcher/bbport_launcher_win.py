@@ -356,13 +356,15 @@ TWEAKS = [
 READOUTS = [('show_fps', ('FPS',)), ('show_frame_times', ('Frame time',)), ('show_latency', ('Render latency',)),
             ('show_vram', ('Video memory (VRAM)',)), ('show_gpu', ('GPU usage',)), ('show_cpu', ('CPU usage',)),
             ('show_ram', ('RAM usage',)), ('show_fps_graph', ('Frame time graph',))]
+# The counter's values: green / amber / red by how they stand, or plain grey (bbport_overlay.cpp PlainCounter).
+COUNTER_COLORS = [('1', ('Colour-coded (green, orange, red)',)), ('0', ('Plain (grey)',))]
 # Effects that are taste, not performance: on Picture & performance (the others on All graphics).
 TASTE_EFFECTS = ('effect_chromatic_aberration', 'effect_dof', 'effect_motion_blur')
 INI_FLAGS = {'sharpen', 'object_motion', 'object_motion_cache', 'fsr_compatibility_options', 'show_fps', 'mute_unfocused', 'frame_gen_fit_display',
              'sharp_ui', *(key for key, _t in READOUTS),
              *(k for k, _t, _o in EFFECTS + EXTRAS + CHEATS + TWEAKS)}
 INI_DEFAULTS = {'upscaler': 'fsr3', 'preset': '1', 'sharpen': '1', 'sharpness': '0.50',
-                'object_motion': '1', **{key: '0' for key, _t in READOUTS}, 'show_fps': '1',
+                'object_motion': '1', **{key: '0' for key, _t in READOUTS}, 'show_fps': '1', 'counter_colors': '1',
                 'output_res': '1920x1080', 'model_lod': '0',
                 'fsr411_backend': 'vk', 'fsr41_version': 'fsr412', 'object_motion_cache': '0', 'fsr_compatibility_options': '0',
                 'live_resolution': 'auto', 'hud_position': '100', 'sharp_ui': '0', 'fov': '43', 'mute_unfocused': '0',
@@ -1737,6 +1739,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             box = self.ttk.Checkbutton(boxes, text=_(*title), variable=self.var(key, 'ini'))
             box.grid(row=index // 2, column=index % 2, sticky='w', padx=(0, self.px(32)), pady=(self.px(4), 0))
             self.index_entry(box, _(*title), None, key)
+        self.row(f, _('Value colours'), self.choice(f, 'counter_colors', 'ini', COUNTER_COLORS),
+                 _('Colour-coded shows at a glance how each value stands; plain keeps the counter quiet.'),
+                 key='counter_colors')
         self.note(f, _('One box per line of the counter in the top right; also in the in-game menu. Render '
                        'latency is the time from the game starting a frame to it being shown, which Low latency '
                        'lowers; frame time is the time between two frames.'), top=6)
