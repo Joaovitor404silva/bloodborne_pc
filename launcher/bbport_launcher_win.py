@@ -365,7 +365,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'voice_language': 'auto',
                 'player_name': '', 'fullscreen': False, 'exclusive_fullscreen': False, 'hdr': False, 'present_mode': 'Mailbox',
                 'fps_mode': 'uncap', 'frame_cap': '', 'draw_pipe': '', 'readbacks': '', 'low_vram': '', 'vram_warning': True,
-                'frames_ahead': '', 'low_latency': 'off', 'async_pipelines': '', 'vrr': '', 'frame_stats': False, 'gpu_profile': False,
+                'frames_ahead': '', 'low_latency': 'off', 'async_pipelines': '', 'vrr': '', 'early_submit': '', 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'extra_env': '', 'close_on_play': False,
                 'on_play': 'stay', 'reopen_after_game': False, 'minimize_to_tray': False, 'discord_status': True,
                 'menu_key': 'Insert', 'menu_pad': 'l3+r3',
@@ -512,6 +512,8 @@ LOW_LATENCY = [('off', ('Off', 'Выкл.')), ('on', ('On', 'Вкл.')), ('boost
 # vk_pipeline_cache.cpp BB_ASYNC_PIPELINES: new pipelines built on worker threads, their draws skipped meanwhile.
 # gpu/shim/core/emulator_settings.h BB_VRR: V-Sync (FIFO) and a frame cap just below the refresh rate.
 VRR_MODES = [('', ('Off', 'Выкл.')), ('1', ('On (G-Sync / FreeSync)', 'Вкл. (G-Sync / FreeSync)'))]
+# vk_rasterizer.cpp BB_EARLY_SUBMIT: the frame goes to the GPU in parts while it is prepared.
+EARLY_SUBMIT = [('', ('Off', 'Выкл.')), ('1', ('On (about 2 ms less lag)', 'Вкл. (примерно на 2 мс меньше задержка)'))]
 ASYNC_PIPELINES = [('', ('Wait for each (exact)', 'Ждать каждый (точно)')),
                    ('1', ('In the background (no stutter)', 'В фоне (без фризов)'))]
 UI_LANGUAGES = bbport_lang.LANGUAGE_NAMES
@@ -1205,7 +1207,8 @@ def game_environment(s, graphics=None):
         env['BB_FPS_LIMIT'] = s['frame_cap']
     for key, name in (('draw_pipe', 'BB_DRAW_PIPE'), ('readbacks', 'BB_READBACKS'), ('frames_ahead', 'BB_FRAMES_AHEAD'),
                       ('low_vram', 'BB_LOW_VRAM'), ('low_latency', 'BB_LOW_LATENCY'),
-                      ('async_pipelines', 'BB_ASYNC_PIPELINES'), ('vrr', 'BB_VRR')):
+                      ('async_pipelines', 'BB_ASYNC_PIPELINES'), ('vrr', 'BB_VRR'),
+                      ('early_submit', 'BB_EARLY_SUBMIT')):
         if s[key]:
             env[name] = s[key]
     if not s.get('vram_warning', True):
@@ -2570,6 +2573,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'Меньше задержка ввода: игра начинает кадр вовремя, а не копит кадры в очереди. NVIDIA Reflex на '
                    'GeForce, AMD Anti-Lag 2 на Radeon (свежие драйверы); на других GPU не действует. Boost держит '
                    'частоты GPU высокими.'))
+        self.row(f, _('Send frames to the GPU in parts', 'Отправлять кадр в GPU частями'),
+                 self.choice(f, 'early_submit', 'app', EARLY_SUBMIT),
+                 _('The graphics card starts drawing a frame while the rest of it is still being prepared, '
+                   'so it is finished about 2 ms sooner. Uses a little more CPU. New: turn it off if you see '
+                   'flickering or missing objects.',
+                   'Видеокарта начинает рисовать кадр, пока остальное ещё готовится, и заканчивает примерно на '
+                   '2 мс раньше. Немного больше нагрузка на CPU. Новое: выключите, если видите мерцание или '
+                   'пропавшие объекты.'))
         self.row(f, _('Variable refresh rate (VRR)', 'Переменная частота (VRR)'),
                  self.choice(f, 'vrr', 'app', VRR_MODES),
                  _('For a G-Sync or FreeSync display: the display follows the frames of the game, without tearing '

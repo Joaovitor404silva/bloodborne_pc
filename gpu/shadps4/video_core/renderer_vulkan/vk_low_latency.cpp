@@ -6,7 +6,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
+#include <condition_variable>
 #include <deque>
+#include <thread>
 #include <mutex>
 #include <string_view>
 #include "bbport_settings.h"
@@ -57,6 +59,18 @@ struct State {
     std::chrono::steady_clock::time_point window{};
     double latency_ms = 0.0, latency_max_ms = 0.0;
     std::array<double, 4> parts_ms{}; ///< game, GPU thread, waiting to present, present
+    double gpu_done_ms = 0.0; ///< from the game starting a frame to the GPU finishing it
+    u32 gpu_done_frames = 0;
+    // The GPU watcher: waits for each game frame's GPU work (WatchGpu).
+    struct GpuWatch {
+        u64 id;
+        VkSemaphore semaphore;
+        u64 value;
+    };
+    std::mutex watch_mutex;
+    std::condition_variable watch_cv;
+    std::deque<GpuWatch> watches;
+    std::thread watcher;
     u32 latency_frames = 0;
 
     u64 frame = 1; ///< the frame the game works on (game render thread)
@@ -152,6 +166,36 @@ bool Flag(const char* name) {
 
 } // namespace
 
+void WatchLoop() {
+    while (true) {
+        State::GpuWatch watch;
+        {
+            std::unique_lock lock{state.watch_mutex};
+            state.watch_cv.wait(lock, [] { return !state.watches.empty(); });
+            watch = state.watches.front();
+            state.watches.pop_front();
+        }
+        const VkSemaphoreWaitInfo wait{
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
+            .semaphoreCount = 1,
+            .pSemaphores = &watch.semaphore,
+            .pValues = &watch.value,
+        };
+        if (VULKAN_HPP_DEFAULT_DISPATCHER.vkWaitSemaphores(state.device, &wait, 1'000'000'000) !=
+            VK_SUCCESS) {
+            continue;
+        }
+        const auto now = std::chrono::steady_clock::now();
+        std::scoped_lock lock{state.measure_mutex};
+        const auto& times = state.times[watch.id % state.times.size()];
+        if (times.id == watch.id) {
+            state.gpu_done_ms +=
+                std::chrono::duration<double, std::milli>(now - times.start).count();
+            ++state.gpu_done_frames;
+        }
+    }
+}
+
 bool Wanted() {
     const auto setting = Setting();
     return setting == "on" || setting == "boost";
@@ -159,6 +203,11 @@ bool Wanted() {
 
 void Init(const Instance& instance) {
     state.log = Flag("BB_FRAME_STATS") || Flag("BB_LATENCY_LOG");
+    state.device = instance.GetDevice();
+    if (state.log) {
+        state.watcher = std::thread{WatchLoop};
+        state.watcher.detach();
+    }
     if (const u32 limit = EmulatorSettings.GetFrameLimit()) {
         state.period = std::chrono::nanoseconds(1'000'000'000 / limit);
     }
@@ -382,16 +431,32 @@ void PresentEnd(u64 id) {
             const double n = state.latency_frames;
             std::printf("Latency: %.1f ms from the game starting a frame to its present (worst "
                         "%.1f ms, %u frames, %s): game %.1f, GPU thread %.1f, waiting to present "
-                        "%.1f, present %.1f ms\n",
+                        "%.1f, present %.1f ms; GPU finished it at %.1f ms\n",
                         state.latency_ms / n, state.latency_max_ms, state.latency_frames,
                         ModeName(), state.parts_ms[0] / n, state.parts_ms[1] / n,
-                        state.parts_ms[2] / n, state.parts_ms[3] / n);
+                        state.parts_ms[2] / n, state.parts_ms[3] / n,
+                        state.gpu_done_frames ? state.gpu_done_ms / state.gpu_done_frames : 0.0);
         }
         state.window = now;
         state.latency_ms = state.latency_max_ms = 0.0;
         state.parts_ms = {};
+        state.gpu_done_ms = 0.0;
+        state.gpu_done_frames = 0;
         state.latency_frames = 0;
     }
+}
+
+void WatchGpu(u64 id, vk::Semaphore semaphore, u64 value) {
+    if (!id || !state.log || !semaphore) {
+        return;
+    }
+    {
+        std::scoped_lock lock{state.watch_mutex};
+        if (state.watches.size() < 16) {
+            state.watches.push_back({id, semaphore, value});
+        }
+    }
+    state.watch_cv.notify_one();
 }
 
 } // namespace Vulkan::LowLatency

@@ -841,6 +841,7 @@ void Presenter::Present(Frame* frame, bool is_reusing_frame, bool is_game_frame)
     }
     const auto presented_generated = std::chrono::steady_clock::now();
     present_latency_id = !is_reusing_frame && is_game_frame ? frame->latency_id : 0;
+    LowLatency::WatchGpu(present_latency_id, frame->ready_semaphore, frame->ready_tick);
     const bool presented = PresentImage(frame, frame->image, true);
     present_latency_id = 0;
     if (!presented) {

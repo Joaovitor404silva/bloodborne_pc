@@ -42,5 +42,8 @@ u64 RenderSubmitEnd();
 /// Presenter, around the present of a game frame (id 0: not a game frame, nothing is done).
 void PresentStart(u64 id);
 void PresentEnd(u64 id);
+/// Presenter: the GPU work of game frame `id` is done when `semaphore` (timeline) reaches
+/// `value`; logged as when the GPU finished it (measurement only).
+void WatchGpu(u64 id, vk::Semaphore semaphore, u64 value);
 
 } // namespace Vulkan::LowLatency
