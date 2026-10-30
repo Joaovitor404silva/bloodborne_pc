@@ -19,7 +19,9 @@ from pathlib import Path
 import bbport_theme as theme
 
 L = None  # bbport_launcher_win, set by bind()
-DISCORD = 'https://discord.gg/yTMG8c4Bqm'  # the community Discord (bbport.de), its help forum
+DISCORD = 'https://discord.gg/WtYT4fXhEN'  # the community Discord (bbport.de); the old invite expired
+# Help & Support on the community forum: help is asked there since 28 October 2026, not in the Discord any more.
+FORUM_HELP = 'https://forum.bbport.de/t/help-support'
 EBOOT_SIZE = 93_825_704  # the clean 1.09 eboot.bin as the update PKG unpacks it
 # The 1.09 image with Lance McDonald's 60 fps patch built in (run.py LANCE_60FPS_IMAGE).
 LANCE_60FPS_IMAGE = 'bbc91f4dff6bc3118b039464289e39878a8fdfc802a07fab9d5fe84d935a676f'
@@ -70,9 +72,10 @@ TOPICS = {
          'Copy everything from the update folder into the base game folder and replace the files.']),
     'eboot_unreadable': (
         'eboot.bin cannot be read',
-        'It is not the original file (a PS4 SELF file): another tool has converted it, or it is not from '
-        'Bloodborne.',
-        ['Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes).']),
+        'It is not the original file (a PS4 SELF file), or it is damaged: another tool has converted it, a copy '
+        'went wrong, or it is not from Bloodborne.',
+        ['Use the eboot.bin of an unmodified 1.09 update (exactly 93,825,704 bytes). Copy it again even if yours '
+         'has that size: the size alone does not show damage.']),
     'program_files': (
         'A program file of the game is not the original',
         'eboot.bin or a file in sce_module was converted by another tool or comes from another release (the log '
@@ -112,7 +115,8 @@ TOPICS = {
         'page file together. When Windows refuses, the game closes at once with code 3 (the log says "cannot '
         'create … MiB of guest memory").',
         ['Press Win + R, type sysdm.cpl, press Enter.',
-         'Advanced > Performance: Settings… > Advanced > Virtual memory: Change…',
+         'In the System Properties window that opens: the Advanced tab > Performance: Settings…, there the '
+         'Advanced tab > Virtual memory: Change…',
          'Tick Automatically manage paging file size for all drives. Still crashing: untick it, select a drive '
          'with free space, Custom size: initial 16384, maximum 32768, then Set.',
          'OK, then restart the PC: the change works only after a restart.',
@@ -142,7 +146,7 @@ TOPICS = {
         'The graphics card\'s memory runs full',
         'Cards with 6 GB or less, or the log says ErrorOutOfDeviceMemory or "memory pressure": textures no '
         'longer fit, the game stutters, shows broken faces or crashes.',
-        ['Graphics: preset Balanced or Performance (DLSS on GeForce RTX cards).',
+        ['All graphics (expert view): Quality preset Balanced or Performance (DLSS on GeForce RTX cards).',
          'Model detail (LOD) "As in the game", object motion vectors off.',
          'Close your browser and other programs while playing.']),
     'driver': (
@@ -231,8 +235,9 @@ TOPICS = {
         "shadPS4's public shadNet server checks which program connects and doesn't accept this port's version at the "
         'moment. The game then plays offline. Your account and your settings are fine.',
         ['Online play: Play with SuperMedo Server, then Sign in with Discord.',
-         "Or your own server (Seamless co-op, a friend's): choose Own server there, with the address from the "
-         'person who runs it.']),
+         # The page offers an own server only when Seamless co-op opened the launcher (started_by_bbsc).
+         "Seamless co-op or a friend's server: open this launcher from Seamless co-op (OPEN BBPORT LAUNCHER + "
+         'BBSC), then choose Own server under Play with.']),
     'steam_layout': (
         'Steam turns the controller into a mouse and keyboard',
         "With Steam open, its Desktop Layout sends mouse movement and key presses for a controller it manages, on "
@@ -732,10 +737,10 @@ class HelpMixin:
         last = ttk.Frame(f, style='Card.TFrame', padding=(px(22), px(16)))
         last.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(4), 0))
         self.piracy_notice(last, theme.CARD, wrap=700).pack(fill='x', pady=(0, px(12)))
-        tk.Label(last, text=_('Ask in the help forum of the community Discord. Save a report and attach it: it has '
-                              'the log, your settings and this PC\'s details (no passwords), so a helper sees the '
-                              'cause at once.'), bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 10), justify='left',
-                 wraplength=px(720)).pack(anchor='w')
+        tk.Label(last, text=_('Ask in Help & Support on forum.bbport.de: start a new topic. Save a report and attach '
+                              'it: it has the log, your settings and this PC\'s details (no passwords), so a helper '
+                              'sees the cause at once.'), bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 10),
+                 justify='left', wraplength=px(720)).pack(anchor='w')
         row = tk.Frame(last, bg=theme.CARD)
         row.pack(anchor='w', pady=(px(10), 0))
         button = ttk.Button(row, text=_('Save a report'), style='Card.Accent.TButton', command=self.save_report)
@@ -744,16 +749,20 @@ class HelpMixin:
         self.index_entry(button, _('Save a report'), key='button:report')
         ttk.Button(row, text=_('Copy a summary'), style='Card.TButton', command=self.copy_diagnostics).pack(
             side='left', padx=(px(8), 0))
-        discord = ttk.Button(row, text=_('Open the Discord'), style='Card.TButton',
-                             command=lambda: webbrowser.open(DISCORD))
-        discord.pack(side='left', padx=(px(8), 0))
-        self.index_entry(discord, _('Open the Discord'), key='button:discord')
+        # Where the report goes, beside it; the Discord (the community, no longer its help) in the row below.
+        forum = ttk.Button(row, text=_('Open the forum'), style='Card.TButton', command=self.open_forum)
+        forum.pack(side='left', padx=(px(8), 0))
+        self.index_entry(forum, _('Open the forum'), key='button:forum')
         more = tk.Frame(last, bg=theme.CARD)
         more.pack(anchor='w', pady=(px(8), 0))
         ttk.Button(more, text=_('Show the log'), style='Card.TButton', command=lambda: self.show('log')).pack(
             side='left')
         ttk.Button(more, text=_('Repeat the setup'), style='Card.TButton', command=self.open_setup).pack(
             side='left', padx=(px(8), 0))
+        discord = ttk.Button(more, text=_('Open the Discord'), style='Card.TButton',
+                             command=lambda: webbrowser.open(DISCORD))
+        discord.pack(side='left', padx=(px(8), 0))
+        self.index_entry(discord, _('Open the Discord'), key='button:discord')
         self.report_note = tk.Label(last, text='', bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9),
                                     justify='left', wraplength=px(720))
         self.report_note.pack(anchor='w', pady=(px(6), 0))
@@ -1121,13 +1130,17 @@ class HelpMixin:
                                     '\n\n' + _('Show the fix?')):
             self.open_topic(topics[0])
 
+    def open_forum(self):
+        """Help & Support on the community forum, where a report goes in a new topic."""
+        webbrowser.open(FORUM_HELP)
+
     def save_report(self, button=None, note=None):
-        """The BB Report Tool's zip, the one the Discord helpers ask for: run without its window into
-        <bbport>/reports, then shown selected in Explorer with its summary in the clipboard for the #help
-        post. Without the tool (a build from the sources): the launcher's own zip on the desktop. `button` and
-        `note`: where it was asked for (Help's, or the Report button beside Play and the status line). The tool
-        gets this port folder and the log this launcher wrote (<saves folder>/last_run.log): on its own it took
-        the newest log of any installation it found."""
+        """The BB Report Tool's zip, the one the helpers ask for: run without its window into
+        <bbport>/reports, then shown selected in Explorer with its summary in the clipboard for a new topic in
+        the forum's Help & Support. Without the tool (a build from the sources): the launcher's own zip on the
+        desktop. `button` and `note`: where it was asked for (Help's, or the Report button beside Play and the
+        status line). The tool gets this port folder and the log this launcher wrote (<saves folder>/last_run.log):
+        on its own it took the newest log of any installation it found."""
         import subprocess
         import time
         button, note = button or self.report_button, note or self.report_note
@@ -1178,7 +1191,8 @@ class HelpMixin:
                 summary = z.read('report.txt').decode('utf-8-sig', errors='replace').strip()
             self.root.clipboard_clear()
             self.root.clipboard_append(summary)
-            text += '\n' + _('Its summary is in the clipboard: paste it into your #help post, then attach the zip.')
+            text += '\n' + _('Its summary is in the clipboard: post it in a new topic in Help & Support on '
+                             'forum.bbport.de (Help > "Open the forum"), then attach the zip.')
         except (OSError, KeyError, zipfile.BadZipFile):
             pass
         note.configure(text=text, fg=theme.GOLD_LIGHT)

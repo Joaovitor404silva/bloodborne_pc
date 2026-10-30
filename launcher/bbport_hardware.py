@@ -602,8 +602,7 @@ def assess(g, cpu, ram, tr=str):
             notes.append(tr('Settings for 4 GB cards: 720p/1080p, FSR 3.1 Performance, Model detail "As in the game", '
                             'Object motion vectors off, frame generation off, a 60 FPS cap.'))
         if g.vendor == 'intel':
-            notes.append(tr('Intel graphics: keep the upscaler off, stretched polygons can still appear with it on '
-                            '(known issue in 1.9.2).'))
+            notes.append(tr('Intel graphics: keep the upscaler off, stretched polygons can still appear with it on.'))
         if g.amd_driver_note:
             notes.append(tr('AMD driver 26.8.1: if the game crashes or shows broken graphics, clear the shader cache '
                             '(Help) or try another driver.'))
@@ -872,6 +871,5 @@ DRIVER_NOTES = ['DLSS needs a GeForce RTX 20 series or newer. DLSS Frame Generat
                 'FSR 4 is slow below Radeon RX 7000/9000; use FSR 3.1 there.',
                 'AMD driver 26.8.1: if an RX 6000/9000 crashes or shows broken graphics, clear the shader cache '
                 '(Help), or try another driver.',
-                'Intel graphics: stretched polygons can still appear with an upscaler on (known issue in 1.9.2), '
-                'so turn it off.',
+                'Intel graphics: stretched polygons can still appear with an upscaler on, so turn it off.',
                 'Overlays: if the game won’t start or keeps crashing, close MSI Afterburner, RTSS and other overlays.']

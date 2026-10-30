@@ -7,7 +7,7 @@ The original PlayStation 4 game runs directly on your PC: its own x86-64 code ru
 and the graphics are translated to Vulkan. No emulator window, no setup scripts: unpack the zip,
 start `Bloodborne.exe`, pick your game folder and press **PLAY**.
 
-**[Download the latest version](https://github.com/Supermedo/bloodborne_pc/releases/latest)** · **[Join the Discord](https://discord.gg/yTMG8c4Bqm)**  **[Join X,com](https://x.com/SuperMedoPorts)**
+**[Download the latest version](https://github.com/Supermedo/bloodborne_pc/releases/latest)** · **[Join the Discord](https://discord.gg/WtYT4fXhEN)**  **[Join X,com](https://x.com/SuperMedoPorts)**
 Check my other ports 
 https://nativeretro.com/
 
@@ -95,7 +95,7 @@ Nothing else to install: everything the game needs is in the zip.
 **DLC.** The Game of the Year edition (CUSA03173) already has The Old Hunters. With a base-game
 dump, also dump your add-ons: each is a folder named like `SPEXPANSIONDLC03` with only
 `sce_sys` inside, since their data ships with the 1.09 update. Put them in one folder and choose
-it as **DLC folder** on **Game & effects**, or copy them to `user\addcont\<title id>\` (the
+it as **DLC folder** on **Game files** (expert view), or copy them to `user\addcont\<title id>\` (the
 layout shadPS4 and bbport use).
 
 In the game, **Insert** (or **L3+R3** on a controller) opens the settings menu. The game's own
@@ -112,7 +112,7 @@ made for shadPS4 can be copied over it), including mouse look: see [docs/INPUT.m
 ## Playing online (beta)
 
 1. Register a shadNet account at [shadnet.shadps4.net](https://shadnet.shadps4.net).
-2. In the launcher, open **Online co-op**, tick **Play online** and enter your account name
+2. In the launcher, open **Online play**, tick **Play online** and enter your account name
    (not your email) and password.
 3. Press **Test connection**: all three lines should say "reachable". Then press **PLAY** and
    choose online at the title screen. The Hunter's Dream welcome message means you are online.
@@ -123,7 +123,7 @@ put its address in **Server address**.
 
 Playing with bbhost players on The Hunter's Dream's co-op pool is off in this port until it
 works properly with their server. Please don't ask The Hunter's Dream for help with bbport: use
-our [Discord server](https://discord.gg/yTMG8c4Bqm) instead.
+our [Discord server](https://discord.gg/WtYT4fXhEN) instead.
 
 ## Known issues
 
@@ -138,7 +138,8 @@ our [Discord server](https://discord.gg/yTMG8c4Bqm) instead.
 
 ## Problems and feedback
 
-Ask on the [Discord server](https://discord.gg/yTMG8c4Bqm), or open an [issue](https://github.com/Supermedo/bloodborne_pc/issues) and attach
+Ask in [Help & Support](https://forum.bbport.de/t/help-support) on the community forum or on the
+[Discord server](https://discord.gg/WtYT4fXhEN), or open an [issue](https://github.com/Supermedo/bloodborne_pc/issues) and attach
 `user\last_run.log` from the game folder, with your graphics card and what happened.
 If the game shows only a black screen, try **Advanced → Clear shader cache** first.
 Crashes on AMD RDNA2 cards, slow FSR 4 and online errors are collected in

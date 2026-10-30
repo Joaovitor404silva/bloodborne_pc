@@ -246,6 +246,7 @@ import bbport_lang_vram  # noqa: E402,F401 (the video memory warning's switch)
 import bbport_lang_latency  # noqa: E402,F401 (the low latency options)
 import bbport_lang_gpu  # noqa: E402,F401 (a graphics card Windows has and Vulkan does not see)
 import bbport_lang_ready  # noqa: E402,F401 (the start's other prerequisites: runtime, folders, firewall)
+import bbport_lang_audit2  # noqa: E402,F401 (the wrong and stale texts of the launcher check, rewritten)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
 import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
@@ -1483,10 +1484,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         shown.add(text)
         self.messagebox.showerror('Bloodborne', _('Something went wrong in the launcher: {}',
                                                   'В лаунчере произошла ошибка: {}').format(value or kind.__name__) +
-                                  '\n\n' + _('The details are on the Log page. Help > "Save a report" makes the zip to '
-                                             'attach when you ask for help.',
-                                             'Подробности на странице «Журнал». «Помощь» > «Сохранить отчёт» создаёт '
-                                             'zip-файл, который нужно приложить, когда просите о помощи.'))
+                                  '\n\n' + _('The details are in the log (Help > "Show the log"). Help > "Save a '
+                                             'report" makes the zip to attach when you ask for help.',
+                                             'Подробности в журнале («Помощь» > «Показать журнал»). «Помощь» > '
+                                             '«Сохранить отчёт» создаёт zip-файл, который нужно приложить, когда '
+                                             'просите о помощи.'))
 
     def save_settings(self):
         """collect() before PLAY; False with a message when they cannot be written (a folder without write
@@ -3026,7 +3028,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def build_online(self):
         ttk = self.ttk
-        f = self.scrolled_page('online', _('Online co-op'),
+        f = self.scrolled_page('online', _('Online play'),
                                _('Messages, bloodstains and ghosts come from the game server; bells and summons '
                                  'go through a shadNet server.'))
         self.check(f, 'online', 'app', _('Play online'),
@@ -5061,9 +5063,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.ui_calls.put(lambda: self.messagebox.showwarning('Bloodborne', _(
                     'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port '
                     'cannot patch it: the game runs at 30 FPS in 16:9 (ultrawide and the output resolution '
-                    'do not apply), the Game & effects options do nothing, and some scenes (like the '
-                    'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified '
-                    '1.09 update.')))
+                    'do not apply), the effects (All graphics > Effects, Picture & performance > Taste) and the '
+                    'gameplay tweaks (Gameplay) do nothing, and some scenes (like the cutscene after Rom) can '
+                    'freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.')))
             elif not warned and 'eboot.bin is modified, not the clean 01.09 build' in text:
                 # Some patch groups still apply (run.py): the line says which are off.
                 warned = True

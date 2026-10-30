@@ -59,6 +59,15 @@ def level_color(level):
     return (theme.BLOOD_LIGHT, theme.BLOOD_LIGHT, theme.AMBER, theme.TEXT, theme.GOLD_LIGHT, theme.GOLD_LIGHT)[level]
 
 
+def gpu_unknown(name):
+    """The line above the card picker when the rating has no card: one Vulkan named that the list lacks, or none
+    named at all (it then said "Your graphics card (?) is not in the list")."""
+    if name:
+        return _('Your graphics card ({}) is not in the list of the hardware check. Pick it or the closest '
+                 'model:').format(name)
+    return _('Your graphics card was not detected. Pick it or the closest model:')
+
+
 def same_setting(a, b):
     """A setting's value against another (b) the way the launcher shows them: numbers to two
     decimals, flags on or off, the rest as text."""
@@ -1539,8 +1548,7 @@ class SetupMixin:
             if not r:
                 gpu, _manual, name = self.detected_gpu()
                 if self.hw_ready and not gpu:
-                    tk.Label(body, text=_('Your graphics card ({}) is not in the list of the hardware check. Pick it '
-                                          'or the closest model:').format(name or '?'), bg=bg, fg=theme.TEXT,
+                    tk.Label(body, text=gpu_unknown(name), bg=bg, fg=theme.TEXT,
                              font=(theme.BODY, 10), wraplength=px(560), justify='left').pack(anchor='w')
                     self.gpu_picker(body, 'Card.TCombobox').pack(anchor='w', pady=(px(10), 0))
                 else:
@@ -2354,9 +2362,9 @@ class SetupGuide:
 
     def step_welcome(self, body):
         px = self.px
-        self.text(body, _('A few steps to your first hunt: the guide checks your game and your PC, sets the picture '
-                          'for your hardware and brings your character along. Every setting can be changed in the '
-                          'launcher afterwards.'), size=11, wrap=720)
+        # The header's subtitle (titles) already says the rest: not twice.
+        self.text(body, _('The guide checks your game and your PC, sets the picture for your hardware and brings your '
+                          'character along.'), size=11, wrap=720)
         row = self.tk.Frame(body, bg=theme.BG)
         row.pack(fill='x', pady=(px(18), 0))
         lang = self.tk.Frame(row, bg=theme.BG)
@@ -2516,10 +2524,9 @@ class SetupGuide:
             self.heading(pc, _('Your PC'))
             r = app.rating
             if not r:
-                gpu = app.detected_gpu()[0]
+                gpu, _manual, name = app.detected_gpu()
                 if app.hw_ready and not gpu:
-                    tk.Label(pc, text=_('Your graphics card is not in the list of the hardware check. Pick it or the '
-                                        'closest model:'), bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 10),
+                    tk.Label(pc, text=gpu_unknown(name), bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 10),
                              wraplength=px(620), justify='left').pack(anchor='w')
                     app.gpu_picker(pc, 'Card.TCombobox').pack(anchor='w', pady=(px(8), 0))
                 else:

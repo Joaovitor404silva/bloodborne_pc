@@ -49,7 +49,7 @@ function Val($value) { if ("$value" -ne '') { "$value" } else { 'default' } }
 
 Write-Host ''
 Write-Host "  BB Report Tool $ToolVersion - Bloodborne PC Port" -ForegroundColor Yellow
-Write-Host '  Collecting info for your #help post. Nothing is sent anywhere.'
+Write-Host '  Collecting info for your post in Help & Support on forum.bbport.de. Nothing is sent anywhere.'
 Write-Host ''
 
 # --- Port folder --------------------------------------------------------------------------
@@ -766,6 +766,6 @@ if ($logNote -like 'log is from a later start*') {
     Write-Host '  The crash info from Windows is in the report. Best: make it crash again, then run this tool right away.' -ForegroundColor Yellow
 }
 Write-Host '  Done!' -ForegroundColor Green
-Write-Host '  1. The summary is in your clipboard: paste it into your #help post (Ctrl+V).'
+Write-Host '  1. The summary is in your clipboard: paste it into a new topic in Help & Support on forum.bbport.de (Ctrl+V).'
 Write-Host "  2. Attach this file to the post: $zip"
 if (-not $env:BBTOOL_OUT) { Start-Process explorer.exe "/select,`"$zip`"" }

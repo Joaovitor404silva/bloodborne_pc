@@ -22,6 +22,7 @@ IMPORTANT = {
     'backup_now': 'button:backup',
     'open_bug_benchmark': 'button:benchmark',
     'check_game_files': 'button:game_files',
+    'open_forum': 'button:forum',
 }
 
 
