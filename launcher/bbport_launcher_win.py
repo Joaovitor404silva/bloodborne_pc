@@ -42,7 +42,7 @@ PATCH_VERSION = '01.09'
 MAX_LOG_LINES = 6000
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 # This build; GitHub release tags are windows-v<VERSION>.
-VERSION = '1.9.6'
+VERSION = '1.9.7'
 # A beta of VERSION (its number), or 0: shown as 'v1.9.5 beta 1', and the release of VERSION itself is
 # offered as its update.
 BETA = 0
@@ -53,7 +53,7 @@ BETA_PAGE = 'https://github.com/emurphy04/bloodborne_pc/releases/tag/v1.9.5-beta
 DISCORD_APPLICATION_ID = '1563260197835907232'
 # Co-op: the community server that answers the game's own server requests.
 COMMUNITY_SERVER = 'https://game.supermedo.com'
-# The Hunter's Dream, for its own pool (for the time being; BB_HUNTERS_DREAM=0 hides it): its sign-in, player
+# The Hunter's Dream, for its own pool (off since 1.9.7; BB_HUNTERS_DREAM=1 shows it again): its sign-in, player
 # count and game server.
 HUNTERS_DREAM_SERVER = 'https://thehuntersdream.com'
 # SuperMedo Server: the shadNet server (accounts, bells and summons) and the game server above,
@@ -256,6 +256,7 @@ import bbport_lang_audit4  # noqa: E402,F401 (the search: the side bar's buttons
 import bbport_lang_audit5  # noqa: E402,F401 (Help's new order: asking for help above the problems)
 import bbport_lang_audit8  # noqa: E402,F401 (sharpening with FSR 4, achievements from another installation)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
+import bbport_lang_thd  # noqa: E402,F401 (1.9.7: The Hunter's Dream no longer offered)
 import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
 # EXTRA_TRANSLATIONS after it would not be in them.
@@ -920,11 +921,18 @@ def settled_online(app, saved):
     return settled
 
 
+def chosen_pool(s):
+    """The pool a start plays on: The Hunter's Dream's players play on SuperMedo Server while it is not offered
+    (since 1.9.7), before the window or settled_pool has rewritten their choice."""
+    pool = s.get('online_pool', 'supermedo')
+    return 'supermedo' if pool == 'huntersdream' and not HUNTERS_DREAM_POOL else pool
+
+
 def pool_account(s):
     """The account the game signs in with on the chosen pool, '' without one. Each pool keeps its own, so a
     change of pool (or a co-op tool writing the shadNet boxes) never signs another one out: SuperMedo Server's
     account, The Hunter's Dream's Discord sign-in, the shadNet boxes."""
-    pool = s.get('online_pool', 'supermedo')
+    pool = chosen_pool(s)
     if pool == 'huntersdream':
         return str(s.get('thd_online_id', '')).strip() if s.get('thd_token') else ''
     if pool == 'supermedo':
@@ -935,7 +943,7 @@ def pool_account(s):
 def signed_out_server(s):
     """With online on: the name of the chosen server when the launcher has no account for it (SuperMedo Server
     or The Hunter's Dream), else ''. A Seamless co-op start (shadnet) brings its own."""
-    pool = s.get('online_pool', 'supermedo')
+    pool = chosen_pool(s)
     if not s.get('online') or pool not in ('supermedo', 'huntersdream') or pool_account(s):
         return ''
     return "The Hunter's Dream" if pool == 'huntersdream' else 'SuperMedo Server'
@@ -995,8 +1003,9 @@ def server_check(server, webapi, community):
 
 
 # The Hunter's Dream pool: the engine's own backend for it (BB_NET_BACKEND=thd, bbhost's
-# protocol, from Awaken's port). For the time being, after SuperMedo Server; BB_HUNTERS_DREAM=0 hides it.
-HUNTERS_DREAM_POOL = os.environ.get('BB_HUNTERS_DREAM', '1') != '0'
+# protocol, from Awaken's port). Not offered since 1.9.7: its players move to SuperMedo Server (settled_pool,
+# show_pool) and are told once (bbport_news). BB_HUNTERS_DREAM=1 shows it again.
+HUNTERS_DREAM_POOL = os.environ.get('BB_HUNTERS_DREAM', '0') == '1'
 
 
 SHADNET_ERRORS = {3: 'The name or the email address is not valid.', 4: 'Too soon: try again in a minute.',
@@ -3349,7 +3358,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                            show_code(), show_accounts(), self.collect()))
             threading.Thread(target=work, daemon=True).start()
         button = self.row(f, '', ttk.Button(f, text=_('Sign in with Discord'), command=sign_in_thd))
-        self.index_entry(button, _('Sign in with Discord'), _("The Hunter's Dream account"), key='button:signin_thd')
+        if HUNTERS_DREAM_POOL:  # hidden otherwise: the search must not lead to it
+            self.index_entry(button, _('Sign in with Discord'), _("The Hunter's Dream account"),
+                             key='button:signin_thd')
         signing.grid(row=self.next_row(f), column=1, sticky='we', pady=(6, 0))
         code_box.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 0))
         self.check(f, 'bridge_live_map', 'app', _('Show me on the live map'),
@@ -6262,8 +6273,7 @@ def needs_sign_in(settings):
     game would stay offline without a word. A start from Steam or a shortcut opens the launcher, whose Play asks."""
     if not settings.get('online') or pool_account(settings):
         return False
-    pool = settings.get('online_pool', 'supermedo')
-    return pool == 'supermedo' or (pool == 'huntersdream' and HUNTERS_DREAM_POOL)
+    return chosen_pool(settings) in ('supermedo', 'huntersdream')
 
 
 def custom_output(size, settings):

@@ -171,7 +171,9 @@ class ServerCheckTests(unittest.TestCase):
                             root=types.SimpleNamespace(state=lambda: 'normal'), show_hunters=mock.Mock(),
                             var=lambda key, store: types.SimpleNamespace(get=lambda: 'huntersdream'))
         errors = []
+        # The Hunter's Dream's count is only asked while it is offered (BB_HUNTERS_DREAM=1 since 1.9.7).
         with mock.patch.object(L, 'hunters_online', side_effect=RuntimeError('a bug')), \
+                mock.patch.object(L, 'HUNTERS_DREAM_POOL', True), \
                 mock.patch.object(threading, 'excepthook', lambda args: errors.append(args.exc_type)):
             app.ask_hunters()
             self.assertTrue(app.hunters_asking)
