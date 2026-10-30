@@ -1,5 +1,6 @@
 """Importing saves of other PC versions (launcher/bbport_saves.py), on temporary folders."""
 from paths import ROOT
+import hashlib
 import importlib.util
 import os
 from pathlib import Path
@@ -77,6 +78,7 @@ class SaveTests(unittest.TestCase):
         make_save(self.root / 'port' / 'benchmark' / 'savedata' / '1' / 'CUSA00207' / 'SPRJ0005', 'Hunter')
         make_save(self.root / 'BB.Other' / 'benchmark' / 'savedata' / '1' / 'CUSA00207' / 'SPRJ0005', 'Hunter')
         make_save(self.root / 'port' / 'launcher_src' / 'recordings' / 'sewers' / 'save' / 'SPRJ0005', 'Hunter')
+        make_save(self.user / 'savedata.benchmark' / '1' / 'CUSA00207' / 'SPRJ0005', 'Hunter')  # put aside at a start
         player = make_save(self.root / 'BB.Other' / 'user' / 'savedata' / '1' / 'CUSA00207' / 'SPRJ0005', 'Zed')
         (self.root / 'BB.Other' / 'run.py').write_text('')
         with mock.patch.dict(os.environ, {'APPDATA': str(self.root / 'Roaming'), 'LOCALAPPDATA': str(self.root / 'Local')}):
@@ -214,6 +216,103 @@ class BackupTests(unittest.TestCase):
         added = saves.add_backup_file(copy, self.user)
         item = saves.Backup(added)
         self.assertEqual((item.reason, item.detail, item.names), ('file', 'from a friend', ['Nick', 'Nick']))
+
+
+def contents(folder):
+    """{file name: SHA-256} of a folder's files (a failed comparison of the files' bytes takes minutes to show)."""
+    return {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(Path(folder).iterdir()) if p.is_file()}
+
+
+class SwapTests(unittest.TestCase):
+    """An import or a restore deleted the save's files and then moved the new ones in: a file that would not move
+    left half of one save and half of another. The files in use go aside first and come back on any error."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        self.user = self.root / 'user'
+        self.mine = make_save(saves.target_dir(self.user), 'Old', slots=(0, 2))
+        (self.mine / 'backup0001').write_bytes(b'only here')  # a file the new save has not
+        self.meta = self.mine.with_name('SPRJ0005.sce_sys')
+        self.meta.mkdir()
+        (self.meta / 'param.bin').write_bytes(b'old meta')
+        self.before = contents(self.mine), contents(self.meta)
+        self.other = saves.SaveSet('bbhost', make_save(self.root / 'data' / 'saves' / 'SPRJ0005', 'New',
+                                                       slots=(0, 5), extra=('backup0002',)))
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def as_before(self):
+        self.assertEqual((contents(self.mine), contents(self.meta)), self.before)
+        self.assertFalse((self.user / saves.REPLACED_DIR).exists())
+        self.assertFalse((self.user / 'save_import').exists())
+
+    @staticmethod
+    def failing(name):
+        """os.replace that fails for the new file `name` moved in from the staging folder (a full drive)."""
+        real = os.replace
+
+        def replace(source, target):
+            if Path(target).name == name and 'save_import' in Path(source).parts:
+                raise OSError(28, 'No space left on device')
+            return real(source, target)
+        return replace
+
+    def test_the_new_files_replace_the_old_ones_and_nothing_stays_aside(self):
+        saves.import_set(self.other, self.user)
+        self.assertEqual(saves.SaveSet('', self.mine).names, ['New', 'New'])
+        self.assertNotIn('backup0001', contents(self.mine))  # the old save's own extra file went with it
+        self.assertIn('backup0002', contents(self.mine))
+        self.assertFalse((self.user / saves.REPLACED_DIR).exists())
+
+    def test_an_import_that_fails_halfway_leaves_the_save_as_it_was(self):
+        # The profile is the last file moved in: every other new one is in place by then and goes out again.
+        with mock.patch.object(saves.os, 'replace', side_effect=self.failing('userdata0010')):
+            with self.assertRaises(OSError):
+                saves.import_set(self.other, self.user)
+        self.as_before()
+
+    def test_a_restore_whose_metadata_cannot_follow_puts_the_save_back_too(self):
+        archive = saves.backup(self.user)
+        (self.mine / 'userdata0000').write_bytes(b'\x01' + bytes(4095))  # played since
+        self.before = contents(self.mine), contents(self.meta)
+        with mock.patch.object(saves.os, 'replace', side_effect=self.failing('param.bin')):
+            with self.assertRaises(OSError):
+                saves.restore(archive, self.user)
+        self.as_before()
+
+    @unittest.skipUnless(os.name == 'nt', 'only Windows keeps a file that is open from being moved')
+    def test_a_file_held_open_leaves_the_save_as_it_was(self):
+        """A sync tool or an antivirus holding one of the save's files while the others were already gone."""
+        with open(self.mine / 'userdata0005', 'rb'), mock.patch.object(saves.time, 'sleep') as waited:
+            with self.assertRaises(PermissionError):
+                saves.import_set(self.other, self.user)
+        self.assertEqual(waited.call_count, saves.LOCK_TRIES - 1)  # tried again first
+        self.as_before()
+
+    def test_a_file_that_cannot_go_back_is_named_with_its_folder(self):
+        moving_in = self.failing('userdata0010')
+
+        def replace(source, target):
+            if Path(target) == self.mine / 'userdata0002' and saves.REPLACED_DIR in Path(source).parts:
+                raise OSError(13, 'Access is denied')
+            return moving_in(source, target)
+        with mock.patch.object(saves.os, 'replace', side_effect=replace):
+            with self.assertRaises(OSError) as raised:
+                saves.import_set(self.other, self.user)
+        aside = next((self.user / saves.REPLACED_DIR).iterdir())
+        self.assertIn('userdata0002', str(raised.exception))
+        self.assertIn(str(aside), str(raised.exception))
+        self.assertEqual(contents(aside / 'save'), {'userdata0002': self.before[0]['userdata0002']})  # kept
+        self.assertEqual({**contents(self.mine), 'userdata0002': self.before[0]['userdata0002']}, self.before[0])
+
+    def test_put_aside_saves_are_not_taken_for_misplaced_ones(self):
+        for name in sorted(self.mine.iterdir()):
+            name.unlink()  # this port's own save folder empty: misplaced() looks around
+        make_save(self.user / saves.REPLACED_DIR / '2026-10-30 12.00.00' / 'save', 'Old')
+        make_save(self.user / 'savedata.benchmark' / '1' / 'CUSA00207' / 'SPRJ0005', 'Hunter')
+        self.assertEqual(saves.misplaced(self.user), ([], []))
 
 
 class ImportWindowTests(unittest.TestCase):
