@@ -189,6 +189,18 @@ class ReadOnlyIniTests(Folder):
         self.assertEqual(len(textfile.REPAIRS), 1)  # one line for the log, however often it is read
         self.assertEqual(self.ini.read_text(encoding='utf-8'), 'upscaler=fsr3\nfsr411_backend=vk\n')
 
+    def test_a_hand_edit_that_cannot_be_repaired_leaves_no_pile_of_copies(self):
+        """The repair of a hand edit kept a copy as .bad before writing: with the file read-only, every load
+        (several per session) made one more, .bad2, .bad3, … and the log said nothing."""
+        self.read_only('upscaler=fsr3\nfsr411_backend=vk\nsharpness=0,5\n')
+        for _load in range(3):
+            self.assertEqual(L.load_ini()[0]['sharpness'], '0.50')  # as meant, for this start
+        self.assertEqual(os.listdir(self.folder), ['bbport.ini'])
+        self.assertEqual(self.ini.read_text(encoding='utf-8'), 'upscaler=fsr3\nfsr411_backend=vk\nsharpness=0,5\n')
+        self.assertEqual(len(textfile.REPAIRS), 1)
+        self.assertIn('cannot be written', textfile.REPAIRS[0])
+        self.assertIn('sharpness=0.50', textfile.REPAIRS[0])
+
     def test_play_bloodborne_exe_starts_the_game_anyway(self):
         self.read_only('upscaler=fsr3\n')  # no fsr411_backend: --play adds it
         user = self.folder / 'user'
@@ -280,6 +292,15 @@ class BenchmarkBackupTests(Folder):
         self.assertEqual((self.who(self.live), self.who(self.backup)), ('test', 'player'))
         self.assertFalse((self.user / 'savedata.benchmark').exists())
         self.assertIn('could not be put back', textfile.REPAIRS[0])
+
+    def test_a_saves_folder_that_cannot_be_reached_does_not_stop_the_launcher(self):
+        """Path.is_dir() raises for more than a missing folder (a network drive that refuses the sign-in): the
+        check was inside the old try, and main() must still go on to the window or --play."""
+        self.save(self.backup, 'player')
+        with mock.patch.object(L.Path, 'is_dir', side_effect=OSError(1326, 'The user name or password is incorrect')):
+            L.restore_benchmark_backup(self.user)
+        self.assertEqual((self.who(self.backup), textfile.REPAIRS, sorted(os.listdir(self.user))),
+                         ('player', [], ['savedata.benchmark-backup']))
 
     def test_the_launcher_puts_them_back_at_every_start(self):
         source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')

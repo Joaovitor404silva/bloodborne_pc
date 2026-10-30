@@ -79,11 +79,16 @@ class SaveTests(unittest.TestCase):
         make_save(self.root / 'BB.Other' / 'benchmark' / 'savedata' / '1' / 'CUSA00207' / 'SPRJ0005', 'Hunter')
         make_save(self.root / 'port' / 'launcher_src' / 'recordings' / 'sewers' / 'save' / 'SPRJ0005', 'Hunter')
         make_save(self.user / 'savedata.benchmark' / '1' / 'CUSA00207' / 'SPRJ0005', 'Hunter')  # put aside at a start
+        make_save(self.user / 'savedata.benchmark 2026-10-30 12.00.00' / '1' / 'CUSA00207' / 'SPRJ0005', 'Hunter')
         player = make_save(self.root / 'BB.Other' / 'user' / 'savedata' / '1' / 'CUSA00207' / 'SPRJ0005', 'Zed')
-        (self.root / 'BB.Other' / 'run.py').write_text('')
+        # The player's own save, kept there while an old build's test ran and not put back: still offered.
+        kept = make_save(self.root / 'BB.Old' / 'user' / 'savedata.benchmark-backup' / '1' / 'CUSA00207' / 'SPRJ0005',
+                         'Ann')
+        for folder in ('BB.Other', 'BB.Old'):
+            (self.root / folder / 'run.py').write_text('')
         with mock.patch.dict(os.environ, {'APPDATA': str(self.root / 'Roaming'), 'LOCALAPPDATA': str(self.root / 'Local')}):
             found = saves.scan(self.root / 'port')
-        self.assertEqual([s.folder for s in found], [player])
+        self.assertEqual(sorted(s.folder for s in found), sorted([player, kept]))
 
     def test_import_backs_up_copies_and_restores(self):
         mine = make_save(saves.target_dir(self.user), 'Old')
@@ -307,11 +312,31 @@ class SwapTests(unittest.TestCase):
         self.assertEqual(contents(aside / 'save'), {'userdata0002': self.before[0]['userdata0002']})  # kept
         self.assertEqual({**contents(self.mine), 'userdata0002': self.before[0]['userdata0002']}, self.before[0])
 
+    def test_a_new_file_that_cannot_come_out_is_named_and_no_empty_folder_stays(self):
+        """Only a file the old save has not (backup0002) would not go back to staging: every file from before is
+        in place again, so the error names the new one left in the save folder, not an empty aside folder."""
+        moving_in = self.failing('userdata0010')
+
+        def replace(source, target):
+            if Path(source) == self.mine / 'backup0002':
+                raise OSError(13, 'Access is denied')
+            return moving_in(source, target)
+        with mock.patch.object(saves.os, 'replace', side_effect=replace), mock.patch.object(saves.time, 'sleep'):
+            with self.assertRaises(OSError) as raised:
+                saves.import_set(self.other, self.user)
+        self.assertIn(f'backup0002 of the new save stayed in {self.mine}', str(raised.exception))
+        self.assertNotIn(saves.REPLACED_DIR, str(raised.exception))
+        self.assertFalse((self.user / saves.REPLACED_DIR).exists())
+        left = contents(self.mine)
+        self.assertEqual(left.pop('backup0002'), contents(self.other.folder)['backup0002'])
+        self.assertEqual(left, self.before[0])
+
     def test_put_aside_saves_are_not_taken_for_misplaced_ones(self):
         for name in sorted(self.mine.iterdir()):
             name.unlink()  # this port's own save folder empty: misplaced() looks around
         make_save(self.user / saves.REPLACED_DIR / '2026-10-30 12.00.00' / 'save', 'Old')
         make_save(self.user / 'savedata.benchmark' / '1' / 'CUSA00207' / 'SPRJ0005', 'Hunter')
+        make_save(self.user / 'savedata.benchmark 2026-10-30 12.00.00' / '1' / 'CUSA00207' / 'SPRJ0005', 'Hunter')
         self.assertEqual(saves.misplaced(self.user), ([], []))
 
 

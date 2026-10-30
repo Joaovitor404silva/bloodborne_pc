@@ -648,7 +648,15 @@ def load_ini(legacy_settings=None):
         bad = textfile.keep_bad(ini_path())
         try:
             save_ini(fixed, lines)
-        except OSError:
+        except OSError as error:
+            # Read-only or locked: the file is as it was, so its copy goes again (each load made one more), and
+            # the repaired values hold for this start.
+            if bad:
+                try:
+                    bad.unlink()
+                except OSError:
+                    pass
+            ini_not_written(error, fixed)
             return values, lines
         what = ', '.join(f'{key}={value}' for key, value in fixed.items()) or 'its text as UTF-8'
         textfile.REPAIRS.append(f'Settings: {ini_path()} repaired by hand edits ({what}); '
@@ -721,7 +729,7 @@ def ini_not_written(error, values):
     """A line for the log (once) when bbport.ini cannot be written (read-only, held by another program): the
     launcher goes on with `values` in memory instead of stopping."""
     line = (f'Settings: {ini_path()} cannot be written ({error}); this start goes on without saving '
-            + ', '.join(f'{key}={value}' for key, value in values.items()))
+            + (', '.join(f'{key}={value}' for key, value in values.items()) or 'its text as UTF-8'))
     if line not in textfile.REPAIRS:
         textfile.REPAIRS.append(line)
 
@@ -5966,20 +5974,24 @@ def restore_benchmark_backup(user):
     renamed aside now (bbport_saves.BENCHMARK_SAVE: kept, never deleted) before the player's is renamed back, and
     goes back itself when that fails. Either way the log of the next start says so."""
     backup, live = user / 'savedata.benchmark-backup', user / 'savedata'
-    if not backup.is_dir():
+    try:
+        if not backup.is_dir():
+            return
+    except OSError:  # a saves folder that cannot be reached now (a network drive): nothing to put back this start
         return
-    aside = None
+    aside, moved = None, False
     try:
         if live.exists():
             aside = user / saves.BENCHMARK_SAVE
             if aside.exists():
                 aside = user / f'{saves.BENCHMARK_SAVE} {time.strftime("%Y-%m-%d %H.%M.%S")}'
             live.rename(aside)
+            moved = True
         backup.rename(live)
     except OSError as error:
         line = (f'Saves: the saves from before an unfinished game test could not be put back ({error}); they stay '
                 f'in {backup}, the next start tries again')
-        if aside is not None and aside.exists() and not live.exists():
+        if moved:  # the rename of the player's failed, so savedata is free again
             try:
                 aside.rename(live)
             except OSError as second:

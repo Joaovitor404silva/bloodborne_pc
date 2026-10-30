@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-spec =importlib.util.spec_from_file_location('bbport_run', ROOT / 'run.py')
+spec = importlib.util.spec_from_file_location('bbport_run', ROOT / 'run.py')
 run = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(run)
 

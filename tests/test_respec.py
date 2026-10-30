@@ -8,7 +8,7 @@ import unittest
 from unittest import mock
 
 sys.path.insert(0, str(ROOT / 'launcher'))  # bbport_textfile
-spec =importlib.util.spec_from_file_location('bbport_respec', ROOT / 'launcher/bbport_respec.py')
+spec = importlib.util.spec_from_file_location('bbport_respec', ROOT / 'launcher/bbport_respec.py')
 respec = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(respec)
 

@@ -46,9 +46,15 @@ SKIP = {'dvdroot_ps4', 'sce_module', 'cache', 'shader', 'shader_cache', 'fsr4_sh
         # assets, recorded routes): not a player's save
         'benchmark', 'recordings', 'assets'}
 # The save the route benchmark of the 1.9.3 test builds left in place of the player's, put aside when the
-# player's came back (bbport_launcher_win.restore_benchmark_backup): savedata.benchmark…, kept but never offered
-# as a save.
+# player's came back (bbport_launcher_win.restore_benchmark_backup): savedata.benchmark, or with the time after a
+# space when that is taken. Kept but never offered as a save.
 BENCHMARK_SAVE = 'savedata.benchmark'
+
+
+def benchmark_save(name):
+    """True for a (lower-case) folder name restore_benchmark_backup gives the test's save. Not for
+    savedata.benchmark-backup: that one holds the player's own save while a test runs or after it broke off."""
+    return name == BENCHMARK_SAVE or name.startswith(BENCHMARK_SAVE + ' ')
 
 
 # ---- where this port wants them --------------------------------------------------------------
@@ -236,8 +242,8 @@ def walk(roots, depth=9, limit=30000):
                 name = child.name.lower()
                 if name == SAVE_DIR.lower() and is_save_folder(child):
                     found.append(child)
-                elif name not in SKIP and not name.endswith('.sce_sys') and \
-                        not name.startswith(('sdimg_', BENCHMARK_SAVE)):
+                elif name not in SKIP and not name.endswith('.sce_sys') and not name.startswith('sdimg_') and \
+                        not benchmark_save(name):
                     following.append(child)
             if seen > limit:
                 return found
@@ -329,7 +335,7 @@ def misplaced(user_dir, game_dir=''):
                 if name.startswith('sdimg_'):
                     encrypted.append(child)
                 elif not child.is_dir() or name in SKIP or name in OWN_COPIES or name.endswith('.sce_sys') or \
-                        name.startswith(BENCHMARK_SAVE):
+                        benchmark_save(name):
                     continue
                 elif is_save_folder(child):
                     try:
@@ -704,7 +710,7 @@ def swap_in(user_dir, parts):
     """Moves the files of each part (staging folder, save folder, every) into its save folder as one step. The
     files they replace go aside first; with `every`, all the save folder's own files (userdata, backup) go,
     also those the new save has not. Any error puts the files back as they were and is raised; when even that
-    fails, the error names the folder that holds the files from before."""
+    fails, the error names what is not as it was (stuck_text)."""
     aside = aside_folder(user_dir)
     moved, placed = [], []  # (file in use, where it went aside), (new file in staging, where it went)
     try:
@@ -723,33 +729,46 @@ def swap_in(user_dir, parts):
                 retried(os.replace, new, folder / new.name)
                 placed.append((new, folder / new.name))
     except OSError as error:
-        stuck = put_back(moved, placed)
-        if stuck:
-            raise OSError(f'{error}; {", ".join(p.name for p in stuck)} could not be put back, the files from '
-                          f'before are in {aside}') from error
-        remove_aside(aside)
+        left_new, left_old = put_back(moved, placed)
+        if not left_old:
+            remove_aside(aside)  # empty: every file from before is back
+        if left_new or left_old:
+            raise OSError(f'{error}; {stuck_text(left_new, left_old, aside)}') from error
         raise
     remove_aside(aside)
 
 
 def put_back(moved, placed):
     """Undoes swap_in's moves so far: the new files back to staging, the files in use back in place. Returns
-    the places that are not as they were."""
-    stuck = []
+    what is not as it was: ([new files left in a save folder], [files from before left in the aside folder])."""
+    left_new, left_old = [], []
     for new, place in reversed(placed):
         try:
             retried(os.replace, place, new)
         except OSError:
-            stuck.append(place)
+            left_new.append(place)
     for old, kept in reversed(moved):
         try:
             retried(os.replace, kept, old)
         except OSError:
-            stuck.append(old)
+            left_old.append(kept)
             continue
-        if old in stuck:
-            stuck.remove(old)  # the new file that would not move out was replaced by the old one
-    return stuck
+        if old in left_new:
+            left_new.remove(old)  # the new file that would not move out was replaced by the old one
+    return left_new, left_old
+
+
+def stuck_text(left_new, left_old, aside):
+    """What put_back could not undo, for the error: a new file left among the old ones (a slot of the other save
+    beside the old profile) is named with its folder; the aside folder only while it holds files from before."""
+    parts = []
+    for folder in sorted({path.parent for path in left_new}):
+        names = ', '.join(path.name for path in left_new if path.parent == folder)
+        parts.append(f'{names} of the new save stayed in {folder}')
+    if left_old:
+        names = ', '.join(str(path.relative_to(aside)) for path in left_old)
+        parts.append(f'the files from before that could not go back ({names}) are in {aside}')
+    return '; '.join(parts)
 
 
 def remove_aside(aside):
