@@ -7,7 +7,7 @@ The original PlayStation 4 game runs directly on your PC: its own x86-64 code ru
 and the graphics are translated to Vulkan. No emulator window, no setup scripts: unpack the zip,
 start `Bloodborne.exe`, pick your game folder and press **PLAY**.
 
-**[Download the latest version](https://github.com/Supermedo/bloodborne_pc/releases/latest)** · **[Join the Discord](https://discord.gg/WtYT4fXhEN)**  **[Join X,com](https://x.com/SuperMedoPorts)**
+**[Download the latest version](https://github.com/Supermedo/bloodborne_pc/releases/latest)** · **[Join the Discord](https://discord.gg/HXBaehzTBx)**  **[Join X,com](https://x.com/SuperMedoPorts)**
 Check my other ports 
 https://nativeretro.com/
 
