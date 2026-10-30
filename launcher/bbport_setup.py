@@ -952,10 +952,11 @@ class SetupMixin:
                 tk.Label(body, text=_('Searching this PC for saves of shadPS4, Awaken\'s port and bbhost…'),
                          bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9)).pack(anchor='w', pady=(top, 0))
             elif not sets:
-                tk.Label(body, text=_('No saves from shadPS4, Awaken\'s port or bbhost found on this PC. If yours '
-                                      'are somewhere else (a backup, a PS4 export), choose their folder.'),
-                         bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
-                         wraplength=px(640)).pack(anchor='w', pady=(top, 0))
+                self.wrap_within(tk.Label(body, text=_('No saves from shadPS4, Awaken\'s port or bbhost found on this '
+                                                       'PC. If yours are somewhere else (a backup, a PS4 export), '
+                                                       'choose their folder.'),
+                                          bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
+                                          anchor='w'), 640).pack(fill='x', pady=(top, 0))
             for save in (sets or [])[:limit or None]:
                 tk.Frame(body, bg=theme.BORDER, height=1).pack(fill='x', pady=(px(10), px(8)))
                 line = tk.Frame(body, bg=theme.CARD)
@@ -964,13 +965,13 @@ class SetupMixin:
                            command=lambda s=save: self.import_save(s, search)).pack(side='right', anchor='center')
                 words = tk.Frame(line, bg=theme.CARD)
                 words.pack(side='left', fill='x', expand=True)
-                tk.Label(words, text=save.source, bg=theme.CARD, fg=theme.GOLD_LIGHT, font=(theme.BODY_SEMI, 10),
-                         anchor='w', justify='left', wraplength=px(520)).pack(anchor='w')
-                tk.Label(words, text=self.describe_save(save) + '  ·  ' + _('last played {}').format(save.when()),
-                         bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 9), anchor='w', justify='left',
-                         wraplength=px(520)).pack(anchor='w', pady=(px(1), 0))
-                tk.Label(words, text=str(save.folder), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 8),
-                         anchor='w', justify='left', wraplength=px(520)).pack(anchor='w', pady=(px(2), 0))
+                # wrapped at the room beside the Import button: a long folder was cut off there in a narrow window
+                for text, fg, font, top in ((save.source, theme.GOLD_LIGHT, (theme.BODY_SEMI, 10), 0),
+                                            (self.describe_save(save) + '  ·  ' + _('last played {}').format(
+                                                save.when()), theme.TEXT, (theme.BODY, 9), px(1)),
+                                            (str(save.folder), theme.MUTED, (theme.BODY, 8), px(2))):
+                    self.wrap_within(tk.Label(words, text=text, bg=theme.CARD, fg=fg, font=font, anchor='w',
+                                              justify='left'), 520).pack(fill='x', pady=(top, 0))
             buttons = tk.Frame(body, bg=theme.CARD)
             buttons.pack(anchor='w', pady=(px(12), 0))
             ttk.Button(buttons, text=_('Search again'), style='Card.TButton', command=search).pack(side='left')
@@ -1268,15 +1269,16 @@ class SetupMixin:
                 child.destroy()
             ttk.Checkbutton(body, text=_('Back up automatically before every start'),
                             variable=self.var('auto_backup', 'app'), style='Card.TCheckbutton').pack(anchor='w')
-            tk.Label(body, text=_('Only when you played since the last backup. The last {} automatic backups are '
-                                  'kept; the ones you make yourself always.').format(saves.AUTO_KEEP),
-                     bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
-                     wraplength=px(640)).pack(anchor='w', padx=(px(26), 0))
+            self.wrap_within(tk.Label(body, text=_('Only when you played since the last backup. The last {} automatic '
+                                                   'backups are kept; the ones you make yourself always.').format(
+                saves.AUTO_KEEP), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left', anchor='w'),
+                640).pack(fill='x', padx=(px(26), 0))
             ttk.Checkbutton(body, text=_('Back up after every game exit'),
                             variable=self.var('exit_backup', 'app'), style='Card.TCheckbutton').pack(anchor='w', pady=(px(8), 0))
-            tk.Label(body, text=_('Copies the final save after a normal exit or crash. No periodic copies; exit backups are kept.'),
-                     bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
-                     wraplength=px(640)).pack(anchor='w', padx=(px(26), 0))
+            self.wrap_within(tk.Label(body, text=_('Copies the final save after a normal exit or crash. No periodic '
+                                                   'copies; exit backups are kept.'),
+                                      bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left', anchor='w'),
+                             640).pack(fill='x', padx=(px(26), 0))
 
             items = [b for b in saves.backups(self.save_user_dir()) if b.ok]
             if not items:
@@ -1335,17 +1337,18 @@ class SetupMixin:
             tk.Label(words, text=_('A name for this backup. Enter keeps it, Esc leaves it as it was.'), bg=theme.CARD,
                      fg=theme.MUTED, font=(theme.BODY, 8)).pack(anchor='w', pady=(px(2), 0))
         else:
-            tk.Label(words, text=self.backup_title(item), bg=theme.CARD, fg=theme.GOLD_LIGHT,
-                     font=(theme.BODY_SEMI, 10), anchor='w', justify='left', wraplength=px(520)).pack(anchor='w')
+            self.wrap_within(tk.Label(words, text=self.backup_title(item), bg=theme.CARD, fg=theme.GOLD_LIGHT,
+                                      font=(theme.BODY_SEMI, 10), anchor='w', justify='left'), 520).pack(fill='x')
         size = item.size / 1024
         size = f'{size / 1024:.1f} MB' if size >= 1024 else f'{max(1, round(size))} KB'
         level = character.names(self.var('game_dir', 'app').get(), self.var('language', 'app').get()).word(
             character.LEVEL_TEXT)
         found = saves.backup_characters(item).values()
         who = ', '.join(f'{c.name} ({level} {c.level})' for c in found) if found else ', '.join(item.names)
-        tk.Label(words, text='  ·  '.join([item.created.strftime('%d.%m.%Y %H:%M'), who or _('no characters'), size]),
-                 bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 9), anchor='w', justify='left',
-                 wraplength=px(520)).pack(anchor='w', pady=(px(1), 0))
+        self.wrap_within(tk.Label(words, text='  ·  '.join([item.created.strftime('%d.%m.%Y %H:%M'),
+                                                            who or _('no characters'), size]),
+                                  bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 9), anchor='w', justify='left'),
+                         520).pack(fill='x', pady=(px(1), 0))
         links = tk.Frame(words, bg=theme.CARD)
         links.pack(anchor='w', pady=(px(3), 0))
         for title, command in ((_('Rename'), lambda: (state.update(rename=item.path), redraw())),
@@ -1483,8 +1486,8 @@ class SetupMixin:
         if bold:
             tk.Label(words, text=bold, bg=bg, fg=theme.TEXT_STRONG, font=(theme.BODY_SEMI, 10), anchor='w',
                      justify='left').pack(anchor='w')
-        tk.Label(words, text=text, bg=bg, fg=theme.TEXT if state != 'info' else theme.MUTED, font=(theme.BODY, 10),
-                 anchor='w', justify='left', wraplength=px(wrap)).pack(anchor='w')
+        self.wrap_within(tk.Label(words, text=text, bg=bg, fg=theme.TEXT if state != 'info' else theme.MUTED,
+                                  font=(theme.BODY, 10), anchor='w', justify='left'), wrap).pack(fill='x')
         return line
 
     def piracy_notice(self, parent, bg, wrap=640):
@@ -1501,11 +1504,11 @@ class SetupMixin:
         words.pack(side='left', fill='both', expand=True, padx=(px(10), px(14)), pady=px(10))
         tk.Label(words, text=_('Only with your own copy of the game'), bg=bg, fg=theme.BLOOD_LIGHT, font=(theme.BODY_SEMI, 11),
                  anchor='w').pack(anchor='w')
-        tk.Label(words, text=_("The port does not come with the game, and we can't give out game files or "
-                               'help anyone find them. Asking for them or sharing them breaks rule 2 of the '
-                               'community Discord and can get you banned.'),
-                 bg=bg, fg=theme.TEXT, font=(theme.BODY, 10), justify='left', anchor='w',
-                 wraplength=px(wrap)).pack(anchor='w', pady=(px(4), 0))
+        self.wrap_within(tk.Label(words, text=_("The port does not come with the game, and we can't give out game "
+                                                'files or help anyone find them. Asking for them or sharing them '
+                                                'breaks rule 2 of the community Discord and can get you banned.'),
+                                  bg=bg, fg=theme.TEXT, font=(theme.BODY, 10), justify='left', anchor='w'),
+                         wrap).pack(fill='x', pady=(px(4), 0))
         return box
 
     def link(self, parent, text, url, bg):
@@ -1632,9 +1635,8 @@ class SetupMixin:
         summary = tk.Label(body, text='', bg=theme.CARD, fg=theme.TEXT_STRONG, font=(theme.BODY_SEMI, 11), anchor='w',
                            justify='left')
         summary.pack(anchor='w', pady=(px(8), 0))
-        pc = tk.Label(body, text='', bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), anchor='w', justify='left',
-                      wraplength=px(700))
-        pc.pack(anchor='w', pady=(px(2), 0))
+        pc = tk.Label(body, text='', bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), anchor='w', justify='left')
+        self.wrap_within(pc, 700).pack(fill='x', pady=(px(2), 0))
         goal_row = tk.Frame(body, bg=theme.CARD)
         goal_row.pack(fill='x', pady=(px(14), 0))
         tk.Label(goal_row, text=_('Your goal'), bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 10)).pack(
@@ -1642,8 +1644,8 @@ class SetupMixin:
         self.goal_switch(goal_row).pack(side='left')
         self.index_entry(goal_row, _('Your goal'), '', 'goal')
         note = tk.Label(body, text='', bg=theme.CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9), anchor='w',
-                        justify='left', wraplength=px(700))
-        note.pack(anchor='w', pady=(px(6), 0))
+                        justify='left')
+        self.wrap_within(note, 700).pack(fill='x', pady=(px(6), 0))
         self.goal_notes = getattr(self, 'goal_notes', []) + [note]
         buttons = tk.Frame(body, bg=theme.CARD)
         buttons.pack(fill='x', pady=(px(14), 0))
@@ -1820,8 +1822,9 @@ class SetupMixin:
         self.folder(f, 'cache_dir', _('Cache folder'), _('Choose the cache folder'),
                     _('Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every '
                       'version and every PC keeps its own shaders, wherever the saves are.').format(L.DATA_DIR / 'user'))
-        where = self.tk.Label(f, text='', bg=L.PANEL, fg=theme.MUTED, font=(theme.BODY, 9), justify='left', anchor='w')
-        where.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 2))
+        where = self.wrap_within(self.tk.Label(f, text='', bg=L.PANEL, fg=theme.MUTED, font=(theme.BODY, 9),
+                                               justify='left', anchor='w'), 560)
+        where.grid(row=self.next_row(f), column=1, sticky='we', pady=(4, 2))
 
         def show_where(*_a):
             settings = {key: self.var(key, 'app').get() for key in ('user_dir', 'cache_dir')}
@@ -1833,7 +1836,7 @@ class SetupMixin:
             elif not settings['cache_dir'] and L.saves_in_other_installation(settings):
                 text += '\n' + _('Your saves folder is in another installation of the port: this one keeps its shaders '
                                   'in its own folder, because another version\'s shaders can break the picture.')
-            where.configure(text=text, wraplength=self.px(560))
+            where.configure(text=text)
         for key in ('user_dir', 'cache_dir'):
             self.var(key, 'app').trace_add('write', lambda *_a: self.root.after_idle(show_where))
         show_where()
@@ -1871,33 +1874,34 @@ class SetupMixin:
         grid = tk.Frame(table, bg=L.CARD)
         grid.pack(fill='x')
         grid.columnconfigure((1, 2, 3), weight=1, uniform='req')
-        tk.Label(table, text=_(hardware.FOUR_K), bg=L.CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9),
-                 justify='left', wraplength=px(700)).pack(anchor='w', pady=(px(10), 0))
+        self.wrap_within(tk.Label(table, text=_(hardware.FOUR_K), bg=L.CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9),
+                                  justify='left', anchor='w'), 700).pack(fill='x', pady=(px(10), 0))
 
         def draw_requirements():
             for child in grid.winfo_children():
                 child.destroy()
+            # The cells wrap at their column's width: in a narrow window the columns get narrower than the texts
             for col, text in enumerate(('',) + hardware.REQUIREMENT_HEADS + ('Your PC',)):
-                tk.Label(grid, text=_(text) if text else '', bg=L.CARD, fg=theme.GOLD_LIGHT, font=(theme.HEAD, 10),
-                         anchor='w', justify='left', wraplength=px(220)).grid(row=0, column=col, sticky='nw',
-                                                                             padx=(0, px(16)), pady=(0, px(8)))
+                self.wrap_within(tk.Label(grid, text=_(text) if text else '', bg=L.CARD, fg=theme.GOLD_LIGHT,
+                                          font=(theme.HEAD, 10), anchor='w', justify='left'), 220).grid(
+                    row=0, column=col, sticky='nwe', padx=(0, px(16)), pady=(0, px(8)))
             yours = self.your_pc()
             for row, (part, low, high) in enumerate(hardware.REQUIREMENTS, start=1):
                 tk.Frame(grid, bg=theme.BORDER, height=1).grid(row=row * 2 - 1, column=0, columnspan=4, sticky='we')
                 tk.Label(grid, text=_(part), bg=L.CARD, fg=theme.MUTED, font=(theme.BODY_MEDIUM, 9), anchor='nw').grid(
                     row=row * 2, column=0, sticky='nw', padx=(0, px(16)), pady=px(7))
                 for col, text in enumerate((low, high), start=1):
-                    tk.Label(grid, text=_(text), bg=L.CARD, fg=theme.TEXT, font=(theme.BODY, 9), anchor='nw',
-                             justify='left', wraplength=px(210)).grid(row=row * 2, column=col, sticky='nw',
-                                                                      padx=(0, px(16)), pady=px(7))
+                    self.wrap_within(tk.Label(grid, text=_(text), bg=L.CARD, fg=theme.TEXT, font=(theme.BODY, 9),
+                                              anchor='nw', justify='left'), 210).grid(
+                        row=row * 2, column=col, sticky='nwe', padx=(0, px(16)), pady=px(7))
                 state, text = yours.get(part, (None, '…'))
                 cell = tk.Frame(grid, bg=L.CARD)
-                cell.grid(row=row * 2, column=3, sticky='nw', pady=px(7))
+                cell.grid(row=row * 2, column=3, sticky='nwe', pady=px(7))
                 if state:
                     tk.Label(cell, text=theme.ICON[STATE_ICONS[state]], bg=L.CARD, fg=STATE_COLORS[state],
                              font=(theme.ICONS, 9)).pack(side='left', anchor='n', pady=(px(2), 0), padx=(0, px(6)))
-                tk.Label(cell, text=text, bg=L.CARD, fg=theme.TEXT_STRONG, font=(theme.BODY_MEDIUM, 9), anchor='nw',
-                         justify='left', wraplength=px(190)).pack(side='left', anchor='nw')
+                self.wrap_within(tk.Label(cell, text=text, bg=L.CARD, fg=theme.TEXT_STRONG, font=(theme.BODY_MEDIUM, 9),
+                                          anchor='nw', justify='left'), 190).pack(side='left', fill='x', expand=True)
         draw_requirements()
         self.rating_views.append(draw_requirements)
 
