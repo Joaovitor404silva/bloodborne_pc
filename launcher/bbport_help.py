@@ -1189,10 +1189,13 @@ class HelpMixin:
                 subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
                                 'Invoke-Expression ([IO.File]::ReadAllText($env:BBTOOL))'], env=env,
                                stdin=subprocess.DEVNULL, capture_output=True, timeout=300, creationflags=L.NO_WINDOW)
-            except (OSError, subprocess.TimeoutExpired) as failure:
-                error = failure
-            made = sorted((p for p in folder.glob('BB-Report-*.zip') if p.stat().st_mtime >= started - 2),
-                          key=lambda p: p.stat().st_mtime)
+            except Exception as failure:  # whatever stopped the tool: its zip may be there all the same
+                error = L.error_text(failure)
+            try:
+                made = sorted((p for p in folder.glob('BB-Report-*.zip') if p.stat().st_mtime >= started - 2),
+                              key=lambda p: p.stat().st_mtime)
+            except Exception:  # a zip gone while it was listed: the button must come back all the same
+                made = []
             self.ui_calls.put(lambda: self.report_done(made[-1] if made else None, error, button, note))
         threading.Thread(target=work, daemon=True).start()
 

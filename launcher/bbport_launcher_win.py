@@ -251,6 +251,7 @@ import bbport_lang_gpu  # noqa: E402,F401 (a graphics card Windows has and Vulka
 import bbport_lang_ready  # noqa: E402,F401 (the start's other prerequisites: runtime, folders, firewall)
 import bbport_lang_audit1  # noqa: E402,F401 (the launcher's own update: its checks and the installer's window)
 import bbport_lang_audit2  # noqa: E402,F401 (the wrong and stale texts of the launcher check, rewritten)
+import bbport_lang_audit3  # noqa: E402,F401 (background work that no longer ends without a word, the shader cache)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
 import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
@@ -926,28 +927,30 @@ def webapi_setting(s):
 
 
 def server_check(server, webapi, community):
-    """A line about each online address: reachable, or why not (runs off the Tk thread)."""
+    """A line about each online address: reachable, or why not (runs off the Tk thread). Every error counts as an
+    answer: a broken HTTP reply (BadStatusLine from a proxy or a virus scanner) is no OSError, and it ended the
+    test's thread with "Checking…" left on the Online page for good."""
     import socket
     lines = []
     try:
         with bbport_tls.urlopen(community + ':20443/bb-eu/ss.info', timeout=6) as reply:
             reply.read(64)
         lines.append(_('Game server {0}: reachable').format(community))
-    except (OSError, ValueError) as error:
-        lines.append(_('Game server {0}: not reachable ({1})').format(community, error))
+    except Exception as error:
+        lines.append(_('Game server {0}: not reachable ({1})').format(community, error_text(error)))
     host, _sep, port = server.rpartition(':')
     try:
         socket.create_connection((host or server, int(port or 31313)), timeout=4).close()
         lines.append(_('Server {0}: reachable').format(server))
-    except (OSError, ValueError) as error:
-        lines.append(_('Server {0}: not reachable ({1})').format(server, error))
+    except Exception as error:
+        lines.append(_('Server {0}: not reachable ({1})').format(server, error_text(error)))
     try:
         with bbport_tls.urlopen(webapi.rstrip('/') + '/status', timeout=4) as reply:
             ok = b'"ok":true' in reply.read(512).replace(b' ', b'')
         lines.append(_('WebAPI {0}: reachable').format(webapi) if ok else
                      _('WebAPI {0}: answered, but it is not a shadNet server').format(webapi))
-    except (OSError, ValueError) as error:
-        lines.append(_('WebAPI {0}: not reachable ({1})').format(webapi, error))
+    except Exception as error:
+        lines.append(_('WebAPI {0}: not reachable ({1})').format(webapi, error_text(error)))
     return '\n'.join(lines)
 
 
@@ -1096,8 +1099,8 @@ def server_check_hunters_dream():
             lines.append(_('{0}: reachable').format(name))
         except urllib.error.HTTPError:
             lines.append(_('{0}: reachable').format(name))   # it answered
-        except (OSError, ValueError) as error:
-            lines.append(_('{0}: not reachable ({1})').format(name, error))
+        except Exception as error:  # a broken reply too (BadStatusLine): see server_check
+            lines.append(_('{0}: not reachable ({1})').format(name, error_text(error)))
     return '\n'.join(lines)
 
 
@@ -1122,6 +1125,20 @@ def vulkan_verdict(env):
         crashed = result.returncode < 0 or result.returncode >= 0xC0000000
         return {'ok': False, 'problem': 'crashed', 'code': f'0x{result.returncode & 0xffffffff:08X}'} \
             if crashed else None
+
+
+def fsr41_check_failed(error):
+    """bbport_fsr41.query's answer when the check stopped with an error it does not expect: "check failed" with
+    why (bbport_fsr411.query's own shape for a failed probe), not "checking support…" for good."""
+    detail = error_text(error)
+    return {'vendor_id': None, **{method: dict(supported=False, reason='check', detail=detail,
+                                               checks=[dict(id='probe', state='fail', detail=detail)])
+                                  for method in ('vk', 'dx12')}}
+
+
+def fg401_check_failed():
+    """bbport_fg401.query_versions' answer when the check stopped with an error it does not expect."""
+    return {key: dict(supported=False, reason='check', detail='') for key in ('fsr401', 'fsr402')}
 
 
 def motion_cache_available(graphics, unavailable=''):
@@ -1171,7 +1188,7 @@ def hunters_online():
             return None
         clients = sessions.get('by_client') or {}
         return int(sessions.get('count') or 0), int(clients.get('bbhost') or 0), int(clients.get('shadps4') or 0)
-    except (OSError, ValueError, TypeError, AttributeError):
+    except Exception:  # a broken reply too (IncompleteRead): no count, never a dead helper thread
         return None
 
 
@@ -1630,7 +1647,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.fg401_support = None
         self.refresh_fg401()
         def work():
-            support = bbport_fg401.query_versions(PORT_DIR, bbport_fsr411.environment(PORT_DIR, self.app))
+            try:
+                support = bbport_fg401.query_versions(PORT_DIR, bbport_fsr411.environment(PORT_DIR, self.app))
+            except Exception as error:  # never "checking support…" for good
+                support = fg401_check_failed()
+                self.ui_calls.put(lambda e=error_text(error, kind=True): self.append(
+                    _('The check of the graphics card stopped: {}').format(e) + '\n'))
             def done():
                 self.fg401_support = support
                 self.refresh_fg401()
@@ -2327,6 +2349,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def bring_back(self):
         """The launcher in front again: from the tray, the task bar or hidden."""
+        self.__dict__.pop('close_after_steam', None)  # opened again while Add to Steam finished: it stays open
         if self.tray:
             self.tray.hide()
         self.root.deiconify()
@@ -3129,7 +3152,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             def work():
                 try:
                     name, token = thd_sign_in(on_code)
-                except (OSError, ValueError) as error:
+                except Exception as error:  # a broken reply too (BadStatusLine): the line always answers
                     self.ui_calls.put(lambda e=connection_error(error, COMMUNITY_SERVER): (
                         signing.configure(text=_('Sign-in failed: {}').format(e)), show_code()))
                     return
@@ -3193,8 +3216,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             def work():
                 try:
                     npid, password = discord_sign_in(COMMUNITY_SERVER, on_page)
-                except (OSError, ValueError, KeyError) as error:
-                    self.ui_calls.put(lambda e=error: discord_line.configure(
+                except Exception as error:  # a broken reply too (BadStatusLine): the line always answers
+                    self.ui_calls.put(lambda e=connection_error(error, COMMUNITY_SERVER): discord_line.configure(
                         text=_('Sign-in failed: {}').format(e)))
                     return
                 self.ui_calls.put(lambda: (npid_var.set(npid), password_var.set(password),
@@ -3225,7 +3248,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 try:
                     problem = shadnet_register(SUPERMEDO_SERVER, npid, password, mail)
                 except OSError as error:
-                    problem = _('SuperMedo Server could not be reached: {}').format(error)
+                    problem = _('SuperMedo Server could not be reached: {}').format(error_text(error))
+                except Exception as error:
+                    # An answer that is not shadNet's (struct.error): never "Creating the account…" for good.
+                    problem = _('The account could not be created: {}').format(error_text(error))
                 if problem:
                     self.ui_calls.put(lambda: sign_up.configure(text=problem))
                     return
@@ -3275,20 +3301,23 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             result.configure(text=_('Checking…'))
 
             def work():
-                if hunters_dream:
-                    text = server_check_hunters_dream()
-                    text += '\n' + (_('Signed in as {}').format(signed_in) if signed_in else
-                                    _('Not signed in: use "Sign in with Discord" above.'))
-                else:
-                    text = server_check(address, webapi, game)
-                if pool_name == 'supermedo':
-                    text += '\n' + (_('Signed in as {}').format(supermedo_name) if supermedo_name else
-                                    _('Not signed in: sign in with Discord, or create an account below.'))
-                if pool_name == 'shadnet' and own and values['online_webapi'].strip() \
-                        and values['online_webapi'].strip() != webapi:
-                    text += '\n' + _('The WebAPI box holds the game server address; it is ignored.')
-                if not online_on:
-                    text += '\n' + _('"Play online" is off: the game starts offline.')
+                try:
+                    if hunters_dream:
+                        text = server_check_hunters_dream()
+                        text += '\n' + (_('Signed in as {}').format(signed_in) if signed_in else
+                                        _('Not signed in: use "Sign in with Discord" above.'))
+                    else:
+                        text = server_check(address, webapi, game)
+                    if pool_name == 'supermedo':
+                        text += '\n' + (_('Signed in as {}').format(supermedo_name) if supermedo_name else
+                                        _('Not signed in: sign in with Discord, or create an account below.'))
+                    if pool_name == 'shadnet' and own and values['online_webapi'].strip() \
+                            and values['online_webapi'].strip() != webapi:
+                        text += '\n' + _('The WebAPI box holds the game server address; it is ignored.')
+                    if not online_on:
+                        text += '\n' + _('"Play online" is off: the game starts offline.')
+                except Exception as error:  # the line never stays at "Checking…" (R85); only a bug gets here
+                    text = _('The check stopped: {}').format(error_text(error, kind=True))
                 self.ui_calls.put(lambda: result.configure(text=text))
             threading.Thread(target=work, daemon=True).start()
         self.row(f, '', ttk.Button(f, text=_('Test connection'), command=check))
@@ -4500,12 +4529,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.hunters_asking = True
 
         def ask():
-            found = hunters_online()
+            found = None
 
             def done():
                 self.hunters, self.hunters_when, self.hunters_asking = found, time.time(), False
                 self.show_hunters()
-            self.ui_calls.put(done)
+            try:
+                found = hunters_online()
+            finally:  # hunters_asking back to False whatever happened: a thread that died left it True for good
+                self.ui_calls.put(done)
         threading.Thread(target=ask, daemon=True).start()
 
     def show_hunters(self):
@@ -4554,6 +4586,31 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         return f'{_(*fps)}   ·   {upscaler}   ·   {output}   ·   {online}'
 
     def detect_gpu(self):
+        """Helper thread: the graphics card, its support checks and the processor (detect_hardware), for the Play
+        page and the rating. However it ends, the window hears that it is over: an error nobody expected ended the
+        thread with "Checking the graphics card…" and the support checks waiting for good. Then the error is on the
+        Log page, and the checks that had not answered say "check failed"."""
+        try:
+            self.detect_hardware()
+        except Exception as error:
+            failed, why = fsr41_check_failed(error), error_text(error, kind=True)
+
+            def not_checked():
+                self.append(_('The check of the graphics card stopped: {}').format(why) + '\n')
+                if self.fsr411_support is None:  # its answer, when it came, ran before this
+                    self.fsr411_support = failed
+                    self.refresh_fsr411()
+                    self.refresh_status()
+            self.ui_calls.put(not_checked)
+            if self.fg401_support is None:
+                self.fg401_support = fg401_check_failed()
+        finally:
+            self.ui_calls.put(self.refresh_status)
+            self.ui_calls.put(self.hardware_ready)
+            self.ui_calls.put(self.refresh_motion)
+            self.ui_calls.put(self.refresh_fg401)
+
+    def detect_hardware(self):
         exe = PORT_DIR / 'bin' / 'bb-gpu-capabilities.exe'
         if not exe.is_file():
             exe = PORT_DIR / 'out' / 'bb-gpu-capabilities.exe'
@@ -4576,7 +4633,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             elif result.returncode:
                 text = _('✗ No Vulkan 1.3 graphics card found (update the driver)',
                          '✗ Не найдена видеокарта с Vulkan 1.3 (обновите драйвер)')
-        except (OSError, subprocess.TimeoutExpired):
+        except (OSError, ValueError, subprocess.TimeoutExpired):  # ValueError: output in another code page
             pass
         self.gpu_text = text
         self.vulkan = vulkan_verdict(env)
@@ -4594,10 +4651,6 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         except Exception:  # the rating is a guide: never stop the launcher over it
             self.cpu, self.ram = hardware.Cpu('', None), 16
         self.cpu_instructions = hardware.instructions()  # the System page's hard limits
-        self.ui_calls.put(self.refresh_status)
-        self.ui_calls.put(self.hardware_ready)
-        self.ui_calls.put(self.refresh_motion)
-        self.ui_calls.put(self.refresh_fg401)
 
     def refresh_fsr4(self):
         total, missing = len(fsr4_files()), len(fsr4_missing())
@@ -4630,8 +4683,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.fsr411_support = None
         self.refresh_fsr411()
         def work():
-            support = bbport_fsr41.query(PORT_DIR,
-                bbport_fsr411.environment(PORT_DIR, self.app), refresh=True)
+            try:
+                support = bbport_fsr41.query(PORT_DIR,
+                    bbport_fsr411.environment(PORT_DIR, self.app), refresh=True)
+            except Exception as error:  # never "checking support…" for good
+                support = fsr41_check_failed(error)
+                self.ui_calls.put(lambda e=error_text(error, kind=True): self.append(
+                    _('The check of the graphics card stopped: {}').format(e) + '\n'))
             def done():
                 self.fsr411_support = support
                 self.refresh_fsr411()
@@ -4676,12 +4734,6 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
         def work():
             error = None
-            try:
-                fetch_fsr4vk.fetch(folder, progress)
-                if not fetch_fsr4vk.files_ok(folder):
-                    raise fetch_fsr4vk.FetchError(_('Vulkan (fsr4vk): files missing or need updating.'))
-            except (OSError, fetch_fsr4vk.FetchError) as failure:
-                error = str(failure)
 
             def done():
                 self.fsr411_downloading = False
@@ -4691,7 +4743,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.refresh_status()
                 if error:
                     self.messagebox.showerror('FSR 4.1.1', _('Download failed: {}', 'Не удалось скачать: {}').format(error))
-            self.ui_calls.put(done)
+            try:
+                fetch_fsr4vk.fetch(folder, progress)
+                if not fetch_fsr4vk.files_ok(folder):
+                    raise fetch_fsr4vk.FetchError(_('Vulkan (fsr4vk): files missing or need updating.'))
+            except Exception as failure:  # a broken download too (IncompleteRead)
+                error = error_text(failure)
+            finally:  # Play and the button come back whatever happened (R85)
+                self.ui_calls.put(done)
         threading.Thread(target=work, daemon=True).start()
 
     def download_fsr4(self):
@@ -4701,6 +4760,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
         def work():
             error = None
+
+            def done():
+                self.downloading = False
+                self.refresh_fsr4()
+                self.refresh_status()
+                if error:
+                    self.messagebox.showerror('FSR 4', _('Download failed: {}', 'Не удалось скачать: {}').format(error))
             try:
                 folder.mkdir(parents=True, exist_ok=True)
                 for name in fsr4_missing():
@@ -4709,16 +4775,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                         part.write_bytes(response.read())
                     part.replace(folder / name)
                     self.ui_calls.put(self.refresh_fsr4)
-            except OSError as failure:
-                error = failure
-
-            def done():
-                self.downloading = False
-                self.refresh_fsr4()
-                self.refresh_status()
-                if error:
-                    self.messagebox.showerror('FSR 4', _('Download failed: {}', 'Не удалось скачать: {}').format(error))
-            self.ui_calls.put(done)
+            except Exception as failure:  # a broken download too (IncompleteRead)
+                error = connection_error(failure, FSR4_BASE)
+            finally:  # the button comes back whatever happened: it stayed grey (R85)
+                self.ui_calls.put(done)
         threading.Thread(target=work, daemon=True).start()
 
     def refresh_lists(self, only_if_changed=False):
@@ -5058,16 +5118,28 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def read_output(self, process, before=''):
         """Helper thread: the game's output to the Log page and to <saves folder>/last_run.log, after `before`
-        (what the Log page said before the start: the repairs made for it)."""
-        log = None
+        (what the Log page said before the start: the repairs made for it). The game's end always reaches the
+        window, and nothing about the log file stops the reading (RunLog): an unread pipe freezes the game."""
+        log = RunLog(Path(self.app.get('user_dir') or DATA_DIR / 'user') / 'last_run.log', self.output.put)
+        if before:
+            log.write(before)
         try:
-            log_dir = Path(self.app.get('user_dir') or DATA_DIR / 'user')
-            log_dir.mkdir(parents=True, exist_ok=True)
-            log = open(log_dir / 'last_run.log', 'w', encoding='utf-8', buffering=1)
-            if before:
-                log.write(before)
-        except OSError:
-            pass
+            self.forward_output(process, log)
+        except Exception as error:
+            # Nothing expected (the log file is RunLog's): the error to the window like a Tk callback's, and the rest
+            # of the output read all the same before the wait below, as an unread pipe freezes the game.
+            self.ui_calls.put(lambda e=error: self.root.report_callback_exception(type(e), e, e.__traceback__))
+            try:
+                while process.stdout.read(1 << 16):
+                    pass
+            except Exception:  # the pipe itself broke: nothing left to read
+                pass
+        finally:
+            log.close()
+            self.output.put((process.wait(),))
+
+    def forward_output(self, process, log):
+        """read_output's lines: to the Log page (drain_output), the eboot warnings, and the log file."""
         warned = False
         for raw in iter(process.stdout.readline, b''):
             text = raw.decode('utf-8', errors='replace')
@@ -5088,83 +5160,128 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     "Your eboot.bin has been modified (for example with a 60 FPS patch already applied). "
                     "Part of the port's patches cannot be used with it:\n\n{}\n\nFor every option, "
                     "replace eboot.bin with the one from an unmodified 1.09 update.").format(detail)))
-            if log:
-                log.write(text.replace('\r\n', '\n'))
-        if log:
-            log.close()
-        self.output.put((process.wait(),))
+            log.write(text.replace('\r\n', '\n'))
 
     def drain_output(self):
-        if self.process:
-            try:
-                stamp = ini_path().stat().st_mtime_ns
-                # Wait for a stable write before merging an overlay save into the UI.
-                if stamp == getattr(self, '_shared_ini_seen', None) and stamp != getattr(self, '_shared_ini_synced', None):
-                    self.sync_ini()
-                    self._shared_ini_synced = stamp
-                self._shared_ini_seen = stamp
-            except OSError:
-                pass
-        while not self.ui_calls.empty():
-            try:
-                self.ui_calls.get_nowait()()
-            except Exception:  # reported like any Tk callback; this loop must keep running
-                self.root.report_callback_exception(*sys.exc_info())
+        """Every 100 ms on the Tk thread: the helper threads' calls (ui_calls) and the game's output. Each part on
+        its own, and the next round planned whatever happens: one failing call stopped every later answer to the
+        window (a finished download, the game's end, so Play stayed disabled). A failure is reported like a Tk
+        callback's (reported)."""
+        closed = False
+        try:
+            if self.process:
+                self.reported(self.follow_shared_ini)
+            while not self.ui_calls.empty():
+                self.reported(self.ui_calls.get_nowait())
+            self.reported(self.tidy_up)
+            closed = self.reported(self.take_output)
+        finally:
+            if not closed:  # the window closed with the game: no next round
+                self.root.after(100, self.drain_output)
+
+    def reported(self, call, *args):
+        """call(*args); an error in it goes to callback_error like a Tk callback's (the Log page and a message), once
+        per error: a part of drain_output that fails in every round would fill the Log page. None then."""
+        try:
+            return call(*args)
+        except Exception:
+            import traceback
+            kind, value, trace = sys.exc_info()
+            seen = self.__dict__.setdefault('drain_errors', set())
+            text = ''.join(traceback.format_exception(kind, value, trace))
+            if text not in seen:
+                seen.add(text)
+                self.root.report_callback_exception(kind, value, trace)
+            return None
+
+    def follow_shared_ini(self):
+        """While the game runs: bbport.ini saved by the in-game menu, merged into the pages."""
+        try:
+            stamp = ini_path().stat().st_mtime_ns
+            # Wait for a stable write before merging an overlay save into the UI.
+            if stamp == getattr(self, '_shared_ini_seen', None) and stamp != getattr(self, '_shared_ini_synced', None):
+                self.sync_ini()
+                self._shared_ini_synced = stamp
+            self._shared_ini_seen = stamp
+        except OSError:
+            pass
+
+    def tidy_up(self):
+        """Python's collector on the Tk thread (see gc.disable in __init__), and the picture a minimize put over the
+        window taken away when the minimize did not happen."""
         if time.monotonic() - self._collected > 2:
             gc.collect()
             self._collected = time.monotonic()
         frame = self.custom_frame
         if frame and frame.cover and time.monotonic() - frame.cover_time > 1.5 and self.root.state() != 'iconic':
             self.uncover_window()  # a minimize that did not happen: the picture never stays over the window
-        try:
-            for _i in range(500):
+
+    def take_output(self):
+        """Up to 500 of the game's lines (read_output) to the Log page, and its end. True when the window closed
+        with the game."""
+        for _i in range(500):
+            try:
                 item = self.output.get_nowait()
-                if isinstance(item, tuple):
-                    self.append(_('\n— the game exited (code {}) —\n', '\n— игра завершилась (код {}) —\n').format(item[0]))
-                    self.process = None
-                    self.sync_ini()
-                    self.refresh_fsr411()
-                    if self.job:
-                        self.job.close()
-                    self.refresh_saves()  # the characters' times
-                    if self.placer:
-                        self.placer.stop()
-                        self.window_left(self.placer.last)
-                        self.placer = None
-                    self.stop_button.configure(state='disabled')
-                    self.stop_button.pack_forget()
-                    self.forget_refused_sign_in()
-                    self.refresh_status()
-                    reopen = self.setting('reopen_after_game')
-                    if self.hidden:
-                        if item[0] == 0 and not reopen:
-                            self.drop_tray()
-                            self.root.destroy()
-                            return
-                        # Back (asked for, or it stopped with an error: then with its log).
-                        self.hidden = False
-                        self.bring_back()
-                        if item[0] != 0:
-                            self.show('log')
-                    elif reopen:
-                        self.bring_back()
-                    self.root.after(300, lambda code=item[0]: self.after_exit(code))  # the known causes in its log
-                else:
-                    if 'Entering original x86-64 code' in item:
-                        self.status.configure(text=_('The game is running.', 'Игра запущена.'), fg=GOLD)
-                    elif 'restarting through run.py' in item:
-                        self.status.configure(text=_('Restarting with the new settings…', 'Перезапуск с новыми настройками…'), fg=GOLD)
-                    elif any(text in item for text, _topic in bbport_help.GAME_NOTICES):
-                        # Said once the game closes (after_exit).
-                        notices = self.__dict__.setdefault('game_notices', [])
-                        notices += [topic for text, topic in bbport_help.GAME_NOTICES
-                                    if text in item and topic not in notices]
-                    elif 'Runtime: trophy ' in item:
-                        self.trophies_changed(self.tracker.observe(item))
-                    self.append(item)
-        except queue.Empty:
-            pass
-        self.root.after(100, self.drain_output)
+            except queue.Empty:
+                break
+            if isinstance(item, tuple):
+                if self.game_ended(item[0]):
+                    return True
+            else:
+                self.reported(self.game_line, item)
+        return False
+
+    def game_ended(self, code):
+        """The game's end (read_output's last item). The steps that read files or the game's leftovers each on their
+        own (reported): one that failed left Play disabled and Stop shown. True when the window closed with it."""
+        self.process = None
+        self.append(_('\n— the game exited (code {}) —\n', '\n— игра завершилась (код {}) —\n').format(code))
+        self.reported(self.sync_ini)
+        self.reported(self.refresh_fsr411)
+        if self.job:
+            self.reported(self.job.close)
+        self.reported(self.refresh_saves)  # the characters' times
+        if self.placer:
+            placer, self.placer = self.placer, None
+            placer.stop()
+            self.reported(self.window_left, placer.last)
+        self.stop_button.configure(state='disabled')
+        self.stop_button.pack_forget()
+        self.reported(self.forget_refused_sign_in)
+        self.reported(self.refresh_status)
+        reopen = self.setting('reopen_after_game')
+        if self.hidden:
+            if code == 0 and not reopen:
+                self.drop_tray()
+                self.root.destroy()
+                return True
+            # Back (asked for, or it stopped with an error: then with its log).
+            self.hidden = False
+            self.bring_back()
+            if code != 0:
+                self.show('log')
+        elif reopen:
+            self.bring_back()
+        self.root.after(300, lambda: self.after_exit(code))  # the known causes in its log
+        return False
+
+    def game_line(self, item):
+        """One line of the game's output to the Log page first, then what it changes: the status line, a notice for
+        after the game, a trophy. The line is what the helpers look for: one of those that failed (a trophy toast
+        that raised) took it from the page."""
+        self.append(item)
+        if 'Entering original x86-64 code' in item:
+            self.status.configure(text=_('The game is running.', 'Игра запущена.'), fg=GOLD)
+        elif 'restarting through run.py' in item:
+            self.status.configure(text=_('Restarting with the new settings…', 'Перезапуск с новыми настройками…'),
+                                  fg=GOLD)
+        elif any(text in item for text, _topic in bbport_help.GAME_NOTICES):
+            # Said once the game closes (after_exit).
+            notices = self.__dict__.setdefault('game_notices', [])
+            notices += [topic for text, topic in bbport_help.GAME_NOTICES
+                        if text in item and topic not in notices]
+        elif 'Runtime: trophy ' in item:
+            self.trophies_changed(self.tracker.observe(item))
 
     def forget_refused_sign_in(self):
         """After the game: a sign-in The Hunter's Dream refused is forgotten (forget_sign_in), with a line in
@@ -5223,10 +5340,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     # ---- updates -------------------------------------------------------------------------------
     def check_update(self, manual=False):
-        """Helper thread: asks GitHub for the newest release (and a beta for the next beta) and offers it."""
+        """Helper thread: asks GitHub for the newest release (and a beta for the next beta) and offers it. Asked by
+        the button, it always answers: a broken reply (BadStatusLine) ended the thread without a word."""
         try:
             offer = update_to_offer()
-        except (OSError, ValueError, KeyError) as failure:
+        except Exception as failure:
             if manual:
                 self.ui_calls.put(lambda error=connection_error(failure, RELEASES_API): self.messagebox.showerror(
                     'Bloodborne', _('Could not check for updates: {}', 'Не удалось проверить обновления: {}').format(error)))
@@ -5496,19 +5614,32 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         def fetch():
             try:
                 versions = installable_releases()
-            except (OSError, ValueError, KeyError, TypeError) as failure:
-                self.ui_calls.put(lambda error=failure: failed_list(error))
+            except Exception as failure:  # a broken reply too: never "Loading the list of versions…" for good
+                self.ui_calls.put(lambda error=connection_error(failure, RELEASES_LIST_API): failed_list(error))
                 return
             self.ui_calls.put(lambda: show(versions))
         threading.Thread(target=fetch, daemon=True).start()
 
     def clear_cache(self):
-        """Shader and pipeline caches; they are rebuilt while playing."""
-        if self.process:
+        """Shader and pipeline caches; they are rebuilt while playing. Not while a game runs, also one started
+        through Steam or a shortcut (game_running): it holds them open. The button then did nothing, or said
+        "cleared" over files it could not delete: now what was left is said."""
+        if self.game_running():
+            self.messagebox.showinfo('Bloodborne', _('Close the game first: it uses the shader cache while it runs.'))
             return
-        import shutil
         cache = cache_folder(self.app) / 'cache'
-        shutil.rmtree(cache, ignore_errors=True)
+        left = []
+        if cache.exists():
+            def failed(_function, _path, error):
+                left.append(error_text(error[1] if isinstance(error, tuple) else error))
+            if sys.version_info >= (3, 12):
+                shutil.rmtree(cache, onexc=failed)
+            else:
+                shutil.rmtree(cache, onerror=failed)
+        if left:
+            self.messagebox.showerror('Bloodborne', _('Part of the shader cache could not be deleted: {}').format(
+                left[0]))
+            return
         self.messagebox.showinfo('Bloodborne', _('Shader cache cleared. The next start stutters for a few minutes while '
                                                  'it is rebuilt.', 'Кэш шейдеров очищен. Следующий запуск несколько '
                                                  'минут будет подтормаживать, пока кэш собирается заново.'))
@@ -5533,7 +5664,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.messagebox.showerror('Bloodborne', result.stderr.decode(errors='replace')[:400])
 
     def add_to_steam(self):
-        """Bloodborne in the Steam library (a non-Steam game that starts Play Bloodborne.exe)."""
+        """Bloodborne in the Steam library (a non-Steam game that starts Play Bloodborne.exe). Steam has to close
+        for it: the wait for that (up to half a minute) and the writing run in a helper thread, as the window froze
+        while it waited on the Tk thread. The window closed meanwhile only hides until it is done (close)."""
+        if getattr(self, 'steam_adding', False):  # a second click while the first one waits for Steam
+            self.messagebox.showinfo('Bloodborne', _('Bloodborne is still being added to Steam: Steam closes for it '
+                                                     'first, which can take up to half a minute.'))
+            return
         import bbport_steam
         steam = bbport_steam.steam_folder()
         configs = bbport_steam.user_configs(steam) if steam else []
@@ -5546,32 +5683,48 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             pythonw = Path(sys.executable).with_name('pythonw.exe')
             exe, options = (pythonw if pythonw.exists() else Path(sys.executable)), f'"{Path(__file__).resolve()}" --play'
         self.collect()  # Play Bloodborne.exe starts the game with the saved settings
-        restart = False
-        if bbport_steam.steam_running():
-            if not self.messagebox.askyesno('Bloodborne', _('Steam has to close while the game is added; it starts '
-                                                            'again afterwards. Close Steam now?')):
-                return
-            subprocess.Popen([str(steam / 'steam.exe'), '-shutdown'], creationflags=NO_WINDOW)
-            for _i in range(60):
-                time.sleep(0.5)
-                if not bbport_steam.steam_running():
-                    break
-            else:
-                self.messagebox.showerror('Bloodborne', _('Steam did not close. Close it yourself and try again.'))
-                return
-            time.sleep(1)  # Steam writes its files as it exits
-            restart = True
-        try:
-            for config in configs:
-                bbport_steam.add_shortcut(config / 'shortcuts.vdf', 'Bloodborne', str(exe), str(PORT_DIR),
-                                          str(exe), options)
-        except (OSError, ValueError) as error:
-            self.messagebox.showerror('Bloodborne', _('Could not add the game to Steam: {}').format(error))
+        running = bbport_steam.steam_running()
+        if running and not self.messagebox.askyesno('Bloodborne', _('Steam has to close while the game is added; it '
+                                                                    'starts again afterwards. Close Steam now?')):
             return
-        if restart:
-            os.startfile('steam://open/games')
-        self.messagebox.showinfo('Bloodborne', _('Bloodborne is in your Steam library. It starts with the settings '
-                                                 'saved in this launcher.'))
+        self.steam_adding = True
+        problem = None
+
+        def done():
+            self.steam_adding = False
+            closing = self.__dict__.pop('close_after_steam', False)  # the window was closed while it waited
+            if problem:
+                self.messagebox.showerror('Bloodborne', problem)
+            else:
+                if running:
+                    os.startfile('steam://open/games')
+                if not closing:  # closed, Steam's library with the game is the answer
+                    self.messagebox.showinfo('Bloodborne', _('Bloodborne is in your Steam library. It starts with '
+                                                             'the settings saved in this launcher.'))
+            if closing:
+                self.close()
+
+        def work():
+            nonlocal problem
+            try:
+                if running:
+                    subprocess.Popen([str(steam / 'steam.exe'), '-shutdown'], creationflags=NO_WINDOW)
+                    for _i in range(60):
+                        time.sleep(0.5)
+                        if not bbport_steam.steam_running():
+                            break
+                    else:
+                        problem = _('Steam did not close. Close it yourself and try again.')
+                        return
+                    time.sleep(1)  # Steam writes its files as it exits
+                for config in configs:
+                    bbport_steam.add_shortcut(config / 'shortcuts.vdf', 'Bloodborne', str(exe), str(PORT_DIR),
+                                              str(exe), options)
+            except Exception as error:  # the button always answers
+                problem = _('Could not add the game to Steam: {}').format(error_text(error))
+            finally:
+                self.ui_calls.put(done)
+        threading.Thread(target=work, daemon=True).start()
 
     def close(self):
         if self.test_running():  # a game test: its game must not stay behind
@@ -5583,6 +5736,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.collect()
         except Exception:  # never keep the window open over a settings problem
             pass
+        if getattr(self, 'steam_adding', False):
+            # Add to Steam waits for Steam to close or writes shortcuts.vdf: ended now, Steam stayed closed and a
+            # cut-off shortcuts.vdf lost every non-Steam game in it. Hidden, the launcher closes once it is done.
+            self.close_after_steam = True
+            self.root.withdraw()
+            return
         if self.process:
             # The game's output still comes through this process (Log page, last_run.log). An
             # exited launcher closed that pipe, and the next line a preparation script or the
@@ -5614,6 +5773,41 @@ class GameJob:
         if self.handle:
             ctypes.windll.kernel32.CloseHandle(ctypes.c_void_p(self.handle))
             self.handle = None
+
+
+class RunLog:
+    """<saves folder>/last_run.log as read_output writes it. A write that fails (a full drive) ends the logging, not
+    the reading: the reader thread died with it, the game's output pipe filled up and the game froze, with the
+    launcher saying "running" and Stop doing nothing. `note(text)` says it once (on the Log page)."""
+
+    def __init__(self, path, note, opener=open):
+        self.path, self.note, self.file = Path(path), note, None
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.file = opener(self.path, 'w', encoding='utf-8', buffering=1)
+        except Exception as error:
+            self.failed(error)
+
+    def write(self, text):
+        if self.file is None:
+            return
+        try:
+            self.file.write(text)
+        except Exception as error:
+            self.failed(error)
+
+    def failed(self, error):
+        self.close()
+        self.note(_("{0} could not be written ({1}): the rest of this game's log is only on this page.").format(
+            self.path, error_text(error)) + '\n')
+
+    def close(self):
+        file, self.file = self.file, None
+        if file is not None:
+            try:
+                file.close()  # its last line may still fail to reach a full drive: nothing more to do
+            except Exception:
+                pass
 
 
 def folder_entries(folder, names=None):
@@ -5687,7 +5881,23 @@ def connection_error(error, url):
                      'Дата на вашем ПК неверна ({}), поэтому защищённые соединения не работают. Установите дату в '
                      'Windows: Параметры > Время и язык > Дата и время, «Установить время автоматически».').format(
                 time.strftime('%d.%m.%Y'))
-    return str(error)
+    return error_text(error)
+
+
+def error_text(error, kind=False):
+    """An error a helper thread caught, in a few words: its own text, with its kind only where the text alone says
+    little (BadStatusLine('') reads "''", KeyError('tag_name') "'tag_name'", http.client's other errors a bare piece
+    of the reply) or where `kind` asks for it (a Log page line about an error nobody expected); never empty. A text
+    that says what happened stays as it is: "FetchError: " or "BadZipFile: " in front of it read worse to players."""
+    import http.client
+    name, text = type(error).__name__, str(error).strip()
+    if not text or text in ("''", '""'):
+        return name
+    if text.startswith(name):
+        return text
+    quoted = len(text) > 1 and text[0] == text[-1] and text[0] in '\'"'
+    bare_reply = isinstance(error, http.client.HTTPException) and not isinstance(error, OSError)
+    return f'{name}: {text}' if kind or quoted or bare_reply else text
 
 
 # What the game logs when The Hunter's Dream refuses the saved sign-in (gpu/bbnet/thd/thd_session.cpp MarkRefused).
@@ -5919,20 +6129,20 @@ def newer_beta():
 def update_to_offer():
     """(version, zip URL, page URL) the launcher offers, or None. A newer release; for a beta also its
     own version's release (the beta's goal), else the next beta, so testers move from beta to beta
-    and on to the release without downloading by hand. Raises OSError/ValueError/KeyError when no
-    check answered."""
+    and on to the release without downloading by hand. Raises the first error when no check answered (any
+    kind: a broken reply from a proxy is no OSError, and a beta still asks for the next beta then)."""
     failure = None
     try:
         version, url, page = latest_release()
         newer = version_tuple(version) > version_tuple(VERSION)
         if newer or (BETA and version_tuple(version) == version_tuple(VERSION)):
             return version, url, page
-    except (OSError, ValueError, KeyError) as error:
+    except Exception as error:
         failure = error
     if BETA:
         try:
             return newer_beta()
-        except (OSError, ValueError, KeyError) as error:
+        except Exception as error:
             failure = failure or error
     if failure:
         raise failure
