@@ -2,7 +2,8 @@
 # Builds dist/bbport-windows/ (and dist/bbport-windows.zip): Bloodborne.exe (the launcher, frozen
 # with PyInstaller so players need no Python), bb-probe.exe with the MSYS2 CLANG64 DLLs it needs,
 # the preparation scripts and run.py. Run from an MSYS2 CLANG64 shell after `bash build.sh`.
-# Freezing uses a Windows Python 3.10+ (python.org; WINPYTHON overrides) and a private venv in
+# Freezing uses Windows Python 3.14 only (PYTHON_VERSION below; python.org's installer or the Python
+# install manager, `py -3.14`; WINPYTHON overrides) and a private venv in
 # out/pyenv with PyInstaller. Includes the pinned fsr4vk provider and licenses, plus a
 # corresponding-source ZIP beside the Windows ZIP. FSR 4 assets in fsr4_shaders/ are included when present.
 set -euo pipefail
@@ -24,10 +25,17 @@ PYTHON_VERSION=3.14
 python=${WINPYTHON:-}
 if [[ -z $python ]]; then
     folder=Python${PYTHON_VERSION/./}
+    local_appdata=${LOCALAPPDATA:-/c/Users/$USER/AppData/Local}
     for candidate in "/c/$folder/python.exe" "/c/Program Files/$folder/python.exe" \
-                     "${LOCALAPPDATA:-/c/Users/$USER/AppData/Local}/Programs/Python/$folder/python.exe"; do
+                     "$local_appdata/Programs/Python/$folder/python.exe" \
+                     "$local_appdata/Python/pythoncore-$PYTHON_VERSION-64/python.exe"; do
         [[ -x $candidate ]] && python=$candidate
     done
+fi
+# The Python launcher knows the versions the Python install manager put elsewhere.
+if [[ -z $python ]] && command -v py >/dev/null 2>&1; then
+    found_py=$(py -"$PYTHON_VERSION" -c 'import sys; print(sys.executable)' 2>/dev/null | tr -d '\r' || true)
+    if [[ -n $found_py ]]; then python=$(cygpath -u "$found_py"); fi
 fi
 [[ -n $python ]] || {
     echo "Need Python $PYTHON_VERSION for Windows (python.org) or WINPYTHON=path\\to\\python.exe" >&2; exit 1; }
