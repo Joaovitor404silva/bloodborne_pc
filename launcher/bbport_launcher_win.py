@@ -3562,7 +3562,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if self.saves_folder_gone():  # its drive went away during the search
             return
         try:
-            target.parent.mkdir(parents=True, exist_ok=True)  # this port's own user/ before a first start, as run.py
+            if not self.var('user_dir', 'app').get():  # only this port's own user/ before a first start, as run.py
+                target.parent.mkdir(parents=True, exist_ok=True)
             added, copy = trophies.add_unlocks(union, target)
         except OSError as error:
             self.messagebox.showerror('Bloodborne', _('Could not add the achievements: {}').format(error))

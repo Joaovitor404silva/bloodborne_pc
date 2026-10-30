@@ -410,6 +410,10 @@ class TrophyImportWindowTests(unittest.TestCase):
         self.offer([('bbport (BB.Old)', old)])
         self.assertIn(f'The saves folder {gone} is not there', self.said[-1])
         self.assertFalse(gone.exists())
+        self.window.saves_folder_gone = lambda: False  # gone between the check and the writing
+        self.offer([('bbport (BB.Old)', old)])
+        self.assertIn('Could not add the achievements', self.said[-1])
+        self.assertFalse(gone.exists())
 
     def test_this_ports_own_folder_before_a_first_start(self):
         """No saves folder of the player's own: this port's user/ is made, as run.py makes it at the start."""
