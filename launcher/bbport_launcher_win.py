@@ -932,6 +932,15 @@ def pool_account(s):
     return str(s.get('online_npid', '')).strip()
 
 
+def signed_out_server(s):
+    """With online on: the name of the chosen server when the launcher has no account for it (SuperMedo Server
+    or The Hunter's Dream), else ''. A Seamless co-op start (shadnet) brings its own."""
+    pool = s.get('online_pool', 'supermedo')
+    if not s.get('online') or pool not in ('supermedo', 'huntersdream') or pool_account(s):
+        return ''
+    return "The Hunter's Dream" if pool == 'huntersdream' else 'SuperMedo Server'
+
+
 # The Online page's settings in settings.json. A co-op tool (Seamless co-op) writes shadNet's there; the pool and
 # the SuperMedo Server and The Hunter's Dream sign-ins are the launcher's own.
 SHADNET_KEYS = ('online_server', 'online_webapi', 'online_community', 'online_npid', 'online_password',
@@ -6381,6 +6390,14 @@ def play_without_window(settings):
     if encrypted:
         notes.append(f'Saves: {encrypted} holds an encrypted PS4 save (sdimg_): it cannot be used; export it with '
                      'Apollo Save Tool on the PS4')
+    offline = signed_out_server(settings)
+    if offline:
+        # A shortcut or Steam has no Play button to ask for the sign-in: online without the chosen server's
+        # account, the game was signed out and said it can't connect to the Bloodborne network (30.10.2026).
+        # This start plays offline, as Play does when the player says No.
+        settings = {**settings, 'online': False}
+        notes.append(f"Online: not signed in to {offline}, so this start plays offline; sign in on the launcher's "
+                     'Online play page to play online')
     if settings.get('auto_backup', True):
         try:
             saves.auto_backup(Path(settings.get('user_dir') or DATA_DIR / 'user'), settings['game_dir'], notes=notes)
