@@ -123,6 +123,8 @@ WORDS = {
     'button:add_backup': 'backup sicherung datei file hinzufugen add zip',
     'button:import': 'import importieren ubernehmen transfer save spielstand charakter character shadps4 awaken '
                      'bbhost ps4 export',
+    'button:trophies': 'erfolge trophaen trophies achievements ubernehmen importieren import transfer alte old '
+                       'installation neuer new pc windows ssd zusammenfuhren merge platin verloren lost',
     'online_npid': 'npid online id konto account shadnet',
     'online_password': 'passwort password kennwort',
     'online_server': 'server adresse address shadnet ip',

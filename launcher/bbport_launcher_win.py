@@ -254,6 +254,7 @@ import bbport_lang_audit2  # noqa: E402,F401 (the wrong and stale texts of the l
 import bbport_lang_audit3  # noqa: E402,F401 (background work that no longer ends without a word, the shader cache)
 import bbport_lang_audit4  # noqa: E402,F401 (the search: the side bar's buttons, notes for other choices)
 import bbport_lang_audit5  # noqa: E402,F401 (Help's new order: asking for help above the problems)
+import bbport_lang_audit8  # noqa: E402,F401 (sharpening with FSR 4, achievements from another installation)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
 import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
@@ -402,9 +403,12 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'setup_done': False, 'gpu_override': '',
                 # Graphics settings made for the hardware (bbport_setup.auto_settings): on/off, the
                 # hardware they were made for, and what they replaced (Undo); the settings right
-                # after they were applied (a later difference is the player's own) and the graphics
-                # cards this PC has shown (a laptop's two are no new hardware when they take turns).
-                'auto_graphics': True, 'auto_hw': '', 'auto_undo': {}, 'auto_applied': {}, 'auto_gpus': [],
+                # after they were applied (a later difference is the player's own) and the hardware
+                # their upscaler was chosen for (one chosen by hand for another card is no choice for a
+                # new one); the graphics cards this PC has shown (a laptop's two are no new hardware when
+                # they take turns).
+                'auto_graphics': True, 'auto_hw': '', 'auto_undo': {}, 'auto_applied': {}, 'auto_applied_hw': '',
+                'auto_gpus': [],
                 'bench_goal': '60',  # the performance test's frame rate goal
                 'eboot_check': {},
                 # The launcher's view: simple (the pages a player needs) or expert (every page); empty
@@ -2710,11 +2714,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def set_goal(self, goal):
         """The player chose a goal: the settings for this PC and that goal, at once (Undo on
-        Picture & performance)."""
+        Picture & performance); an upscaler chosen by hand for this card stays (goal_entries)."""
         self.var('goal', 'app').set(goal)
         chosen = self.recommended()
         if chosen:
-            self.apply_profile(chosen[2])
+            self.apply_profile(self.goal_entries(chosen[2]))
         self.show_goal()
         self.refresh_status()
 
@@ -2819,7 +2823,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'game restarts it). On: change output and preset in the game without a restart, at a cost.',
                    'Выкл.: разрешения кроме 1080p задаются патчем при запуске (быстрее). Вкл.: менять в игре '
                    'без перезапуска, но медленнее.'))
-        self.check(f, 'sharpen', 'ini', _('Sharpening (RCAS)', 'Резкость (RCAS)'))
+        self.check(f, 'sharpen', 'ini', _('Sharpening (RCAS)', 'Резкость (RCAS)'),
+                   _('Off with FSR 4: it sharpens by itself, and sharpening on top of it brings flaws along edges.'))
         holder = ttk.Frame(f)
         ttk.Scale(holder, from_=0.0, to=2.0, variable=self.var('sharpness', 'ini'), length=300).pack(side='left')
         value = ttk.Label(holder, width=5)
@@ -3553,6 +3558,18 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                  'Трофеи, которые игра открывает во время игры; обновляются сразу, хранятся с '
                                  'сохранениями.'))
         self.trophy_filter, self.trophy_state = 'all', None
+        # A new PC or Windows: the trophies of the old installation (a player merged two trophies.log by hand).
+        holder = self.ttk.Frame(f)
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(4, 8))
+        button = self.ttk.Button(holder, text=_('Bring achievements from another installation'),
+                                 command=self.import_trophies)
+        button.pack(side='left')
+        hint = _('From an older port folder, the drive of your old PC or shadPS4: added to yours, none removed.')
+        self.trophy_import_note = self.ttk.Label(holder, text=hint, style='Muted.TLabel', wraplength=self.px(460),
+                                                 justify='left')
+        self.trophy_import_note.pack(side='left', padx=10)
+        self.trophy_import_note.hint = hint
+        self.index_entry(button, _('Bring achievements from another installation'), hint, key='button:trophies')
         self.trophy_body = self.ttk.Frame(f)
         self.trophy_body.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we')
 
@@ -3703,6 +3720,79 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def trophy_dir(self):
         return Path(self.var('user_dir', 'app').get() or DATA_DIR / 'user')
+
+    def import_trophies(self, folder=None):
+        """Achievements: the trophies of other installations (another port folder, shadPS4 and its forks, those of
+        the Windows before, or under a folder the player picks) added to this port's, after a copy of its
+        trophies.log (bbport_trophies.add_unlocks). The search walks folders: in a helper thread."""
+        if getattr(self, 'trophy_searching', False) or self.saves_folder_gone():
+            return
+        self.trophy_searching = True
+        self.trophy_import_note.configure(text=_('Looking for achievements on this PC…'))
+        target, game = self.trophy_dir() / trophies.LOG_NAME, self.var('game_dir', 'app').get()
+
+        def work():
+            try:
+                records = (saves.trophy_records_in(folder, [target]) if folder else
+                           saves.trophy_records(PORT_DIR, game, [target]))
+                found = [(where, path, trophies.missing(trophies.read_unlocks(path), target))
+                         for where, path in records]
+            except Exception:  # a search must never take the launcher down
+                found = []
+            self.ui_calls.put(lambda: self.offer_trophies(found, target, folder))
+        threading.Thread(target=work, daemon=True).start()
+
+    def saves_folder_gone(self):
+        """A saves folder of the player's own that is not there (missing_saves_folder): said, and True. The
+        achievements are never added to one made anew in its place."""
+        problem = missing_saves_folder({'user_dir': self.var('user_dir', 'app').get()})
+        if problem:
+            self.messagebox.showerror('Bloodborne', problem)
+        return bool(problem)
+
+    def offer_trophies(self, found, target, folder=None):
+        """The search's result: the installations with trophies that are not here yet, added on Yes; else a
+        folder to look in."""
+        self.trophy_searching = False
+        self.trophy_import_note.configure(text=self.trophy_import_note.hint)
+        have = trophies.read_log(target)
+        found = [(where, path, unlocks) for where, path, unlocks in found if set(unlocks) - set(have)]
+        if not found:
+            text = (_('No achievements in {} that are not here yet.').format(folder) if folder else
+                    _('No other installation on this PC has achievements that are not here yet.'))
+            if self.messagebox.askyesno('Bloodborne', text + '\n\n' + _(
+                    'Choose a folder to look in? An old port folder, a shadPS4 folder or the drive of your old PC.')):
+                chosen = self.filedialog.askdirectory(title=_('Choose the folder with the achievements'),
+                                                      initialdir=str(Path.home()))
+                if chosen:
+                    self.import_trophies(Path(chosen))
+            return
+        lines = '\n'.join('• ' + _('{}: {} new here').format(where, len(set(unlocks) - set(have))) + f'\n   {path}'
+                          for where, path, unlocks in found)
+        if not self.messagebox.askyesno('Bloodborne', _(
+                'Achievements found:\n\n{}\n\nAdd them to yours? Your trophies.log is copied first, and no trophy is '
+                'removed.').format(lines)):
+            return
+        union = {}
+        for _where, _path, unlocks in found:
+            for trophy, when in unlocks.items():
+                union[trophy] = min(when, union.get(trophy, when))
+        if self.saves_folder_gone():  # its drive went away during the search
+            return
+        try:
+            if not self.var('user_dir', 'app').get():  # only this port's own user/ before a first start, as run.py
+                target.parent.mkdir(parents=True, exist_ok=True)
+            added, copy = trophies.add_unlocks(union, target)
+        except OSError as error:
+            self.messagebox.showerror('Bloodborne', _('Could not add the achievements: {}').format(error))
+            return
+        if Path(self.tracker.user_dir) == target.parent:
+            # earned before, not just now: shown on the page without the "You've earned a trophy" notice
+            self.trophies_changed(self.tracker.refresh_log() + self.tracker.award_platinum(), announce=False)
+        done = _('Achievements added: {} new.').format(added)
+        if copy:
+            done += '\n\n' + _('Your previous list is kept as {}.').format(copy)
+        self.messagebox.showinfo('Bloodborne', done)
 
     def poll_trophies(self):
         """Every 2 s: trophies.log (written by the game) and last_run.log (a game started elsewhere)."""
@@ -5099,13 +5189,48 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 continue
             if shown == self.ini.get(key) and shown != disk[key]:
                 var.set(disk[key] == '1' if key in INI_FLAGS else disk[key])
+        # The running game writes the whole file whenever its menu saves anything. A frame rate it holds (started
+        # with, or chosen in its menu since) and writes back unchanged is no choice of its own: one the launcher
+        # saved since (set while the game ran) stays and is written again, else the game's old value came back and
+        # the next start ran with it (R88).
+        started = getattr(self, 'game_started', None) or {}  # a game started here, until its end: what it holds
+        kept = {}
         for key in MIRRORED_KEYS:  # changed by the game's PC Settings page
             var = self.vars.get(key)
-            if key in disk and disk[key] != self.ini.get(key) and                     (var is None or str(var.get()) == str(self.app.get(key))):
+            if key not in disk or disk[key] == self.ini.get(key):
+                continue
+            if key in started and disk[key] == started[key] and self.ini.get(key) is not None:
+                kept[key] = self.ini[key]
+                continue
+            if key in started:  # chosen in the game's menu: what the game holds from now on
+                started[key] = disk[key]
+            if var is None or str(var.get()) == str(self.app.get(key)):
                 self.app[key] = disk[key]
                 if var is not None:
                     var.set(disk[key])
+        if kept:
+            try:
+                save_ini(kept, lines)
+                disk, lines = load_ini()
+            except OSError:
+                pass  # written with the next save of the settings
+            note = ('Settings: ' + ', '.join(f'{key}={value}' for key, value in kept.items()) + ', set in the '
+                    'launcher while the game ran, kept (the game had written the value it held back)')
+            if note not in textfile.REPAIRS:
+                textfile.REPAIRS.append(note)
         self.ini, self.ini_lines = disk, lines
+
+    def remember_game_start(self):
+        """What the game starting now runs with: bbport.ini as run.py reads it (sync_ini compares the game's saves
+        with it)."""
+        self.game_started = {key: self.ini.get(key) for key in MIRRORED_KEYS}
+
+    def game_restarts(self):
+        """The game restarts itself (its settings menu). It saved bbport.ini before, and the new start reads that
+        file: taken first, else a save handled after this looked like the old start's values written back, and the
+        launcher's older ones replaced the choice just made in the game."""
+        self.sync_ini()
+        self.remember_game_start()
 
     def collect(self):
         """Writes settings.json, bbport.ini, mods.json and patches.json."""
@@ -5249,13 +5374,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                                      'be used. Export the save with Apollo Save Tool on the PS4 '
                                                      'instead.') + '\n\n' + encrypted)
         self.auto_backup()
+        self.remember_game_start()
         try:
             self.process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(self.app, self.ini),
                                             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT, creationflags=NO_WINDOW)
         except OSError as error:
             self.append(_('Could not start: {}', 'Не удалось запустить: {}').format(error) + '\n')
-            self.process = None
+            self.process = self.game_started = None
             return
         self.job = GameJob(self.process)
         self.placer = display.Placer(self.app, display.parse_size(self.ini.get('output_res')) or (1920, 1080)).start()
@@ -5415,6 +5541,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.process = None
         self.append(_('\n— the game exited (code {}) —\n', '\n— игра завершилась (код {}) —\n').format(code))
         self.reported(self.sync_ini)
+        self.game_started = None  # the frame rate the launcher now follows again (sync_ini)
         self.reported(self.refresh_fsr411)
         if self.job:
             self.reported(self.job.close)
@@ -5453,6 +5580,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         elif 'restarting through run.py' in item:
             self.status.configure(text=_('Restarting with the new settings…', 'Перезапуск с новыми настройками…'),
                                   fg=GOLD)
+            self.game_restarts()
         elif any(text in item for text, _topic in bbport_help.GAME_NOTICES):
             # Said once the game closes (after_exit).
             notices = self.__dict__.setdefault('game_notices', [])
@@ -6175,14 +6303,20 @@ def start_problem(settings):
     problem = bbport_help.system_problem(settings.get('game_dir'))
     if problem:
         return problem, 'game'
-    # A saves folder of the player's own on a drive that is not connected, or renamed: an empty one made in its
-    # place would show no characters, and the game would start new ones there.
+    problem = missing_saves_folder(settings)
+    return (problem, 'saves') if problem else None
+
+
+def missing_saves_folder(settings):
+    """The message for a saves folder of the player's own on a drive that is not connected, or renamed: an empty
+    one made in its place would show no characters, and the game would start new ones there. None when it is there
+    or none is set (this port's own, user/, is made at the start)."""
     user = str(settings.get('user_dir') or '').strip()
     if user and not Path(user).is_dir():
         return _('The saves folder {} is not there: its drive is not connected, or the folder was renamed or moved. '
                  'Connect the drive, or choose the saves folder again.',
                  'Папки сохранений {} нет: её диск не подключён, или папку переименовали или переместили. Подключите '
-                 'диск или выберите папку сохранений заново.').format(user), 'saves'
+                 'диск или выберите папку сохранений заново.').format(user)
     return None
 
 

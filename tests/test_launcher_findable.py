@@ -32,6 +32,7 @@ IMPORTANT = {
     'restore_backup': 'button:restore',
     'toggle_mode': 'button:expert',
     'open_forum': 'button:forum',
+    'import_trophies': 'button:trophies',
 }
 
 
