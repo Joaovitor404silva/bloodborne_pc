@@ -3342,6 +3342,18 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                  'Трофеи, которые игра открывает во время игры; обновляются сразу, хранятся с '
                                  'сохранениями.'))
         self.trophy_filter, self.trophy_state = 'all', None
+        # A new PC or Windows: the trophies of the old installation (a player merged two trophies.log by hand).
+        holder = self.ttk.Frame(f)
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(4, 8))
+        button = self.ttk.Button(holder, text=_('Bring achievements from another installation'),
+                                 command=self.import_trophies)
+        button.pack(side='left')
+        hint = _('From an older port folder, the drive of your old PC or shadPS4: added to yours, none removed.')
+        self.trophy_import_note = self.ttk.Label(holder, text=hint, style='Muted.TLabel', wraplength=self.px(460),
+                                                 justify='left')
+        self.trophy_import_note.pack(side='left', padx=10)
+        self.trophy_import_note.hint = hint
+        self.index_entry(button, _('Bring achievements from another installation'), hint, key='button:trophies')
         self.trophy_body = self.ttk.Frame(f)
         self.trophy_body.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we')
 
@@ -3492,6 +3504,67 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def trophy_dir(self):
         return Path(self.var('user_dir', 'app').get() or DATA_DIR / 'user')
+
+    def import_trophies(self, folder=None):
+        """Achievements: the trophies of other installations (another port folder, shadPS4 and its forks, those of
+        the Windows before, or under a folder the player picks) added to this port's, after a copy of its
+        trophies.log (bbport_trophies.add_unlocks). The search walks folders: in a helper thread."""
+        if getattr(self, 'trophy_searching', False):
+            return
+        self.trophy_searching = True
+        self.trophy_import_note.configure(text=_('Looking for achievements on this PC…'))
+        target, game = self.trophy_dir() / trophies.LOG_NAME, self.var('game_dir', 'app').get()
+
+        def work():
+            try:
+                records = (saves.trophy_records_in(folder, [target]) if folder else
+                           saves.trophy_records(PORT_DIR, game, [target]))
+                found = [(where, path, trophies.missing(trophies.read_unlocks(path), target))
+                         for where, path in records]
+            except Exception:  # a search must never take the launcher down
+                found = []
+            self.ui_calls.put(lambda: self.offer_trophies(found, target, folder))
+        threading.Thread(target=work, daemon=True).start()
+
+    def offer_trophies(self, found, target, folder=None):
+        """The search's result: the installations with trophies that are not here yet, added on Yes; else a
+        folder to look in."""
+        self.trophy_searching = False
+        self.trophy_import_note.configure(text=self.trophy_import_note.hint)
+        have = trophies.read_log(target)
+        found = [(where, path, unlocks) for where, path, unlocks in found if set(unlocks) - set(have)]
+        if not found:
+            text = (_('No achievements in {} that are not here yet.').format(folder) if folder else
+                    _('No other installation on this PC has achievements that are not here yet.'))
+            if self.messagebox.askyesno('Bloodborne', text + '\n\n' + _(
+                    'Choose a folder to look in? An old port folder, a shadPS4 folder or the drive of your old PC.')):
+                chosen = self.filedialog.askdirectory(title=_('Choose the folder with the achievements'),
+                                                      initialdir=str(Path.home()))
+                if chosen:
+                    self.import_trophies(Path(chosen))
+            return
+        lines = '\n'.join('• ' + _('{}: {} new here').format(where, len(set(unlocks) - set(have))) + f'\n   {path}'
+                          for where, path, unlocks in found)
+        if not self.messagebox.askyesno('Bloodborne', _(
+                'Achievements found:\n\n{}\n\nAdd them to yours? Your trophies.log is copied first, and no trophy is '
+                'removed.').format(lines)):
+            return
+        union = {}
+        for _where, _path, unlocks in found:
+            for trophy, when in unlocks.items():
+                union[trophy] = min(when, union.get(trophy, when))
+        try:
+            added, copy = trophies.add_unlocks(union, target)
+        except OSError as error:
+            self.messagebox.showerror('Bloodborne', _('Could not add the achievements: {}').format(error))
+            return
+        if Path(self.tracker.user_dir) == target.parent:
+            # earned before, not just now: shown on the page without the "You've earned a trophy" notice
+            self.trophies_changed(self.tracker.refresh_log() + self.tracker.award_platinum(), announce=False)
+        done = _('Achievements added: {} new.').format(added)
+        if copy:
+            done += '\n\n' + _('Your previous list is kept as {}.').format(copy)
+        self.messagebox.showinfo('Bloodborne', done)
 
     def poll_trophies(self):
         """Every 2 s: trophies.log (written by the game) and last_run.log (a game started elsewhere)."""

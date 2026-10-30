@@ -118,6 +118,33 @@ class SaveTests(unittest.TestCase):
         self.assertEqual(saves.bring_trophies(mine, self.user), 0)
         self.assertEqual((self.user / 'trophies.log').read_text(encoding='utf-8'), '14 100\n')
 
+    def test_achievements_of_other_installations_are_found(self):
+        """R86: as the saves of other versions are found: another port folder beside this one, shadPS4 in
+        %APPDATA% and portable beside the port, the Windows before a new installation (Windows.old)."""
+        xml = '<title-name>Bloodborne</title-name><trophy id="014" unlockstate="true" timestamp="1790000000"/>'
+        (self.user).mkdir(parents=True)
+        (self.user / 'trophies.log').write_text('14 100\n', encoding='utf-8')  # this port's own
+        (self.root / 'BB.Old' / 'user').mkdir(parents=True)
+        (self.root / 'BB.Old' / 'run.py').write_text('')
+        (self.root / 'BB.Old' / 'user' / 'trophies.log').write_text('15 200\n', encoding='utf-8')
+        lists = Path('TrophyFiles') / 'trophy00' / 'Xml'
+        portable = self.root / 'shadPS4-portable' / 'user' / 'game_data' / 'CUSA03173' / lists
+        appdata = self.root / 'Roaming' / 'shadPS4' / 'home' / '1000' / 'trophy' / 'NPWR07150_00' / 'Xml'
+        roaming = self.root / 'Windows.old' / 'Users' / 'nick' / 'AppData' / 'Roaming'
+        old = roaming / 'shadPS4' / 'game_data' / 'CUSA00207' / lists
+        for folder in (portable, appdata, old):
+            folder.mkdir(parents=True)
+            (folder / 'TROP.XML').write_text(xml, encoding='utf-8')
+        folders = {'APPDATA': str(self.root / 'Roaming'), 'LOCALAPPDATA': str(self.root / 'Local'),
+                   'SystemDrive': str(self.root)}
+        with mock.patch.dict(os.environ, folders):
+            found = saves.trophy_records(self.root / 'port', exclude=[self.user / 'trophies.log'])
+        self.assertEqual(sorted(where for where, _path in found),
+                         ['bbport (BB.Old)', 'shadPS4', 'shadPS4', 'shadPS4 (shadPS4-portable)'])
+        self.assertNotIn(self.user / 'trophies.log', [path for _where, path in found])
+        picked = saves.trophy_records_in(self.root / 'BB.Old')  # a folder the player picks
+        self.assertEqual(picked, [('bbport (BB.Old)', self.root / 'BB.Old' / 'user' / 'trophies.log')])
+
     def test_backups_never_overwrite_each_other(self):
         make_save(saves.target_dir(self.user))
         first, second = saves.backup(self.user), saves.backup(self.user)
@@ -256,6 +283,67 @@ class ImportWindowTests(unittest.TestCase):
         self.assertIn('Your achievements from there came along: 2 new here.', said[-1])
         self.assertEqual(changed, [([14, 15], False)])  # on the page, without "You've earned a trophy"
         self.assertEqual(Window.tracker.poll(), [])  # and not announced later by the 2-second poll
+
+
+class TrophyImportWindowTests(unittest.TestCase):
+    """Achievements > Bring achievements from another installation, after the search, as the window does it
+    (bbport_launcher_win.Launcher.offer_trophies)."""
+
+    def setUp(self):
+        import bbport_trophies as trophies
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name)
+        self.user = self.root / 'port' / 'user'
+        self.user.mkdir(parents=True)
+        self.target = self.user / 'trophies.log'
+        self.target.write_text('14 100\n', encoding='utf-8')
+        self.asked, self.said, self.changed, self.picked = [], [], [], []
+        note = types.SimpleNamespace(hint='', configure=lambda **_options: None)
+        self.window = types.SimpleNamespace(
+            trophy_searching=True, trophy_import_note=note, tracker=trophies.Tracker(self.user),
+            messagebox=types.SimpleNamespace(askyesno=lambda title, text: self.asked.append(text) or self.answer,
+                                             showinfo=lambda title, text: self.said.append(text),
+                                             showerror=lambda title, text: self.said.append(text)),
+            filedialog=types.SimpleNamespace(askdirectory=lambda **_options: str(self.root)),
+            import_trophies=lambda folder=None: self.picked.append(folder),
+            trophies_changed=lambda new, announce=True: self.changed.append((new, announce)))
+        self.window.tracker.poll()  # the page shows what is there
+        self.answer = True
+
+    def offer(self, records, folder=None):
+        import bbport_launcher_win as L
+        import bbport_trophies as trophies
+        found = [(where, path, trophies.missing(trophies.read_unlocks(path), self.target)) for where, path in records]
+        with mock.patch.object(L, 'LANG', 'en'):
+            L.Launcher.offer_trophies(self.window, found, self.target, folder)
+
+    def test_new_trophies_are_added_after_a_copy_without_notices(self):
+        import bbport_trophies as trophies
+        old = self.root / 'BB.Old' / 'user' / 'trophies.log'
+        old.parent.mkdir(parents=True)
+        old.write_text('14 50\n15 200\n', encoding='utf-8')
+        self.offer([('bbport (BB.Old)', old)])
+        self.assertIn('bbport (BB.Old): 1 new here', self.asked[0])
+        self.assertIn('Achievements added: 1 new.', self.said[-1])
+        self.assertEqual(trophies.read_log(self.target), {14: 50, 15: 200})  # the earlier time as well
+        self.assertEqual([p.read_text(encoding='utf-8') for p in self.user.glob('trophies.log.*.bak')], ['14 100\n'])
+        self.assertEqual(self.changed, [([15], False)])  # on the page, without "You've earned a trophy"
+        self.assertEqual(self.window.tracker.poll(), [])  # and not announced later by the 2-second poll
+        self.assertEqual(old.read_text(encoding='utf-8'), '14 50\n15 200\n')  # the other installation as it was
+
+    def test_nothing_new_offers_a_folder_to_look_in(self):
+        old = self.root / 'BB.Old' / 'user' / 'trophies.log'
+        old.parent.mkdir(parents=True)
+        old.write_text('14 50\n', encoding='utf-8')  # only an earlier time: nothing new to offer
+        self.offer([('bbport (BB.Old)', old)])
+        self.assertIn('No other installation on this PC has achievements that are not here yet.', self.asked[0])
+        self.assertEqual(self.picked, [self.root])  # searched again there
+        self.answer = False
+        self.offer([], folder=self.root)
+        self.assertIn(f'No achievements in {self.root} that are not here yet.', self.asked[-1])
+        self.assertEqual((self.picked, self.said), ([self.root], []))
+        self.assertEqual(self.target.read_text(encoding='utf-8'), '14 100\n')
 
 
 if __name__ == '__main__':

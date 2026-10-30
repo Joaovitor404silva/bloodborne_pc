@@ -721,14 +721,21 @@ def import_set(save, user_dir, game_dir=''):
     return archive
 
 
+def saves_root(folder):
+    """The saves folder a save lies in (<saves folder>/savedata/1/<title>/SPRJ0005), or None outside one."""
+    parts = [part.lower() for part in Path(folder).parts]
+    if 'savedata' not in parts:
+        return None
+    return Path(*Path(folder).parts[:len(parts) - 1 - parts[::-1].index('savedata')])
+
+
 def bring_trophies(save, user_dir):
     """The achievements of the saves folder `save` lies in (another installation's trophies.log) added to this
     one's, so a character brought over keeps them; how many were new here. Saves from elsewhere (shadPS4,
     bbhost, a backup) have none."""
-    parts = [part.lower() for part in save.folder.parts]
-    if 'savedata' not in parts:
+    root = saves_root(save.folder)
+    if root is None:
         return 0
-    root = Path(*save.folder.parts[:len(parts) - 1 - parts[::-1].index('savedata')])
     source, target = root / trophies.LOG_NAME, Path(user_dir) / trophies.LOG_NAME
     try:
         if not source.is_file() or source.resolve() == target.resolve():
@@ -736,6 +743,102 @@ def bring_trophies(save, user_dir):
     except OSError:
         return 0
     return trophies.merge_log(source, target)
+
+
+# ---- achievements of other installations ----------------------------------------------------------------------
+# This port keeps them in <saves folder>/trophies.log; shadPS4 and its forks in the game's trophy list,
+# <data>/game_data/<title>/TrophyFiles/trophy00/Xml/TROP.XML (older ones) or <data>/home/<user>/trophy/<NP id>/Xml/
+# TROP.XML. They are found as scan() finds saves: the other versions' known folders, also those of the Windows
+# before a new installation (Windows.old), and the folders beside this port and the game.
+TROPHY_LISTS = ('game_data/*/TrophyFiles/*/Xml/TROP*.XML', 'home/*/trophy/*/Xml/TROP*.XML')
+TROPHY_LIST = re.compile(r'^TROP.*\.XML$', re.I)
+
+
+def trophy_label(path):
+    """Which installation a trophies.log or a TROP.XML belongs to, from where it is."""
+    path = Path(path)
+    if path.name.lower() == trophies.LOG_NAME:
+        return label_for(path.parent / 'savedata' / '1' / DEFAULT_TITLE / SAVE_DIR)
+    parts = [part.lower() for part in path.parts]
+    for anchor in ('game_data', 'home'):
+        if anchor in parts:
+            root = Path(*path.parts[:len(parts) - 1 - parts[::-1].index(anchor)])
+            install = root.parent if root.name.lower() in ('user', 'data') else root  # a portable one: <install>/user
+            return 'shadPS4' if install.name.lower() == 'shadps4' else f'shadPS4 ({install.name})'
+    folder = next((q for q in path.parents if q.name.lower() not in ('xml', 'trophy00', 'trophyfiles')), path.parent)
+    return f'Backup ({folder.name})'
+
+
+def walk_trophies(roots, depth=9, limit=30000):
+    """trophies.log files and TROP.XML trophy lists (in an Xml folder) under `roots`, skipping the big folders of
+    dumps and ports, as walk() does for saves."""
+    found, seen = [], 0
+    level = [Path(r) for r in roots if r and Path(r).is_dir()]
+    for _ in range(depth + 1):
+        following = []
+        for folder in level:
+            try:
+                entries = list(os.scandir(folder))
+            except OSError:
+                continue
+            for entry in entries:
+                name = entry.name.lower()
+                try:
+                    if entry.is_dir():
+                        seen += 1
+                        if name not in SKIP and name not in OWN_COPIES and not name.endswith('.sce_sys'):
+                            following.append(Path(entry.path))
+                    elif name == trophies.LOG_NAME or (folder.name.lower() == 'xml' and TROPHY_LIST.match(entry.name)):
+                        found.append(Path(entry.path))
+                except OSError:
+                    continue
+            if seen > limit:
+                return found
+        level = following
+    return found
+
+
+def trophy_records(port_dir, game_dir='', exclude=()):
+    """[(where, path)] of the trophy records of other installations on this PC (see above), without `exclude`
+    (this port's own trophies.log)."""
+    paths = []
+    for pattern in sources(port_dir, game_dir):
+        roots = [saves_root(folder) for folder in glob.glob(pattern)]
+        paths += [root / trophies.LOG_NAME for root in roots if root]
+    appdata = [os.environ.get('APPDATA', '')]
+    appdata += glob.glob(os.path.join(os.environ.get('SystemDrive', 'C:') + os.sep, 'Windows.old', 'Users', '*',
+                                      'AppData', 'Roaming'))
+    for folder in filter(None, appdata):
+        for data in glob.glob(os.path.join(folder, '*')):
+            paths += [Path(name) for pattern in TROPHY_LISTS for name in glob.glob(os.path.join(data, pattern))]
+    paths += walk_trophies([Path(port_dir).parent] + ([Path(game_dir).parent] if game_dir else []))
+    return unique_records(paths, exclude)
+
+
+def trophy_records_in(root, exclude=()):
+    """[(where, path)] of the trophy records at or under a folder the player picked (an old port folder, the drive
+    of an old PC)."""
+    return unique_records(walk_trophies([root]), exclude)
+
+
+def unique_records(paths, exclude=()):
+    seen = set()
+    for path in exclude:
+        try:
+            seen.add(os.path.normcase(str(Path(path).resolve())))
+        except OSError:
+            pass
+    records = []
+    for path in paths:
+        try:
+            key = os.path.normcase(str(Path(path).resolve()))
+            if key in seen or not Path(path).is_file():
+                continue
+        except OSError:
+            continue
+        seen.add(key)
+        records.append((trophy_label(path), Path(path)))
+    return records
 
 
 def restore(archive, user_dir, game_dir=''):

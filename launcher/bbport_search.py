@@ -105,6 +105,8 @@ WORDS = {
                  'mauskamera kb m+k wasd',
     'auto_backup': 'sicherung sichern backup automatisch spielstand spielstande',
     'button:backup': 'sicherung sichern backup jetzt spielstand spielstande zuruckholen wiederherstellen restore',
+    'button:trophies': 'erfolge trophaen trophies achievements ubernehmen importieren import transfer alte old '
+                       'installation neuer new pc windows ssd zusammenfuhren merge platin verloren lost',
     'online_npid': 'npid online id konto account shadnet',
     'online_password': 'passwort password kennwort',
     'online_server': 'server adresse address shadnet ip',
