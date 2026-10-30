@@ -77,22 +77,21 @@ class ReadinessTests(unittest.TestCase):
                 self.assertEqual((values['upscaler'],values['fsr411_backend']),('fsr412','vk'))
                 self.assertEqual(path.read_bytes(),before)
 
-    def test_a_new_ini_on_an_fsr_4_method_has_sharpening_off(self):
-        """R81: the FSR 4.1 method the launcher picks for a new bbport.ini sharpens by itself."""
+    def test_a_new_ini_leaves_sharpening_to_the_profile(self):
+        """R81: the FSR 4.1 method a new bbport.ini starts with is only a first value (fsr4vk is supported on a
+        GeForce RTX too, whose profile brings DLSS). Sharpening keeps its default here: the profile applied for a
+        new ini turns it off with FSR 4 only (test_launcher_auto_profile)."""
         with tempfile.TemporaryDirectory() as temp, \
              patch.object(launcher, 'ini_path', return_value=Path(temp)/'bbport.ini'), \
              patch.object(family, 'query', return_value={}), \
              patch.object(launcher.bbport_fsr411, 'default_backend', return_value='vk'):
             path = Path(temp)/'bbport.ini'
-            with patch.object(family, 'method_statuses', return_value=[dict(supported=True)]+[dict(supported=False)]*3):
-                values, _ = launcher.load_ini()
-                self.assertEqual((values['upscaler'], values['sharpen']), ('fsr412', '0'))
-                path.write_text('sharpen=1\n', encoding='utf-8')  # the player's own
-                self.assertEqual(launcher.load_ini()[0]['sharpen'], '1')
-            path.unlink()
-            with patch.object(family, 'method_statuses', return_value=[dict(supported=False)]*4):
-                values, _ = launcher.load_ini()
-                self.assertEqual((values['upscaler'], values['sharpen']), ('fsr3', '1'))
+            for states, upscaler in (([dict(supported=True)]+[dict(supported=False)]*3, 'fsr412'),
+                                     ([dict(supported=False)]*4, 'fsr3')):
+                path.unlink(missing_ok=True)
+                with patch.object(family, 'method_statuses', return_value=states):
+                    values, _ = launcher.load_ini()
+                self.assertEqual((values['upscaler'], values['sharpen']), (upscaler, '1'))
 
     def test_runtime_environment_shared_initialization_and_overrides(self):
         with patch.object(runtime,'discover',return_value={'vulkan':'new-vk.dll','dx12':'new-dx.dll'}):

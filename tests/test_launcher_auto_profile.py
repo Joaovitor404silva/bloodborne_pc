@@ -256,20 +256,53 @@ class AutoProfileTests(unittest.TestCase):
     def test_a_goal_after_a_new_card_gives_it_its_upscaler(self):
         """R84: set up while only the processor's Radeon showed (no driver for the GeForce yet), an upscaler of
         the player's own on it; the GeForce, once its driver is in, is offered its settings, and the goal chosen
-        then brought FSR, the FSR 4.1 method fsr4vk runs on a GeForce too. Now DLSS."""
+        then brought FSR, the FSR 4.1 method fsr4vk runs on a GeForce too. Now DLSS, also with "Adjust them
+        automatically" off (the new card is not remembered then)."""
         laptop = {'cpu': LAPTOP_CPU, 'ram': 16, 'display': (1920, 1080)}
+        for automatic in (True, False):
+            (self.folder / 'settings.json').unlink(missing_ok=True)
+            self.ini.write_text('fsr411_backend=vk\n', encoding='utf-8')
+            with patch.object(launcher.bbport_fsr41, 'method_statuses', return_value=FSR4VK_ONLY):
+                self.set_up(LAPTOP_RADEON, **laptop)
+                ui = self.start(LAPTOP_RADEON, **laptop)
+                ui.var('upscaler', 'ini').set('taa')  # chosen by hand for the Radeon
+                ui.var('auto_graphics', 'app').set(automatic)
+                self.saved(ui)
+                ui = self.start(LAPTOP_GEFORCE, **laptop)
+                self.assertEqual(ui.automatic, 0)
+                if automatic:
+                    self.assertIn('Your own graphics settings were kept', ui.status.text)
+                self.assertEqual(self.recommended(ui)['upscaler'], 'dlss')
+                ui.set_goal('smooth')
+                self.assertEqual(self.saved(ui)['upscaler'], 'dlss', automatic)
+                self.assertNotIn('fsr411_backend', self.recommended(ui))
+
+    def test_a_laptops_sleeping_card_keeps_the_players_upscaler(self):
+        """Chosen by hand on the GeForce; a start that shows only the processor's Radeon (the GeForce asleep) is
+        no new card, and a goal chosen then keeps it."""
+        laptop = {'cpu': LAPTOP_CPU, 'ram': 16, 'display': (1920, 1080)}
+        self.set_up(LAPTOP_GEFORCE, **laptop)
+        ui = self.start(LAPTOP_GEFORCE, **laptop)
+        ui.var('upscaler', 'ini').set('taa')
+        self.saved(ui)
+        ui = self.start(LAPTOP_RADEON, **laptop)
+        ui.set_goal('quiet')
+        self.assertEqual(self.saved(ui)['upscaler'], 'taa')
+        ui = self.start(LAPTOP_GEFORCE, **laptop)
+        ui.set_goal('smooth')
+        self.assertEqual(self.saved(ui)['upscaler'], 'taa')
+
+    def test_a_new_installation_on_a_geforce_keeps_sharpening(self):
+        """R81: a new bbport.ini starts on the FSR 4.1 method fsr4vk where it is supported, a GeForce RTX too; the
+        profile then brings DLSS, and sharpening stays on as for every upscaler but FSR 4."""
         with patch.object(launcher.bbport_fsr41, 'method_statuses', return_value=FSR4VK_ONLY):
-            self.set_up(LAPTOP_RADEON, **laptop)
-            ui = self.start(LAPTOP_RADEON, **laptop)
-            ui.var('upscaler', 'ini').set('taa')  # chosen by hand for the Radeon
-            self.saved(ui)
-            ui = self.start(LAPTOP_GEFORCE, **laptop)
-            self.assertEqual(ui.automatic, 0)
-            self.assertIn('Your own graphics settings were kept', ui.status.text)
-            self.assertEqual(self.recommended(ui)['upscaler'], 'dlss')
-            ui.set_goal('smooth')
-            self.assertEqual(self.saved(ui)['upscaler'], 'dlss')
-            self.assertNotIn('fsr411_backend', self.recommended(ui))
+            self.assertEqual(launcher.load_ini()[0]['upscaler'], 'fsr411')
+            after_setup = self.set_up(GEFORCE)
+        self.assertEqual((after_setup['upscaler'], after_setup['sharpen']), ('dlss', True))
+        with patch.object(launcher.bbport_fsr41, 'method_statuses', return_value=FSR412_VULKAN):
+            self.ini.write_text('fsr411_backend=vk\n', encoding='utf-8')
+            after_setup = self.set_up(RADEON)
+        self.assertEqual((after_setup['upscaler'], after_setup['sharpen']), ('fsr412', False))
 
     def test_an_upscaler_chosen_for_this_card_stays_with_a_goal(self):
         self.set_up(GEFORCE)

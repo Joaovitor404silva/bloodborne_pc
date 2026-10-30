@@ -245,7 +245,10 @@ class SetupMixin:
                 applied[key] = value
         self.app['auto_applied'] = applied
         self.remember_hardware(hardware.signature(self.gpu_line, self.cpu, self.ram))
-        self.app['auto_applied_hw'] = self.app.get('auto_hw', '')  # what they were made for (set_by_hand)
+        # The card the upscaler was chosen for (set_by_hand): one the player's own upscaler stayed through (a goal
+        # on a laptop's processor graphics) keeps the card it was chosen on.
+        if 'upscaler' in touched or not self.app.get('auto_applied_hw'):
+            self.app['auto_applied_hw'] = self.app.get('auto_hw', '')
         for view in list(self.rating_views):
             try:
                 view()
@@ -294,10 +297,21 @@ class SetupMixin:
         applied = self.app.get('auto_applied') or {}
         if key not in applied:
             return False
-        made_for, now = (hardware.signature_parts(self.app.get(name, '')) for name in ('auto_applied_hw', 'auto_hw'))
-        if this_card and made_for and now and not hardware.same_card(made_for[:2], now[:2]):
+        if this_card and not self.applied_for_this_card():
             return False
         return not same_setting(self.current_settings().get(key), applied[key])
+
+    def applied_for_this_card(self):
+        """Whether the automatic settings were last applied for the graphics card detected now. That one, not the
+        hardware remembered (auto_hw): with "Adjust them automatically" off a new card is never remembered. An
+        integrated card detected now is no other card (a laptop's discrete one asleep, as for new_hardware); one
+        not detected this time and an earlier version's record (no auto_applied_hw) say nothing either way."""
+        made_for = hardware.signature_parts(self.app.get('auto_applied_hw', ''))
+        detected = hardware.signature(self.gpu_line, self.cpu, self.ram)
+        now = hardware.signature_parts(detected or self.app.get('auto_hw', ''))
+        if not made_for or not now or (detected and hardware.parse_gpu_line(self.gpu_line)[1]):
+            return True
+        return hardware.same_card(made_for[:2], now[:2])
 
     def goal_entries(self, entries):
         """A profile as a goal applies it. The goal is about frame rate and detail: an upscaler the player chose by

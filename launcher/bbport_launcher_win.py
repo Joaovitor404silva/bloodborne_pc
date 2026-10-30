@@ -395,8 +395,8 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 # Graphics settings made for the hardware (bbport_setup.auto_settings): on/off, the
                 # hardware they were made for, and what they replaced (Undo); the settings right
                 # after they were applied (a later difference is the player's own) and the hardware
-                # they were applied for (an upscaler chosen for another card is no choice for a new
-                # one); the graphics cards this PC has shown (a laptop's two are no new hardware when
+                # their upscaler was chosen for (one chosen by hand for another card is no choice for a
+                # new one); the graphics cards this PC has shown (a laptop's two are no new hardware when
                 # they take turns).
                 'auto_graphics': True, 'auto_hw': '', 'auto_undo': {}, 'auto_applied': {}, 'auto_applied_hw': '',
                 'auto_gpus': [],
@@ -679,8 +679,6 @@ def load_ini(legacy_settings=None):
             backend=values['fsr411_backend'] if 'fsr411_backend' in present else None)
         if choice is not None:
             values['upscaler'], values['fsr411_backend'] = bbport_fsr41.ROUTES[choice][:2]
-            if 'sharpen' not in present:  # FSR 4 sharpens by itself (hardware.SHARPEN_WITH_FSR4)
-                values['sharpen'] = '0'
     if 'fsr411_backend' not in present:
         if 'upscaler' in present and values['upscaler'] in ('fsr411', 'fsr412'):
             env = bbport_fsr411.environment(PORT_DIR, legacy_settings or {})
