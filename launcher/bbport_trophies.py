@@ -113,6 +113,7 @@ def merge_log(source, target):
 
 # shadPS4 and its forks keep the unlocks in the game's trophy list (TROP.XML, unpacked from trophy00.trp): a
 # trophy's element gets unlockstate="true" and the time, sceRtcGetCurrentTick's microseconds since the year 1.
+TROPHY_LIST = re.compile(r'^TROP.*\.XML$', re.I)  # TROP.XML, TROP_00.XML ... (TROPCONF.XML: no unlocks)
 TROPHY_ELEMENT = re.compile(r'<trophy\b([^>]*)>', re.I)
 ATTRIBUTE = re.compile(r'([\w-]+)\s*=\s*"([^"]*)"')
 RTC_UNIX = 62135596800  # seconds from 0001-01-01 to 1970-01-01
@@ -148,8 +149,20 @@ def read_trop_xml(path):
 
 
 def read_unlocks(path):
-    """{id: earliest unlock time} of a trophies.log or a TROP.XML."""
-    if Path(path).suffix.lower() == '.xml':
+    """{id: earliest unlock time} of a trophies.log, a TROP.XML or an Xml folder of them (shadPS4 may mark the
+    unlocks in each language's list, TROP_xx.XML, as well)."""
+    path = Path(path)
+    if path.is_dir():
+        unlocks = {}
+        try:
+            lists = sorted(entry for entry in path.iterdir() if TROPHY_LIST.match(entry.name))
+        except OSError:
+            return {}
+        for name in lists:
+            for trophy, when in read_trop_xml(name).items():
+                unlocks[trophy] = min(when, unlocks.get(trophy, when))
+        return unlocks
+    if path.suffix.lower() == '.xml':
         return read_trop_xml(path)
     return {trophy: when for trophy, when in read_log(path).items() if trophy in BY_ID}
 
@@ -163,8 +176,11 @@ def missing(found, target):
 def add_unlocks(found, target):
     """The unlocks of other installations ({id: time}) added to this port's trophies.log `target`: the trophies
     it lacks and the earlier times (read_log keeps the earliest); nothing is removed, the file is only appended
-    to. It is copied beside itself first. Returns (new trophies, the copy or None)."""
+    to. It is copied beside itself first. Returns (new trophies, the copy or None). The saves folder must be
+    there: never made here (a renamed or disconnected one of the player's own would come back empty, run.py)."""
     target = Path(target)
+    if not target.parent.is_dir():
+        raise FileNotFoundError(f'The saves folder {target.parent} is not there')
     adds = missing({trophy: when for trophy, when in found.items() if trophy in BY_ID}, target)
     if not adds:
         return 0, None
@@ -177,7 +193,6 @@ def add_unlocks(found, target):
             number += 1
             copy = target.with_name(f'{target.name}.{stamp}-{number}.bak')
         shutil.copy2(target, copy)
-    target.parent.mkdir(parents=True, exist_ok=True)
     with open(target, 'ab') as log:
         if log.tell():  # a last line without its end would run into the first one added
             with open(target, 'rb') as old:

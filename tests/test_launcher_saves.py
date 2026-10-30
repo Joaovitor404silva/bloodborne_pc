@@ -135,15 +135,65 @@ class SaveTests(unittest.TestCase):
         for folder in (portable, appdata, old):
             folder.mkdir(parents=True)
             (folder / 'TROP.XML').write_text(xml, encoding='utf-8')
+        (portable / 'TROP_00.XML').write_text(xml, encoding='utf-8')  # one installation: listed once
+        # This port's own Seamless co-op trophies and the game test's copy of the saves in %TEMP%: no other
+        # installation's.
+        for own in (self.user / 'seamless-coop', self.root / 'Temp' / 'bbport-test' / 'user'):
+            own.mkdir(parents=True)
+            (own / 'trophies.log').write_text('16 300\n', encoding='utf-8')
         folders = {'APPDATA': str(self.root / 'Roaming'), 'LOCALAPPDATA': str(self.root / 'Local'),
                    'SystemDrive': str(self.root)}
         with mock.patch.dict(os.environ, folders):
             found = saves.trophy_records(self.root / 'port', exclude=[self.user / 'trophies.log'])
         self.assertEqual(sorted(where for where, _path in found),
                          ['bbport (BB.Old)', 'shadPS4', 'shadPS4', 'shadPS4 (shadPS4-portable)'])
+        self.assertIn(portable, [path for _where, path in found])  # its Xml folder
         self.assertNotIn(self.user / 'trophies.log', [path for _where, path in found])
         picked = saves.trophy_records_in(self.root / 'BB.Old')  # a folder the player picks
         self.assertEqual(picked, [('bbport (BB.Old)', self.root / 'BB.Old' / 'user' / 'trophies.log')])
+
+    def test_achievements_on_the_drive_of_an_old_pc(self):
+        """The drive of the old PC, picked by the player (a new SSD with a new Windows: the old drive is D:).
+        shadPS4's lists are ten folders down in AppData, a portable one in Downloads is as deep: the known places
+        and a data folder met on the way are looked into, Windows' and the programs' folders are not walked."""
+        xml = '<title-name>Bloodborne</title-name><trophy id="014" unlockstate="true" timestamp="1790000000"/>'
+        drive = self.root / 'D'
+        lists = Path('TrophyFiles') / 'trophy00' / 'Xml'
+        roaming = drive / 'Users' / 'nick' / 'AppData' / 'Roaming'
+        places = [roaming / 'shadPS4' / 'game_data' / 'CUSA03173' / lists,
+                  roaming / 'shadPS4-qt' / 'home' / '1000' / 'trophy' / 'NPWR07150_00' / 'Xml',
+                  drive / 'Windows.old' / 'Users' / 'nick' / 'AppData' / 'Roaming' / 'shadPS4' / 'game_data' /
+                  'CUSA00207' / lists,
+                  drive / 'Users' / 'nick' / 'Downloads' / 'Emulators' / 'shadPS4-win64' / 'user' / 'game_data' /
+                  'CUSA03173' / lists]
+        for folder in places:
+            folder.mkdir(parents=True)
+            (folder / 'TROP.XML').write_text(xml, encoding='utf-8')
+        port = drive / 'Users' / 'nick' / 'Desktop' / 'Games' / 'BB.Port' / 'user'
+        port.mkdir(parents=True)
+        (port / 'trophies.log').write_text('15 200\n', encoding='utf-8')
+        for skipped in (drive / 'ProgramData' / 'x' / 'user', drive / '$Recycle.Bin' / 'S-1-5' / 'user'):
+            skipped.mkdir(parents=True)
+            (skipped / 'trophies.log').write_text('15 200\n', encoding='utf-8')
+        found = saves.trophy_records_in(drive)
+        self.assertEqual(sorted(path for _where, path in found), sorted(places + [port / 'trophies.log']))
+        self.assertEqual(sorted(where for where, _path in found),
+                         ['Backup (BB.Port)', 'shadPS4', 'shadPS4', 'shadPS4 (shadPS4-qt)', 'shadPS4 (shadPS4-win64)'])
+        # The player picked the user's folder, or shadPS4's own.
+        self.assertEqual(len(saves.trophy_records_in(drive / 'Users' / 'nick')), 4)
+        self.assertEqual([path for _where, path in saves.trophy_records_in(roaming / 'shadPS4')], places[:1])
+
+    def test_a_profile_folder_with_brackets(self):
+        """A Windows user name like Nick[DE]: glob takes [DE] for a set of letters, and shadPS4 there was not found."""
+        roaming = self.root / 'Users' / 'Nick[DE]' / 'AppData' / 'Roaming'
+        lists = roaming / 'shadPS4' / 'game_data' / 'CUSA03173' / 'TrophyFiles' / 'trophy00' / 'Xml'
+        lists.mkdir(parents=True)
+        (lists / 'TROP.XML').write_text('<title-name>Bloodborne</title-name><trophy id="014" unlockstate="true"/>',
+                                        encoding='utf-8')
+        with mock.patch.dict(os.environ, {'APPDATA': str(roaming), 'LOCALAPPDATA': '', 'SystemDrive': str(self.root)}):
+            found = saves.trophy_records(self.root / 'port')
+        self.assertEqual(found, [('shadPS4', lists)])
+        self.assertEqual(saves.trophy_records_in(self.root / 'Users' / 'Nick[DE]'), [('shadPS4', lists)])
 
     def test_backups_never_overwrite_each_other(self):
         make_save(saves.target_dir(self.user))
@@ -290,6 +340,7 @@ class TrophyImportWindowTests(unittest.TestCase):
     (bbport_launcher_win.Launcher.offer_trophies)."""
 
     def setUp(self):
+        import bbport_launcher_win as L
         import bbport_trophies as trophies
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
@@ -307,7 +358,10 @@ class TrophyImportWindowTests(unittest.TestCase):
                                              showerror=lambda title, text: self.said.append(text)),
             filedialog=types.SimpleNamespace(askdirectory=lambda **_options: str(self.root)),
             import_trophies=lambda folder=None: self.picked.append(folder),
-            trophies_changed=lambda new, announce=True: self.changed.append((new, announce)))
+            trophies_changed=lambda new, announce=True: self.changed.append((new, announce)),
+            var=lambda key, store: types.SimpleNamespace(get=lambda: {'user_dir': self.user_dir}[key]),
+            saves_folder_gone=lambda: L.Launcher.saves_folder_gone(self.window))
+        self.user_dir = str(self.user)  # a saves folder of the player's own
         self.window.tracker.poll()  # the page shows what is there
         self.answer = True
 
@@ -344,6 +398,29 @@ class TrophyImportWindowTests(unittest.TestCase):
         self.assertIn(f'No achievements in {self.root} that are not here yet.', self.asked[-1])
         self.assertEqual((self.picked, self.said), ([self.root], []))
         self.assertEqual(self.target.read_text(encoding='utf-8'), '14 100\n')
+
+    def test_a_saves_folder_that_is_gone_is_not_made_anew(self):
+        """Its drive not connected, or renamed: an empty one made in its place would show no characters at the next
+        start (run.py user_folders), so the achievements are not added to one."""
+        old = self.root / 'BB.Old' / 'user' / 'trophies.log'
+        old.parent.mkdir(parents=True)
+        old.write_text('15 200\n', encoding='utf-8')
+        gone = self.root / 'E' / 'Bloodborne saves'
+        self.user_dir, self.target = str(gone), gone / 'trophies.log'
+        self.offer([('bbport (BB.Old)', old)])
+        self.assertIn(f'The saves folder {gone} is not there', self.said[-1])
+        self.assertFalse(gone.exists())
+
+    def test_this_ports_own_folder_before_a_first_start(self):
+        """No saves folder of the player's own: this port's user/ is made, as run.py makes it at the start."""
+        import bbport_trophies as trophies
+        old = self.root / 'BB.Old' / 'user' / 'trophies.log'
+        old.parent.mkdir(parents=True)
+        old.write_text('15 200\n', encoding='utf-8')
+        self.user_dir, self.target = '', self.root / 'new port' / 'user' / 'trophies.log'
+        self.offer([('bbport (BB.Old)', old)])
+        self.assertIn('Achievements added: 1 new.', self.said[-1])
+        self.assertEqual(trophies.read_log(self.target), {15: 200})
 
 
 if __name__ == '__main__':

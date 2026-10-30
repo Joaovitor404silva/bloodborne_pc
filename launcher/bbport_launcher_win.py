@@ -3507,7 +3507,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         """Achievements: the trophies of other installations (another port folder, shadPS4 and its forks, those of
         the Windows before, or under a folder the player picks) added to this port's, after a copy of its
         trophies.log (bbport_trophies.add_unlocks). The search walks folders: in a helper thread."""
-        if getattr(self, 'trophy_searching', False):
+        if getattr(self, 'trophy_searching', False) or self.saves_folder_gone():
             return
         self.trophy_searching = True
         self.trophy_import_note.configure(text=_('Looking for achievements on this PC…'))
@@ -3523,6 +3523,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 found = []
             self.ui_calls.put(lambda: self.offer_trophies(found, target, folder))
         threading.Thread(target=work, daemon=True).start()
+
+    def saves_folder_gone(self):
+        """A saves folder of the player's own that is not there (missing_saves_folder): said, and True. The
+        achievements are never added to one made anew in its place."""
+        problem = missing_saves_folder({'user_dir': self.var('user_dir', 'app').get()})
+        if problem:
+            self.messagebox.showerror('Bloodborne', problem)
+        return bool(problem)
 
     def offer_trophies(self, found, target, folder=None):
         """The search's result: the installations with trophies that are not here yet, added on Yes; else a
@@ -3551,7 +3559,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         for _where, _path, unlocks in found:
             for trophy, when in unlocks.items():
                 union[trophy] = min(when, union.get(trophy, when))
+        if self.saves_folder_gone():  # its drive went away during the search
+            return
         try:
+            target.parent.mkdir(parents=True, exist_ok=True)  # this port's own user/ before a first start, as run.py
             added, copy = trophies.add_unlocks(union, target)
         except OSError as error:
             self.messagebox.showerror('Bloodborne', _('Could not add the achievements: {}').format(error))
@@ -5813,14 +5824,20 @@ def start_problem(settings):
     problem = bbport_help.system_problem(settings.get('game_dir'))
     if problem:
         return problem, 'game'
-    # A saves folder of the player's own on a drive that is not connected, or renamed: an empty one made in its
-    # place would show no characters, and the game would start new ones there.
+    problem = missing_saves_folder(settings)
+    return (problem, 'saves') if problem else None
+
+
+def missing_saves_folder(settings):
+    """The message for a saves folder of the player's own on a drive that is not connected, or renamed: an empty
+    one made in its place would show no characters, and the game would start new ones there. None when it is there
+    or none is set (this port's own, user/, is made at the start)."""
     user = str(settings.get('user_dir') or '').strip()
     if user and not Path(user).is_dir():
         return _('The saves folder {} is not there: its drive is not connected, or the folder was renamed or moved. '
                  'Connect the drive, or choose the saves folder again.',
                  'Папки сохранений {} нет: её диск не подключён, или папку переименовали или переместили. Подключите '
-                 'диск или выберите папку сохранений заново.').format(user), 'saves'
+                 'диск или выберите папку сохранений заново.').format(user)
     return None
 
 

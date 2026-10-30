@@ -749,13 +749,36 @@ def bring_trophies(save, user_dir):
 # This port keeps them in <saves folder>/trophies.log; shadPS4 and its forks in the game's trophy list,
 # <data>/game_data/<title>/TrophyFiles/trophy00/Xml/TROP.XML (older ones) or <data>/home/<user>/trophy/<NP id>/Xml/
 # TROP.XML. They are found as scan() finds saves: the other versions' known folders, also those of the Windows
-# before a new installation (Windows.old), and the folders beside this port and the game.
-TROPHY_LISTS = ('game_data/*/TrophyFiles/*/Xml/TROP*.XML', 'home/*/trophy/*/Xml/TROP*.XML')
-TROPHY_LIST = re.compile(r'^TROP.*\.XML$', re.I)
+# before a new installation (Windows.old), and the folders beside this port and the game. A shadPS4 installation
+# is one record, its Xml folder: it may keep the unlocks in each language's list (TROP_xx.XML) as well.
+TROPHY_LISTS = ('game_data/*/TrophyFiles/*/Xml', 'home/*/trophy/*/Xml')
+# Where shadPS4's data folder lies under a folder the player picks: the folder itself, in it (%APPDATA%), in a
+# user's or a drive's AppData, also the Windows before (Windows.old). On a drive that is deeper than the walk goes.
+TROPHY_DATA = ('', '*', 'Roaming/*', 'AppData/Roaming/*', 'Users/*/AppData/Roaming/*',
+               'Windows.old/Users/*/AppData/Roaming/*')
+# Not walked for them: Windows' and the programs' folders (on a drive the walk's limit goes to likely places, and
+# AppData's shadPS4 is found by TROPHY_DATA), Seamless co-op's saves (run.py COOP_SAVES: this port's own co-op
+# trophies, no other installation) and the game test's copy of the saves in %TEMP% (bbport_benchmark).
+TROPHY_SKIP = {'appdata', 'programdata', 'program files (x86)', '$recycle.bin', 'system volume information',
+               'recovery', 'perflogs', '$windows.~bt', '$windows.~ws', 'temp', 'seamless-coop', 'bbport-test'}
+
+
+def trophy_lists(folder, places=TROPHY_DATA):
+    """The Xml folders with shadPS4 trophy lists of the data folders in `places` under `folder`."""
+    base, found = glob.escape(str(folder)), set()
+    for place in places:
+        for pattern in TROPHY_LISTS:
+            for name in glob.glob(os.path.join(base, place, pattern)):
+                try:
+                    if any(trophies.TROPHY_LIST.match(entry) for entry in os.listdir(name)):
+                        found.add(Path(name))
+                except OSError:
+                    continue
+    return sorted(found)
 
 
 def trophy_label(path):
-    """Which installation a trophies.log or a TROP.XML belongs to, from where it is."""
+    """Which installation a trophies.log or an Xml folder of trophy lists belongs to, from where it is."""
     path = Path(path)
     if path.name.lower() == trophies.LOG_NAME:
         return label_for(path.parent / 'savedata' / '1' / DEFAULT_TITLE / SAVE_DIR)
@@ -770,8 +793,9 @@ def trophy_label(path):
 
 
 def walk_trophies(roots, depth=9, limit=30000):
-    """trophies.log files and TROP.XML trophy lists (in an Xml folder) under `roots`, skipping the big folders of
-    dumps and ports, as walk() does for saves."""
+    """trophies.log files and Xml folders of trophy lists under `roots`, skipping the big folders of dumps, ports
+    and Windows, as walk() does for saves. A shadPS4 data folder met on the way (a portable one) is looked into at
+    once: its lists lie five folders further down."""
     found, seen = [], 0
     level = [Path(r) for r in roots if r and Path(r).is_dir()]
     for _ in range(depth + 1):
@@ -781,17 +805,25 @@ def walk_trophies(roots, depth=9, limit=30000):
                 entries = list(os.scandir(folder))
             except OSError:
                 continue
+            data = False
             for entry in entries:
                 name = entry.name.lower()
                 try:
                     if entry.is_dir():
                         seen += 1
-                        if name not in SKIP and name not in OWN_COPIES and not name.endswith('.sce_sys'):
+                        data = data or name in ('game_data', 'home')
+                        if name not in SKIP and name not in OWN_COPIES and name not in TROPHY_SKIP and \
+                                not name.endswith('.sce_sys'):
                             following.append(Path(entry.path))
-                    elif name == trophies.LOG_NAME or (folder.name.lower() == 'xml' and TROPHY_LIST.match(entry.name)):
+                    elif name == trophies.LOG_NAME:
                         found.append(Path(entry.path))
+                    elif folder.name.lower() == 'xml' and trophies.TROPHY_LIST.match(entry.name) and \
+                            folder not in found:
+                        found.append(folder)  # a copy of one elsewhere
                 except OSError:
                     continue
+            if data:
+                found += trophy_lists(folder, ('',))
             if seen > limit:
                 return found
         level = following
@@ -805,20 +837,17 @@ def trophy_records(port_dir, game_dir='', exclude=()):
     for pattern in sources(port_dir, game_dir):
         roots = [saves_root(folder) for folder in glob.glob(pattern)]
         paths += [root / trophies.LOG_NAME for root in roots if root]
-    appdata = [os.environ.get('APPDATA', '')]
-    appdata += glob.glob(os.path.join(os.environ.get('SystemDrive', 'C:') + os.sep, 'Windows.old', 'Users', '*',
-                                      'AppData', 'Roaming'))
-    for folder in filter(None, appdata):
-        for data in glob.glob(os.path.join(folder, '*')):
-            paths += [Path(name) for pattern in TROPHY_LISTS for name in glob.glob(os.path.join(data, pattern))]
+    if os.environ.get('APPDATA'):
+        paths += trophy_lists(os.environ['APPDATA'], ('*',))
+    paths += trophy_lists(os.environ.get('SystemDrive', 'C:') + os.sep, ('Windows.old/Users/*/AppData/Roaming/*',))
     paths += walk_trophies([Path(port_dir).parent] + ([Path(game_dir).parent] if game_dir else []))
     return unique_records(paths, exclude)
 
 
 def trophy_records_in(root, exclude=()):
-    """[(where, path)] of the trophy records at or under a folder the player picked (an old port folder, the drive
-    of an old PC)."""
-    return unique_records(walk_trophies([root]), exclude)
+    """[(where, path)] of the trophy records at or under a folder the player picked (an old port folder, a shadPS4
+    folder, the drive of an old PC): shadPS4's known places first (TROPHY_DATA), then the walk."""
+    return unique_records(trophy_lists(root) + walk_trophies([root]), exclude)
 
 
 def unique_records(paths, exclude=()):
@@ -832,7 +861,7 @@ def unique_records(paths, exclude=()):
     for path in paths:
         try:
             key = os.path.normcase(str(Path(path).resolve()))
-            if key in seen or not Path(path).is_file():
+            if key in seen or not Path(path).exists():  # a trophies.log, or an Xml folder of trophy lists
                 continue
         except OSError:
             continue

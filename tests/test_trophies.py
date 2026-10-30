@@ -57,6 +57,16 @@ class TrophyTests(unittest.TestCase):
         other.write_text('<title-name>Another game</title-name><trophy id="1" unlockstate="true"/>', encoding='utf-8')
         self.assertEqual(trophies.read_unlocks(other), {})
         self.assertEqual(trophies.read_unlocks(self.user / 'missing.xml'), {})
+        # An installation's Xml folder: every language's list, the earliest time of each trophy.
+        folder = self.user / 'Xml'
+        folder.mkdir()
+        xml.replace(folder / 'TROP.XML')
+        (folder / 'TROP_08.XML').write_text('<title-name>Bloodborne</title-name><trophy id="014" unlockstate="true" '
+                                            'timestamp="1789000000"/><trophy id="016" unlockstate="true" '
+                                            'timestamp="1789000000"/>', encoding='utf-8')
+        (folder / 'TROPCONF.XML').write_text('<title-name>Bloodborne</title-name><trophy id="017"/>', encoding='utf-8')
+        self.assertEqual(trophies.read_unlocks(folder), {14: 1789000000, 16: 1789000000, 21: 1780000000,
+                                                         22: 1790000123})
 
     def test_another_installations_unlocks_are_added_and_none_removed(self):
         """R86: a player with a new Windows merged two trophies.log by hand."""
@@ -73,6 +83,10 @@ class TrophyTests(unittest.TestCase):
         self.assertEqual(trophies.add_unlocks(found, target), (0, None))  # once is enough: no second copy
         self.assertEqual(len(list(self.user.glob('trophies.log.*.bak'))), 1)
         fresh = self.user / 'new' / 'trophies.log'
+        with self.assertRaises(OSError):  # a saves folder that is not there is never made here
+            trophies.add_unlocks({14: 100}, fresh)
+        self.assertFalse(fresh.parent.exists())
+        fresh.parent.mkdir()
         self.assertEqual(trophies.add_unlocks({14: 100}, fresh), (1, None))  # nothing to copy yet
         self.assertEqual(trophies.read_log(fresh), {14: 100})
 
