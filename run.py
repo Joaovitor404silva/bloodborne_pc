@@ -605,10 +605,22 @@ def main():
         fail(f'The game folder {game} has no {" / ".join(missing)}: the game was not unpacked completely. '
              'Unpack the base game into a new, empty folder again and copy the 1.09 update over it.')
     if env.get('BB_SKIP_GAME_CHECK') != '1':
+        from clean_eboot import CLEAN_IMAGE, note as eboot_note, restore as restore_eboot
         try:
-            prepatched = image_sha256(game) == LANCE_60FPS_IMAGE
+            digest = image_sha256(game)
         except (OSError, ValueError, KeyError, IndexError):
-            prepatched = False  # prepare.py reports unreadable executables itself
+            digest = None  # prepare.py reports unreadable executables itself
+        # Not the clean 1.09 eboot.bin (a 60 fps one, a patched one, one cut off): the clean one comes back when it
+        # is still on this PC (clean_eboot.py), the other one is kept beside it.
+        if digest != CLEAN_IMAGE:
+            try:
+                restored = restore_eboot(game)
+            except Exception:  # a repair: never in the way of a start
+                restored = None
+            if restored:
+                print(eboot_note(restored))
+                digest = CLEAN_IMAGE
+        prepatched = digest == LANCE_60FPS_IMAGE
         if prepatched:
             fail("This eboot.bin has Lance McDonald's 60 fps patch applied to it, which crashes the "
                  'game when the gestures menu opens (the port has its own 60 fps): copy eboot.bin '

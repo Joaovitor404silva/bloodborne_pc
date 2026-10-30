@@ -112,8 +112,7 @@ class GraphicsCardTests(unittest.TestCase):
     def test_the_play_page_shows_it_only_when_the_port_cannot_start(self):
         source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
         self.assertIn("self.check_line('gpu', _('✗ The graphics card cannot run the port: see Help') if "
-                      "self.gpu_problem() else\n                        '⚠ ' + _('{} is not used: its Vulkan driver "
-                      "does not answer (Help)').format(unseen[0])\n                        if unseen else ''", source)
+                      "self.gpu_problem() else\n                        self.gpu_unused_line(),", source)
 
     # A player's RTX 5070 Ti: in Windows' list, not in Vulkan's; the game ran on the processor's graphics.
     UNSEEN = {'ok': True, 'problem': None, 'device': {'name': 'AMD Radeon(TM) Graphics', 'api': '1.4.315',
@@ -134,6 +133,22 @@ class GraphicsCardTests(unittest.TestCase):
         self.assertTrue(window.gpu_problem().startswith('Windows has NVIDIA GeForce RTX 5070 Ti, but its Vulkan '
                                                         'driver does not answer. Install'))  # not "too old"
         self.assertEqual(window.gpu_check()[:2], ('bad', 'gpu_unseen'))
+
+    def test_a_card_its_driver_holds_back(self):
+        # R29: a GTX 1060 whose driver offers Vulkan 1.2, the game on the processor's Radeon Vega.
+        verdict = {**self.UNSEEN, 'unseen': [], 'device': {'name': 'AMD Radeon(TM) Vega 8 Graphics', 'missing': []},
+                   'held_back': [{'name': 'NVIDIA GeForce GTX 1060 6GB', 'missing': ['Vulkan 1.3 (1.2.175)']}]}
+        window = self.window(verdict)
+        self.assertEqual(window.unused_card(), 'NVIDIA GeForce GTX 1060 6GB')
+        self.assertEqual(window.gpu_check()[:2], ('warn', 'gpu_unseen'))
+        self.assertTrue(window.gpu_unseen().startswith('NVIDIA GeForce GTX 1060 6GB is not used: its driver lacks '
+                                                       'Vulkan 1.3 (1.2.175), so the game runs on AMD Radeon(TM) '
+                                                       'Vega 8 Graphics'))
+        self.assertEqual(window.gpu_unused_line(),
+                         '⚠ NVIDIA GeForce GTX 1060 6GB is not used: its driver is too old for the port (Help)')
+        self.assertEqual(self.window(self.UNSEEN).gpu_unused_line(),
+                         '⚠ NVIDIA GeForce RTX 5070 Ti is not used: its Vulkan driver does not answer (Help)')
+        self.assertEqual(self.window(self.verdict(None, 'RX 9070 XT')).gpu_unused_line(), '')
 
     def test_asked_once_before_play(self):
         window = self.window(self.UNSEEN, answer=False)

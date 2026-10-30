@@ -9,11 +9,12 @@ prints one JSON object:
 
     {"ok": true/false, "problem": null | "loader" | "loader_version" | "devices" | "device",
      "loader": "1.3.280", "device": {"name", "api", "type", "missing": [...]}, "devices": [...],
-     "unseen": ["NVIDIA GeForce RTX 5070 Ti"]}
+     "unseen": ["NVIDIA GeForce RTX 5070 Ti"], "held_back": [{"name", "missing": [...]}]}
 
 "unseen": graphics cards Windows has (DXGI) and Vulkan does not list, while the game would not run on a
 working discrete card: a GeForce whose Vulkan driver does not answer leaves the game on the processor's
-graphics (a player's RTX 5070 Ti, 30 October 2026).
+graphics (a player's RTX 5070 Ti, 30 October 2026). "held_back": discrete cards Vulkan lists but whose driver
+lacks something, while the game runs on the processor's graphics (only then present).
 
 tests/test_vulkan_check.py keeps API, REQUIRED_EXTENSIONS and REQUIRED_FEATURES equal to the renderer's."""
 import ctypes
@@ -88,6 +89,11 @@ def evaluate(loader, devices, gpu_id=None, adapters=()):
     # A card Vulkan does not see matters when the game would not run on a working discrete one.
     if result['problem'] in ('devices', 'device') or result['ok'] and result['device']['type'] != 'discrete':
         result['unseen'] = unseen(devices, adapters)
+    # A discrete card its driver holds back (Vulkan 1.2, an extension missing) while the game runs on the processor's
+    # graphics: a GTX 1060 with an old driver left the game on a Radeon Vega (R29).
+    if result['ok'] and result['device']['type'] != 'discrete':
+        result['held_back'] = [{'name': d['name'], 'missing': d['missing']} for d in result['devices']
+                               if d['type'] == 'discrete' and d['missing']]
     return result
 
 

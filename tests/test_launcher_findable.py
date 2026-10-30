@@ -21,6 +21,7 @@ IMPORTANT = {
     'add_to_steam': 'button:steam',
     'backup_now': 'button:backup',
     'open_bug_benchmark': 'button:benchmark',
+    'check_game_files': 'button:game_files',
 }
 
 

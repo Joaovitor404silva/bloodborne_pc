@@ -245,6 +245,7 @@ import bbport_lang_mistakes  # noqa: E402,F401 (the repairs of player mistakes, 
 import bbport_lang_vram  # noqa: E402,F401 (the video memory warning's switch)
 import bbport_lang_latency  # noqa: E402,F401 (the low latency options)
 import bbport_lang_gpu  # noqa: E402,F401 (a graphics card Windows has and Vulkan does not see)
+import bbport_lang_ready  # noqa: E402,F401 (the start's other prerequisites: runtime, folders, firewall)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
 import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
@@ -2428,7 +2429,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         ttk.Label(info, text=_('Ready check', 'Проверка'), style='Card.Section.TLabel').pack(anchor='w', pady=(0, px(8)))
         # One line per thing that matters; a line that is not fine leads to its fix with a click.
         self.checks, self.check_lines, self.check_targets = {}, {}, {}
-        for key in ('news', 'system', 'gpu', 'settings', 'game', 'saves', 'online', 'pool', 'cheats', 'fsr4'):
+        for key in ('news', 'system', 'gpu', 'runtime', 'settings', 'game', 'files', 'saves', 'online', 'firewall',
+                    'pool', 'cheats', 'fsr4'):
             line = ttk.Frame(info, style='Inner.TFrame')
             line.pack(fill='x', pady=px(4))
             icon = tk.Label(line, text='', bg=CARD, fg=MUTED, font=(theme.ICONS, 11))
@@ -4383,13 +4385,19 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                         (lambda: self.show('game')) if not info else
                         (lambda: self.open_topic('version')) if info[1] != PATCH_VERSION else None)
         self.check_line('saves', save, lambda: self.show('saves'))
-        # The start check (scripts/vulkan_check.py): only when the port cannot start on the card, or when Windows
-        # has a card Vulkan does not see and the game runs on a slower one; Help says why.
-        unseen = (getattr(self, 'vulkan', None) or {}).get('unseen')
+        # The start check (scripts/vulkan_check.py): only when the port cannot start on the card, or when the game
+        # runs on a slower one than the PC has (Vulkan does not see it, or its driver holds it back); Help says why.
+        unused = self.unused_card()
         self.check_line('gpu', _('✗ The graphics card cannot run the port: see Help') if self.gpu_problem() else
-                        '⚠ ' + _('{} is not used: its Vulkan driver does not answer (Help)').format(unseen[0])
-                        if unseen else '',
-                        (lambda: self.open_topic('gpu_unseen')) if unseen else lambda: self.show('help'))
+                        self.gpu_unused_line(),
+                        (lambda: self.open_topic('gpu_unseen')) if unused else lambda: self.show('help'))
+        # The game folder in OneDrive or another synced folder (Help's check counts the files kept online only).
+        self.check_line('files', '⚠ ' + _('The game folder is in OneDrive or another synced folder: move it (Help)')
+                        if info and bbport_help.synced_game(self.var('game_dir', 'app').get()) else '',
+                        lambda: self.open_topic('game_location'))
+        # AMD's DirectX 12 FSR 4 and frame generation could not be loaded, and the Visual C++ runtime is missing.
+        self.check_line('runtime', '• ' + _('AMD FSR 4 needs the Microsoft Visual C++ Redistributable: click to '
+                                            'download it') if self.runtime_problem() else '', self.open_vc_redist)
         self.check_line('fsr4', _('• FSR 4 files missing: FSR 3.1 is used meanwhile. Click to download (30 MB)')
                         if missing and self.var('upscaler', 'ini').get() == 'fsr4' else '', self.download_fsr4)
         fsr411_ready, status = True, None
@@ -4403,6 +4411,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         signed_in = bool(name)
         self.check_line('online', ('⚠ ' + _('Online is on, but you are not signed in yet: sign in now')
                                    if online and not signed_in else ''), lambda: self.show('online'))
+        # Cancel at Windows' "allow this app" question: the firewall blocks the game's incoming connections.
+        self.check_line('firewall', '⚠ ' + _('Windows Firewall blocks the game: co-op can fail (Help)')
+                        if online and getattr(self, 'firewall_blocked', False) else '',
+                        lambda: self.open_topic('firewall'))
         previous = online and self.var('online_pool', 'app').get() == 'huntersdream'  # nudged to SuperMedo Server
         self.check_line('pool', '• ' + _("The Hunter's Dream is the previous server, and connections there often "
                                          'drop: switch to SuperMedo Server') if previous else '',
@@ -4559,6 +4571,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.refresh_status()
         self.ui_calls.put(fsr411_done)
         self.fg401_support = bbport_fg401.query_versions(PORT_DIR, env)
+        self.firewall_blocked = bbport_help.firewall_blocks(PORT_DIR / 'bin' / 'bb-probe.exe')
         self.gpu_line = hardware.best_gpu_line(names)  # 'Name, discrete, 16304 MiB' for the hardware check
         try:
             self.cpu, self.ram = hardware.detect_cpu(), hardware.memory_gb()

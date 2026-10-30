@@ -121,6 +121,19 @@ class UnseenCardTests(unittest.TestCase):
                    adapter('DisplayLink USB Device', 0x17E9, 0x4300)]
         self.assertEqual(V.evaluate(V13, [apu], adapters=virtual)['unseen'], [])
 
+    def test_a_card_its_driver_holds_back(self):
+        # R29: a GTX 1060 with Vulkan 1.2 from an old driver; the game picks the Vega, which has 1.3.
+        gtx = card('NVIDIA GeForce GTX 1060 6GB', api=V12, vendor=0x10DE, device_id=0x1C03, memory=6 << 30)
+        vega = card('AMD Radeon(TM) Vega 8 Graphics', kind=1, vendor=0x1002, device_id=0x15DD, memory=2 << 30)
+        result = V.evaluate(V13, [gtx, vega])
+        self.assertEqual(result['device']['name'], 'AMD Radeon(TM) Vega 8 Graphics')
+        self.assertEqual(result['held_back'], [{'name': 'NVIDIA GeForce GTX 1060 6GB',
+                                                'missing': ['Vulkan 1.3 (1.2.0)']}])
+        self.assertEqual(result['unseen'], [])  # Vulkan sees it
+        # The game on a discrete card: nothing held back to say.
+        self.assertNotIn('held_back', V.evaluate(V13, [card('GeForce RTX 3060'), vega]))
+        self.assertEqual(V.evaluate(V13, [vega])['held_back'], [])
+
     def test_no_driver_at_all_is_said_otherwise(self):
         self.assertEqual(V.evaluate(None, [], adapters=[self.RTX])['unseen'], [])  # 'loader' names the fix
 

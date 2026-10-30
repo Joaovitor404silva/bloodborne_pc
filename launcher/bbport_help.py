@@ -155,9 +155,9 @@ TOPICS = {
          'Close overlays such as MSI Afterburner and RivaTuner (RTSS): they hook into the graphics driver.']),
     'gpu_unseen': (
         'The game does not use your graphics card',
-        "Windows has the card, but its Vulkan driver does not answer: the game then runs on the processor's "
-        'graphics, much slower, or finds no card at all. Usually a driver update went wrong, or one driver was '
-        'installed over another.',
+        "Windows has the card, but its Vulkan driver does not answer or is too old for the port: the game then runs "
+        "on the processor's graphics, much slower, or finds no card at all. Usually a driver update went wrong, or "
+        'one driver was installed over another.',
         ['NVIDIA: download the current driver from nvidia.com, start it, choose Custom (Advanced) and tick Perform '
          'a clean installation.',
          'AMD: start the current AMD Software (Adrenalin) installer and choose Factory Reset.',
@@ -166,6 +166,34 @@ TOPICS = {
          'again.',
          'VK_ICD_FILENAMES or VK_DRIVER_FILES in the Windows environment variables: delete them. Vulkan then loads '
          'only the drivers they name.']),
+    'vc_runtime': (
+        'The Microsoft Visual C++ Redistributable is missing',
+        "AMD's FSR 4 and frame generation files for DirectX 12 need it. Without it Windows cannot load them, and "
+        'the launcher offers them as unavailable.',
+        ['Download it from Microsoft (the button below), run it and let it install.',
+         'Then close the launcher and start it again.']),
+    'game_location': (
+        'The game folder is in a synced folder',
+        'OneDrive, Dropbox and Google Drive keep files online only until they are opened, and lock them while '
+        'they sync: the game then hangs while loading or shows only a black screen.',
+        ['Move the whole game folder (the one with eboot.bin) to a plain folder like C:\\Games\\CUSA03173.',
+         'Then choose it again (the button below).']),
+    'game_files': (
+        'Game files are damaged',
+        'Files of the game folder are not those of the clean 1.09: a copy or an unpack that went wrong, or a mod '
+        'copied into the game folder. The game can then hang while loading, lose parts of the map, or crash in '
+        'one place.',
+        ['Unpack the base game and the 1.09 update into a new, empty folder again, and copy the update over the '
+         'base game.',
+         'Or copy only the files the check names from that new unpack into your game folder.',
+         'Mods belong on the Mods page, not in the game folder.']),
+    'firewall': (
+        'Windows Firewall blocks the game',
+        'Windows asked whether bb-probe.exe may use the network, and the answer was Cancel: it now blocks the '
+        "game's incoming connections, and summons or joining others can fail.",
+        ['Click the button below: Windows Defender Firewall with Advanced Security opens.',
+         'Inbound Rules: delete the rules named bb-probe.exe that have a red sign (right-click > Delete).',
+         'Start the game online, and when Windows asks again, click Allow.']),
     'black_screen': (
         'Only a black screen',
         'The game starts but shows nothing, or the picture breaks after a driver update: its shader cache no longer '
@@ -220,8 +248,9 @@ TOPICS = {
         ['Click More info, then Run anyway.']),
 }
 TOPIC_ORDER = ['eboot_modified', 'eboot_truncated', 'eboot_unreadable', 'program_files', 'version', 'update_only',
-               'empty_files', 'page_file', 'antivirus', 'location', 'save_lost', 'controller', 'black_screen', 'vram',
-               'gpu_unseen', 'driver', 'shader_cache', 'smartscreen']
+               'empty_files', 'game_files', 'page_file', 'antivirus', 'location', 'game_location', 'save_lost',
+               'controller', 'black_screen', 'vram', 'gpu_unseen', 'driver', 'vc_runtime', 'shader_cache',
+               'firewall', 'smartscreen']
 # Buttons under a topic's steps: (text, launcher method). They do the step for the player.
 TOPIC_ACTIONS = {'black_screen': [('Clear the shader cache', 'clear_cache')],
                  'page_file': [('Open the memory settings', 'open_memory_settings')],
@@ -233,6 +262,10 @@ TOPIC_ACTIONS = {'black_screen': [('Clear the shader cache', 'clear_cache')],
                  'update_only': [('Choose the game folder', 'choose_game_page')],
                  'save_lost': [('Open the backups', 'open_backups')],
                  'controller': [('Open the controller test', 'open_controller_test')],
+                 'vc_runtime': [('Download it from Microsoft', 'open_vc_redist')],
+                 'game_location': [('Choose the game folder', 'choose_game_page')],
+                 'game_files': [('Check the game files', 'check_game_files')],
+                 'firewall': [('Open the firewall settings', 'open_firewall_settings')],
                  'shadnet_rejected': [('Open Online play', 'open_online_page')]}
 TOPIC_ORDER += [key for key in TOPICS if key not in TOPIC_ORDER]  # topics added later: at the end
 
@@ -344,11 +377,29 @@ def eboot_state(folder):
     return ('clean' if clean else 'modified'), len(data)
 
 
+def restore_eboot(game):
+    """scripts/clean_eboot.py's restore: (source, backup) when eboot.bin was put back from a clean copy on this PC,
+    with a line for the next start's log; None otherwise. A repair never stops the check."""
+    try:
+        import clean_eboot
+        import bbport_textfile
+        restored = clean_eboot.restore(game)
+    except Exception:
+        return None
+    if restored:
+        bbport_textfile.REPAIRS.append(clean_eboot.note(restored))
+    return restored
+
+
+ONLINE_ONLY = 0x400000 | 0x40000 | 0x1000  # FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS, _RECALL_ON_OPEN, _OFFLINE
+
+
 def scan_game(folder, limit=60000):
-    """{'files', 'bytes', 'empty': [first few empty files], 'shaders': bool} of a game folder."""
+    """{'files', 'bytes', 'empty': [first few empty files], 'online_only': number of files a cloud program
+    (OneDrive) keeps online only, 'first_online': the first of them, 'shaders': bool} of a game folder."""
     root = Path(folder)
-    files = size = 0
-    empty = []
+    files = size = online = 0
+    empty, first_online = [], None
     stack = [root]
     while stack and files < limit:
         try:
@@ -361,14 +412,78 @@ def scan_game(folder, limit=60000):
                     stack.append(entry.path)
                 elif entry.is_file(follow_symlinks=False):
                     files += 1
-                    length = entry.stat().st_size
-                    size += length
-                    if not length and len(empty) < 5:
+                    stat = entry.stat()
+                    size += stat.st_size
+                    if not stat.st_size and len(empty) < 5:
                         empty.append(os.path.relpath(entry.path, root))
+                    if getattr(stat, 'st_file_attributes', 0) & ONLINE_ONLY:
+                        online += 1
+                        first_online = first_online or os.path.relpath(entry.path, root)
             except OSError:
                 pass
-    return {'files': files, 'bytes': size, 'empty': empty,
+    return {'files': files, 'bytes': size, 'empty': empty, 'online_only': online, 'first_online': first_online,
             'shaders': (root / 'dvdroot_ps4' / 'shader' / 'gxshader.shaderbnd.dcx').is_file()}
+
+
+def synced_game(game_dir):
+    """Whether the game folder lies in OneDrive or another cloud sync folder (bbport_launcher_win.synced_folder)."""
+    synced = getattr(L, 'synced_folder', None)
+    return bool(game_dir) and ('onedrive' in str(game_dir).lower() or bool(synced and synced(game_dir)))
+
+
+# The Microsoft Visual C++ runtime that AMD's DirectX 12 FSR 4 and frame generation files load (their imports; the
+# port's own programs need only Windows' universal C runtime).
+VC_RUNTIME = ('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll')
+VC_REDIST = 'https://aka.ms/vs/17/release/vc_redist.x64.exe'  # Microsoft's own link to the x64 installer
+
+
+def missing_runtime(port_dir, system=None):
+    """The VC_RUNTIME files that are neither in Windows' System32 nor beside the game's program (bin)."""
+    system = Path(system or Path(os.environ.get('SystemRoot', r'C:\Windows')) / 'System32')
+    return [name for name in VC_RUNTIME
+            if not (system / name).is_file() and not (Path(port_dir or '.') / 'bin' / name).is_file()]
+
+
+def runtime_failed(*results):
+    """Whether any of the AMD feature checks' answers (bbport_fsr41, bbport_fg401) says its files could not be
+    loaded (reason 'runtime'), however deep it sits in them."""
+    stack = list(results)
+    while stack:
+        item = stack.pop()
+        if isinstance(item, dict):
+            if item.get('reason') == 'runtime':
+                return True
+            stack += item.values()
+        elif isinstance(item, (list, tuple)):
+            stack += item
+    return False
+
+
+FIREWALL_RULES = r'SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules'
+
+
+def firewall_blocks(program, rules=None):
+    """Whether an active Windows Firewall rule blocks the program's incoming connections (what Cancel at Windows'
+    "allow this app" question leaves). rules: the rule strings, read from the registry (no admin needed) when
+    None; 'v2.10|Action=Block|Active=TRUE|Dir=In|…|App=C:\\…\\bb-probe.exe|…'."""
+    if rules is None:
+        try:
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, FIREWALL_RULES) as key:
+                rules = [str(winreg.EnumValue(key, i)[1]) for i in range(winreg.QueryInfoKey(key)[1])]
+        except (OSError, ImportError):
+            return False
+    wanted = os.path.normcase(os.path.abspath(str(program)))
+    for rule in rules:
+        fields = {}
+        for part in rule.split('|'):
+            name, _sep, value = part.partition('=')
+            fields.setdefault(name.lower(), value)
+        if fields.get('action', '').lower() == 'block' and fields.get('active', '').upper() == 'TRUE' and \
+                fields.get('dir', '').lower() == 'in' and fields.get('app') and \
+                os.path.normcase(os.path.abspath(os.path.expandvars(fields['app']))) == wanted:
+            return True
+    return False
 
 
 def mods_with_eboot(mods_dir):
@@ -473,6 +588,16 @@ def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):
         # '2|': checked per patch group; an older launcher's answer is not reused.
         key = f'2|{(game / "eboot.bin").resolve()}|{stat.st_size}|{int(stat.st_mtime)}'
         state = cached.get('state') if cached and cached.get('key') == key else eboot_state(game)[0]
+        # Not the clean one: the clean copy back when it is still on this PC (scripts/clean_eboot.py), silently,
+        # the other one kept beside it.
+        restored = restore_eboot(game) if state != 'clean' else None
+        if restored:
+            source, backup = restored
+            checks.append(('ok', None, _('eboot.bin was not the clean 1.09 file: the clean copy from {0} is used '
+                                         'now, the other one is kept as {1}.').format(source.parent, backup.name)))
+            stat = (game / 'eboot.bin').stat()
+            key = f'2|{(game / "eboot.bin").resolve()}|{stat.st_size}|{int(stat.st_mtime)}'
+            state = eboot_state(game)[0]
         eboot = {'key': key, 'state': state}
         size = number(stat.st_size)
         values = {}
@@ -511,6 +636,14 @@ def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):
         else:
             checks.append(('ok', None, _('The game folder is complete ({} files, {} GB).').format(
                 number(scan['files']), number(scan['bytes'] / 1024 ** 3, 1))))
+        # OneDrive and the like: files kept online only hang the game while it loads them.
+        if scan.get('online_only'):
+            checks.append(('bad', 'game_location', _('{0} files of the game are kept online only by OneDrive or '
+                                                     'another cloud program, for example {1}: the game hangs when '
+                                                     'it loads them.').format(number(scan['online_only']),
+                                                                              scan['first_online'])))
+        elif synced_game(game):
+            checks.append(('warn', 'game_location', _('The game folder is in a synced folder: {}.').format(game)))
     problem = system_problem(game) if game and (game / 'eboot.bin').is_file() else None
     if problem:
         checks.append(('bad', None, problem))
@@ -534,6 +667,9 @@ def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):
         checks.append(('ok', None, _("The port's files all belong to version {}.").format(version)))
     if location_problem(port_dir):
         checks.append(('warn', 'location', _('The port is in {}.').format(port_dir)))
+    if port_dir and firewall_blocks(Path(port_dir) / 'bin' / 'bb-probe.exe'):
+        checks.append(('warn', 'firewall', _("Windows Firewall blocks the game's incoming connections: co-op can "
+                                             'fail.')))
     return checks, eboot
 
 
@@ -571,6 +707,17 @@ class HelpMixin:
         self.help_button.pack(side='right')
         self.help_list = tk.Frame(card, bg=theme.CARD)
         self.help_list.pack(fill='x', pady=(px(10), 0))
+        # Every game file against the clean 1.09's checksums: minutes, so only on a click.
+        files = tk.Frame(card, bg=theme.CARD)
+        files.pack(fill='x', pady=(px(10), 0))
+        self.files_button = ttk.Button(files, text=_('Check the game files'), style='Card.TButton',
+                                       command=self.check_game_files)
+        self.files_button.pack(side='left')
+        self.index_entry(self.files_button, _('Check the game files'), key='button:game_files')
+        self.files_note = tk.Label(files, text=_('Compares every file with the clean 1.09 (a few minutes).'),
+                                   bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
+                                   wraplength=px(560))
+        self.files_note.pack(side='left', padx=(px(12), 0))
         self.link_row(f, _('Set everything up again, step by step.'), None, _('Repeat the setup'), self.open_setup)
         # What's new again, whenever: the Play page's line goes once it was seen (bbport_news).
         news = self.link_row(f, _('What changed in this version, and what to know.'), None, _("What's new", 'Что нового'),
@@ -706,6 +853,10 @@ class HelpMixin:
             self.app['eboot_check'] = eboot
         gpu = self.gpu_check()
         checks = checks + ([gpu] if gpu else [])
+        if self.runtime_problem():
+            checks.append(('warn', 'vc_runtime', _("AMD's FSR 4 files could not be loaded: the Microsoft Visual C++ "
+                                                   'Redistributable is missing ({}).').format(
+                ', '.join(missing_runtime(L.PORT_DIR if L else None)))))
         self.help_results = checks
         for child in self.help_list.winfo_children():
             child.destroy()
@@ -716,7 +867,60 @@ class HelpMixin:
                 self.link_to_topic(line, topic).pack(side='right', anchor='n')
         self.refresh_status()
 
+    def runtime_problem(self):
+        """Whether AMD's DirectX 12 FSR 4 or frame generation files could not be loaded (their checks' reason
+        'runtime') while the Visual C++ runtime they need is missing: then that is why."""
+        return runtime_failed(getattr(self, 'fsr411_support', None), getattr(self, 'fg401_support', None)) and \
+            bool(missing_runtime(L.PORT_DIR if L else None))
+
     # the topics' buttons
+    def open_vc_redist(self):
+        webbrowser.open(VC_REDIST)
+
+    def open_firewall_settings(self):
+        os.startfile('wf.msc')  # Windows Defender Firewall with Advanced Security
+
+    def check_game_files(self):
+        """Help's button: every game file against the clean 1.09's checksums (scripts/game_files.py), in the
+        background, a few minutes for 29 GB; the result as lines under the installation check."""
+        if getattr(self, 'files_running', False):
+            return
+        game = self.var('game_dir', 'app').get()
+        self.show('help')
+        if not game or not (Path(game) / 'dvdroot_ps4').is_dir():
+            self.files_note.configure(text=_('No game folder chosen yet.'))
+            return
+        self.files_running = True
+        self.files_button.configure(state='disabled')
+        self.files_note.configure(text=_('Checking the game files… {}%').format(0))
+
+        def progress(done, total):
+            percent = int(done * 100 / max(1, total))
+            if percent != getattr(self, 'files_percent', -1):
+                self.files_percent = percent
+                self.ui_calls.put(lambda p=percent: self.files_note.configure(
+                    text=_('Checking the game files… {}%').format(p)))
+
+        def work():
+            try:
+                import game_files
+                result = game_files.check(game, progress)
+                bad = result['differ'] + result['missing']
+                text = (_('All {} game files are those of the clean 1.09.').format(number(result['checked']))
+                        if not bad else
+                        _('{0} of {1} game files differ from the clean 1.09 or are missing, for example: {2}. See '
+                          '"Game files are damaged" below.').format(number(len(bad)), number(result['checked']),
+                                                                   ', '.join(bad[:3])))
+            except Exception as error:  # a check must never take the launcher down
+                text, bad = _('The check stopped: {}').format(error), None
+
+            def done():
+                self.files_running = False
+                self.files_button.configure(state='normal')
+                self.files_note.configure(text=text, fg=theme.MUTED if not bad else theme.AMBER)
+            self.ui_calls.put(done)
+        threading.Thread(target=work, daemon=True).start()
+
     def open_memory_settings(self):
         import subprocess
         subprocess.Popen(['SystemPropertiesAdvanced.exe'])  # Advanced > Performance > Virtual memory
@@ -778,16 +982,28 @@ class HelpMixin:
             return None
         if verdict.get('ok'):
             device = verdict.get('device') or {}
-            if verdict.get('unseen'):
+            if self.unused_card():
                 return ('warn', 'gpu_unseen', self.gpu_unseen())
             return ('ok', None, _('Graphics card {0}: Vulkan {1} and everything else the port needs.').format(device.get('name', '?'), device.get('api', '?')))
         return ('bad', 'gpu_unseen' if verdict.get('unseen') else 'driver', self.gpu_problem())
 
+    def unused_card(self):
+        """The better card the game does not use (scripts/vulkan_check.py): one Vulkan does not see ('unseen'), or
+        one its driver holds back ('held_back'); None."""
+        verdict = getattr(self, 'vulkan', None) or {}
+        held = verdict.get('held_back') or []
+        return (verdict.get('unseen') or [None])[0] or (held[0]['name'] if held else None)
+
     def gpu_unseen(self):
-        """The card Windows has and Vulkan does not see (scripts/vulkan_check.py's 'unseen'), while the game would
-        run on a lesser one or on none, as a sentence; None when there is none."""
+        """Why the game does not use the better card (unused_card), while it would run on a lesser one or on none,
+        as a sentence; None when there is none."""
         verdict = getattr(self, 'vulkan', None) or {}
         unseen, device = verdict.get('unseen') or [], verdict.get('device') or {}
+        held = verdict.get('held_back') or []
+        if not unseen and held and verdict.get('ok'):
+            return _('{0} is not used: its driver lacks {1}, so the game runs on {2}, much slower. Install the '
+                     'current driver for {0} (clean installation), then restart the PC.').format(
+                held[0]['name'], ', '.join(held[0].get('missing', [])), device.get('name', '?'))
         if not unseen:
             return None
         if verdict.get('ok'):
@@ -796,6 +1012,15 @@ class HelpMixin:
                 unseen[0], device.get('name', '?'))
         return _('Windows has {0}, but its Vulkan driver does not answer. Install the driver for {0} anew (clean '
                  'installation), then restart the PC.').format(unseen[0])
+
+    def gpu_unused_line(self):
+        """The Play page's line for unused_card, '' without one."""
+        card = self.unused_card()
+        if not card:
+            return ''
+        if (getattr(self, 'vulkan', None) or {}).get('unseen'):
+            return '⚠ ' + _('{} is not used: its Vulkan driver does not answer (Help)').format(card)
+        return '⚠ ' + _('{} is not used: its driver is too old for the port (Help)').format(card)
 
     def gpu_problem(self):
         """Why the game's renderer would not start on this PC, or None: scripts/vulkan_check.py asks the
@@ -834,14 +1059,15 @@ class HelpMixin:
             if not self.messagebox.askyesno('Bloodborne', text, icon='warning'):
                 return False
             self.app['gpu_warned'] = card
-        # A card Vulkan does not see while the game runs on a slower one: asked once per card as well.
-        unseen = verdict.get('unseen') or []
-        if unseen and not problem and self.app.get('gpu_warned') != unseen[0]:
+        # A better card the game does not use (not seen, or held back by its driver) while it runs on a slower one:
+        # asked once per card as well.
+        unused = self.unused_card()
+        if unused and not problem and self.app.get('gpu_warned') != unused:
             if not self.messagebox.askyesno('Bloodborne', self.gpu_unseen() + '\n\n' + _('Start anyway?'),
                                             icon='warning'):
                 self.open_topic('gpu_unseen')
                 return False
-            self.app['gpu_warned'] = unseen[0]
+            self.app['gpu_warned'] = unused
         problem = memory_problem(self.var('output_res', 'ini').get())
         if problem:
             free, need, off = problem
