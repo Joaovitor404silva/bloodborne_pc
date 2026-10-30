@@ -69,9 +69,12 @@ BETAS_API = 'https://api.github.com/repos/emurphy04/bloodborne_pc/releases?per_p
 # The oldest version Advanced > Other versions offers: older ones cannot install themselves the
 # same way (--install-update) or read today's settings.
 OLDEST_INSTALLABLE = '1.8.2'
+# The downloads, one folder per update (install_version); cleared at a start without an update underway.
 UPDATE_DIR = Path(tempfile.gettempdir()) / 'bbport-update'
-# Never copied over an installation by an update (the package does not hold them either).
+# Never put in place by an update (bbport_update.stage), whatever the package holds.
 USER_FILES = ('user', 'out', 'mods', 'fsr4vk', 'bbport.ini', 'input.ini', 'mods.json', 'patches.json', 'last_run.log')
+# The GitHub asset's digest ("sha256:…") by download URL, noted by game_zip: the download is checked against it.
+ASSET_DIGESTS = {}
 
 
 # ---------------------------------------------------------------------------------------------
@@ -246,6 +249,7 @@ import bbport_lang_vram  # noqa: E402,F401 (the video memory warning's switch)
 import bbport_lang_latency  # noqa: E402,F401 (the low latency options)
 import bbport_lang_gpu  # noqa: E402,F401 (a graphics card Windows has and Vulkan does not see)
 import bbport_lang_ready  # noqa: E402,F401 (the start's other prerequisites: runtime, folders, firewall)
+import bbport_lang_audit1  # noqa: E402,F401 (the launcher's own update: its checks and the installer's window)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
 import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
@@ -265,6 +269,7 @@ import bbport_news  # noqa: E402
 import bbport_trophies as trophies  # noqa: E402
 import bbport_theme as theme  # noqa: E402
 import bbport_tls  # noqa: E402 (every HTTPS request: no expired certificates of the stores, Windows' trust)
+import bbport_update as updater  # noqa: E402 (the launcher's own update: checked, swapped in by renaming)
 from bbport_trophy_icons import TrophyIcons  # noqa: E402
 from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SLOTS, keysym_to_name,
                                   button_num_to_name, input_ini_path, load_input_ini, reserved_keys,
@@ -1987,6 +1992,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.nav_filler.pack(fill='both', expand=True)
         self.update_box = None
         self.version_window = None  # Advanced > Other versions
+        self.versions_listed = False  # its list arrived: its Install may be used
+        self.updating = False  # an update is being downloaded or started: one at a time (update_buttons)
         # The view: the switch never changes a setting, only which pages are shown.
         expert = tk.BooleanVar(value=self.app['ui_mode'] == 'expert')
         self.expert_var = expert
@@ -5237,7 +5244,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         buttons.pack(fill='x', padx=12, pady=(0, 12))
         buttons.columnconfigure((0, 1), weight=1, uniform='update')
         self.update_button = ttk.Button(buttons, text=_('Update', 'Обновить'), style='Card.Tight.Accent.TButton',
-                                        command=lambda: self.install_update(version, url, page))
+                                        command=lambda: self.install_update(version, url, page),
+                                        state='disabled' if self.updating else 'normal')
         self.update_button.grid(row=0, column=0, sticky='we')
         ttk.Button(buttons, text=_("What's new", 'Что нового'), style='Card.Tight.TButton',
                    command=lambda: webbrowser.open(page)).grid(row=0, column=1, sticky='we', padx=(6, 0))
@@ -5251,21 +5259,34 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def install_update(self, version, url, page):
         """The side box's Update button."""
-        def progress(percent):
-            self.update_label.configure(text=_('Downloading version {}… {}%', 'Загрузка версии {}… {}%').format(
-                version, percent))
+        def say(text):
+            self.update_label.configure(text=text)
 
         def failed():
-            self.update_button.configure(state='normal')
-            self.update_label.configure(text=_('Version {} is available.', 'Доступна версия {}.').format(version))
-        if self.install_version(version, url, page, progress, failed):
-            self.update_button.configure(state='disabled')
+            say(_('Version {} is available.', 'Доступна версия {}.').format(version))
+        self.install_version(version, url, page, say, failed)
 
-    def install_version(self, version, url, page, progress, failed):
-        """Downloads release `version` and lets its launcher copy itself over this installation
-        (saves, settings and mods stay). False when nothing was started."""
+    def update_buttons(self):
+        """The side box's Update and Other versions' Install, off while an update is under way: two at once shared
+        one download folder, and the second one's start took the first one's files away."""
+        state = 'disabled' if self.updating else 'normal'
+        button = getattr(self, 'update_button', None)
+        if button is not None and button.winfo_exists():
+            button.configure(state=state)
+        if self.versions_listed and self.version_window and self.version_window.winfo_exists():
+            self.version_install.configure(state=state)
+
+    def install_version(self, version, url, page, say, failed):
+        """Downloads release `version`, checks it and starts an installer that puts it in place of this installation
+        once this launcher has closed (saves, settings and mods stay; bbport_update). say(text) shows how far it is,
+        failed() puts the caller's view back. One update at a time; False when nothing was started."""
+        if self.updating:
+            return False
         if self.game_running():
             self.messagebox.showinfo('Bloodborne', _('Close the game before updating.', 'Закройте игру перед обновлением.'))
+            return False
+        if self.test_running():  # its game runs from the files the update replaces
+            self.messagebox.showinfo('Bloodborne', _('A game test is running. Update when it has finished.'))
             return False
         if not FROZEN or not url:  # a source tree updates with git
             webbrowser.open(page)
@@ -5282,12 +5303,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                          'настройки останутся.')
         if not self.messagebox.askyesno('Bloodborne', question.format(version)):
             return False
+        self.updating = True
+        self.update_buttons()
+        digest = ASSET_DIGESTS.get(url)
 
         def work():
             try:
-                shutil.rmtree(UPDATE_DIR, ignore_errors=True)
                 UPDATE_DIR.mkdir(parents=True, exist_ok=True)
-                archive = UPDATE_DIR / 'update.zip'
+                # A folder of its own: no leftover and no other download mixes into it.
+                folder = Path(tempfile.mkdtemp(prefix=re.sub(r'[^\w.]+', '-', f'v{version}') + '-', dir=UPDATE_DIR))
+                archive = folder / 'update.zip'
                 request = urllib.request.Request(url, headers={'User-Agent': 'bbport-launcher'})
                 with bbport_tls.urlopen(request, timeout=60) as response, open(archive, 'wb') as out:
                     total, done, shown = int(response.headers.get('Content-Length') or 0), 0, -1
@@ -5297,24 +5322,57 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                         percent = done * 100 // total if total else 0
                         if percent != shown:
                             shown = percent
-                            self.ui_calls.put(lambda p=percent: progress(p))
+                            self.ui_calls.put(lambda p=percent: say(_('Downloading version {}… {}%',
+                                                                      'Загрузка версии {}… {}%').format(version, p)))
+                self.ui_calls.put(lambda: say(_('Checking the download…')))
+                inside = updater.check_package(archive, digest)  # before anything is unpacked or replaced
                 with zipfile.ZipFile(archive) as package:
-                    package.extractall(UPDATE_DIR / 'new')
+                    package.extractall(folder / 'new')
                 archive.unlink()
-                new = next((p.parent for p in (UPDATE_DIR / 'new').rglob('Bloodborne.exe')), None)
-                if not new:
-                    raise OSError('Bloodborne.exe is missing from the download')
-                # The new launcher copies itself over this installation once this one has closed.
-                subprocess.Popen([str(new / 'Bloodborne.exe'), '--install-update', str(PORT_DIR), str(os.getpid())],
-                                 cwd=str(new), stdin=subprocess.DEVNULL, creationflags=NO_WINDOW)
-                self.ui_calls.put(self.root.destroy)
-            except (OSError, zipfile.BadZipFile) as failure:
-                def show_failure(error=connection_error(failure, url)):
-                    failed()
-                    self.messagebox.showerror('Bloodborne', _('Update failed: {}', 'Не удалось обновить: {}').format(error))
-                self.ui_calls.put(show_failure)
+                new = folder / 'new' / inside
+                installer = update_installer(version, new, folder)
+            except Exception as failure:  # whatever it was (a broken HTTP answer is no OSError), the buttons come back
+                self.ui_calls.put(lambda error=connection_error(failure, url) or type(failure).__name__:
+                                  self.update_failed(failed, error))
+                return
+            self.ui_calls.put(lambda: self.start_installer(version, installer, new, say, failed))
         threading.Thread(target=work, daemon=True).start()
         return True
+
+    def update_failed(self, failed, error):
+        self.updating = False
+        self.update_buttons()
+        failed()
+        self.messagebox.showerror('Bloodborne', _('Update failed: {}', 'Не удалось обновить: {}').format(error))
+
+    def start_installer(self, version, installer, new, say, failed):
+        """The download is checked: the installer starts, and once it holds the update mutex (then a second start can
+        no longer take its files away) this launcher closes the usual way, settings saved and the tray icon gone. A
+        game or a game test started during the download is waited for first."""
+        if self.game_running() or self.test_running():
+            say(_('Version {} is downloaded: it installs once the game is closed.').format(version))
+            self.root.after(2000, lambda: self.start_installer(version, installer, new, say, failed))
+            return
+        say(_('Starting the installation…'))
+        env = {key: value for key, value in os.environ.items() if not key.upper().startswith('BB_UPDATE_')}
+        env.update(BB_UPDATE_FROM=str(new), BB_UPDATE_VERSION=version)
+        try:
+            process = subprocess.Popen([str(installer), '--install-update', str(PORT_DIR), str(os.getpid())],
+                                       cwd=str(installer.parent), stdin=subprocess.DEVNULL, env=env,
+                                       creationflags=NO_WINDOW)
+        except OSError as failure:
+            self.update_failed(failed, _('the new version did not start ({}). An antivirus program may have stopped '
+                                         'it.').format(failure))
+            return
+
+        def wait():
+            problem = updater.wait_for_installer(process)
+            if problem is None:
+                self.ui_calls.put(self.close)
+            else:
+                self.ui_calls.put(lambda: self.update_failed(failed, _(
+                    'the new version did not start ({}). An antivirus program may have stopped it.').format(problem)))
+        threading.Thread(target=wait, daemon=True).start()
 
     def choose_version(self):
         """Advanced > Other versions: any release from OLDEST_INSTALLABLE on, chosen by the player."""
@@ -5343,6 +5401,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         buttons.pack(anchor='w', pady=(12, 0))
         install = ttk.Button(buttons, text=_('Install', 'Установить'), state='disabled')
         install.pack(side='left')
+        self.version_install, self.versions_listed = install, False
         notes = ttk.Button(buttons, text=_("What's new", 'Что нового'), state='disabled')
         notes.pack(side='left', padx=6)
         ttk.Button(buttons, text=_('Close', 'Закрыть'), command=window.destroy).pack(side='left')
@@ -5372,7 +5431,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                             if version_tuple(v) == version_tuple(VERSION)), 0)
             box.current(current)
             status.configure(text=_('Installed: v{}', 'Установлена: v{}').format(VERSION))
-            install.configure(state='normal')
+            self.versions_listed = True
+            install.configure(state='disabled' if self.updating else 'normal')  # the side box's may run
             notes.configure(state='normal')
 
         def failed_list(error):
@@ -5390,18 +5450,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                                          'Версия {} уже установлена.').format(version))
                 return
 
-            def progress(percent):
+            def say(text):
                 if window.winfo_exists():
-                    status.configure(text=_('Downloading version {}… {}%', 'Загрузка версии {}… {}%').format(
-                        version, percent))
+                    status.configure(text=text)
 
             def failed():
                 if window.winfo_exists():
-                    install.configure(state='normal')
                     box.configure(state='readonly')
                     status.configure(text=_('Installed: v{}', 'Установлена: v{}').format(VERSION))
-            if self.install_version(version, url, page, progress, failed):
-                install.configure(state='disabled')
+            if self.install_version(version, url, page, say, failed):
                 box.configure(state='disabled')
 
         install.configure(command=on_install)
@@ -5862,7 +5919,11 @@ def game_zip(release):
     named = [asset for asset in zips if asset['name'].lower() == 'bloodborne-windows.zip']
     games = named or [asset for asset in zips
                       if not re.search(r'(^|[-_.])(src|source|sources)([-_.]|$)', asset['name'].lower())]
-    return games[0]['browser_download_url'] if len(games) == 1 else None
+    if len(games) != 1:
+        return None
+    if games[0].get('digest'):  # GitHub lists "sha256:…" for its assets: install_version checks the download
+        ASSET_DIGESTS[games[0]['browser_download_url']] = games[0]['digest']
+    return games[0]['browser_download_url']
 
 
 def installable_releases():
@@ -5886,31 +5947,104 @@ def installable_releases():
     return sorted(found.values(), key=lambda item: version_tuple(item[0]), reverse=True)
 
 
-def install_update(target, wait_pid):
-    """--install-update TARGET PID, run by the downloaded version from its temporary folder:
-    waits for the old launcher to close, copies this version over TARGET (never the saves,
-    settings or mods) and starts it."""
-    target = Path(target)
-    kernel = ctypes.windll.kernel32
-    handle = kernel.OpenProcess(0x00100000, False, int(wait_pid))  # SYNCHRONIZE
-    if handle:
-        kernel.WaitForSingleObject(handle, 60000)
-        kernel.CloseHandle(handle)
-    ignore = shutil.ignore_patterns(*USER_FILES)
-    for _attempt in range(30):
+def update_installer(version, new, folder):
+    """The program that puts the downloaded version `new` in place: its own launcher, which installs itself this way
+    (bbport_update); for an older version, whose launcher still copied itself over the running installation file by
+    file, a copy of this launcher in the update's folder."""
+    if version_tuple(version) >= version_tuple(VERSION):
+        return new / 'Bloodborne.exe'
+    internal = Path(getattr(sys, '_MEIPASS', PORT_DIR / '_internal'))  # the frozen Python beside Bloodborne.exe
+    own = folder / 'installer'
+    shutil.copytree(internal, own / internal.name)
+    shutil.copy2(sys.executable, own / 'Bloodborne.exe')
+    return own / 'Bloodborne.exe'
+
+
+def progress_window(heading, work):
+    """Runs work(say) on a helper thread under a small window: the heading and the line say(text) sets. It cannot be
+    closed (that would stop a swap halfway). Returns what work raised, None when it finished; without Tk it runs
+    without the window."""
+    outcome, lines = [], queue.Queue()
+
+    def run():
         try:
-            shutil.copytree(PORT_DIR, target, dirs_exist_ok=True, ignore=ignore)
-            break
-        except OSError:  # a file still in use: the old launcher is closing
-            time.sleep(1)
-    else:
-        ctypes.windll.user32.MessageBoxW(None, _(
-            'Could not install the update. Download it from the releases page.',
-            'Не удалось установить обновление. Скачайте его со страницы релизов.'), 'Bloodborne', 0x10)
+            work(lines.put)
+            outcome.append(None)
+        except Exception as failure:  # the window closes and says it, whatever it was
+            outcome.append(failure)
+    try:
+        import tkinter as tk
+        root = tk.Tk()
+    except Exception:
+        run()
+        return outcome[0]
+    root.title('Bloodborne')
+    root.configure(bg=BG)
+    root.resizable(False, False)
+    root.protocol('WM_DELETE_WINDOW', lambda: None)
+    try:
+        root.iconbitmap(default=str(PORT_DIR / 'launcher' / 'bloodborne.ico'))
+    except tk.TclError:
+        pass
+    tk.Label(root, text=heading, bg=BG, fg=GOLD, font=(theme.BODY_SEMI, 12)).pack(anchor='w', padx=28, pady=(22, 6))
+    line = tk.Label(root, text='', bg=BG, fg=MUTED, font=(theme.BODY, 10), width=52, anchor='w', justify='left',
+                    wraplength=440)
+    line.pack(anchor='w', padx=28, pady=(0, 24))
+    root.update_idletasks()
+    root.geometry(f'+{(root.winfo_screenwidth() - root.winfo_reqwidth()) // 2}'
+                  f'+{(root.winfo_screenheight() - root.winfo_reqheight()) // 3}')
+    root.lift()
+    worker = threading.Thread(target=run, daemon=True)
+    worker.start()
+
+    def poll():
+        try:
+            while True:
+                line.configure(text=lines.get_nowait())
+        except queue.Empty:
+            pass
+        if outcome:
+            root.destroy()
+        else:
+            root.after(100, poll)
+    root.after(100, poll)
+    root.mainloop()
+    worker.join()
+    return outcome[0] if outcome else None
+
+
+def install_update(target, wait_pid):
+    """--install-update TARGET PID: run by the downloaded version from its folder in %TEMP% (BB_UPDATE_FROM names the
+    new files when a copy of the launcher installs an older version). Holds the update mutex, waits in a small window
+    for the old launcher and every program started from TARGET, puts the new version in place by renaming
+    (bbport_update.install), then starts TARGET's launcher: the new one, or the old one again when the update was
+    undone."""
+    target = Path(target)
+    source = Path(os.environ.get('BB_UPDATE_FROM') or PORT_DIR)
+    version = os.environ.get('BB_UPDATE_VERSION') or VERSION_TEXT
+    launcher = updater.open_process(wait_pid)  # before the mutex: the old launcher waits for it, so it is still there
+    if not updater.hold_mutex():
+        updater.notice(_('An update is being installed. The launcher opens by itself when it is done.'))
+        return 1
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+    except (AttributeError, OSError):
+        pass
+    failure = progress_window(_('Installing version {}…').format(version), lambda say: updater.install(
+        source, target, launcher, int(wait_pid), say, USER_FILES))
+    updater.release_mutex()  # the launcher started next clears what is left
+    if isinstance(failure, updater.RollbackFailed):
+        updater.notice(_('Version {0} could not be installed, and the installed version could not be put back '
+                         'completely ({1}).\n\nDownload the port again from the releases page, which opens now. Saves, '
+                         'settings and mods are not affected.').format(version, failure), error=True)
         webbrowser.open(RELEASES_PAGE)
         return 1
-    subprocess.Popen([str(target / 'Bloodborne.exe')], cwd=str(target))
-    return 0
+    if failure:
+        updater.notice(_('Version {0} could not be installed: {1}.\n\nThe installed version was kept and works as '
+                         'before.').format(version, failure), error=True)
+    env = {key: value for key, value in os.environ.items() if not key.upper().startswith('BB_UPDATE_')}
+    subprocess.Popen([str(target / 'Bloodborne.exe')], cwd=str(target), env=env)
+    return 1 if failure else 0
 
 
 class _ThisModule:
@@ -5930,6 +6064,7 @@ bbport_help.bind(_ThisModule())
 bbport_search.bind(_ThisModule())
 bbport_pad.bind(_ThisModule())
 bbport_tls.bind(_ThisModule())
+updater.bind(_ThisModule())
 
 
 def main():
@@ -5947,6 +6082,11 @@ def main():
     saves.WORDS.update({key: _(text) for key, text in saves.REASONS.items()})  # backup file names
     if args[:1] == ['--install-update'] and len(args) == 3:
         sys.exit(install_update(args[1], args[2]))
+    # An update is being installed: its files are being swapped, and a launcher or a game started from them would
+    # hold them (the installer would wait for it). The new version's launcher opens by itself.
+    if updater.underway():
+        updater.notice(_('An update is being installed. The launcher opens by itself when it is done.'))
+        sys.exit(0)
     # The route benchmark of the 1.9.3 test builds left its own save in place of the player's when it
     # did not finish (closed launcher, crash): the player's comes back.
     try:
@@ -5956,8 +6096,6 @@ def main():
             (user / 'savedata.benchmark-backup').rename(user / 'savedata')
     except OSError:
         pass
-    if FROZEN and UPDATE_DIR not in PORT_DIR.parents:
-        shutil.rmtree(UPDATE_DIR, ignore_errors=True)  # what a finished update left behind
     # Without a usable game folder there is nothing to play yet: open the launcher instead.
     page, failed, problem = 'play', None, None
     if '--play' in args and (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file() and CONFIG_FILE.exists():
@@ -5982,6 +6120,10 @@ def main():
         pass
     if not one_launcher():
         sys.exit(0)  # the open launcher comes to the front
+    # What finished or failed updates left behind, only now: before, a second start deleted the files an update was
+    # still copying from. clear_leftovers keeps them while an installer holds the update mutex.
+    if FROZEN:
+        updater.clear_leftovers(PORT_DIR, UPDATE_DIR)
     import tkinter as tk
     from tkinter import filedialog, messagebox, ttk
     root = tk.Tk()
