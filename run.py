@@ -455,20 +455,27 @@ def coop_user_dir(env, user_dir, game):
 def backup_saves(user_dir, keep=SAVE_BACKUPS_KEPT, now=None):
     """BB_SAVE_BACKUPS=1 (launcher: Play page, "Back up saves at start"): a copy of the saves
     in <user>/save-backups/<time>/savedata before the game starts, the newest `keep` kept.
-    A failed copy is reported and the game starts anyway. Returns the copy, or None."""
+    A failed copy is reported, its part removed, and the game starts anyway. Returns the copy, or None."""
     saves = Path(user_dir) / 'savedata'
     if not saves.is_dir() or not any(saves.rglob('userdata*')):
         return None
     root = Path(user_dir) / 'save-backups'
     target = root / time.strftime('%Y%m%d-%H%M%S', time.localtime(now)) / 'savedata'
+    made = not target.parent.exists()
     try:
         if not target.exists():
             shutil.copytree(saves, target)
+    except OSError as error:
+        # A copy cut off (a full drive, a file held) counted among the kept ones and pushed a whole one out.
+        if made:
+            shutil.rmtree(target.parent, ignore_errors=True)
+        print(f'Save backup: {error}; the game starts without one')
+        return None
+    try:
         for old in sorted(p for p in root.iterdir() if p.is_dir())[:-keep]:
             shutil.rmtree(old, ignore_errors=True)
     except OSError as error:
-        print(f'Save backup: {error}; the game starts without one')
-        return None
+        print(f'Save backup: the oldest copies stay ({error})')
     print(f'Save backup: {target.parent}')
     return target
 
