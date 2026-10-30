@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 """The texts the launcher check of 30 October 2026 found wrong or stale, rewritten: help is asked in Help & Support
-on forum.bbport.de (no longer the Discord's #help), an eboot.bin that does not read, the pages named as they are now
-(All graphics, Picture & performance, Gameplay, Help > Show the log), the own server that only Seamless co-op's start
-offers, Windows' page file dialog, the Intel hints without their old version, the setup guide's welcome and a card
+on forum.bbport.de (no longer the Discord's #help), an eboot.bin that does not read or is cut off, the pages named as
+they are now (All graphics, Picture & performance, Gameplay, Help > Show the log), the own server that only Seamless
+co-op's start offers and where a friend's address goes, Windows' page file dialog, the Intel hints without their old version, the setup guide's welcome and a card
 that was not detected. In every language besides English; keyed by the English text like bbport_lang, merged into
 its tables on import."""
 import bbport_lang
@@ -17,7 +17,10 @@ KEYS = [
     '> Virtual memory: Change…',
     'All graphics (expert view): Quality preset Balanced or Performance (DLSS on GeForce RTX cards).',
     "Seamless co-op or a friend's server: open this launcher from Seamless co-op (OPEN BBPORT LAUNCHER + BBSC), "
-    'then choose Own server under Play with.',
+    "then choose Own server under Play with. For a friend's server, enter the address from the person who runs it "
+    'under Server address.',
+    'It is shorter than the clean file: unpacking or copying it stopped early (the log then says "prepare failed: '
+    'out of bounds").',
     # Help's last card and the report
     "Ask in Help & Support on forum.bbport.de: start a new topic. Save a report and attach it: it has the log, "
     "your settings and this PC's details (no passwords), so a helper sees the cause at once.",
@@ -48,7 +51,10 @@ TEXTS = {
         'вкладка «Дополнительно» > Виртуальная память: «Изменить…»',
         'Вся графика (режим эксперта): пресет Balanced или Performance (DLSS на видеокартах GeForce RTX).',
         'Seamless co-op или сервер друга: откройте этот лаунчер из Seamless co-op (OPEN BBPORT LAUNCHER + BBSC), '
-        'затем выберите «Свой сервер» в «Играть через».',
+        'затем выберите «Свой сервер» в «Играть через». Для сервера друга введите в поле «Адрес сервера» адрес, '
+        'который даст тот, кто его запускает.',
+        'Он короче чистого файла: распаковка или копирование оборвались раньше времени (в журнале тогда: «prepare '
+        'failed: out of bounds»).',
         'Спросите в разделе Help & Support на forum.bbport.de: создайте новую тему. Сохраните отчёт и приложите '
         'его: в нём журнал, ваши настройки и данные этого ПК (без паролей), так помощник сразу увидит причину.',
         'Открыть форум',
@@ -75,7 +81,9 @@ TEXTS = {
         '«خيارات متقدمة» > الذاكرة الظاهرية: «تغيير…»',
         'كل إعدادات الرسومات (وضع الخبير): إعداد الجودة Balanced أو Performance (DLSS على بطاقات GeForce RTX).',
         'Seamless co-op أو خادم صديق: افتح هذا المشغّل من Seamless co-op (OPEN BBPORT LAUNCHER + BBSC)، ثم اختر '
-        '«خادمك الخاص» في «العب باستخدام».',
+        '«خادمك الخاص» في «العب باستخدام». لخادم صديق: أدخل في «عنوان الخادم» العنوان الذي يعطيك إياه من يشغّله.',
+        'إنه أقصر من الملف السليم: توقّف فك الضغط أو النسخ قبل اكتماله (ويذكر السجل حينها «prepare failed: out of '
+        'bounds»).',
         'اسأل في قسم Help & Support على forum.bbport.de: ابدأ موضوعًا جديدًا. احفظ تقريرًا وأرفقه: فهو يحتوي على '
         'السجل وإعداداتك وتفاصيل هذا الحاسوب (دون كلمات مرور)، فيرى من يساعدك السبب فورًا.',
         'فتح المنتدى',
@@ -102,7 +110,10 @@ TEXTS = {
         'Todos los gráficos (vista experta): Preajuste de calidad Balanced o Performance (DLSS en tarjetas GeForce '
         'RTX).',
         'Seamless co-op o el servidor de un amigo: abre este lanzador desde Seamless co-op (OPEN BBPORT LAUNCHER + '
-        'BBSC) y elige Servidor propio en «Jugar con».',
+        'BBSC) y elige Servidor propio en «Jugar con». Para el servidor de un amigo, escribe en «Dirección del '
+        'servidor» la dirección que te dé quien lo gestiona.',
+        'Es más corto que el archivo limpio: la extracción o la copia se detuvo antes de tiempo (el registro dice '
+        'entonces «prepare failed: out of bounds»).',
         'Pregunta en Help & Support en forum.bbport.de: abre un tema nuevo. Guarda un informe y adjúntalo: contiene '
         'el registro, tus ajustes y los datos de este PC (sin contraseñas), así quien te ayude verá la causa '
         'enseguida.',
@@ -131,7 +142,10 @@ TEXTS = {
         'Gráficos (todos), no modo especialista: Predefinição de qualidade Balanced ou Performance (DLSS em placas '
         'GeForce RTX).',
         'Seamless co-op ou o servidor de um amigo: abra este launcher pelo Seamless co-op (OPEN BBPORT LAUNCHER + '
-        'BBSC) e escolha Servidor próprio em «Jogar com».',
+        'BBSC) e escolha Servidor próprio em «Jogar com». Para o servidor de um amigo, digite em «Endereço do '
+        'servidor» o endereço que a pessoa que o mantém passar para você.',
+        'Ele é menor que o arquivo limpo: a extração ou a cópia parou antes do fim (o registro então diz "prepare '
+        'failed: out of bounds").',
         'Pergunte em Help & Support no forum.bbport.de: crie um tópico novo. Salve um relatório e anexe-o: ele traz '
         'o registro, as suas configurações e os dados deste PC (sem senhas), e assim quem for ajudar vê a causa na '
         'hora.',
@@ -160,7 +174,10 @@ TEXTS = {
         'Tous les graphismes (mode expert) : Préréglage de qualité Balanced ou Performance (DLSS sur les cartes '
         'GeForce RTX).',
         'Seamless co-op ou le serveur d’un ami : ouvrez ce lanceur depuis Seamless co-op (OPEN BBPORT LAUNCHER + '
-        'BBSC), puis choisissez Serveur perso dans « Jouer avec ».',
+        'BBSC), puis choisissez Serveur perso dans « Jouer avec ». Pour le serveur d’un ami, saisissez dans « Adresse '
+        'du serveur » l’adresse que vous donne la personne qui le gère.',
+        'Il est plus court que le fichier d’origine : l’extraction ou la copie s’est arrêtée trop tôt (le journal '
+        'indique alors « prepare failed: out of bounds »).',
         'Demandez dans Help & Support sur forum.bbport.de : créez un nouveau sujet. Enregistrez un rapport et '
         'joignez-le : il contient le journal, vos réglages et les caractéristiques de ce PC (aucun mot de passe), ce '
         'qui permet à la personne qui vous aide de voir la cause tout de suite.',
@@ -189,7 +206,10 @@ TEXTS = {
         'Registerkarte Erweitert > Virtueller Arbeitsspeicher: Ändern…',
         'Grafik (alle) im Expertenmodus: Qualitätsstufe Balanced oder Performance (DLSS auf GeForce-RTX-Karten).',
         'Seamless co-op oder der Server von Freunden: Öffne diesen Launcher aus Seamless co-op (OPEN BBPORT LAUNCHER '
-        '+ BBSC) und wähle dann unter „Spielen mit“ „Eigener Server“.',
+        '+ BBSC) und wähle dann unter „Spielen mit“ „Eigener Server“. Für den Server von Freunden trägst du unter '
+        '„Serveradresse“ die Adresse ein, die du von der Person bekommst, die ihn betreibt.',
+        'Sie ist kürzer als die saubere Datei: Das Entpacken oder Kopieren hat vorzeitig aufgehört (im Log steht dann '
+        '„prepare failed: out of bounds“).',
         'Frag in Help & Support auf forum.bbport.de: Starte ein neues Thema. Speichere einen Bericht und häng ihn an: '
         'Er enthält das Log, deine Einstellungen und die Daten dieses PCs (keine Passwörter), so sieht ein Helfer '
         'die Ursache sofort.',
@@ -219,7 +239,10 @@ TEXTS = {
         'Tutta la grafica (modalità esperto): Preset di qualità Balanced o Performance (DLSS sulle schede GeForce '
         'RTX).',
         'Seamless co-op o il server di un amico: apri questo launcher da Seamless co-op (OPEN BBPORT LAUNCHER + '
-        'BBSC), poi scegli Server proprio in «Gioca con».',
+        'BBSC), poi scegli Server proprio in «Gioca con». Per il server di un amico, inserisci in «Indirizzo del '
+        'server» l’indirizzo che ti dà chi lo gestisce.',
+        'È più corto del file pulito: l’estrazione o la copia si è interrotta prima del tempo (il registro riporta '
+        'allora "prepare failed: out of bounds").',
         'Chiedi in Help & Support su forum.bbport.de: apri una nuova discussione. Salva un rapporto e allegalo: '
         'contiene il registro, le tue impostazioni e i dati di questo PC (nessuna password), così chi ti aiuta vede '
         'subito la causa.',
@@ -249,7 +272,10 @@ TEXTS = {
         'Zaawansowane > Pamięć wirtualna: Zmień…',
         'Grafika (wszystko) w widoku eksperta: Profil jakości Balanced lub Performance (DLSS na kartach GeForce RTX).',
         'Seamless co-op lub serwer znajomego: otwórz ten launcher z Seamless co-op (OPEN BBPORT LAUNCHER + BBSC), a '
-        'potem wybierz Własny serwer w „Graj z”.',
+        'potem wybierz Własny serwer w „Graj z”. W przypadku serwera znajomego wpisz w „Adres serwera” adres od '
+        'osoby, która go prowadzi.',
+        'Jest krótszy niż czysty plik: rozpakowywanie lub kopiowanie przerwało się przedwcześnie (w dzienniku jest '
+        'wtedy „prepare failed: out of bounds”).',
         'Zapytaj w Help & Support na forum.bbport.de: załóż nowy temat. Zapisz raport i dołącz go: zawiera dziennik, '
         'twoje ustawienia i dane tego PC (bez haseł), więc pomagający od razu zobaczy przyczynę.',
         'Otwórz forum',
@@ -278,7 +304,10 @@ TEXTS = {
         'Tüm grafik ayarları (uzman görünümü): Kalite ön ayarı Balanced veya Performance (GeForce RTX kartlarda '
         'DLSS).',
         'Seamless co-op veya bir arkadaşın sunucusu: bu başlatıcıyı Seamless co-op’tan açın (OPEN BBPORT LAUNCHER + '
-        'BBSC), ardından "Oynanacak sunucu" altında Kendi sunucun’u seçin.',
+        'BBSC), ardından "Oynanacak sunucu" altında Kendi sunucun’u seçin. Bir arkadaşın sunucusu için, sunucuyu '
+        'çalıştıran kişiden aldığınız adresi "Sunucu adresi" alanına girin.',
+        'Temiz dosyadan daha kısa: çıkarma veya kopyalama erken durmuş (günlükte o zaman "prepare failed: out of '
+        'bounds" yazar).',
         'forum.bbport.de üzerindeki Help & Support bölümünde sorun: yeni bir konu açın. Bir rapor kaydedip ekleyin: '
         'raporda günlük, ayarlarınız ve bu bilgisayarın bilgileri (parolalar hariç) bulunur; böylece yardım eden '
         'kişi nedeni hemen görür.',
@@ -305,7 +334,8 @@ TEXTS = {
         '在打开的“系统属性”窗口中：“高级”选项卡 > 性能：“设置…”，然后在那里的“高级”选项卡 > 虚拟内存：“更改…”',
         '全部图形（专家视图）：画质预设选 Balanced 或 Performance（GeForce RTX 显卡使用 DLSS）。',
         'Seamless co-op 或朋友的服务器：从 Seamless co-op 打开本启动器（OPEN BBPORT LAUNCHER + BBSC），然后在“在线游玩”'
-        '页面的“游玩设备”中选择“自己的服务器”。',
+        '页面的“游玩设备”中选择“自己的服务器”。如果是朋友的服务器，请在“服务器地址”中填入运行该服务器的人给你的地址。',
+        '它比干净的文件短：解包或复制提前中断了（日志中会显示“prepare failed: out of bounds”）。',
         '请到 forum.bbport.de 的 Help & Support 版块提问：发一个新帖子。保存一份报告并附上：其中包含日志、你的设置和这台电脑'
         '的信息（不含密码），帮助者可以立即看出原因。',
         '打开论坛',
@@ -330,7 +360,10 @@ TEXTS = {
         '全グラフィック設定（エキスパート表示）：画質プリセットを Balanced または Performance に（GeForce RTX カードでは '
         'DLSS）。',
         'Seamless co-op や友人のサーバー：このランチャーを Seamless co-op から開き（OPEN BBPORT LAUNCHER + BBSC）、'
-        '「接続先」で「自分のサーバー」を選んでください。',
+        '「接続先」で「自分のサーバー」を選んでください。友人のサーバーの場合は、運営している人から聞いたアドレスを'
+        '「サーバーアドレス」に入力してください。',
+        '無改変のファイルより短くなっています。展開またはコピーが途中で止まりました（ログには「prepare failed: out of '
+        'bounds」と出ます）。',
         'forum.bbport.de の Help & Support で質問してください：新しいトピックを作成します。レポートを保存して添付すると、'
         'ログ、設定、この PC の情報（パスワードは含みません）が入っているので、サポートする人がすぐに原因を把握できます。',
         'フォーラムを開く',
@@ -358,7 +391,10 @@ TEXTS = {
         "열리는 '시스템 속성' 창에서: '고급' 탭 > 성능: '설정…', 그곳의 '고급' 탭 > 가상 메모리: '변경…'",
         '그래픽 전체(전문가 보기): 품질 프리셋 Balanced 또는 Performance (GeForce RTX 카드에서는 DLSS).',
         "Seamless co-op 또는 친구 서버: Seamless co-op에서 이 런처를 연 다음(OPEN BBPORT LAUNCHER + BBSC) '함께 "
-        "플레이'에서 자체 서버를 선택하세요.",
+        "플레이'에서 자체 서버를 선택하세요. 친구 서버라면 서버를 운영하는 사람에게 받은 주소를 '서버 주소'에 "
+        '입력하세요.',
+        '원본 파일보다 짧습니다. 압축 해제나 복사가 도중에 멈췄습니다(이때 로그에 "prepare failed: out of bounds"가 '
+        '표시됨).',
         'forum.bbport.de의 Help & Support에 질문하세요: 새 주제를 만드세요. 보고서를 저장해 첨부하면 로그, 설정, 이 PC의 '
         '정보 (비밀번호 제외)가 들어 있어 도와주는 사람이 원인을 바로 알 수 있습니다.',
         '포럼 열기',

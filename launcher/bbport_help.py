@@ -66,7 +66,8 @@ TOPICS = {
          'Mods must not bring their own eboot.bin: the check at the top of this page names any that do.']),
     'eboot_truncated': (
         'eboot.bin is cut off',
-        'It broke while unpacking (the log says "prepare failed: out of bounds").',
+        'It is shorter than the clean file: unpacking or copying it stopped early (the log then says "prepare '
+        'failed: out of bounds").',
         ['Put the base game and the 1.09 update into two new, empty folders again.',
          'Check the size: eboot.bin of the update is exactly 93,825,704 bytes (89.4 MB).',
          'Copy everything from the update folder into the base game folder and replace the files.']),
@@ -237,7 +238,8 @@ TOPICS = {
         ['Online play: Play with SuperMedo Server, then Sign in with Discord.',
          # The page offers an own server only when Seamless co-op opened the launcher (started_by_bbsc).
          "Seamless co-op or a friend's server: open this launcher from Seamless co-op (OPEN BBPORT LAUNCHER + "
-         'BBSC), then choose Own server under Play with.']),
+         "BBSC), then choose Own server under Play with. For a friend's server, enter the address from the person "
+         'who runs it under Server address.']),
     'steam_layout': (
         'Steam turns the controller into a mouse and keyboard',
         "With Steam open, its Desktop Layout sends mouse movement and key presses for a controller it manages, on "
@@ -264,6 +266,7 @@ TOPIC_ACTIONS = {'black_screen': [('Clear the shader cache', 'clear_cache')],
                  'other_install': [("Use this installation's own folders", 'use_own_folders')],
                  'eboot_modified': [('Open the game folder', 'open_game_folder')],
                  'eboot_truncated': [('Open the game folder', 'open_game_folder')],
+                 'eboot_unreadable': [('Open the game folder', 'open_game_folder')],
                  'update_only': [('Choose the game folder', 'choose_game_page')],
                  'save_lost': [('Open the backups', 'open_backups')],
                  'controller': [('Open the controller test', 'open_controller_test')],
@@ -305,6 +308,20 @@ NOTICE_INTROS = {'shadnet_rejected': 'Online play was off this time. Its log nam
 def hints_in_log(text):
     """The topics whose messages the log has, in the order of LOG_HINTS."""
     return [topic for pattern, topic in LOG_HINTS if re.search(pattern, text or '')]
+
+
+def hints_for_game(text, game_dir):
+    """hints_in_log for the game in game_dir. Any eboot.bin whose program does not build makes the log say "out of
+    bounds": one of the clean file's size is then damaged, not cut off (eboot_state), and its topic must not send
+    the player to check a size that is right (R78)."""
+    topics = hints_in_log(text)
+    try:
+        full = bool(game_dir) and (Path(game_dir) / 'eboot.bin').stat().st_size >= EBOOT_SIZE
+    except OSError:
+        full = False
+    if full:
+        topics = ['eboot_unreadable' if topic == 'eboot_truncated' else topic for topic in topics]
+    return list(dict.fromkeys(topics))
 
 
 # The folders of the launcher's settings that belong to an installation: (setting, its name on its page).
@@ -593,8 +610,9 @@ def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):
                                       'sce_sys and dvdroot_ps4 directly inside (Game & language).')))
     else:
         stat = (game / 'eboot.bin').stat()
-        # '2|': checked per patch group; an older launcher's answer is not reused.
-        key = f'2|{(game / "eboot.bin").resolve()}|{stat.st_size}|{int(stat.st_mtime)}'
+        # '3|': a full-size file that does not read is unreadable, not cut off (R78); an older launcher's answer
+        # ('2|': checked per patch group) is not reused.
+        key = f'3|{(game / "eboot.bin").resolve()}|{stat.st_size}|{int(stat.st_mtime)}'
         state = cached.get('state') if cached and cached.get('key') == key else eboot_state(game)[0]
         # Not the clean one: the clean copy back when it is still on this PC (scripts/clean_eboot.py), silently,
         # the other one kept beside it.
@@ -604,7 +622,7 @@ def run_checks(game_dir, mods_dir, port_dir, output_res, cached=None):
             checks.append(('ok', None, _('eboot.bin was not the clean 1.09 file: the clean copy from {0} is used '
                                          'now, the other one is kept as {1}.').format(source.parent, backup.name)))
             stat = (game / 'eboot.bin').stat()
-            key = f'2|{(game / "eboot.bin").resolve()}|{stat.st_size}|{int(stat.st_mtime)}'
+            key = f'3|{(game / "eboot.bin").resolve()}|{stat.st_size}|{int(stat.st_mtime)}'
             state = eboot_state(game)[0]
         eboot = {'key': key, 'state': state}
         size = number(stat.st_size)
@@ -1120,7 +1138,7 @@ class HelpMixin:
             text = log.read_text(encoding='utf-8', errors='replace')[-400_000:]
         except OSError:
             text = ''
-        topics = hints_in_log(text)
+        topics = hints_for_game(text, self.app.get('game_dir'))
         if not topics:
             if always:
                 self.messagebox.showinfo('Bloodborne', _('The game ended with an error (code {}). Help has the checks, '

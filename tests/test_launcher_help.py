@@ -182,6 +182,16 @@ class GraphicsCardTests(unittest.TestCase):
             self.assertFalse(no.preflight())  # asked again until the player says start
 
 
+def self_file(segments, program_type, offset):
+    """A PS4 SELF with one program header, and a segment table entry pointing at `offset` if `segments`."""
+    import struct
+    table = struct.pack('<QQQQ', 0x800, offset, 16, 16) if segments else b''
+    head = b'O\x15=\x1d' + bytes(20) + struct.pack('<H', len(table) // 32) + bytes(6)
+    elf = struct.pack('<16sHHIQQQIHHHHHH', b'\x7fELF\x02\x01\x01' + bytes(9), 2, 62, 1, 0, 64, 0, 0, 64, 56,
+                      1, 0, 0, 0)
+    return head + table + elf + struct.pack('<IIQQQQQQ', program_type, 0, 0x200, 0, 0, 16, 16, 0)
+
+
 class FileTests(unittest.TestCase):
     def test_eboot_states(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -194,15 +204,6 @@ class FileTests(unittest.TestCase):
     def test_only_a_short_eboot_is_cut_off(self):
         """R78: an eboot.bin of the clean one's size whose program does not build was "cut off (93,825,704 bytes,
         the clean one has 93,825,704)". It is unreadable; only a shorter one is cut off."""
-        import struct
-
-        def self_file(segments, program_type, offset):
-            """A PS4 SELF with one program header, and a segment table entry pointing at `offset` if `segments`."""
-            table = struct.pack('<QQQQ', 0x800, offset, 16, 16) if segments else b''
-            head = b'O\x15=\x1d' + bytes(20) + struct.pack('<H', len(table) // 32) + bytes(6)
-            elf = struct.pack('<16sHHIQQQIHHHHHH', b'\x7fELF\x02\x01\x01' + bytes(9), 2, 62, 1, 0, 64, 0, 0, 64, 56,
-                              1, 0, 0, 0)
-            return head + table + elf + struct.pack('<IIQQQQQQ', program_type, 0, 0x200, 0, 0, 16, 16, 0)
         with tempfile.TemporaryDirectory() as folder, mock.patch.object(help_, 'EBOOT_SIZE', 4096):
             path = Path(folder) / 'eboot.bin'
             # It parses, but has no segment to load: building the image fails (the second step).
@@ -216,6 +217,40 @@ class FileTests(unittest.TestCase):
                         self.assertEqual(help_.eboot_state(folder), (state, size))
             path.write_bytes(beyond[:40])  # cut off inside its headers
             self.assertEqual(help_.eboot_state(folder), ('truncated', 40))
+
+    def test_an_older_launchers_cut_off_is_checked_again(self):
+        """R78 after the update: settings.json still has 1.9.6's "truncated" for the full-size file. That answer
+        ('2|') is not reused, the file is read again; this launcher's own answer is, while the file is unchanged."""
+        scan = {'files': 28800, 'bytes': 30 * 1024 ** 3, 'empty': [], 'shaders': True}
+        with tempfile.TemporaryDirectory() as folder, mock.patch.object(help_, 'EBOOT_SIZE', 4096), \
+                mock.patch.object(help_, 'scan_game', return_value=scan), \
+                mock.patch.object(help_, 'restore_eboot', return_value=None):
+            path = Path(folder) / 'eboot.bin'
+            path.write_bytes(self_file(False, 0, 0).ljust(4096, b'\0'))
+            stat = path.stat()
+            old = {'key': f'2|{path.resolve()}|{stat.st_size}|{int(stat.st_mtime)}', 'state': 'truncated'}
+            mods = str(Path(folder) / 'mods')
+            checks, eboot = help_.run_checks(folder, mods, '', '1920x1080', old)
+            self.assertEqual(eboot['state'], 'unreadable')
+            self.assertIn(('bad', 'eboot_unreadable', 'eboot.bin cannot be read (4,096 bytes).'), checks)
+            self.assertNotIn('eboot_truncated', [topic for _state, topic, _text in checks])
+            with mock.patch.object(help_, 'eboot_state', side_effect=AssertionError('read again')):
+                self.assertEqual(help_.run_checks(folder, mods, '', '1920x1080', eboot)[1], eboot)
+
+    def test_out_of_bounds_in_a_full_size_eboot(self):
+        """The log's "out of bounds" comes from any eboot.bin that does not build: after a failed start, a
+        full-size one gets the topic of a damaged file (with the game folder's button), not "cut off" (R78)."""
+        log = 'prepare failed: out of bounds: 0x5000+0x1000 / 0x4000\n'
+        with tempfile.TemporaryDirectory() as folder, mock.patch.object(help_, 'EBOOT_SIZE', 4096):
+            path = Path(folder) / 'eboot.bin'
+            self.assertEqual(help_.hints_for_game(log, folder), ['eboot_truncated'])  # no file: the log decides
+            self.assertEqual(help_.hints_for_game(log, ''), ['eboot_truncated'])
+            path.write_bytes(bytes(4095))
+            self.assertEqual(help_.hints_for_game(log, folder), ['eboot_truncated'])
+            path.write_bytes(bytes(4096))
+            self.assertEqual(help_.hints_for_game(log, folder), ['eboot_unreadable'])
+            self.assertEqual(help_.hints_for_game(log + 'expected PS4 SELF or ELF\n', folder), ['eboot_unreadable'])
+        self.assertEqual(help_.TOPIC_ACTIONS['eboot_unreadable'], [('Open the game folder', 'open_game_folder')])
 
     def test_scan_and_mods(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -264,7 +299,7 @@ class AfterExitTests(unittest.TestCase):
     """After the game ended with an error. Started from Steam or a shortcut (--play), the launcher opens with
     it: a log without a known cause gets a message too, where its own Play has the output on the screen."""
 
-    def run_after(self, log, code, always):
+    def run_after(self, log, code, always, game=''):
         class Box:
             def __init__(self):
                 self.shown = []
@@ -278,7 +313,7 @@ class AfterExitTests(unittest.TestCase):
 
         class Window(help_.HelpMixin):
             def __init__(self, user):
-                self.app, self.messagebox, self.opened = {'user_dir': user}, Box(), []
+                self.app, self.messagebox, self.opened = {'user_dir': user, 'game_dir': game}, Box(), []
 
             def open_topic(self, key):
                 self.opened.append(key)
@@ -293,6 +328,14 @@ class AfterExitTests(unittest.TestCase):
         shown, opened = self.run_after('GPU: device lost (submit)\n', 1, always=True)
         self.assertEqual([kind for kind, _t in shown], ['ask'])
         self.assertEqual(opened, ['driver'])
+
+    def test_a_full_size_eboot_is_not_called_cut_off(self):
+        with tempfile.TemporaryDirectory() as game, mock.patch.object(help_, 'EBOOT_SIZE', 4096):
+            (Path(game) / 'eboot.bin').write_bytes(bytes(4096))
+            shown, opened = self.run_after('prepare failed: out of bounds: 0x5000+0x1000 / 0x4000\n', 1, True, game)
+        self.assertEqual(opened, ['eboot_unreadable'])
+        self.assertIn('eboot.bin cannot be read', shown[0][1])
+        self.assertNotIn('cut off', shown[0][1])
 
     def test_without_a_known_cause_a_message_only_when_asked_for(self):
         for log in ('Frame stats: 98.0 FPS\n', None):  # nothing known; no log at all
