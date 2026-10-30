@@ -77,7 +77,7 @@ class RunningGameTests(unittest.TestCase):
     def play(self):
         """Play: the settings saved, the game started with them (as Launcher.play)."""
         self.ui.collect()
-        self.ui.game_started = {key: self.ui.ini.get(key) for key in launcher.MIRRORED_KEYS}
+        self.ui.remember_game_start()
         self.ui.process = object()
 
     def game_saves(self, **values):
@@ -118,12 +118,45 @@ class RunningGameTests(unittest.TestCase):
         self.assertEqual(self.shown(), ('60', '60'))
         self.assertEqual(self.next_start(), '60')
         # The game restarts itself with it (drain_output: "restarting through run.py"); then the launcher's 30.
-        self.ui.game_started = {key: launcher.load_ini()[0].get(key) for key in launcher.MIRRORED_KEYS}
+        self.ui.game_restarts()
         self.ui.var('fps_mode', 'app').set('30')
         self.ui.collect()
         self.game_saves(fps_mode='60', fov='50')
         self.ui.sync_ini()
         self.assertEqual(launcher.load_ini()[0]['fps_mode'], '30')
+
+    def test_back_to_the_start_value_in_the_game_wins(self):
+        """The game holds what its menu chose last: Unlocked again after 60 is no old value written back."""
+        self.play()
+        self.game_saves(fps_mode='60')
+        self.ui.sync_ini()
+        self.game_saves(fps_mode='uncap')  # no restart: the frame rate changes in the running game
+        self.ui.sync_ini()
+        self.assertEqual(self.shown(), ('uncap', 'uncap'))
+        self.assertEqual(self.next_start(), 'uncap')
+        self.assertEqual(textfile.REPAIRS, [])
+
+    def test_a_launcher_choice_after_one_in_the_game_stays(self):
+        self.play()
+        self.game_saves(fps_mode='60')  # chosen in the game
+        self.ui.sync_ini()
+        self.ui.var('fps_mode', 'app').set('30')
+        self.ui.collect()  # then in the launcher, saved while the game runs
+        self.game_saves(fps_mode='60', fov='50')  # the game's next save writes the 60 it holds
+        self.ui.sync_ini()
+        self.assertEqual(self.shown(), ('30', '30'))
+        self.assertEqual(self.next_start(), '30')
+
+    def test_a_restart_seen_before_the_games_save_keeps_its_choice(self):
+        """The restart line can come before the 200 ms check of bbport.ini (a busy window): the save it made is
+        the game's choice, not the old start's values written back."""
+        self.play()
+        self.game_saves(fps_mode='30')  # chosen in the game's menu, which restarts the game
+        self.ui.game_restarts()
+        self.ui.sync_ini()  # the check of bbport.ini, after the line
+        self.assertEqual(self.shown(), ('30', '30'))
+        self.assertEqual(self.next_start(), '30')
+        self.assertEqual(textfile.REPAIRS, [])
 
     def test_an_unsaved_launcher_choice_waits_for_play(self):
         self.play()
