@@ -25,7 +25,7 @@ IMPORTANT = {
     'check_game_files': 'button:game_files',
     'check_update': 'button:updates',
     'sign_in_discord': 'button:signin_supermedo',  # the Online page's own functions, not methods
-    'sign_in': 'button:signin_thd',
+    'sign_in_thd': 'button:signin_thd',
     'create_account': 'button:create_account',
     'import_save': 'button:import',
     'restore_backup': 'button:restore',

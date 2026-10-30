@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(ROOT / 'launcher'))
 sys.path.insert(0, str(ROOT / 'scripts'))
-from test_launcher_search_questions import QUESTIONS  # noqa: E402  (the players' questions from the Discord)
+from test_launcher_search_questions import MORE_QUESTIONS, QUESTIONS  # noqa: E402  (the players' questions)
 
 # Settings without a row of their own: internal state, or a part of another setting's row.
 INTERNAL = {'setup_done', 'auto_hw', 'bench_goal', 'test_compare', 'test_mode', 'test_scenario', 'thd_token',
@@ -54,7 +54,7 @@ QUERIES = [
     ('tastatur und maus', {'play_with'}), ('spiele mit', {'play_with'}), ('mauskamera', {'play_with'}),
     ('keyboard', {'play_with', 'mouse:layout'}),
     ('charakter weg', {'topic:save_lost'}),
-] + QUESTIONS  # in English, on the German pages: the players' words carry them
+] + QUESTIONS + MORE_QUESTIONS  # in English too, on the German pages: the players' words carry them
 
 
 @unittest.skipUnless(sys.platform == 'win32', 'the launcher window is Windows only')
@@ -128,7 +128,8 @@ class LiveSearchTests(unittest.TestCase):
     def test_the_players_words(self):
         for query, keys in QUERIES:
             with self.subTest(query):
-                self.assertTrue(keys & {self.key(e) for e in self.app.search(query)[:3]})
+                found = [self.key(e) for e in self.app.search(query)[:3]]
+                self.assertTrue(keys & set(found), f'{query!r} found {found}')
 
     def test_a_row_of_another_pool_is_found_and_leads_to_the_pool(self):
         """The Hunter's Dream's sign-in while SuperMedo Server is chosen: found with its note, and the jump

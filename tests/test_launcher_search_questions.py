@@ -2,8 +2,8 @@
 rebuilt from the pages' code (every index_entry, row, check and folder call with a written-out title, the
 settings the pages list in a loop), and search_ready adds the pages, Help's topics and the setup as it does in
 the launcher. "where is clear shader cache" and "how to update" found nothing (every word had to be found),
-"sign in", "expert view" or "restore save" had no entry, "bug report" found the benchmark first.
-test_launcher_search_live asks the same questions on the real pages."""
+"sign in", "expert view" or "restore save" had no entry, "bug report" found the benchmark first; "absturz im
+spiel" found Import first ("im"). test_launcher_search_live asks the same questions on the real pages."""
 from paths import ROOT
 import ast
 import re
@@ -27,6 +27,22 @@ QUESTIONS = [
     ('restore save', {'button:restore', 'button:backup'}), ('where are my saves', {'user_dir', 'page:saves'}),
     ('reset settings', {'action:setup'}), ('expert view', {'button:expert'}), ('older version', {'button:versions'}),
     ('bug report', {'button:report'}), ('mouse look', {'mouse:enabled'}),
+]
+# More of the same, and the German ones: with only some words found, a small word ("im" in "Import"), a plural in
+# the wrong entry or a missing players' word put the wrong entries first.
+MORE_QUESTIONS = [
+    ('absturz im spiel', {'topic:page_file'}),
+    # on the German pages "Spiel" is in many hints: there the stutter entries with both words (the video memory
+    # topic, "Neue Shader beim Spielen") come before the shader cache topic
+    ('ruckeln im spiel', {'topic:shader_cache', 'topic:vram', 'async_pipelines'}),
+    ('wie melde ich mich an', {'button:signin_supermedo', 'button:signin_thd'}),
+    ('wie melde ich mich ab', {'button:signout'}), ('sign-in', {'button:signin_supermedo', 'button:signin_thd'}),
+    ('wo sind meine spielstände', {'user_dir', 'page:saves'}),
+    ('wo sind die spielstände', {'user_dir', 'page:saves'}),
+    ('why is my game stuttering', {'topic:shader_cache', 'frames_ahead'}),
+    ('how do i play with friends', {'online', 'online_pool', 'page:online'}),
+    ('how do i add mods', {'mods_enabled', 'page:mods'}), ('install mods', {'page:mods'}),
+    ('how to install', {'button:site'}),
 ]
 
 SOURCES = ('bbport_launcher_win.py', 'bbport_setup.py', 'bbport_help.py', 'bbport_fsr41_ui.py')
@@ -126,6 +142,9 @@ class Index(search.SearchMixin):
                              title, hint, key)
             if key in ONLY:
                 self.search_settings[-1]['only'] = ('only for another choice', ONLY[key])
+        # the side bar's website button: its title is the site's address, not written out
+        self.index_entry(Widget(self.side), L.COMMUNITY_SITE.split('//')[1].strip('/'),
+                         'Install guide and FAQ on bbport.de', 'button:site')
         self.search_ready()
 
 
@@ -146,15 +165,25 @@ class QuestionTests(unittest.TestCase):
     def test_the_index_has_the_pages_settings(self):
         keys = {e.get('key') for e in self.index.search_entries}
         for key in ('fullscreen', 'online_pool', 'user_dir', 'button:shader_cache', 'button:expert', 'mouse:enabled',
-                    'button:signin_supermedo', 'button:import', 'effect_motion_blur', 'action:setup'):
+                    'button:signin_supermedo', 'button:import', 'effect_motion_blur', 'action:setup', 'button:site'):
             self.assertIn(key, keys)
         self.assertEqual(next(e for e in self.index.search_entries if e.get('key') == 'button:expert')['kind'], 'side')
 
     def test_the_players_questions(self):
-        for query, keys in QUESTIONS:
+        for query, keys in QUESTIONS + MORE_QUESTIONS:
             with self.subTest(query):
                 found = self.found(query)
                 self.assertTrue(keys & set(found), f'{query!r} found {found}')
+
+    def test_what_is_meant_comes_first(self):
+        """Not only among three: the small words and the generic ones do not win over what the player means."""
+        for query, key in (('absturz im spiel', 'topic:page_file'), ('rollback', 'button:versions'),
+                           ('wie melde ich mich an', 'button:signin_supermedo'), ('fehler melden', 'button:report'),
+                           ('wo sind meine spielstände', 'user_dir'), ('log-in', 'button:signin_supermedo'),
+                           ('why is my game stuttering', 'topic:shader_cache'), ('sign-out', 'button:signout')):
+            with self.subTest(query):
+                self.assertEqual(self.found(query, 1), [key])
+        self.assertNotIn('button:add_backup', self.found('add mods', 7))  # every word in the mods' entries
 
     def test_what_the_page_shows_comes_before_another_choice(self):
         self.assertEqual(self.found('sign in', 1), ['button:signin_supermedo'])

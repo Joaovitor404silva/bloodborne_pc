@@ -39,7 +39,7 @@ WORDS = {
     'vram_warning': 'vram videospeicher grafikspeicher warnung warning popup banner meldung hinweis',
     'fps_mode': 'fps bildrate framerate frame rate 30 60 120 unbegrenzt unlock uncap uncapped flussig ruckelt lag',
     'frame_cap': 'begrenzen begrenzung maximal max limiter fps grenze limit cap 30 60 120 144 165 240',
-    'frames_ahead': 'latenz input lag ruckelt stutter',
+    'frames_ahead': 'latenz input lag ruckelt stutter stuttering stutters lagging laggy',
     'present_mode': 'vsync tearing mailbox fifo',
     'output_res': 'auflosung resolution 4k 1440p 1080p 2160p 720p scharf unscharf pixelig eigene custom '
                   'benutzerdefiniert monitor',
@@ -73,7 +73,7 @@ WORDS = {
     'cache_dir': 'cache shader shaders logs temp ordner folder onedrive cloud lokal local zwei pcs two pcs',
     'characters': 'charakter character level stufe waffen weapons bosse bosses besiegt getötet beaten killed '
                   'attribute stats vitalität spielzeit play time tode deaths früher earlier stand',
-    'user_dir': 'spielstandordner folder speicherort spielstande saves save speicherstand ordner location where',
+    'user_dir': 'spielstandordner folder speicherort spielstande saves save speicherstand ordner location',
     'skip_intro': 'intro logos video uberspringen skip',
     'mute_unfocused': 'ton stumm sound mute hintergrund lautstarke volume audio',
     'cheat_no_death': 'unsterblich unverwundbar nie sterben god mode godmode immortal invincible',
@@ -93,11 +93,12 @@ WORDS = {
     'button:respec': 'respec umverteilen neu verteilen attribute attributpunkte punkte stats skillung',
     'button:fsr4': 'fsr4 fsr 4 herunterladen download dateien fehlen assets',
     'button:fsr4vk': 'fsr4vk fsr 4.1 fsr411 herunterladen download reparieren vulkan',
-    'online': 'online koop coop co-op multiplayer seamless freunde glocke bell beschworen summon summoning invasion '
-              'passwort password',
+    'online': 'online koop coop co-op multiplayer seamless freunde friends friend glocke bell beschworen summon '
+              'summoning invasion passwort password',
     'online_pool': 'server online shadnet supermedo hunters dream thd bbhost spielen mit play with koop coop co-op '
-                   'seamless summon bell passwort password',
-    'mods_enabled': 'mods mod remaster texturen',
+                   'seamless freunde friends friend summon bell passwort password',
+    # "install" on the page only: alone it is the port's install guide (the side bar's website button)
+    'mods_enabled': 'mods mod remaster texturen add hinzufugen',
     'translucent_window': 'transparent durchsichtig transparenz glas acrylic opacity deckkraft see through '
                           'unreadable unlesbar',
     'ui_language': 'sprache language launcher',
@@ -112,15 +113,15 @@ WORDS = {
     'goal': 'ziel goal flussig ausgewogen leise smooth balanced quiet laptop akku',
     'play_with': 'spiele mit play with eingabe input gerat device controller gamepad tastatur keyboard maus mouse '
                  'mauskamera kb m+k wasd',
-    'auto_backup': 'sicherung sichern backup automatisch spielstand spielstande',
-    # "save" without "saves": "where are my saves" is the saves folder and the Saves page. Restoring has its
-    # own entry: "restore save" finds it, not Back up now.
-    'button:backup': 'sicherung sichern backup jetzt spielstand spielstande save',
-    'button:restore': 'restore wiederherstellen zuruckholen zuruck backup backups sicherung save spielstand '
-                      'spielstande rollback',
+    'auto_backup': 'sicherung sichern backup automatisch spielstand',
+    # The backups' entries (and auto_backup above) have "save" and "spielstand" without their plurals: "where
+    # are my saves" and "wo sind meine spielstände" are the saves folder and the Saves page. Restoring has its
+    # own entry: "restore save" finds it, not Back up now. ("rollback" is Other versions'.)
+    'button:backup': 'sicherung sichern backup jetzt spielstand save',
+    'button:restore': 'restore wiederherstellen zuruckholen zuruck backup backups sicherung save spielstand',
     'button:add_backup': 'backup sicherung datei file hinzufugen add zip',
-    'button:import': 'import importieren ubernehmen transfer save spielstand spielstande charakter character '
-                     'shadps4 awaken bbhost ps4 export',
+    'button:import': 'import importieren ubernehmen transfer save spielstand charakter character shadps4 awaken '
+                     'bbhost ps4 export',
     'online_npid': 'npid online id konto account shadnet',
     'online_password': 'passwort password kennwort',
     'online_server': 'server adresse address shadnet ip',
@@ -128,11 +129,12 @@ WORDS = {
     'online_community': 'spielserver community server nachrichten blutflecken geister messages',
     'thd_online_id': 'konto account discord anmelden hunters dream',
     'supermedo_npid': 'konto account supermedo npid',
-    # the Online page's buttons ("log in" is joined to "login" in query_words)
-    'button:signin_supermedo': 'sign signin login einloggen anmelden anmeldung discord supermedo account konto '
-                               'connexion connecter iniciar sesion entrar accedi zaloguj войти вход',
-    'button:signin_thd': 'sign signin login einloggen anmelden anmeldung discord hunters dream thd account konto code '
-                         'connexion connecter iniciar sesion entrar accedi zaloguj войти вход',
+    # the Online page's buttons ("log in" is joined to "login" in query_words); "melde" and "logge" for "wie melde
+    # ich mich an", whose "an" is a stop word ("melden" alone is a report)
+    'button:signin_supermedo': 'sign signin login einloggen anmelden anmeldung melde logge discord supermedo account '
+                               'konto connexion connecter iniciar sesion entrar accedi zaloguj войти вход',
+    'button:signin_thd': 'sign signin login einloggen anmelden anmeldung melde logge discord hunters dream thd account '
+                         'konto code connexion connecter iniciar sesion entrar accedi zaloguj войти вход',
     'button:signout': 'logout signout abmelden ausloggen account konto wechseln switch deconnexion выйти',
     'button:create_account': 'account konto registrieren registrierung register signup erstellen anlegen neu new '
                              'create supermedo email compte cuenta conta аккаунт',
@@ -173,8 +175,8 @@ WORDS = {
     'button:show_log': 'log logs protokoll ausgabe output',
     'button:undo': 'ruckgangig zuruck revert vorher before previous empfehlung recommended',
     'page:trophies': 'erfolge trophaen trophies achievements platin',
-    'page:online': 'online koop coop multiplayer freunde hunters dream shadnet anmelden discord',
-    'page:mods': 'reihenfolge order ziehen drag drop mods mod remaster patches',
+    'page:online': 'online koop coop multiplayer freunde friends friend hunters dream shadnet anmelden discord',
+    'page:mods': 'reihenfolge order ziehen drag drop mods mod remaster patches add install hinzufugen installieren',
     'page:system': 'pc hardware grafikkarte prozessor anforderungen requirements system',
     'page:picture': 'grafik bild leistung fps ziel flussig ausgewogen leise laptop akku',
     'page:graphics': 'grafik graphics alle einstellungen',
@@ -193,7 +195,7 @@ WORDS = {
     'topic:location': 'onedrive programme program files ordner',
     'topic:vram': 'vram grafikspeicher ruckelt texturen gesichter memory',
     'topic:driver': 'treiber driver device lost absturz grafikkarte',
-    'topic:shader_cache': 'ruckeln ruckelt stutter erste minuten shader',
+    'topic:shader_cache': 'ruckeln ruckelt stutter stuttering stutters lagging laggy erste minuten shader',
     'topic:save_lost': 'spielstand weg kaputt beschadigt charakter verschwunden verloren fortschritt save lost '
                        'corrupted damaged gone missing laden leer sicherung zuruckholen',
     # symptoms, and the device only as a word's start: a plain "controller" finds the Controls page first
@@ -206,13 +208,16 @@ WORDS = {
 # With the game tests on (bbport_launcher_win.GAME_TESTS): their words, added to their pages.
 GAME_TEST_WORDS = {'page:system': 'benchmark test messen stabilitat beta tests', 'page:picture': 'messen benchmark'}
 # The words of a question around what is meant ("where is", "how do i", "wie kann ich"): every word
-# has to be found, and these are in almost no entry, so a question found nothing. ("die" stays: the
-# English one is a word players mean.)
+# has to be found, and these are in almost no entry, so a question found nothing; counted as found,
+# they would find what starts with them ("im" in "Import", "mich" in a hint). ("die" stays: the
+# English one is a word players mean; "mit" too: "spielen mit".)
 STOP_WORDS = set('where is are how do does did i my me to the a an can what when why which it of in on for and '
-                 'please pls wo ist sind wie mein meine meinen ich kann man was wann warum und der das ein eine es '
-                 'gibt'.split())
-# Two words players write for one, joined before the stop words go ("in" is one; "log" alone is the Log page).
-JOINED = {'log in': 'login', 'logged in': 'login', 'log out': 'logout'}
+                 'please pls wo ist sind wie mein meine meinen ich kann man was wann warum und der das den dem ein '
+                 'eine es gibt im am zu zum zur beim vom mich mir dich'.split())
+# Two words players write for one, joined before the stop words go ("in" is one; "log" alone is the Log
+# page), and the launcher's own "sign-in" written by players.
+JOINED = {'log in': 'login', 'logged in': 'login', 'log out': 'logout', 'log-in': 'login', 'log-out': 'logout',
+          'sign-in': 'signin', 'sign-out': 'signout'}
 
 
 def fold(text):

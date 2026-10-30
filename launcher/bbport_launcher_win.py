@@ -3112,7 +3112,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             else:
                 code_box.grid_remove()
 
-        def sign_in():
+        def sign_in_thd():  # its own name: tests/test_launcher_findable.py finds this page's button by it
             signing.configure(text=_('Starting the sign-in…'))
             show_code()
 
@@ -3131,7 +3131,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.ui_calls.put(lambda: (thd_id.set(name), thd_token.set(token), signing.configure(text=''),
                                            show_code(), show_accounts(), self.collect()))
             threading.Thread(target=work, daemon=True).start()
-        button = self.row(f, '', ttk.Button(f, text=_('Sign in with Discord'), command=sign_in))
+        button = self.row(f, '', ttk.Button(f, text=_('Sign in with Discord'), command=sign_in_thd))
         self.index_entry(button, _('Sign in with Discord'), _("The Hunter's Dream account"), key='button:signin_thd')
         signing.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
         code_box.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 0))
@@ -3325,9 +3325,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 'huntersdream': _("only with The Hunter's Dream") if HUNTERS_DREAM_POOL else None,
                 'shadnet': _('only with an own server') if bbsc else None}
         for name, widgets in groups.items():
-            pools = [p for p, wanted in shown.items() if name in wanted]
-            if len(pools) == 1 and only[pools[0]]:
-                self.index_only(widgets, only[pools[0]], 'online_pool')
+            choices = [p for p, wanted in shown.items() if name in wanted]  # (pools is the "Play with" frame)
+            if len(choices) == 1 and only[choices[0]]:
+                self.index_only(widgets, only[choices[0]], 'online_pool')
 
     def build_mods(self):
         f = self.scrolled_page('mods', _('Mods & patches', 'Моды и патчи'),
