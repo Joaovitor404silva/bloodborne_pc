@@ -335,6 +335,17 @@ def refresh_shared_graphics(env, config):
             env.pop('BB_FPS_LIMIT', None)
 
 
+def frame_pacing(env, fps):
+    """The vblank rate for the frame rate mode (BB_VBLANK_HZ: 0 is the unlocked mode's 480 Hz with a frame limit
+    at the display refresh), chosen here at every start. The in-game restart inherits the previous start's
+    environment, and a value kept from it held a frame rate changed in the game's menu at the old pacing: 30 FPS
+    after Unlocked kept the 480 Hz vblank and the frame limit at the display refresh, Unlocked after 30 kept 60 Hz
+    (R88). An explicit one (set before the first start, for measurements) is used as given."""
+    if env.get('BB_AUTO_VBLANK') == '1' or not env.get('BB_VBLANK_HZ'):
+        env['BB_VBLANK_HZ'] = {'uncap': '0', '90': '90'}.get(fps, '60')
+        env['BB_AUTO_VBLANK'] = '1'
+
+
 def find_executable(name):
     """bin/ (packaged), else out/ (built with build.sh)."""
     for candidate in (PORT / 'bin' / name, PORT / 'out' / name):
@@ -826,8 +837,7 @@ def main():
                    '--output-res', env.get('BB_OUTPUT_RES', ''),
                    '--patches-dir', env.get('BB_PATCHES_DIR', data / 'patches'),
                    '--patches-config', env.get('BB_PATCHES_CONFIG', data / 'patches.json'))
-        if not env.get('BB_VBLANK_HZ'):
-            env['BB_VBLANK_HZ'] = {'uncap': '0', '90': '90'}.get(fps, '60')
+        frame_pacing(env, fps)
 
         # The in-game restart starts this script again once this process is gone.
         # GPU caches (shaders, pipelines) beside the saves; read before main(), so set here.

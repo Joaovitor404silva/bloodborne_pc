@@ -4847,12 +4847,31 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 continue
             if shown == self.ini.get(key) and shown != disk[key]:
                 var.set(disk[key] == '1' if key in INI_FLAGS else disk[key])
+        # The running game writes the whole file whenever its menu saves anything. A frame rate it started with and
+        # writes back unchanged is no choice of its own: one the launcher saved since (set while the game ran) stays
+        # and is written again, else the game's old value came back and the next start ran with it (R88).
+        started = getattr(self, 'game_started', None) or {}  # a game started here, until its end
+        kept = {}
         for key in MIRRORED_KEYS:  # changed by the game's PC Settings page
             var = self.vars.get(key)
-            if key in disk and disk[key] != self.ini.get(key) and                     (var is None or str(var.get()) == str(self.app.get(key))):
+            if key not in disk or disk[key] == self.ini.get(key):
+                continue
+            if key in started and disk[key] == started[key] and self.ini.get(key) is not None:
+                kept[key] = self.ini[key]
+            elif var is None or str(var.get()) == str(self.app.get(key)):
                 self.app[key] = disk[key]
                 if var is not None:
                     var.set(disk[key])
+        if kept:
+            try:
+                save_ini(kept, lines)
+                disk, lines = load_ini()
+            except OSError:
+                pass  # written with the next save of the settings
+            note = ('Settings: ' + ', '.join(f'{key}={value}' for key, value in kept.items()) + ', set in the '
+                    'launcher while the game ran, kept (the game had written the value it started with back)')
+            if note not in textfile.REPAIRS:
+                textfile.REPAIRS.append(note)
         self.ini, self.ini_lines = disk, lines
 
     def collect(self):
@@ -4995,13 +5014,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                                      'be used. Export the save with Apollo Save Tool on the PS4 '
                                                      'instead.') + '\n\n' + encrypted)
         self.auto_backup()
+        self.game_started = {key: self.ini.get(key) for key in MIRRORED_KEYS}  # what it runs with (sync_ini)
         try:
             self.process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=game_environment(self.app, self.ini),
                                             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT, creationflags=NO_WINDOW)
         except OSError as error:
             self.append(_('Could not start: {}', 'Не удалось запустить: {}').format(error) + '\n')
-            self.process = None
+            self.process = self.game_started = None
             return
         self.job = GameJob(self.process)
         self.placer = display.Placer(self.app, display.parse_size(self.ini.get('output_res')) or (1920, 1080)).start()
@@ -5107,6 +5127,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     self.append(_('\n— the game exited (code {}) —\n', '\n— игра завершилась (код {}) —\n').format(item[0]))
                     self.process = None
                     self.sync_ini()
+                    self.game_started = None
                     self.refresh_fsr411()
                     if self.job:
                         self.job.close()
@@ -5138,6 +5159,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                         self.status.configure(text=_('The game is running.', 'Игра запущена.'), fg=GOLD)
                     elif 'restarting through run.py' in item:
                         self.status.configure(text=_('Restarting with the new settings…', 'Перезапуск с новыми настройками…'), fg=GOLD)
+                        # The game saved before it restarts: the new start reads that file.
+                        self.game_started = {key: load_ini()[0].get(key) for key in MIRRORED_KEYS}
                     elif any(text in item for text, _topic in bbport_help.GAME_NOTICES):
                         # Said once the game closes (after_exit).
                         notices = self.__dict__.setdefault('game_notices', [])
