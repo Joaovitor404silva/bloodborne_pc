@@ -191,6 +191,32 @@ class FileTests(unittest.TestCase):
             (Path(folder) / 'eboot.bin').write_bytes(b'O\x15=\x1d' + bytes(60))
             self.assertIn(help_.eboot_state(folder)[0], ('truncated', 'unreadable'))
 
+    def test_only_a_short_eboot_is_cut_off(self):
+        """R78: an eboot.bin of the clean one's size whose program does not build was "cut off (93,825,704 bytes,
+        the clean one has 93,825,704)". It is unreadable; only a shorter one is cut off."""
+        import struct
+
+        def self_file(segments, program_type, offset):
+            """A PS4 SELF with one program header, and a segment table entry pointing at `offset` if `segments`."""
+            table = struct.pack('<QQQQ', 0x800, offset, 16, 16) if segments else b''
+            head = b'O\x15=\x1d' + bytes(20) + struct.pack('<H', len(table) // 32) + bytes(6)
+            elf = struct.pack('<16sHHIQQQIHHHHHH', b'\x7fELF\x02\x01\x01' + bytes(9), 2, 62, 1, 0, 64, 0, 0, 64, 56,
+                              1, 0, 0, 0)
+            return head + table + elf + struct.pack('<IIQQQQQQ', program_type, 0, 0x200, 0, 0, 16, 16, 0)
+        with tempfile.TemporaryDirectory() as folder, mock.patch.object(help_, 'EBOOT_SIZE', 4096):
+            path = Path(folder) / 'eboot.bin'
+            # It parses, but has no segment to load: building the image fails (the second step).
+            nothing_to_load = self_file(False, 0, 0)
+            # Its segment lies beyond the end of the file: out of bounds while parsing (the first step).
+            beyond = self_file(True, 1, 0x10000)
+            for program in (nothing_to_load, beyond):
+                for size, state in ((4096, 'unreadable'), (4100, 'unreadable'), (4095, 'truncated')):
+                    with self.subTest(segments=program is beyond, size=size):
+                        path.write_bytes(program.ljust(size, b'\0'))
+                        self.assertEqual(help_.eboot_state(folder), (state, size))
+            path.write_bytes(beyond[:40])  # cut off inside its headers
+            self.assertEqual(help_.eboot_state(folder), ('truncated', 40))
+
     def test_scan_and_mods(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

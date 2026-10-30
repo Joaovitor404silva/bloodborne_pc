@@ -351,12 +351,15 @@ def other_installations(settings, port_dir, data_dir):
 # ---- the checks ----------------------------------------------------------------------------------
 def eboot_state(folder):
     """'clean', 'lance' (Lance McDonald's 60 fps patch), 'modified' (another build, or changed),
-    'truncated', 'unreadable' or 'missing'; with the file size."""
+    'truncated' (shorter than the clean file), 'unreadable' or 'missing'; with the file size."""
     path = Path(folder or '.') / 'eboot.bin'
     try:
         data = path.read_bytes()
     except OSError:
         return 'missing', 0
+    # Only a file shorter than the clean one is cut off: a full-size one that does not read is damaged or
+    # converted, and "cut off (93,825,704 bytes, the clean one has 93,825,704)" told players nothing (R78).
+    broken = 'truncated' if len(data) < EBOOT_SIZE else 'unreadable'
     try:
         from prepare import parse_self, span
         from patches import PATCH_GROUPS, eboot_bytes, matching_groups_of
@@ -365,7 +368,7 @@ def eboot_state(folder):
         # another format (another file, or an ELF that isn't the PS4's: a plain one is read)
         if 'expected PS4 SELF' in str(error) or 'ELF' in str(error) or 'program headers' in str(error):
             return 'unreadable', len(data)
-        return ('truncated' if 'out of bounds' in str(error) or len(data) < EBOOT_SIZE else 'unreadable'), len(data)
+        return broken, len(data)
     except (ImportError, KeyError, IndexError, OSError):
         return 'unreadable', len(data)
     try:
@@ -378,7 +381,7 @@ def eboot_state(folder):
         # Every patch group's original bytes (patches.py fingerprints each group on its own).
         clean = matching_groups_of(lambda start, end: eboot_bytes(elf, start, end)) == set(PATCH_GROUPS)
     except (ValueError, KeyError, IndexError, OSError):
-        return 'truncated', len(data)
+        return broken, len(data)
     return ('clean' if clean else 'modified'), len(data)
 
 
