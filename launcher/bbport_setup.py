@@ -1472,8 +1472,8 @@ class SetupMixin:
         if bold:
             tk.Label(words, text=bold, bg=bg, fg=theme.TEXT_STRONG, font=(theme.BODY_SEMI, 10), anchor='w',
                      justify='left').pack(anchor='w')
-        tk.Label(words, text=text, bg=bg, fg=theme.TEXT if state != 'info' else theme.MUTED, font=(theme.BODY, 10),
-                 anchor='w', justify='left', wraplength=px(wrap)).pack(anchor='w')
+        self.wrap_within(tk.Label(words, text=text, bg=bg, fg=theme.TEXT if state != 'info' else theme.MUTED,
+                                  font=(theme.BODY, 10), anchor='w', justify='left'), wrap).pack(fill='x')
         return line
 
     def piracy_notice(self, parent, bg, wrap=640):
@@ -1490,11 +1490,11 @@ class SetupMixin:
         words.pack(side='left', fill='both', expand=True, padx=(px(10), px(14)), pady=px(10))
         tk.Label(words, text=_('Only with your own copy of the game'), bg=bg, fg=theme.BLOOD_LIGHT, font=(theme.BODY_SEMI, 11),
                  anchor='w').pack(anchor='w')
-        tk.Label(words, text=_("The port does not come with the game, and we can't give out game files or "
-                               'help anyone find them. Asking for them or sharing them breaks rule 2 of the '
-                               'community Discord and can get you banned.'),
-                 bg=bg, fg=theme.TEXT, font=(theme.BODY, 10), justify='left', anchor='w',
-                 wraplength=px(wrap)).pack(anchor='w', pady=(px(4), 0))
+        self.wrap_within(tk.Label(words, text=_("The port does not come with the game, and we can't give out game "
+                                                'files or help anyone find them. Asking for them or sharing them '
+                                                'breaks rule 2 of the community Discord and can get you banned.'),
+                                  bg=bg, fg=theme.TEXT, font=(theme.BODY, 10), justify='left', anchor='w'),
+                         wrap).pack(fill='x', pady=(px(4), 0))
         return box
 
     def link(self, parent, text, url, bg):
@@ -1622,9 +1622,8 @@ class SetupMixin:
         summary = tk.Label(body, text='', bg=theme.CARD, fg=theme.TEXT_STRONG, font=(theme.BODY_SEMI, 11), anchor='w',
                            justify='left')
         summary.pack(anchor='w', pady=(px(8), 0))
-        pc = tk.Label(body, text='', bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), anchor='w', justify='left',
-                      wraplength=px(700))
-        pc.pack(anchor='w', pady=(px(2), 0))
+        pc = tk.Label(body, text='', bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), anchor='w', justify='left')
+        self.wrap_within(pc, 700).pack(fill='x', pady=(px(2), 0))
         goal_row = tk.Frame(body, bg=theme.CARD)
         goal_row.pack(fill='x', pady=(px(14), 0))
         tk.Label(goal_row, text=_('Your goal'), bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 10)).pack(
@@ -1632,8 +1631,8 @@ class SetupMixin:
         self.goal_switch(goal_row).pack(side='left')
         self.index_entry(goal_row, _('Your goal'), '', 'goal')
         note = tk.Label(body, text='', bg=theme.CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9), anchor='w',
-                        justify='left', wraplength=px(700))
-        note.pack(anchor='w', pady=(px(6), 0))
+                        justify='left')
+        self.wrap_within(note, 700).pack(fill='x', pady=(px(6), 0))
         self.goal_notes = getattr(self, 'goal_notes', []) + [note]
         buttons = tk.Frame(body, bg=theme.CARD)
         buttons.pack(fill='x', pady=(px(14), 0))
@@ -1857,33 +1856,34 @@ class SetupMixin:
         grid = tk.Frame(table, bg=L.CARD)
         grid.pack(fill='x')
         grid.columnconfigure((1, 2, 3), weight=1, uniform='req')
-        tk.Label(table, text=_(hardware.FOUR_K), bg=L.CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9),
-                 justify='left', wraplength=px(700)).pack(anchor='w', pady=(px(10), 0))
+        self.wrap_within(tk.Label(table, text=_(hardware.FOUR_K), bg=L.CARD, fg=theme.TEXT_SOFT, font=(theme.BODY, 9),
+                                  justify='left', anchor='w'), 700).pack(fill='x', pady=(px(10), 0))
 
         def draw_requirements():
             for child in grid.winfo_children():
                 child.destroy()
+            # The cells wrap at their column's width: in a narrow window the columns get narrower than the texts
             for col, text in enumerate(('',) + hardware.REQUIREMENT_HEADS + ('Your PC',)):
-                tk.Label(grid, text=_(text) if text else '', bg=L.CARD, fg=theme.GOLD_LIGHT, font=(theme.HEAD, 10),
-                         anchor='w', justify='left', wraplength=px(220)).grid(row=0, column=col, sticky='nw',
-                                                                             padx=(0, px(16)), pady=(0, px(8)))
+                self.wrap_within(tk.Label(grid, text=_(text) if text else '', bg=L.CARD, fg=theme.GOLD_LIGHT,
+                                          font=(theme.HEAD, 10), anchor='w', justify='left'), 220).grid(
+                    row=0, column=col, sticky='nwe', padx=(0, px(16)), pady=(0, px(8)))
             yours = self.your_pc()
             for row, (part, low, high) in enumerate(hardware.REQUIREMENTS, start=1):
                 tk.Frame(grid, bg=theme.BORDER, height=1).grid(row=row * 2 - 1, column=0, columnspan=4, sticky='we')
                 tk.Label(grid, text=_(part), bg=L.CARD, fg=theme.MUTED, font=(theme.BODY_MEDIUM, 9), anchor='nw').grid(
                     row=row * 2, column=0, sticky='nw', padx=(0, px(16)), pady=px(7))
                 for col, text in enumerate((low, high), start=1):
-                    tk.Label(grid, text=_(text), bg=L.CARD, fg=theme.TEXT, font=(theme.BODY, 9), anchor='nw',
-                             justify='left', wraplength=px(210)).grid(row=row * 2, column=col, sticky='nw',
-                                                                      padx=(0, px(16)), pady=px(7))
+                    self.wrap_within(tk.Label(grid, text=_(text), bg=L.CARD, fg=theme.TEXT, font=(theme.BODY, 9),
+                                              anchor='nw', justify='left'), 210).grid(
+                        row=row * 2, column=col, sticky='nwe', padx=(0, px(16)), pady=px(7))
                 state, text = yours.get(part, (None, '…'))
                 cell = tk.Frame(grid, bg=L.CARD)
-                cell.grid(row=row * 2, column=3, sticky='nw', pady=px(7))
+                cell.grid(row=row * 2, column=3, sticky='nwe', pady=px(7))
                 if state:
                     tk.Label(cell, text=theme.ICON[STATE_ICONS[state]], bg=L.CARD, fg=STATE_COLORS[state],
                              font=(theme.ICONS, 9)).pack(side='left', anchor='n', pady=(px(2), 0), padx=(0, px(6)))
-                tk.Label(cell, text=text, bg=L.CARD, fg=theme.TEXT_STRONG, font=(theme.BODY_MEDIUM, 9), anchor='nw',
-                         justify='left', wraplength=px(190)).pack(side='left', anchor='nw')
+                self.wrap_within(tk.Label(cell, text=text, bg=L.CARD, fg=theme.TEXT_STRONG, font=(theme.BODY_MEDIUM, 9),
+                                          anchor='nw', justify='left'), 190).pack(side='left', fill='x', expand=True)
         draw_requirements()
         self.rating_views.append(draw_requirements)
 

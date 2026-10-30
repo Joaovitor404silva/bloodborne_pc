@@ -715,27 +715,48 @@ class HelpMixin:
         self.files_button.pack(side='left')
         self.index_entry(self.files_button, _('Check the game files'), key='button:game_files')
         self.files_note = tk.Label(files, text=_('Compares every file with the clean 1.09 (a few minutes).'),
-                                   bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
-                                   wraplength=px(560))
-        self.files_note.pack(side='left', padx=(px(12), 0))
+                                   bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left', anchor='w')
+        self.wrap_within(self.files_note, 560).pack(side='left', fill='x', expand=True, padx=(px(12), 0))
+        # The upkeep players asked for in the simple view too, beside the game files (Advanced has it as well): the
+        # shader cache, the updates, another version. Their search entries lead here, a page of both views.
+        cache = tk.Frame(card, bg=theme.CARD)
+        cache.pack(fill='x', pady=(px(8), 0))
+        button = ttk.Button(cache, text=_('Clear the shader cache'), style='Card.TButton', command=self.clear_cache)
+        button.pack(side='left')
+        hint = _('For a black screen, or a broken picture after a driver update. The next start stutters for a few '
+                 'minutes.')
+        self.wrap_within(tk.Label(cache, text=hint, bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9),
+                                  justify='left', anchor='w'), 560).pack(side='left', fill='x', expand=True,
+                                                                         padx=(px(12), 0))
+        self.index_entry(button, _('Clear the shader cache'), hint, key='button:shader_cache')
+        versions = tk.Frame(card, bg=theme.CARD)
+        versions.pack(fill='x', pady=(px(8), 0))
+        button = ttk.Button(versions, text=_('Check for updates', 'Проверить обновления'), style='Card.TButton',
+                            command=self.check_update_now)
+        button.pack(side='left')
+        self.index_entry(button, _('Check for updates', 'Проверить обновления'), key='button:updates')
+        button = ttk.Button(versions, text=_('Other versions…', 'Другие версии…'), style='Card.TButton',
+                            command=self.choose_version)
+        button.pack(side='left', padx=(px(8), 0))
+        self.index_entry(button, _('Other versions…', 'Другие версии…'), key='button:versions')
+        tk.Label(versions, text=_('Installed: v{}', 'Установлена: v{}').format(L.VERSION_TEXT),
+                 bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9)).pack(side='left', padx=(px(12), 0))
         self.link_row(f, _('Set everything up again, step by step.'), None, _('Repeat the setup'), self.open_setup)
         # What's new again, whenever: the Play page's line goes once it was seen (bbport_news).
         news = self.link_row(f, _('What changed in this version, and what to know.'), None, _("What's new", 'Что нового'),
                              self.open_news)
         self.index_entry(news, _("What's new", 'Что нового'), key='button:news')
 
-        self.section(f, _('Problems and their fixes'))
-        self.help_topics = {}
-        for key in TOPIC_ORDER:
-            self.help_topics[key] = self.topic_card(f, key)
-        self.section(f, _('Still stuck?'))
+        # Asking for help above the problems: below their 26 cards nobody found the report (the Report button beside
+        # Play makes the same zip).
+        self.section(f, _('Ask for help'))
         last = ttk.Frame(f, style='Card.TFrame', padding=(px(22), px(16)))
         last.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(4), 0))
         self.piracy_notice(last, theme.CARD, wrap=700).pack(fill='x', pady=(0, px(12)))
-        tk.Label(last, text=_('Ask in the help forum of the community Discord. Save a report and attach it: it has '
-                              'the log, your settings and this PC\'s details (no passwords), so a helper sees the '
-                              'cause at once.'), bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 10), justify='left',
-                 wraplength=px(720)).pack(anchor='w')
+        self.wrap_within(tk.Label(last, text=_(
+            'Ask in the help forum of the community Discord. Save a report and attach it: it has the log, your '
+            'settings and this PC\'s details (no passwords), so a helper sees the cause at once.'), bg=theme.CARD,
+            fg=theme.TEXT, font=(theme.BODY, 10), justify='left', anchor='w'), 720).pack(fill='x')
         row = tk.Frame(last, bg=theme.CARD)
         row.pack(anchor='w', pady=(px(10), 0))
         button = ttk.Button(row, text=_('Save a report'), style='Card.Accent.TButton', command=self.save_report)
@@ -748,15 +769,17 @@ class HelpMixin:
                              command=lambda: webbrowser.open(DISCORD))
         discord.pack(side='left', padx=(px(8), 0))
         self.index_entry(discord, _('Open the Discord'), key='button:discord')
-        more = tk.Frame(last, bg=theme.CARD)
-        more.pack(anchor='w', pady=(px(8), 0))
-        ttk.Button(more, text=_('Show the log'), style='Card.TButton', command=lambda: self.show('log')).pack(
-            side='left')
-        ttk.Button(more, text=_('Repeat the setup'), style='Card.TButton', command=self.open_setup).pack(
-            side='left', padx=(px(8), 0))
+        # Repeat the setup is the link above (it was here a second time)
+        ttk.Button(last, text=_('Show the log'), style='Card.TButton', command=lambda: self.show('log')).pack(
+            anchor='w', pady=(px(8), 0))
         self.report_note = tk.Label(last, text='', bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9),
-                                    justify='left', wraplength=px(720))
-        self.report_note.pack(anchor='w', pady=(px(6), 0))
+                                    justify='left', anchor='w')
+        self.wrap_within(self.report_note, 720).pack(fill='x', pady=(px(6), 0))
+
+        self.section(f, _('Problems and their fixes'))
+        self.help_topics = {}
+        for key in TOPIC_ORDER:
+            self.help_topics[key] = self.topic_card(f, key)
         self.help_results = []
         self.root.after(1500, self.help_check)
 
@@ -773,15 +796,15 @@ class HelpMixin:
         tk.Label(top, text=_(title), bg=theme.CARD, fg=theme.TEXT_STRONG, font=(theme.BODY_SEMI, 10),
                  anchor='w').pack(side='left', fill='x', expand=True)
         body = tk.Frame(card, bg=theme.CARD)
-        tk.Label(body, text=_(why), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
-                 wraplength=px(700)).pack(anchor='w', pady=(0, px(6)))
+        self.wrap_within(tk.Label(body, text=_(why), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9),
+                                  justify='left', anchor='w'), 700).pack(fill='x', pady=(0, px(6)))
         for number, step in enumerate(steps, 1):
             line = tk.Frame(body, bg=theme.CARD)
             line.pack(fill='x', pady=px(2))
             tk.Label(line, text=f'{number}.', bg=theme.CARD, fg=theme.GOLD_LIGHT, font=(theme.BODY_SEMI, 10),
                      width=3, anchor='ne').pack(side='left', anchor='n')
-            tk.Label(line, text=_(step), bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 10), justify='left',
-                     anchor='w', wraplength=px(660)).pack(side='left', fill='x', expand=True)
+            self.wrap_within(tk.Label(line, text=_(step), bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 10),
+                                      justify='left', anchor='w'), 660).pack(side='left', fill='x', expand=True)
 
         actions = TOPIC_ACTIONS.get(key, [])
         if actions:

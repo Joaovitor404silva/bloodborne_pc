@@ -246,6 +246,7 @@ import bbport_lang_vram  # noqa: E402,F401 (the video memory warning's switch)
 import bbport_lang_latency  # noqa: E402,F401 (the low latency options)
 import bbport_lang_gpu  # noqa: E402,F401 (a graphics card Windows has and Vulkan does not see)
 import bbport_lang_ready  # noqa: E402,F401 (the start's other prerequisites: runtime, folders, firewall)
+import bbport_lang_audit5  # noqa: E402,F401 (Help's new order: asking for help above the problems)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
 import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
@@ -1355,6 +1356,23 @@ NAV_EXPERT = [('graphics', ('All graphics',)), ('game', ('Game files',)), ('chea
 EXPERT_PAGES = {name for name, _t in NAV_EXPERT} | {'log'}
 
 
+def nav_plan(room, saving, count, group, px, tall=37, short=26, least=22):
+    """The side bar's entries for the `room` (pixels) their list has under the full head: (their height in
+    points, whether the head is the compact one, whether the list scrolls). Entries from `short` points up keep
+    the full head; below that the compact head gives `saving` pixels more, for entries from `short` down to
+    `least` points (never taller than with the full head); with less room than even those need, the list
+    scrolls. Each entry takes px(height) and a pixel's gap, `group` is the EXPERT label's (0 in the simple view).
+    The entries had stopped at 26 points before: at 700 pixels high the last ones were behind the Expert view
+    switch."""
+    def tallest(space, most):
+        return next((h for h in range(most, least - 1, -1) if group + count * (px(h) + px(1)) <= space), None)
+    height = tallest(room, tall)
+    if height is not None and height >= short:
+        return height, False, False
+    height = tallest(room + saving, short)
+    return (height, True, False) if height is not None else (least, True, True)
+
+
 class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.SearchMixin, bbport_pad.PadMixin):
     def __init__(self, root, tk, ttk, filedialog, messagebox):
         self.tk, self.ttk, self.filedialog, self.messagebox = tk, ttk, filedialog, messagebox
@@ -1821,8 +1839,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         label.grid(row=r, column=0, sticky='w', padx=(0, 18), pady=(6, 0))
         widget.grid(row=r, column=1, sticky='w', pady=(6, 0))
         if hint:
-            ttk.Label(parent, text=hint, style='Muted.TLabel', wraplength=self.px(560), justify='left').grid(
-                row=r + 1, column=1, sticky='w', pady=(2, 2))
+            self.wrap_within(ttk.Label(parent, text=hint, style='Muted.TLabel', justify='left', anchor='w'), 560).grid(
+                row=r + 1, column=1, sticky='we', pady=(2, 2))
         self.index_entry(widget, title, hint, key or self.setting_key_of(widget), mark=label)
         return widget
 
@@ -1833,13 +1851,27 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         box.grid(row=r, column=0, columnspan=2, sticky='w', pady=(4, 0))
         self.index_entry(box, title, hint, key)
         if hint:
-            ttk.Label(parent, text=hint, style='Muted.TLabel', wraplength=self.px(640), justify='left').grid(
-                row=r + 1, column=0, columnspan=2, sticky='w', padx=(26, 0))
+            self.wrap_within(ttk.Label(parent, text=hint, style='Muted.TLabel', justify='left', anchor='w'), 640).grid(
+                row=r + 1, column=0, columnspan=2, sticky='we', padx=(26, 0))
         return box
 
+    def wrap_within(self, label, wrap):
+        """`label` wraps at `wrap` points, or narrower where it has less room: a fixed width ran its lines past
+        the right edge of a narrow window, cut off. Its room is what its parent gives it (packed with fill='x',
+        gridded sticky 'we'), less a few pixels for the label's own border. A label as wide as it asks for has
+        no other room to go by: it stays as it is (else it would narrow itself step by step)."""
+        px = self.px
+
+        def fit(event):
+            if event.width != label.winfo_reqwidth():
+                label.configure(wraplength=max(px(120), min(px(wrap), event.width - px(8))))
+        label.configure(wraplength=px(wrap))
+        label.bind('<Configure>', fit, add='+')
+        return label
+
     def note(self, parent, text, top=12):
-        self.ttk.Label(parent, text=text, style='Muted.TLabel', wraplength=self.px(680), justify='left').grid(
-            row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(top, 0))
+        self.wrap_within(self.ttk.Label(parent, text=text, style='Muted.TLabel', justify='left', anchor='w'), 680).grid(
+            row=self.next_row(parent), column=0, columnspan=2, sticky='we', pady=(top, 0))
 
     def fold(self, parent, title, texts, top=10):
         """Details most players never need: a gold link that shows or hides the notes `texts`."""
@@ -1847,8 +1879,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         link.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(top, 0))
         notes = []
         for text in texts:
-            label = self.ttk.Label(parent, text=text, style='Muted.TLabel', wraplength=self.px(680), justify='left')
-            label.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(6, 0))
+            label = self.wrap_within(self.ttk.Label(parent, text=text, style='Muted.TLabel', justify='left', anchor='w'),
+                                     680)
+            label.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='we', pady=(6, 0))
             label.grid_remove()
             notes.append(label)
 
@@ -1897,8 +1930,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             c.create_text(self.px(32), self.px(48), text=title, anchor='w', fill=theme.TEXT_STRONG,
                           font=(theme.HEAD, 21))
             if subtitle:
-                c.create_text(self.px(33), self.px(72), text=subtitle, anchor='nw', fill=theme.TEXT_SOFT,
-                              font=(theme.BODY, 9), width=w - self.px(66))
+                # As wide as the page's cards (its padding and scroll bar lie at the right): it reached the window's
+                # edge. A narrow window wraps it into more lines, and the head grows with them (drawn again).
+                text = c.create_text(self.px(33), self.px(72), text=subtitle, anchor='nw', fill=theme.TEXT_SOFT,
+                                     font=(theme.BODY, 9), width=w - self.px(80))
+                need = max(self.px(118), c.bbox(text)[3] + self.px(14))
+                if need != h:
+                    c.configure(height=need)
 
         def schedule(event):
             if getattr(c, 'pending', None):
@@ -1950,6 +1988,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.side = side
         brand = tk.Frame(side, bg=BG)
         brand.pack(fill='x', padx=px(20), pady=(px(20), px(4)))
+        self.brand = brand
         mark = theme.emblem(px(48), glow=False)
         if mark is not None:
             self.brand_mark = self.theme.photo(mark, BG)
@@ -1958,8 +1997,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         words.pack(side='left', fill='x')
         tk.Label(words, text='BLOODBORNE', bg=BG, fg=theme.TEXT_STRONG, font=(theme.HEAD_BOLD, 14)).pack(anchor='w')
         tk.Label(words, text='PC PORT', bg=BG, fg=GOLD, font=(theme.HEAD, 8)).pack(anchor='w')
-        tk.Label(side, text=_('by Super Medo') + f'  ·  v{VERSION_TEXT}' + ('\n' + _('co-op test build') if COOP_TEST else ''),
-                 bg=BG, fg=MUTED, justify='left', font=(theme.BODY, 9)).pack(anchor='w', padx=px(22), pady=(px(2), px(8)))
+        self.byline = tk.Label(side, text=_('by Super Medo') + f'  ·  v{VERSION_TEXT}' +
+                               ('\n' + _('co-op test build') if COOP_TEST else ''),
+                               bg=BG, fg=MUTED, justify='left', font=(theme.BODY, 9))
+        self.byline.pack(anchor='w', padx=px(22), pady=(px(2), px(8)))
         self.build_search(side)  # bbport_search: settings and help by the player's own words
         self.nav, self.current_page = {}, None
         # Shorter entries on a short screen, so the expert view (13 pages) still fits.
@@ -1967,11 +2008,25 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.nav_pills = {'on': self.theme.box(224, self.nav_h, 8, CARD, LINE, bg=BG),
                           'hover': self.theme.box(224, self.nav_h, 8, theme.SURFACE, bg=BG)}
         accent = self.theme.box(3, 18, 1.5, theme.BLOOD_LIGHT, bg=CARD)
-        self.nav_group = tk.Label(side, text=_('EXPERT'), bg=BG, fg=MUTED, font=(theme.BODY_SEMI, 8), anchor='w')
+        # The entries lie in a list of their own, laid at the top of the room between the search and the switch:
+        # moved up and down by the wheel when even the flattest entries do not fit (fit_nav, nav_scroll).
+        self.nav_list = tk.Frame(side, bg=BG)
+        self.nav_list.pack(fill='both', expand=True)
+        self.nav_inner = tk.Frame(self.nav_list, bg=BG)
+        self.nav_inner.place(x=0, y=0, relwidth=1)
+        self.nav_scrolls, self.nav_offset, self.head_compact = False, 0, False
+        self.nav_arrows = []  # shown while entries lie above or below the list (nav_scroll); a click moves it
+        for glyph, step in (('⌃', -80), ('⌄', 80)):
+            arrow = tk.Label(self.nav_list, text=glyph, bg=BG, fg=MUTED, font=(theme.BODY_SEMI, 9), cursor='hand2')
+            arrow.bind('<Button-1>', lambda _e, step=step: self.nav_scroll(px(step)))
+            self.nav_arrows.append(arrow)
+        self.nav_group = tk.Label(self.nav_inner, text=_('EXPERT'), bg=BG, fg=MUTED, font=(theme.BODY_SEMI, 8),
+                                  anchor='w')
         for name, title in NAV_SIMPLE + NAV_EXPERT:
             if name == NAV_EXPERT[0][0]:
                 self.nav_group.pack(fill='x', padx=px(24), pady=(px(8), px(2)))
-            c = tk.Canvas(side, width=px(224), height=px(self.nav_h), bg=BG, highlightthickness=0, bd=0, cursor='hand2')
+            c = tk.Canvas(self.nav_inner, width=px(224), height=px(self.nav_h), bg=BG, highlightthickness=0, bd=0,
+                          cursor='hand2')
             c.pack(padx=px(12), pady=(0, px(1)))
             mid = px(self.nav_h / 2)
             items = {'pill': c.create_image(0, 0, anchor='nw', state='hidden'),
@@ -1983,8 +2038,6 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             c.bind('<Leave>', lambda _e, n=name: self.nav_paint(n))
             self.nav[name] = (c, items)
             self.nav_paint(name)
-        self.nav_filler = tk.Frame(side, bg=BG)
-        self.nav_filler.pack(fill='both', expand=True)
         self.update_box = None
         self.version_window = None  # Advanced > Other versions
         # The view: the switch never changes a setting, only which pages are shown.
@@ -2004,7 +2057,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             c = tk.Canvas(side, width=px(224), height=px(36), bg=BG, highlightthickness=0, bd=0, cursor='hand2')
             c.create_image(0, 0, anchor='nw', image=pills[0], tags='pill')
             c.create_text(px(20), px(18), text=icon, fill=colour, font=(theme.ICONS, 11))
-            c.create_text(px(40), px(18), text=text, fill=colour, anchor='w', font=(theme.BODY_SEMI, 10))
+            label = c.create_text(px(40), px(18), text=text, fill=colour, anchor='w', font=(theme.BODY_SEMI, 10))
+            for size in (9, 8):  # a long translation (German, Polish) ran into the arrow: a size smaller then
+                if c.bbox(label)[2] <= px(198):
+                    break
+                c.itemconfigure(label, font=(theme.BODY_SEMI, size))
             c.create_text(px(208), px(18), text='\u2197', fill=colour, font=(theme.BODY, 10))
             c.bind('<Button-1>', lambda _e, u=url: webbrowser.open(u))
             c.bind('<Enter>', lambda _e, c=c, p=pills[1]: c.itemconfigure('pill', image=p))
@@ -2017,7 +2074,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.mode_switch = ttk.Checkbutton(side, text=_('Expert view'), variable=expert, command=self.toggle_mode,
                                            style='Bar.TCheckbutton')  # drawn on the side bar's colour
         self.mode_switch.pack(side='bottom', anchor='w', padx=px(22), pady=(px(4), px(6)), before=self.search_box)
-        side.bind('<Configure>', lambda _e: self.root.after_idle(self.fit_nav))
+        # A short window takes the by-line away and narrows these gaps (their pady: full, compact) before the
+        # entries get too flat to read (fit_nav).
+        self.head_pads = [(brand, (px(20), px(4)), (px(8), px(2))), (self.search_box, (0, px(10)), (0, px(6))),
+                          (self.mode_switch, (px(4), px(6)), (px(2), px(3))),
+                          (self.community_buttons[1], (px(4), px(14)), (px(4), px(8)))]
+        # The list's room changes with the window and with the update notice above the switch.
+        self.nav_list.bind('<Configure>', lambda _e: self.root.after_idle(self.fit_nav))
         self.apply_mode()
 
         right = tk.Frame(self.root, bg=PANEL)
@@ -2079,40 +2142,82 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.nav_group.pack_forget()
         for name, _title in NAV_EXPERT:
             self.nav[name][0].pack_forget()
-        if expert:
-            self.nav_group.pack(fill='x', padx=px(24), pady=(px(8), px(2)), before=self.nav_filler)
+        if expert:  # after the simple view's entries in the list
+            self.nav_group.pack(fill='x', padx=px(24), pady=(px(8), px(2)))
             for name, _title in NAV_EXPERT:
-                self.nav[name][0].pack(padx=px(12), pady=(0, px(1)), before=self.nav_filler)
+                self.nav[name][0].pack(padx=px(12), pady=(0, px(1)))
         self.root.after_idle(self.fit_nav)
 
     def fit_nav(self):
-        """The side bar's entries as tall as the window allows (37 points, down to 26 on a short
-        window or a high scaling), so that every entry and the switch below them stay visible."""
+        """The side bar's entries as tall as the window allows, so that every entry and the switch below them
+        stay visible (nav_plan): 37 points, 26 on a short window or a high scaling; shorter still, the by-line
+        goes, the gaps narrow and the entries go down to 22 points. Only where even that is too tall (a 768
+        pixels high screen at 125 %) does the list scroll, with the page shown kept in view."""
         px = self.px
         try:
-            top = self.search_box.winfo_y() + self.search_box.winfo_height() + px(10)
-            bottom = (self.update_box if self.update_box and self.update_box.winfo_manager() else
-                      self.mode_switch).winfo_y() - px(4)
+            if self.side.winfo_height() < px(200):
+                return  # not laid out yet
+            shown = [name for name in self.nav if self.nav[name][0].winfo_manager()]
+            group = self.nav_group.winfo_reqheight() + px(8) + px(2) if self.nav_group.winfo_manager() else 0
+            saving = self.byline.winfo_reqheight() + px(2) + px(8) + sum(
+                sum(full) - sum(compact) for _widget, full, compact in self.head_pads)
+            # the room the list would have under the full head, also while the compact one is shown
+            room = self.nav_list.winfo_height() - (saving if self.head_compact else 0)
         except self.tk.TclError:
             return
-        shown = [name for name in self.nav if self.nav[name][0].winfo_manager()]
-        group = self.nav_group.winfo_reqheight() + px(10) if self.nav_group.winfo_manager() else 0
-        if not shown or bottom - top < px(100):
+        if not shown:
             return
-        height = max(26, min(37, int(((bottom - top - group) / len(shown) - px(1)) / self.dpi)))
-        if height == self.nav_h:
+        height, compact, self.nav_scrolls = nav_plan(room, saving, len(shown), group, px)
+        if compact != self.head_compact:
+            self.head_compact = compact
+            for widget, full, tight in self.head_pads:
+                widget.pack_configure(pady=tight if compact else full)
+            if compact:
+                self.byline.pack_forget()
+            else:
+                self.byline.pack(anchor='w', padx=px(22), pady=(px(2), px(8)), after=self.brand)
+        if height != self.nav_h:
+            self.nav_h = height
+            self.nav_pills = {'on': self.theme.box(224, height, 8, CARD, LINE, bg=BG),
+                              'hover': self.theme.box(224, height, 8, theme.SURFACE, bg=BG)}
+            mid = px(height / 2)
+            for name, (c, items) in self.nav.items():
+                c.configure(height=px(height))
+                c.coords(items['pill'], 0, 0)
+                c.coords(items['bar'], px(1), mid)
+                c.coords(items['icon'], px(22), mid)
+                c.coords(items['label'], px(44), mid)
+                self.nav_paint(name)
+        self.root.after_idle(lambda: self.nav_scroll(reveal=self.current_page))  # the page shown in view
+
+    def nav_scroll(self, pixels=0, reveal=None):
+        """Moves the side bar's list by `pixels` while it scrolls, so that the entry `reveal` is in view if given;
+        at its top while every entry fits. Small arrows at its right edge say that entries lie above or below."""
+        offset = most = 0
+        try:
+            if self.nav_scrolls:
+                room = self.nav_list.winfo_height()
+                most = max(0, self.nav_inner.winfo_reqheight() - room)
+                offset = self.nav_offset + pixels
+                entry = self.nav.get(reveal, (None,))[0]
+                if entry is not None and entry.winfo_manager():
+                    self.root.update_idletasks()  # where the entries lie in the list now
+                    top = entry.winfo_y()
+                    offset = min(max(offset, top + entry.winfo_reqheight() - room), top)
+                offset = min(most, max(0, int(offset)))
+        except self.tk.TclError:
             return
-        self.nav_h = height
-        self.nav_pills = {'on': self.theme.box(224, height, 8, CARD, LINE, bg=BG),
-                          'hover': self.theme.box(224, height, 8, theme.SURFACE, bg=BG)}
-        mid = px(height / 2)
-        for name, (c, items) in self.nav.items():
-            c.configure(height=px(height))
-            c.coords(items['pill'], 0, 0)
-            c.coords(items['bar'], px(1), mid)
-            c.coords(items['icon'], px(22), mid)
-            c.coords(items['label'], px(44), mid)
-            self.nav_paint(name)
+        if offset != self.nav_offset:
+            self.nav_offset = offset
+            self.nav_inner.place_configure(y=-offset)
+        # (the last entry's gap below it is no entry)
+        for arrow, more, rely, anchor in ((self.nav_arrows[0], offset > 0, 0, 'ne'),
+                                          (self.nav_arrows[1], offset < most - self.px(2), 1, 'se')):
+            if more:
+                arrow.place(relx=1, rely=rely, anchor=anchor)
+                arrow.lift()
+            else:
+                arrow.place_forget()
 
     TITLE_ICONS = {'minimize': '\ue921', 'maximize': '\ue922', 'restore': '\ue923', 'close': '\ue8bb'}
 
@@ -2227,7 +2332,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def wheel(self, event):
         """Scrolls the page in pixels (touchpads send small steps), once per redraw however many
-        wheel events came in meanwhile."""
+        wheel events came in meanwhile. Over the side bar's entries while they scroll: those."""
+        if self.nav_scrolls and str(event.widget).startswith(str(self.nav_list)):
+            self.nav_scroll(int(-event.delta / 120 * self.px(40)))
+            return
         page = self.pages.get(self.current_page)
         if not hasattr(page, 'scroll') or isinstance(event.widget, self.tk.Text) or 'popdown' in str(event.widget):
             return
@@ -2389,6 +2497,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.current_page = name
         for n in self.nav:
             self.nav_paint(n)
+        self.nav_scroll(reveal=name)  # its entry in view while the side bar's list scrolls
         if name == 'mods':
             self.refresh_lists(only_if_changed=True)
         elif name == 'graphics':
@@ -4165,27 +4274,22 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             side='left', padx=6)
         ttk.Button(holder, text='bbport.ini', command=lambda: self.open_path(ini_path())).pack(side='left')
         ttk.Button(holder, text=_('Repeat the setup'), command=self.open_setup).pack(side='left', padx=6)
+        # The updates and the shader cache: here since the original launcher, and on Help for the simple view (the
+        # search finds them there, a page of both views), the shader cache also in Help's black screen topic.
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
-        self.updates_button = ttk.Button(
-            holder, text=_('Check for updates', 'Проверить обновления'),
-            command=lambda: threading.Thread(target=self.check_update, args=(True,), daemon=True).start())
-        self.updates_button.pack(side='left')
-        self.index_entry(self.updates_button, _('Check for updates', 'Проверить обновления'), key='button:updates')
-        button = ttk.Button(holder, text=_('Other versions…', 'Другие версии…'), command=self.choose_version)
-        button.pack(side='left', padx=(6, 0))
-        self.index_entry(button, _('Other versions…', 'Другие версии…'), key='button:versions')
+        ttk.Button(holder, text=_('Check for updates', 'Проверить обновления'), command=self.check_update_now).pack(
+            side='left')
+        ttk.Button(holder, text=_('Other versions…', 'Другие версии…'), command=self.choose_version).pack(
+            side='left', padx=(6, 0))
         ttk.Label(holder, text=f'v{VERSION_TEXT}', style='Muted.TLabel').pack(side='left', padx=10)
-        # The shader cache: here since the original launcher, and in Help's black screen topic.
         holder = ttk.Frame(f)
-        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
-        button = ttk.Button(holder, text=_('Clear the shader cache'), command=self.clear_cache)
-        button.pack(side='left')
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(10, 0))
+        ttk.Button(holder, text=_('Clear the shader cache'), command=self.clear_cache).pack(side='left')
         hint = _('For a black screen, or a broken picture after a driver update. The next start stutters for a few '
                  'minutes.')
-        ttk.Label(holder, text=hint, style='Muted.TLabel', wraplength=self.px(560), justify='left').pack(
-            side='left', padx=10)
-        self.index_entry(button, _('Clear the shader cache'), hint, key='button:shader_cache')
+        self.wrap_within(ttk.Label(holder, text=hint, style='Muted.TLabel', justify='left', anchor='w'), 560).pack(
+            side='left', fill='x', expand=True, padx=10)
         self.section(f, _('Appearance'))  # the translucent window: Launcher customization > Launcher
         self.check(f, 'windows_title_bar', 'app', _("Windows' title bar instead of the launcher's own"),
                    _('Applies when the launcher opens again.', 'Применится при следующем открытии лаунчера.'))
@@ -4222,10 +4326,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         # The Cathedral Ward benchmark for testers: with the game tests off (GAME_TESTS) it runs by
         # itself with the player's settings and gives one zip to send.
         holder = ttk.Frame(f)
-        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(10, 0))
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(10, 0))
         ttk.Button(holder, text=_('Benchmark for bug reports…'), command=self.open_bug_benchmark).pack(side='left')
-        ttk.Label(holder, text=_('A fixed route in Cathedral Ward for testers: one zip to send.'),
-                  style='Muted.TLabel').pack(side='left', padx=10)
+        self.wrap_within(ttk.Label(holder, text=_('A fixed route in Cathedral Ward for testers: one zip to send.'),
+                                   style='Muted.TLabel', justify='left', anchor='w'), 560).pack(
+            side='left', fill='x', expand=True, padx=10)
         self.index_entry(holder, _('Benchmark for bug reports…'),
                          _('A fixed route in Cathedral Ward for testers: one zip to send.'), 'button:benchmark')
 
@@ -5206,6 +5311,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         os.startfile(str(path))
 
     # ---- updates -------------------------------------------------------------------------------
+    def check_update_now(self):
+        """The Check for updates buttons (Help, Advanced): asked at once, the answer either way."""
+        threading.Thread(target=self.check_update, args=(True,), daemon=True).start()
+
     def check_update(self, manual=False):
         """Helper thread: asks GitHub for the newest release (and a beta for the next beta) and offers it."""
         try:
@@ -5317,7 +5426,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         return True
 
     def choose_version(self):
-        """Advanced > Other versions: any release from OLDEST_INSTALLABLE on, chosen by the player."""
+        """Help or Advanced > Other versions: any release from OLDEST_INSTALLABLE on, chosen by the player."""
         if self.version_window and self.version_window.winfo_exists():
             self.version_window.lift()
             return
