@@ -252,6 +252,7 @@ import bbport_lang_ready  # noqa: E402,F401 (the start's other prerequisites: ru
 import bbport_lang_audit1  # noqa: E402,F401 (the launcher's own update: its checks and the installer's window)
 import bbport_lang_audit2  # noqa: E402,F401 (the wrong and stale texts of the launcher check, rewritten)
 import bbport_lang_audit3  # noqa: E402,F401 (background work that no longer ends without a word, the shader cache)
+import bbport_lang_audit4  # noqa: E402,F401 (the search: the side bar's buttons, notes for other choices)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
 import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
@@ -2049,6 +2050,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.mode_switch = ttk.Checkbutton(side, text=_('Expert view'), variable=expert, command=self.toggle_mode,
                                            style='Bar.TCheckbutton')  # drawn on the side bar's colour
         self.mode_switch.pack(side='bottom', anchor='w', padx=px(22), pady=(px(4), px(6)), before=self.search_box)
+        # Found by the search too ("expert view", "website"): the jump marks them where they are.
+        self.index_entry(self.mode_switch, _('Expert view'), key='button:expert')
+        self.index_entry(self.community_buttons[1], site, _('Install guide and FAQ on bbport.de'), key='button:site')
         side.bind('<Configure>', lambda _e: self.root.after_idle(self.fit_nav))
         self.apply_mode()
 
@@ -2823,6 +2827,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.ttk.Button(holder, text=_('Recheck support'), command=self.recheck_fsr411).pack(side='left')
         self.note(f, _('Download fsr4vk here. AMD DX12 is included.'), top=6)
         fsr411_asset_rows = list(set(f.grid_slaves()) - before)
+        self.index_only(fsr411_asset_rows, _('only with FSR 4.1.1'), 'upscaler')  # found, and the jump marks Upscaler
 
         def show_fsr411(*_a):
             for widget in fsr411_rows:
@@ -3140,7 +3145,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             else:
                 code_box.grid_remove()
 
-        def sign_in():
+        def sign_in_thd():  # its own name: tests/test_launcher_findable.py finds this page's button by it
             signing.configure(text=_('Starting the sign-in…'))
             show_code()
 
@@ -3159,7 +3164,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.ui_calls.put(lambda: (thd_id.set(name), thd_token.set(token), signing.configure(text=''),
                                            show_code(), show_accounts(), self.collect()))
             threading.Thread(target=work, daemon=True).start()
-        self.row(f, '', ttk.Button(f, text=_('Sign in with Discord'), command=sign_in))
+        button = self.row(f, '', ttk.Button(f, text=_('Sign in with Discord'), command=sign_in_thd))
+        self.index_entry(button, _('Sign in with Discord'), _("The Hunter's Dream account"), key='button:signin_thd')
         signing.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
         code_box.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 0))
         self.check(f, 'bridge_live_map', 'app', _('Show me on the live map'),
@@ -3224,12 +3230,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                            discord_line.configure(text=''), self.collect()))
             threading.Thread(target=work, daemon=True).start()
         self.row(f, _('Account'), signed, key='supermedo_npid')
-        ttk.Button(buttons, text=_('Sign in with Discord'), command=sign_in_discord).pack(side='left')
+        button = ttk.Button(buttons, text=_('Sign in with Discord'), command=sign_in_discord)
+        button.pack(side='left')
+        hint = _('Discord makes your SuperMedo account the first time, named after your Discord name; nothing to '
+                 'remember. Sign in again on any PC.')
+        self.index_entry(button, _('Sign in with Discord'), hint, key='button:signin_supermedo')
         sign_out_button = ttk.Button(buttons, text=_('Sign out'), command=sign_out)
         sign_out_button.pack(side='left', padx=(14, 0))
+        self.index_entry(sign_out_button, _('Sign out'), _('SuperMedo account'), key='button:signout')
         show_signed()
-        self.row(f, '', buttons, _('Discord makes your SuperMedo account the first time, named after your '
-                                    'Discord name; nothing to remember. Sign in again on any PC.'))
+        self.row(f, '', buttons, hint)
         discord_line.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
         self.section(f, _('New SuperMedo account'))
         sign_up = ttk.Label(f, text='', style='Muted.TLabel', justify='left', wraplength=self.px(560))
@@ -3265,7 +3275,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                  key='supermedo_npid')
         self.row(f, _('Email address'), ttk.Entry(f, textvariable=email, width=40),
                  _('Only to make the account.'), key='supermedo_npid')
-        self.row(f, '', ttk.Button(f, text=_('Create account'), command=create_account))
+        button = self.row(f, '', ttk.Button(f, text=_('Create account'), command=create_account))
+        self.index_entry(button, _('Create account'), _('New SuperMedo account'), key='button:create_account')
         sign_up.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
         group('supermedo')
         self.section(f, _('Game server (messages, bloodstains, ghosts)'))
@@ -3320,7 +3331,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                     text = _('The check stopped: {}').format(error_text(error, kind=True))
                 self.ui_calls.put(lambda: result.configure(text=text))
             threading.Thread(target=work, daemon=True).start()
-        self.row(f, '', ttk.Button(f, text=_('Test connection'), command=check))
+        button = self.row(f, '', ttk.Button(f, text=_('Test connection'), command=check))
+        self.index_entry(button, _('Test connection'), _('Connection'), key='button:test_connection')
         result.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
         self.note(f, _('Everyone in a session needs the same game version (1.09) and the same server. '
                        'Cheats change the game for the other players too: turn them off when you play together.'))
@@ -3349,6 +3361,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         pool.trace_add('write', show_pool)
         custom.trace_add('write', show_pool)
         show_pool()
+        # The other pools' rows stay findable ("sign in" while The Hunter's Dream is chosen): the search says
+        # which pool they need and marks "Play with". An own server's only while it can be chosen.
+        only = {'supermedo': _('only with SuperMedo Server'),
+                'huntersdream': _("only with The Hunter's Dream") if HUNTERS_DREAM_POOL else None,
+                'shadnet': _('only with an own server') if bbsc else None}
+        for name, widgets in groups.items():
+            choices = [p for p, wanted in shown.items() if name in wanted]  # (pools is the "Play with" frame)
+            if len(choices) == 1 and only[choices[0]]:
+                self.index_only(widgets, only[choices[0]], 'online_pool')
 
     def build_mods(self):
         f = self.scrolled_page('mods', _('Mods & patches', 'Моды и патчи'),
@@ -3734,8 +3755,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         # self.ini/self.app -- self.var()'s ini/app bookkeeping does not apply to it.
         enabled_var = self.mouse_vars['enabled'] = tk.BooleanVar(value=ms['enabled'])
         enabled_var.trace_add('write', lambda *_a: (ms.__setitem__('enabled', enabled_var.get()), mark_mouse_edited()))
-        ttk.Checkbutton(f, text=_('Enable mouse look', 'Включить обзор мышью'), variable=enabled_var).grid(
-            row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(4, 0))
+        box = ttk.Checkbutton(f, text=_('Enable mouse look', 'Включить обзор мышью'), variable=enabled_var)
+        box.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(4, 0))
+        self.index_entry(box, _('Enable mouse look', 'Включить обзор мышью'), key='mouse:enabled')
         self.note(f, _('F7 also toggles this in-game, instantly; F8 reloads these settings '
                        'without restarting.', 'F7 также переключает это прямо в игре мгновенно; '
                        'F8 применяет эти настройки без перезапуска.'), top=2)
@@ -3817,8 +3839,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         def invert_check(key, text):
             var = self.mouse_vars[key] = tk.BooleanVar(value=ms[key])
             var.trace_add('write', lambda *_a: (ms.__setitem__(key, var.get()), mark_mouse_edited()))
-            ttk.Checkbutton(f, text=text, variable=var).grid(
-                row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(4, 0))
+            box = ttk.Checkbutton(f, text=text, variable=var)
+            box.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(4, 0))
+            self.index_entry(box, text, key=f'mouse:{key}')
 
         invert_check('invert_x', _('Invert horizontal', 'Инвертировать по горизонтали'))
         invert_check('invert_y', _('Invert vertical', 'Инвертировать по вертикали'))
@@ -3867,10 +3890,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 warn.grid(row=r, column=2, sticky='w', padx=(8, 0))
                 self.controller_rows[output] = (btn, warn)
         reset = ttk.Frame(f)
-        ttk.Button(reset, text=_('Reset controller buttons', 'Сбросить кнопки геймпада'),
-                   command=lambda: [self.set_controller(o, DEFAULT_CONTROLLER.get(o)) for o in CONTROLLER_OUTPUTS]
-                   ).pack(side='left')
+        button = ttk.Button(reset, text=_('Reset controller buttons', 'Сбросить кнопки геймпада'),
+                            command=lambda: [self.set_controller(o, DEFAULT_CONTROLLER.get(o))
+                                             for o in CONTROLLER_OUTPUTS])
+        button.pack(side='left')
         self.row(f, '', reset)
+        self.index_entry(button, _('Reset controller buttons', 'Сбросить кнопки геймпада'),
+                         key='button:reset_controller')
         self.refresh_controller_rows()
 
     def current_controller(self, output):

@@ -768,16 +768,18 @@ class HelpMixin:
         button.pack(side='left')
         self.report_button = button
         self.index_entry(button, _('Save a report'), key='button:report')
-        ttk.Button(row, text=_('Copy a summary'), style='Card.TButton', command=self.copy_diagnostics).pack(
-            side='left', padx=(px(8), 0))
+        button = ttk.Button(row, text=_('Copy a summary'), style='Card.TButton', command=self.copy_diagnostics)
+        button.pack(side='left', padx=(px(8), 0))
+        self.index_entry(button, _('Copy a summary'), key='button:copy_summary')
         # Where the report goes, beside it; the Discord (the community, no longer its help) in the row below.
         forum = ttk.Button(row, text=_('Open the forum'), style='Card.TButton', command=self.open_forum)
         forum.pack(side='left', padx=(px(8), 0))
         self.index_entry(forum, _('Open the forum'), key='button:forum')
         more = tk.Frame(last, bg=theme.CARD)
         more.pack(anchor='w', pady=(px(8), 0))
-        ttk.Button(more, text=_('Show the log'), style='Card.TButton', command=lambda: self.show('log')).pack(
-            side='left')
+        button = ttk.Button(more, text=_('Show the log'), style='Card.TButton', command=lambda: self.show('log'))
+        button.pack(side='left')
+        self.index_entry(button, _('Show the log'), key='button:show_log')  # the Log page is an expert one
         ttk.Button(more, text=_('Repeat the setup'), style='Card.TButton', command=self.open_setup).pack(
             side='left', padx=(px(8), 0))
         discord = ttk.Button(more, text=_('Open the Discord'), style='Card.TButton',

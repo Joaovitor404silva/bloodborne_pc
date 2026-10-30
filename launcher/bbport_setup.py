@@ -1657,6 +1657,7 @@ class SetupMixin:
         details.pack(side='left')
         undo = ttk.Button(buttons, text=_('Undo'), style='Card.TButton',
                           command=lambda: (self.undo_profile(), draw()))
+        self.index_entry(undo, _('Undo'), _('Made for your PC'), 'button:undo')  # found while there is one to undo
         if L.GAME_TESTS:
             last = tk.Label(body, text='', bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), anchor='w',
                             justify='left', cursor='hand2')
@@ -1803,11 +1804,14 @@ class SetupMixin:
         self.index_entry(self.backups_view, _('Back up automatically before every start'), _('Backups'), 'auto_backup')
         self.index_entry(self.backups_view, _('Back up after every game exit'), _('Backups'), 'exit_backup')
         self.index_entry(self.backups_view, _('Back up now'), _('Backups'), 'button:backup')
+        self.index_entry(self.backups_view, _('Restore a backup'), _('Backups'), 'button:restore')
+        self.index_entry(self.backups_view, _('Add a backup file…'), _('Backups'), 'button:add_backup')
         self.section(f, _('From other versions'))
         self.note(f, _('Characters from shadPS4, Awaken\'s port, bbhost or a PS4 export: found on this PC and copied '
                        'into this port\'s saves folder. Your current saves are backed up first.'), top=0)
-        self.saves_card(f, manager=True).grid(row=self.next_row(f), column=0, columnspan=2, sticky='we',
-                                              pady=(px(8), 0))
+        found = self.saves_card(f, manager=True)  # drawn anew too: the search points at the card
+        found.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(8), 0))
+        self.index_entry(found, _('Import saves from other versions'), _('From other versions'), 'button:import')
         self.section(f, _('Saves folder'))
         self.folder(f, 'user_dir', _('Saves folder', 'Папка сохранений'),
                     _('Choose the saves folder', 'Выберите папку сохранений'),
