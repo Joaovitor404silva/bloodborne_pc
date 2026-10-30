@@ -250,6 +250,7 @@ import bbport_lang_latency  # noqa: E402,F401 (the low latency options)
 import bbport_lang_gpu  # noqa: E402,F401 (a graphics card Windows has and Vulkan does not see)
 import bbport_lang_ready  # noqa: E402,F401 (the start's other prerequisites: runtime, folders, firewall)
 import bbport_lang_audit1  # noqa: E402,F401 (the launcher's own update: its checks and the installer's window)
+import bbport_lang_audit2  # noqa: E402,F401 (the wrong and stale texts of the launcher check, rewritten)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
 import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
@@ -1488,10 +1489,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         shown.add(text)
         self.messagebox.showerror('Bloodborne', _('Something went wrong in the launcher: {}',
                                                   'В лаунчере произошла ошибка: {}').format(value or kind.__name__) +
-                                  '\n\n' + _('The details are on the Log page. Help > "Save a report" makes the zip to '
-                                             'attach when you ask for help.',
-                                             'Подробности на странице «Журнал». «Помощь» > «Сохранить отчёт» создаёт '
-                                             'zip-файл, который нужно приложить, когда просите о помощи.'))
+                                  '\n\n' + _('The details are in the log (Help > "Show the log"). Help > "Save a '
+                                             'report" makes the zip to attach when you ask for help.',
+                                             'Подробности в журнале («Помощь» > «Показать журнал»). «Помощь» > '
+                                             '«Сохранить отчёт» создаёт zip-файл, который нужно приложить, когда '
+                                             'просите о помощи.'))
 
     def save_settings(self):
         """collect() before PLAY; False with a message when they cannot be written (a folder without write
@@ -3034,7 +3036,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def build_online(self):
         ttk = self.ttk
-        f = self.scrolled_page('online', _('Online co-op'),
+        f = self.scrolled_page('online', _('Online play'),
                                _('Messages, bloodstains and ghosts come from the game server; bells and summons '
                                  'go through a shadNet server.'))
         self.check(f, 'online', 'app', _('Play online'),
@@ -3162,14 +3164,17 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         npid_var, password_var = self.var('supermedo_npid', 'app'), self.var('supermedo_pass', 'app')
         self.section(f, _('SuperMedo account'))
         signed = ttk.Label(f, text='', justify='left')
+        buttons = ttk.Frame(f)
 
         def show_signed(*_args):
-            name = npid_var.get().strip()
-            signed.configure(text=_('Signed in as {}').format(name) if name and password_var.get()
+            name = pool_account({'online_pool': 'supermedo', 'supermedo_npid': npid_var.get(),
+                                 'supermedo_pass': password_var.get()})
+            signed.configure(text=_('Signed in as {}').format(name) if name
                              else _('Not signed in: sign in with Discord, or create an account below.'))
+            # Sign out only with an account to sign out of: without one the button did nothing.
+            sign_out_button.state(['!disabled' if name else 'disabled'])
         npid_var.trace_add('write', show_signed)
         password_var.trace_add('write', show_signed)
-        show_signed()
 
         def sign_out():
             npid_var.set('')
@@ -3196,9 +3201,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                            discord_line.configure(text=''), self.collect()))
             threading.Thread(target=work, daemon=True).start()
         self.row(f, _('Account'), signed, key='supermedo_npid')
-        buttons = ttk.Frame(f)
         ttk.Button(buttons, text=_('Sign in with Discord'), command=sign_in_discord).pack(side='left')
-        ttk.Button(buttons, text=_('Sign out'), command=sign_out).pack(side='left', padx=(14, 0))
+        sign_out_button = ttk.Button(buttons, text=_('Sign out'), command=sign_out)
+        sign_out_button.pack(side='left', padx=(14, 0))
+        show_signed()
         self.row(f, '', buttons, _('Discord makes your SuperMedo account the first time, named after your '
                                     'Discord name; nothing to remember. Sign in again on any PC.'))
         discord_line.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
@@ -5071,9 +5077,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 self.ui_calls.put(lambda: self.messagebox.showwarning('Bloodborne', _(
                     'Your eboot.bin is not the clean 1.09 one (modified, or from another release). The port '
                     'cannot patch it: the game runs at 30 FPS in 16:9 (ultrawide and the output resolution '
-                    'do not apply), the Game & effects options do nothing, and some scenes (like the '
-                    'cutscene after Rom) can freeze.\n\nReplace eboot.bin with the one from an unmodified '
-                    '1.09 update.')))
+                    'do not apply), the effects (All graphics > Effects, Picture & performance > Taste) and the '
+                    'gameplay tweaks (Gameplay) do nothing, and some scenes (like the cutscene after Rom) can '
+                    'freeze.\n\nReplace eboot.bin with the one from an unmodified 1.09 update.')))
             elif not warned and 'eboot.bin is modified, not the clean 01.09 build' in text:
                 # Some patch groups still apply (run.py): the line says which are off.
                 warned = True

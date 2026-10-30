@@ -97,6 +97,13 @@ class RatingTests(unittest.TestCase):
         self.assertEqual(rate('amd-rx-9070-xt', 'AMD FX(tm)-8350 Eight-Core Processor', 32).tier, 0)
         self.assertEqual(rate('amd-rx-9070-xt', 'AMD Ryzen 7 5800X 8-Core Processor', 8).limit, 'ram')
 
+    def test_the_hints_name_no_old_version(self):
+        """Your PC's Intel hints said "(known issue in 1.9.2)" in every later version."""
+        intel = rate('intel-arc-b580', 'AMD Ryzen 7 5800X 8-Core Processor', 32)
+        self.assertTrue([note for note in intel.notes if note.startswith('Intel graphics')])
+        for text in intel.notes + hardware.DRIVER_NOTES + hardware.HARD_LIMITS:
+            self.assertNotRegex(text, r'\b1\.9\.\d', text)
+
 
 def rate_detected(vulkan_name, vram, cpu, ram):
     """The rating the launcher shows for what it detects: the card's Vulkan name and memory."""

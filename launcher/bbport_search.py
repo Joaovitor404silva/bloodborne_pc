@@ -78,7 +78,8 @@ WORDS = {
     'button:report': 'bericht report support zip discord fehler',
     'button:game_files': 'spieldateien prufen pruefen verify integrity game files beschadigt kaputt damaged broken '
                          'dump checksum',
-    'button:discord': 'discord community gemeinschaft server einladung invite hilfe forum chat',
+    'button:discord': 'discord community gemeinschaft server einladung invite chat',
+    'button:forum': 'forum support frage question fragen ask thema topic beitrag post bbport.de',
     'button:benchmark': 'benchmark test messen route kathedrale cathedral fps tester',
     'button:shader_cache': 'shader cache leeren loschen clear schwarz schwarzer bildschirm black screen '
                            'grafikfehler treiber driver',

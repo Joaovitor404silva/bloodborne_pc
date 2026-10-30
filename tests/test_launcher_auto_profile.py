@@ -297,6 +297,16 @@ class TextTests(unittest.TestCase):
             with self.subTest(language=language):
                 self.assertTrue(bbport_lang.table(language).get(note))
 
+    def test_a_card_not_detected_is_not_called_missing_from_the_list(self):
+        """Your PC and the guide said "Your graphics card (?) is not in the list of the hardware check" when the
+        detection named no card at all."""
+        import bbport_setup
+        self.assertEqual(bbport_setup.gpu_unknown(''), 'Your graphics card was not detected. Pick it or the closest '
+                                                       'model:')
+        self.assertEqual(bbport_setup.gpu_unknown('Moore Threads MTT S80'),
+                         'Your graphics card (Moore Threads MTT S80) is not in the list of the hardware check. Pick '
+                         'it or the closest model:')
+
 
 if __name__ == '__main__':
     unittest.main()
