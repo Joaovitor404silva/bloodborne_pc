@@ -2657,9 +2657,25 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         toggles.grid(row=5, column=0, sticky='we')
         device = ttk.Frame(toggles, style='Inner.TFrame')
         device.pack(fill='x', pady=(0, px(10)))
-        ttk.Label(device, text=_('You play with'), style='Card.TLabel').pack(side='left')
+        label = ttk.Label(device, text=_('You play with'), style='Card.TLabel')
+        label.pack(side='left')
         switch = self.device_switch(device)
         switch.pack(side='left', padx=(px(12), 0))
+
+        def fit_device(_event=None):
+            # A narrow card (a small window, a longer language) shows the switch without its label: beside it, the
+            # card's edge cut "Keyboard and mouse" off, and under it the card had no room left for Play online.
+            # Its two choices say what it is.
+            wide = device.winfo_width() >= label.winfo_reqwidth() + switch.winfo_reqwidth() + px(16)
+            if wide == getattr(device, 'wide', None):
+                return
+            device.wide = wide
+            label.pack_forget()
+            switch.pack_forget()
+            if wide:
+                label.pack(side='left')
+            switch.pack(side='left', padx=(px(12), 0) if wide else 0)
+        device.bind('<Configure>', fit_device, add='+')
         self.index_entry(switch, _('You play with'), '{}, {}'.format(_('Controller', 'Геймпад'), _(
             'Keyboard and mouse', 'Клавиатура и мышь')), 'play_with')
         ttk.Checkbutton(toggles, text=_('Fullscreen', 'Полный экран'), variable=self.var('fullscreen', 'app'),
