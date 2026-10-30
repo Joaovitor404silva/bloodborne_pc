@@ -2,9 +2,9 @@
 """The texts the launcher check of 30 October 2026 found wrong or stale, rewritten: help is asked in Help & Support
 on forum.bbport.de (no longer the Discord's #help), an eboot.bin that does not read or is cut off, the pages named as
 they are now (All graphics, Picture & performance, Gameplay, Help > Show the log), the own server that only Seamless
-co-op's start offers and where a friend's address goes, Windows' page file dialog, the Intel hints without their old version, the setup guide's welcome and a card
-that was not detected. In every language besides English; keyed by the English text like bbport_lang, merged into
-its tables on import."""
+co-op's start offers and where a friend's address goes, Windows' page file dialog, the Intel hints without their old
+version, the setup guide's welcome and a card that was not detected. In every language besides English; keyed by the
+English text like bbport_lang, merged into its tables on import."""
 import bbport_lang
 
 KEYS = [
