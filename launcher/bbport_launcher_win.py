@@ -657,7 +657,15 @@ def load_ini(legacy_settings=None):
         bad = textfile.keep_bad(ini_path())
         try:
             save_ini(fixed, lines)
-        except OSError:
+        except OSError as error:
+            # Read-only or locked: the file is as it was, so its copy goes again (each load made one more), and
+            # the repaired values hold for this start.
+            if bad:
+                try:
+                    bad.unlink()
+                except OSError:
+                    pass
+            ini_not_written(error, fixed)
             return values, lines
         what = ', '.join(f'{key}={value}' for key, value in fixed.items()) or 'its text as UTF-8'
         textfile.REPAIRS.append(f'Settings: {ini_path()} repaired by hand edits ({what}); '
@@ -674,8 +682,16 @@ def load_ini(legacy_settings=None):
             migrated[key] = fsr411_backend(legacy_settings) if key == 'fsr411_backend' else \
                 '1' if old is True or old == '1' else '0'
     if migrated:
-        save_ini(migrated, lines)
-        return load_ini(legacy_settings)
+        try:
+            save_ini(migrated, lines)
+        except OSError as error:
+            # A read-only or locked bbport.ini kept the launcher from opening: the moved values hold for this
+            # start, and the next one tries again.
+            values.update(migrated)
+            present |= set(migrated)
+            ini_not_written(error, migrated)
+        else:
+            return load_ini(legacy_settings)
     if 'upscaler' not in present:
         env = bbport_fsr411.environment(PORT_DIR, legacy_settings or {})
         support = bbport_fsr41.query(PORT_DIR, env)
@@ -716,6 +732,15 @@ def save_ini(values, lines):
         out.append('# bbport settings (in-game menu: Insert / L3+R3)')
     out += [f'{key}={value}' for key, value in values.items() if key not in written]
     textfile.write(ini_path(), '\n'.join(out) + '\n')
+
+
+def ini_not_written(error, values):
+    """A line for the log (once) when bbport.ini cannot be written (read-only, held by another program): the
+    launcher goes on with `values` in memory instead of stopping."""
+    line = (f'Settings: {ini_path()} cannot be written ({error}); this start goes on without saving '
+            + (', '.join(f'{key}={value}' for key, value in values.items()) or 'its text as UTF-8'))
+    if line not in textfile.REPAIRS:
+        textfile.REPAIRS.append(line)
 
 
 def game_info(folder):
@@ -4110,7 +4135,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         cannot be written (said in a message)."""
         lines = apply_layout(self.remap_lines)
         try:
-            Path(self.remap_ini_path).write_text('\n'.join(lines) + '\n', encoding='utf-8')
+            textfile.write(self.remap_ini_path, '\n'.join(lines) + '\n')
         except OSError as error:
             self.messagebox.showerror(_('Layout', 'Раскладка'), str(error))
             return False
@@ -5125,17 +5150,19 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             save_mouse_settings(self.remap_ini_path, self.mouse_settings, self.remap_lines)
             self.mouse_edited = False
             self.reload_input_ini()
+        # Whole or not at all, as bbport.ini: a file cut off is read as empty, and the mods' order and the ones
+        # turned off were gone.
         if self.mod_order:
-            (DATA_DIR / 'mods.json').write_text(json.dumps(
+            textfile.write(DATA_DIR / 'mods.json', json.dumps(
                 {'order': self.mod_order, 'disabled': [n for n, v in self.mod_vars.items() if not v.get()]},
-                indent=2), encoding='utf-8')
+                indent=2))
         if self.patch_vars:
             chosen = load_json(DATA_DIR / 'patches.json', {})
             shown = set(self.patch_vars)
             enabled = {k for k in chosen.get('enabled', []) if k not in shown} | {k for k, v in self.patch_vars.items() if v.get()}
             disabled = {k for k in chosen.get('disabled', []) if k not in shown} | {k for k, v in self.patch_vars.items() if not v.get()}
-            (DATA_DIR / 'patches.json').write_text(json.dumps(
-                {'enabled': sorted(enabled), 'disabled': sorted(disabled)}, indent=2), encoding='utf-8')
+            textfile.write(DATA_DIR / 'patches.json', json.dumps(
+                {'enabled': sorted(enabled), 'disabled': sorted(disabled)}, indent=2))
 
     # ---- game process ------------------------------------------------------------------------
     def play(self):
@@ -6175,14 +6202,22 @@ def play_without_window(settings):
     present = {line.split('=', 1)[0].strip() for line in lines
                if '=' in line and not line.lstrip().startswith('#')}
     missing = {key: values[key] for key in ('upscaler', 'fsr411_backend') if key not in present}
+    # A read-only or locked bbport.ini stopped the start with a traceback: the game starts with what the file
+    # holds, and the log says what could not be written.
     if missing:
-        save_ini(missing, lines)
-        lines = ini_path().read_text(encoding='utf-8').splitlines()
+        try:
+            save_ini(missing, lines)
+            lines = ini_path().read_text(encoding='utf-8').splitlines()
+        except OSError as error:
+            ini_not_written(error, missing)
     if settings.get('output_display'):  # the game monitor's own size, as the launcher's Play does
         m = display.monitor(settings.get('game_monitor', ''))
         if m and values.get('output_res') != display.size_text(m.size):
             values['output_res'] = display.size_text(m.size)
-            save_ini({key: values[key] for key in INI_DEFAULTS}, lines)
+            try:
+                save_ini({key: values[key] for key in INI_DEFAULTS}, lines)
+            except OSError as error:
+                ini_not_written(error, {'output_res': values['output_res']})
     own = own_output(settings, values.get('output_res'))
     if own:  # the player's own size, which the game's menu wrote as 1920x1080 (custom_output)
         values['output_res'] = own
@@ -6492,6 +6527,41 @@ bbport_tls.bind(_ThisModule())
 updater.bind(_ThisModule())
 
 
+def restore_benchmark_backup(user):
+    """The route benchmark of the 1.9.3 test builds left its own save in place of the player's when it did not
+    finish (closed launcher, crash): the player's comes back. The savedata in place used to be deleted first: a
+    file in use (a sync tool, an antivirus) left part of it there, and the player's could not come back. It is
+    renamed aside now (bbport_saves.BENCHMARK_SAVE: kept, never deleted) before the player's is renamed back, and
+    goes back itself when that fails. Either way the log of the next start says so."""
+    backup, live = user / 'savedata.benchmark-backup', user / 'savedata'
+    try:
+        if not backup.is_dir():
+            return
+    except OSError:  # a saves folder that cannot be reached now (a network drive): nothing to put back this start
+        return
+    aside, moved = None, False
+    try:
+        if live.exists():
+            aside = user / saves.BENCHMARK_SAVE
+            if aside.exists():
+                aside = user / f'{saves.BENCHMARK_SAVE} {time.strftime("%Y-%m-%d %H.%M.%S")}'
+            live.rename(aside)
+            moved = True
+        backup.rename(live)
+    except OSError as error:
+        line = (f'Saves: the saves from before an unfinished game test could not be put back ({error}); they stay '
+                f'in {backup}, the next start tries again')
+        if moved:  # the rename of the player's failed, so savedata is free again
+            try:
+                aside.rename(live)
+            except OSError as second:
+                line += f'; the saves that were in use could not go back either ({second}), they are in {aside}'
+        textfile.REPAIRS.append(line)
+        return
+    textfile.REPAIRS.append(f'Saves: the saves from before an unfinished game test are back in {live}'
+                            + (f"; the test's save is kept in {aside}" if aside is not None else ''))
+
+
 def main():
     global LANG
     args = sys.argv[1:]
@@ -6514,15 +6584,7 @@ def main():
         if not updater.to_front():
             updater.notice(_('An update is being installed. The launcher opens by itself when it is done.'), seconds=4)
         sys.exit(0)
-    # The route benchmark of the 1.9.3 test builds left its own save in place of the player's when it
-    # did not finish (closed launcher, crash): the player's comes back.
-    try:
-        user = Path(settings.get('user_dir') or DATA_DIR / 'user')
-        if (user / 'savedata.benchmark-backup').is_dir():
-            shutil.rmtree(user / 'savedata', ignore_errors=True)
-            (user / 'savedata.benchmark-backup').rename(user / 'savedata')
-    except OSError:
-        pass
+    restore_benchmark_backup(Path(settings.get('user_dir') or DATA_DIR / 'user'))
     # Without a usable game folder there is nothing to play yet: open the launcher instead.
     page, failed, problem = 'play', None, None
     if '--play' in args and (Path(settings['game_dir'] or '.') / 'eboot.bin').is_file() and CONFIG_FILE.exists():
