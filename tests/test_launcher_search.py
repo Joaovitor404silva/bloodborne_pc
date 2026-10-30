@@ -71,9 +71,57 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(search.fold('Größe'), 'grosse')
         self.assertEqual(self.first('STÜRZT'), self.first('sturzt'))
 
-    def test_every_word_must_match(self):
-        self.assertIsNone(self.first('vollbild xyzzy'))
+    def test_entries_with_every_word_first(self):
+        found = [e['key'] for e in Fake().search('frame rate')]
+        self.assertEqual(found, ['fps_mode'])  # not the entries with only one of the words
         self.assertEqual(Fake().search(''), [])
+
+    def test_without_an_entry_with_every_word_the_most_of_them(self):
+        """A question with a word no entry has found nothing ("Nothing found")."""
+        self.assertEqual(self.first('vollbild xyzzy'), 'fullscreen')
+        self.assertIsNone(self.first('xyzzy'))
+        fake = Fake()
+        self.assertEqual(fake.search('controls vollbild fenster xyzzy')[0]['key'], 'fullscreen')  # two of the words
+        self.assertEqual({e['key'] for e in fake.search('controls saves xyzzy')[:2]}, {'page:controls', 'page:saves'})
+
+    def test_the_words_around_a_question_are_left_out(self):
+        self.assertEqual(search.query_words('Where is clear shader cache?'), ['clear', 'shader', 'cache'])
+        self.assertEqual(search.query_words('how do I update'), ['update'])
+        self.assertEqual(search.query_words('Wo ist mein Spielstand?'), ['spielstand'])
+        self.assertEqual(search.query_words('the'), ['the'])  # nothing else: it stays
+        self.assertEqual(search.query_words('log in'), ['login'])  # not "log" alone (the Log page)
+        self.assertEqual(search.query_words('2560x1440'), ['resolution'])
+        self.assertEqual(search.query_words('?'), [])
+        self.assertEqual(self.first('where is fullscreen'), 'fullscreen')
+        self.assertEqual(self.first('wie kann ich vollbild'), 'fullscreen')
+
+    def test_a_setting_for_another_choice_is_found_with_a_note(self):
+        """A row of the online pool not chosen: found, after what the page shows, and the result says
+        which pool it needs. Without such a note a hidden row stays out."""
+        class Widget:
+            def __init__(self, manager, master=None):
+                self.manager, self.master = manager, master
+
+            def winfo_manager(self):
+                return self.manager
+        fake = Fake()
+        page = Widget('pack')
+        fake.pages, fake.page_titles = {'online': page}, {'online': 'Online play'}
+        for title, key, widget, only in (
+                ('Sign in with Discord', 'button:signin_supermedo', Widget('grid', page), None),
+                ('Sign in with Discord', 'button:signin_thd', Widget('', page),
+                 ("only with The Hunter's Dream", 'online_pool')),
+                ('Account', 'thd_online_id', Widget('', page), None)):
+            fake.search_entries.append({'kind': 'setting', 'page': 'online', 'title': title, 'hint': '', 'key': key,
+                                        'widget': widget, 'only': only,
+                                        'haystack': (search.fold(title), '', search.fold(search.WORDS[key]))})
+        found = [e['key'] for e in fake.search('discord thd')]
+        self.assertEqual(found[0], 'button:signin_thd')
+        self.assertEqual(fake.search_where(fake.search('discord thd')[0]), "Online play · only with The Hunter's Dream")
+        self.assertEqual(fake.search('sign in')[0]['key'], 'button:signin_supermedo')  # the shown one first
+        self.assertNotIn('thd_online_id', [e['key'] for e in fake.search('account')])  # hidden, no note: out
+        side = {'kind': 'side', 'page': 'side', 'title': 'Expert view', 'hint': '', 'key': 'button:expert'}
+        self.assertEqual(fake.search_where(side), 'Side bar')
 
     def test_symptoms_find_the_fix_first(self):
         self.assertIn(self.first('ruckelt'), ('shader_cache', 'vram'))  # Help topics before the settings

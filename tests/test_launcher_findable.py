@@ -1,6 +1,7 @@
 """Important launcher functions sit on a page and the search finds them; every search entry for a button has its
 button. The shader cache button had been left in Help's black screen topic alone after the redesign, and its
-search words pointed at nothing."""
+search words pointed at nothing; signing in, importing, restoring a backup and the expert view were not in the
+search at all."""
 from paths import ROOT
 import ast
 import sys
@@ -22,6 +23,13 @@ IMPORTANT = {
     'backup_now': 'button:backup',
     'open_bug_benchmark': 'button:benchmark',
     'check_game_files': 'button:game_files',
+    'check_update': 'button:updates',
+    'sign_in_discord': 'button:signin_supermedo',  # the Online page's own functions, not methods
+    'sign_in': 'button:signin_thd',
+    'create_account': 'button:create_account',
+    'import_save': 'button:import',
+    'restore_backup': 'button:restore',
+    'toggle_mode': 'button:expert',
 }
 
 
@@ -31,7 +39,8 @@ def sources():
 
 
 def scan():
-    """(the actions page buttons run, the search keys index_entry registers)."""
+    """(the actions page buttons run: methods, and a page's own functions given as command=, the search keys
+    index_entry registers)."""
     commands, keys = set(), set()
     for path in sources():
         for node in ast.walk(ast.parse(path.read_text(encoding='utf-8'))):
@@ -45,6 +54,8 @@ def scan():
                         if isinstance(inner, ast.Attribute) and isinstance(inner.value, ast.Name) \
                                 and inner.value.id in ('self', 'app'):
                             commands.add(inner.attr)
+                        elif isinstance(inner, ast.Name) and part is keywords.get('command'):
+                            commands.add(inner.id)
             if name == 'index_entry':
                 key = keywords.get('key') or (node.args[3] if len(node.args) > 3 else None)
                 if isinstance(key, ast.Constant):

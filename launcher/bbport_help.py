@@ -742,16 +742,18 @@ class HelpMixin:
         button.pack(side='left')
         self.report_button = button
         self.index_entry(button, _('Save a report'), key='button:report')
-        ttk.Button(row, text=_('Copy a summary'), style='Card.TButton', command=self.copy_diagnostics).pack(
-            side='left', padx=(px(8), 0))
+        button = ttk.Button(row, text=_('Copy a summary'), style='Card.TButton', command=self.copy_diagnostics)
+        button.pack(side='left', padx=(px(8), 0))
+        self.index_entry(button, _('Copy a summary'), key='button:copy_summary')
         discord = ttk.Button(row, text=_('Open the Discord'), style='Card.TButton',
                              command=lambda: webbrowser.open(DISCORD))
         discord.pack(side='left', padx=(px(8), 0))
         self.index_entry(discord, _('Open the Discord'), key='button:discord')
         more = tk.Frame(last, bg=theme.CARD)
         more.pack(anchor='w', pady=(px(8), 0))
-        ttk.Button(more, text=_('Show the log'), style='Card.TButton', command=lambda: self.show('log')).pack(
-            side='left')
+        button = ttk.Button(more, text=_('Show the log'), style='Card.TButton', command=lambda: self.show('log'))
+        button.pack(side='left')
+        self.index_entry(button, _('Show the log'), key='button:show_log')  # the Log page is an expert one
         ttk.Button(more, text=_('Repeat the setup'), style='Card.TButton', command=self.open_setup).pack(
             side='left', padx=(px(8), 0))
         self.report_note = tk.Label(last, text='', bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9),
