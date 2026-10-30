@@ -304,7 +304,7 @@ class BenchmarkBackupTests(Folder):
 
     def test_the_launcher_puts_them_back_at_every_start(self):
         source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
-        main = source[source.index('def main():'):source.index("if FROZEN and UPDATE_DIR not in")]
+        main = source[source.index('def main():'):source.index("    # Without a usable game folder there is nothing to play yet")]
         self.assertIn("restore_benchmark_backup(Path(settings.get('user_dir') or DATA_DIR / 'user'))", main)
         self.assertNotIn('rmtree', main)  # the saves in place are never deleted
 

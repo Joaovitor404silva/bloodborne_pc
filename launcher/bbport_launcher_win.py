@@ -3560,14 +3560,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.trophy_filter, self.trophy_state = 'all', None
         # A new PC or Windows: the trophies of the old installation (a player merged two trophies.log by hand).
         holder = self.ttk.Frame(f)
-        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(4, 8))
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(4, 8))
         button = self.ttk.Button(holder, text=_('Bring achievements from another installation'),
                                  command=self.import_trophies)
         button.pack(side='left')
         hint = _('From an older port folder, the drive of your old PC or shadPS4: added to yours, none removed.')
-        self.trophy_import_note = self.ttk.Label(holder, text=hint, style='Muted.TLabel', wraplength=self.px(460),
-                                                 justify='left')
-        self.trophy_import_note.pack(side='left', padx=10)
+        self.trophy_import_note = self.ttk.Label(holder, text=hint, style='Muted.TLabel', justify='left', anchor='w')
+        self.wrap_within(self.trophy_import_note, 460).pack(side='left', fill='x', expand=True, padx=10)
         self.trophy_import_note.hint = hint
         self.index_entry(button, _('Bring achievements from another installation'), hint, key='button:trophies')
         self.trophy_body = self.ttk.Frame(f)

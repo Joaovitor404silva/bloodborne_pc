@@ -268,7 +268,8 @@ class InstallVersionTests(unittest.TestCase):
                         mock.patch.object(L, 'UPDATE_DIR', Path(folder.name) / 'update')):
             patcher.start()
             self.addCleanup(patcher.stop)
-        self.app = bare_launcher(game_running=lambda: False, root=FakeRoot())
+        self.app = bare_launcher(game_running=lambda: False, test_running=lambda: False, root=FakeRoot(),
+                                 updating=False, installing=False, update_buttons=mock.Mock())
         self.app.messagebox.askyesno.return_value = True
         self.progress, self.failed = mock.Mock(), mock.Mock()
 
@@ -288,8 +289,9 @@ class InstallVersionTests(unittest.TestCase):
     def test_a_download_that_is_no_zip(self):
         class Reply(io.BytesIO):
             headers = {'Content-Length': '9'}
-        # Its progress (100 %), then the answer.
-        self.assertEqual(self.install(2, return_value=Reply(b'not a zip')), 'Update failed: File is not a zip file')
+        # Its progress (100 %), "Checking the download…", then the answer.
+        self.assertEqual(self.install(3, return_value=Reply(b'not a zip')),
+                         'Update failed: the download is damaged (File is not a zip file). Try again.')
         self.progress.assert_called()
 
 
