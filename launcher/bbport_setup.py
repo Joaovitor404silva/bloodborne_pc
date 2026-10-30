@@ -650,6 +650,8 @@ class SetupMixin:
         from Picture & performance (view 'picture')."""
         import platform
         import time as clock
+        if self.update_installing():
+            return
         if self.process or bench.game_pids():
             self.messagebox.showinfo('Bloodborne', _('Close the game first.'))
             return
