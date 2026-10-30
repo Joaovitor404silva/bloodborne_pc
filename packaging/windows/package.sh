@@ -17,21 +17,40 @@ elif [[ $# != 0 ]]; then
 fi
 [[ -f out/bb-probe.exe && -f out/bb-gpu-capabilities.exe && -f out/bb-fg401-capabilities.exe && -f out/bb-play.exe ]] || { echo 'Build first: bash build.sh' >&2; exit 1; }
 
-# A Windows Python (not MSYS2's) for PyInstaller.
+# A Windows Python (not MSYS2's) for PyInstaller, always of this minor version: it names the DLL in _internal
+# (python314.dll). 1.9.5 was frozen with 3.12 and 1.9.6 with 3.14, whichever was found first, and an installation
+# with files of both cannot start ("Failed to import encodings module"). Change it on purpose, with a release.
+PYTHON_VERSION=3.14
 python=${WINPYTHON:-}
 if [[ -z $python ]]; then
-    for candidate in /c/Python3*/python.exe "${LOCALAPPDATA:-/c/Users/$USER/AppData/Local}"/Programs/Python/Python3*/python.exe; do
+    folder=Python${PYTHON_VERSION/./}
+    for candidate in "/c/$folder/python.exe" "/c/Program Files/$folder/python.exe" \
+                     "${LOCALAPPDATA:-/c/Users/$USER/AppData/Local}/Programs/Python/$folder/python.exe"; do
         [[ -x $candidate ]] && python=$candidate
     done
 fi
-[[ -n $python ]] || { echo 'Need a Windows Python 3 (python.org) or WINPYTHON=path\to\python.exe' >&2; exit 1; }
+[[ -n $python ]] || {
+    echo "Need Python $PYTHON_VERSION for Windows (python.org) or WINPYTHON=path\\to\\python.exe" >&2; exit 1; }
+minor_of() { "$1" -c 'import sys; print("%d.%d" % sys.version_info[:2])' | tr -d '\r'; }
+found=$(minor_of "$python")
+if [[ $found != "$PYTHON_VERSION" ]]; then
+    echo "$python is Python $found; the launcher is frozen with Python $PYTHON_VERSION (PYTHON_VERSION in $0)" >&2
+    exit 1
+fi
 # Windows Python needs USERPROFILE (some MSYS2 shells start without it).
 export USERPROFILE=${USERPROFILE:-$(cygpath -w "/c/Users/$(id -un)")}
+# A venv made with another Python earlier would freeze that one: it is made anew.
+if [[ -x out/pyenv/Scripts/python.exe && $(minor_of out/pyenv/Scripts/python.exe) != "$PYTHON_VERSION" ]]; then
+    echo "out/pyenv has Python $(minor_of out/pyenv/Scripts/python.exe): made anew with $PYTHON_VERSION" >&2
+    rm -rf out/pyenv
+fi
 if [[ ! -x out/pyenv/Scripts/python.exe ]]; then
     "$python" -m venv out/pyenv
 fi
 # Pillow draws the launcher's look (launcher/bbport_theme.py) and scales the cover art.
 out/pyenv/Scripts/python.exe -m pip install -q --disable-pip-version-check pyinstaller pillow
+echo "Freezing the launcher with Python $(minor_of out/pyenv/Scripts/python.exe)," \
+     "PyInstaller $(out/pyenv/Scripts/python.exe -m PyInstaller --version | tr -d '\r')"
 # The scripts run inside Bloodborne.exe (--script): the standard modules they import come along.
 hidden=()
 for module in argparse base64 bisect collections contextlib hashlib json re shutil struct tempfile \
