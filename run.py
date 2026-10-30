@@ -28,6 +28,18 @@ def prepare_driver_environment(env):
     return bbport_driver_runtime.configure_environment(env)
 
 
+# The Vulkan loader's variables that decide which graphics drivers it loads: one set in Windows' environment
+# variables hides every other card from the game (the launcher's Help: "The game does not use your graphics card").
+VULKAN_DRIVER_VARIABLES = ('VK_ICD_FILENAMES', 'VK_DRIVER_FILES', 'VK_ADD_DRIVER_FILES', 'VK_LOADER_DRIVERS_SELECT',
+                           'VK_LOADER_DRIVERS_DISABLE')
+
+
+def vulkan_driver_note(env):
+    """A line for the log when one of them is set, None without."""
+    found = [f'{name}={env[name]}' for name in VULKAN_DRIVER_VARIABLES if env.get(name)]
+    return f'Vulkan: the drivers it loads are limited by {"; ".join(found)}' if found else None
+
+
 # Co-op: the community service that answers Bloodborne's own game-server requests
 # (messages, bloodstains, sign-in); summon requests go to the shadNet server instead.
 COMMUNITY_SERVER = 'https://game.supermedo.com'
@@ -551,6 +563,9 @@ def main():
     if note:
         print(note)
     prepare_driver_environment(env)
+    note = vulkan_driver_note(env)
+    if note:
+        print(note)
     data = Path(env.get('BB_DATA_DIR', PORT))
     out = data / 'out'
     out.mkdir(parents=True, exist_ok=True)

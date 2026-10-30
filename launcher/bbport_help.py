@@ -153,6 +153,19 @@ TOPICS = {
          'Restart the PC after installing it.',
          'Overclocked graphics card or memory: try the standard clocks.',
          'Close overlays such as MSI Afterburner and RivaTuner (RTSS): they hook into the graphics driver.']),
+    'gpu_unseen': (
+        'The game does not use your graphics card',
+        "Windows has the card, but its Vulkan driver does not answer: the game then runs on the processor's "
+        'graphics, much slower, or finds no card at all. Usually a driver update went wrong, or one driver was '
+        'installed over another.',
+        ['NVIDIA: download the current driver from nvidia.com, start it, choose Custom (Advanced) and tick Perform '
+         'a clean installation.',
+         'AMD: start the current AMD Software (Adrenalin) installer and choose Factory Reset.',
+         'Restart the PC after installing it.',
+         'Still the same: remove the driver with Display Driver Uninstaller (DDU) in Safe Mode, then install it '
+         'again.',
+         'VK_ICD_FILENAMES or VK_DRIVER_FILES in the Windows environment variables: delete them. Vulkan then loads '
+         'only the drivers they name.']),
     'black_screen': (
         'Only a black screen',
         'The game starts but shows nothing, or the picture breaks after a driver update: its shader cache no longer '
@@ -208,7 +221,7 @@ TOPICS = {
 }
 TOPIC_ORDER = ['eboot_modified', 'eboot_truncated', 'eboot_unreadable', 'program_files', 'version', 'update_only',
                'empty_files', 'page_file', 'antivirus', 'location', 'save_lost', 'controller', 'black_screen', 'vram',
-               'driver', 'shader_cache', 'smartscreen']
+               'gpu_unseen', 'driver', 'shader_cache', 'smartscreen']
 # Buttons under a topic's steps: (text, launcher method). They do the step for the player.
 TOPIC_ACTIONS = {'black_screen': [('Clear the shader cache', 'clear_cache')],
                  'page_file': [('Open the memory settings', 'open_memory_settings')],
@@ -236,6 +249,7 @@ LOG_HINTS = [
     (r'is not the original file', 'program_files'),
     (r'ErrorOutOfDeviceMemory|Texture cache: memory pressure', 'vram'),
     (r'ErrorDeviceLost|device lost', 'driver'),
+    (r'Vulkan: the drivers it loads are limited by', 'gpu_unseen'),  # run.py: VK_ICD_FILENAMES and the like
     (r"Server rejected this client|doesn't accept your shadPS4 build", 'shadnet_rejected'),
     (r"Input: mouse motion from Steam's Desktop Layout", 'steam_layout'),
     (r'Fault: .* at (?:amdvlk|amdxc|nvoglv|nvvk|nvwgf|igvk|igxe|igd)\w*\.dll', 'driver'),
@@ -764,8 +778,24 @@ class HelpMixin:
             return None
         if verdict.get('ok'):
             device = verdict.get('device') or {}
+            if verdict.get('unseen'):
+                return ('warn', 'gpu_unseen', self.gpu_unseen())
             return ('ok', None, _('Graphics card {0}: Vulkan {1} and everything else the port needs.').format(device.get('name', '?'), device.get('api', '?')))
-        return ('bad', 'driver', self.gpu_problem())
+        return ('bad', 'gpu_unseen' if verdict.get('unseen') else 'driver', self.gpu_problem())
+
+    def gpu_unseen(self):
+        """The card Windows has and Vulkan does not see (scripts/vulkan_check.py's 'unseen'), while the game would
+        run on a lesser one or on none, as a sentence; None when there is none."""
+        verdict = getattr(self, 'vulkan', None) or {}
+        unseen, device = verdict.get('unseen') or [], verdict.get('device') or {}
+        if not unseen:
+            return None
+        if verdict.get('ok'):
+            return _('Windows has {0}, but its Vulkan driver does not answer, so the game runs on {1}, much slower. '
+                     'Install the driver for {0} anew (clean installation), then restart the PC.').format(
+                unseen[0], device.get('name', '?'))
+        return _('Windows has {0}, but its Vulkan driver does not answer. Install the driver for {0} anew (clean '
+                 'installation), then restart the PC.').format(unseen[0])
 
     def gpu_problem(self):
         """Why the game's renderer would not start on this PC, or None: scripts/vulkan_check.py asks the
@@ -773,6 +803,8 @@ class HelpMixin:
         features) on the card the game would use. No list of card names: the driver's own answer."""
         verdict = getattr(self, 'vulkan', None) or {}
         problem, device = verdict.get('problem'), verdict.get('device') or {}
+        if problem in ('devices', 'device') and verdict.get('unseen'):
+            return self.gpu_unseen()  # the card that would run it is there: its driver is the fix
         if problem == 'loader':
             return _('No working Vulkan driver was found (vulkan-1.dll is missing or broken). Install the current '
                      'driver for your graphics card.')
@@ -802,6 +834,14 @@ class HelpMixin:
             if not self.messagebox.askyesno('Bloodborne', text, icon='warning'):
                 return False
             self.app['gpu_warned'] = card
+        # A card Vulkan does not see while the game runs on a slower one: asked once per card as well.
+        unseen = verdict.get('unseen') or []
+        if unseen and not problem and self.app.get('gpu_warned') != unseen[0]:
+            if not self.messagebox.askyesno('Bloodborne', self.gpu_unseen() + '\n\n' + _('Start anyway?'),
+                                            icon='warning'):
+                self.open_topic('gpu_unseen')
+                return False
+            self.app['gpu_warned'] = unseen[0]
         problem = memory_problem(self.var('output_res', 'ini').get())
         if problem:
             free, need, off = problem

@@ -112,7 +112,42 @@ class GraphicsCardTests(unittest.TestCase):
     def test_the_play_page_shows_it_only_when_the_port_cannot_start(self):
         source = (ROOT / 'launcher' / 'bbport_launcher_win.py').read_text(encoding='utf-8')
         self.assertIn("self.check_line('gpu', _('✗ The graphics card cannot run the port: see Help') if "
-                      "self.gpu_problem() else ''", source)
+                      "self.gpu_problem() else\n                        '⚠ ' + _('{} is not used: its Vulkan driver "
+                      "does not answer (Help)').format(unseen[0])\n                        if unseen else ''", source)
+
+    # A player's RTX 5070 Ti: in Windows' list, not in Vulkan's; the game ran on the processor's graphics.
+    UNSEEN = {'ok': True, 'problem': None, 'device': {'name': 'AMD Radeon(TM) Graphics', 'api': '1.4.315',
+                                                      'missing': []}, 'unseen': ['NVIDIA GeForce RTX 5070 Ti']}
+
+    def test_a_card_vulkan_does_not_see(self):
+        window = self.window(self.UNSEEN)
+        self.assertIsNone(window.gpu_problem())  # it starts
+        state, topic, text = window.gpu_check()
+        self.assertEqual((state, topic), ('warn', 'gpu_unseen'))
+        self.assertTrue(text.startswith('Windows has NVIDIA GeForce RTX 5070 Ti, but its Vulkan driver does not '
+                                        'answer, so the game runs on AMD Radeon(TM) Graphics'))
+        self.assertIn('Install the driver for NVIDIA GeForce RTX 5070 Ti anew (clean installation)', text)
+        self.assertIn('gpu_unseen', help_.TOPIC_ORDER)
+
+    def test_no_card_but_one_vulkan_does_not_see(self):
+        window = self.window({**self.verdict('devices'), 'unseen': ['NVIDIA GeForce RTX 5070 Ti']})
+        self.assertTrue(window.gpu_problem().startswith('Windows has NVIDIA GeForce RTX 5070 Ti, but its Vulkan '
+                                                        'driver does not answer. Install'))  # not "too old"
+        self.assertEqual(window.gpu_check()[:2], ('bad', 'gpu_unseen'))
+
+    def test_asked_once_before_play(self):
+        window = self.window(self.UNSEEN, answer=False)
+        window.open_topic = lambda topic: window.opened.append(topic)
+        window.opened = []
+        with mock.patch.object(help_, 'memory_problem', lambda *_a: None):
+            self.assertFalse(window.preflight())  # No: Help's topic instead of the game
+            self.assertEqual(window.opened, ['gpu_unseen'])
+            window.messagebox = type(window.messagebox)()
+            window.messagebox.askyesno = lambda *_a, **_k: True
+            self.assertTrue(window.preflight())
+            self.assertEqual(window.app['gpu_warned'], 'NVIDIA GeForce RTX 5070 Ti')
+            window.messagebox.askyesno = lambda *_a, **_k: self.fail('asked twice')
+            self.assertTrue(window.preflight())
 
     def test_nothing_to_say(self):
         self.assertIsNone(self.window(self.verdict(None, 'RX 9070 XT')).gpu_problem())

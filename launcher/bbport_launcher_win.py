@@ -244,6 +244,7 @@ import bbport_lang_pools  # noqa: E402,F401 (the co-op pools' texts with The Hun
 import bbport_lang_mistakes  # noqa: E402,F401 (the repairs of player mistakes, in the other eleven languages)
 import bbport_lang_vram  # noqa: E402,F401 (the video memory warning's switch)
 import bbport_lang_latency  # noqa: E402,F401 (the low latency options)
+import bbport_lang_gpu  # noqa: E402,F401 (a graphics card Windows has and Vulkan does not see)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
 import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
@@ -4382,9 +4383,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                         (lambda: self.show('game')) if not info else
                         (lambda: self.open_topic('version')) if info[1] != PATCH_VERSION else None)
         self.check_line('saves', save, lambda: self.show('saves'))
-        # The start check (scripts/vulkan_check.py): only when the port cannot start on the card; Help says why.
-        self.check_line('gpu', _('✗ The graphics card cannot run the port: see Help') if self.gpu_problem() else '',
-                        lambda: self.show('help'))
+        # The start check (scripts/vulkan_check.py): only when the port cannot start on the card, or when Windows
+        # has a card Vulkan does not see and the game runs on a slower one; Help says why.
+        unseen = (getattr(self, 'vulkan', None) or {}).get('unseen')
+        self.check_line('gpu', _('✗ The graphics card cannot run the port: see Help') if self.gpu_problem() else
+                        '⚠ ' + _('{} is not used: its Vulkan driver does not answer (Help)').format(unseen[0])
+                        if unseen else '',
+                        (lambda: self.open_topic('gpu_unseen')) if unseen else lambda: self.show('help'))
         self.check_line('fsr4', _('• FSR 4 files missing: FSR 3.1 is used meanwhile. Click to download (30 MB)')
                         if missing and self.var('upscaler', 'ini').get() == 'fsr4' else '', self.download_fsr4)
         fsr411_ready, status = True, None
