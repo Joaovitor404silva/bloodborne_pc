@@ -941,10 +941,11 @@ class SetupMixin:
                 tk.Label(body, text=_('Searching this PC for saves of shadPS4, Awaken\'s port and bbhost…'),
                          bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9)).pack(anchor='w', pady=(top, 0))
             elif not sets:
-                tk.Label(body, text=_('No saves from shadPS4, Awaken\'s port or bbhost found on this PC. If yours '
-                                      'are somewhere else (a backup, a PS4 export), choose their folder.'),
-                         bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
-                         wraplength=px(640)).pack(anchor='w', pady=(top, 0))
+                self.wrap_within(tk.Label(body, text=_('No saves from shadPS4, Awaken\'s port or bbhost found on this '
+                                                       'PC. If yours are somewhere else (a backup, a PS4 export), '
+                                                       'choose their folder.'),
+                                          bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
+                                          anchor='w'), 640).pack(fill='x', pady=(top, 0))
             for save in (sets or [])[:limit or None]:
                 tk.Frame(body, bg=theme.BORDER, height=1).pack(fill='x', pady=(px(10), px(8)))
                 line = tk.Frame(body, bg=theme.CARD)
@@ -953,13 +954,13 @@ class SetupMixin:
                            command=lambda s=save: self.import_save(s, search)).pack(side='right', anchor='center')
                 words = tk.Frame(line, bg=theme.CARD)
                 words.pack(side='left', fill='x', expand=True)
-                tk.Label(words, text=save.source, bg=theme.CARD, fg=theme.GOLD_LIGHT, font=(theme.BODY_SEMI, 10),
-                         anchor='w', justify='left', wraplength=px(520)).pack(anchor='w')
-                tk.Label(words, text=self.describe_save(save) + '  ·  ' + _('last played {}').format(save.when()),
-                         bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 9), anchor='w', justify='left',
-                         wraplength=px(520)).pack(anchor='w', pady=(px(1), 0))
-                tk.Label(words, text=str(save.folder), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 8),
-                         anchor='w', justify='left', wraplength=px(520)).pack(anchor='w', pady=(px(2), 0))
+                # wrapped at the room beside the Import button: a long folder was cut off there in a narrow window
+                for text, fg, font, top in ((save.source, theme.GOLD_LIGHT, (theme.BODY_SEMI, 10), 0),
+                                            (self.describe_save(save) + '  ·  ' + _('last played {}').format(
+                                                save.when()), theme.TEXT, (theme.BODY, 9), px(1)),
+                                            (str(save.folder), theme.MUTED, (theme.BODY, 8), px(2))):
+                    self.wrap_within(tk.Label(words, text=text, bg=theme.CARD, fg=fg, font=font, anchor='w',
+                                              justify='left'), 520).pack(fill='x', pady=(top, 0))
             buttons = tk.Frame(body, bg=theme.CARD)
             buttons.pack(anchor='w', pady=(px(12), 0))
             ttk.Button(buttons, text=_('Search again'), style='Card.TButton', command=search).pack(side='left')
@@ -1257,15 +1258,16 @@ class SetupMixin:
                 child.destroy()
             ttk.Checkbutton(body, text=_('Back up automatically before every start'),
                             variable=self.var('auto_backup', 'app'), style='Card.TCheckbutton').pack(anchor='w')
-            tk.Label(body, text=_('Only when you played since the last backup. The last {} automatic backups are '
-                                  'kept; the ones you make yourself always.').format(saves.AUTO_KEEP),
-                     bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
-                     wraplength=px(640)).pack(anchor='w', padx=(px(26), 0))
+            self.wrap_within(tk.Label(body, text=_('Only when you played since the last backup. The last {} automatic '
+                                                   'backups are kept; the ones you make yourself always.').format(
+                saves.AUTO_KEEP), bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left', anchor='w'),
+                640).pack(fill='x', padx=(px(26), 0))
             ttk.Checkbutton(body, text=_('Back up after every game exit'),
                             variable=self.var('exit_backup', 'app'), style='Card.TCheckbutton').pack(anchor='w', pady=(px(8), 0))
-            tk.Label(body, text=_('Copies the final save after a normal exit or crash. No periodic copies; exit backups are kept.'),
-                     bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
-                     wraplength=px(640)).pack(anchor='w', padx=(px(26), 0))
+            self.wrap_within(tk.Label(body, text=_('Copies the final save after a normal exit or crash. No periodic '
+                                                   'copies; exit backups are kept.'),
+                                      bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left', anchor='w'),
+                             640).pack(fill='x', padx=(px(26), 0))
 
             items = [b for b in saves.backups(self.save_user_dir()) if b.ok]
             if not items:
@@ -1324,17 +1326,18 @@ class SetupMixin:
             tk.Label(words, text=_('A name for this backup. Enter keeps it, Esc leaves it as it was.'), bg=theme.CARD,
                      fg=theme.MUTED, font=(theme.BODY, 8)).pack(anchor='w', pady=(px(2), 0))
         else:
-            tk.Label(words, text=self.backup_title(item), bg=theme.CARD, fg=theme.GOLD_LIGHT,
-                     font=(theme.BODY_SEMI, 10), anchor='w', justify='left', wraplength=px(520)).pack(anchor='w')
+            self.wrap_within(tk.Label(words, text=self.backup_title(item), bg=theme.CARD, fg=theme.GOLD_LIGHT,
+                                      font=(theme.BODY_SEMI, 10), anchor='w', justify='left'), 520).pack(fill='x')
         size = item.size / 1024
         size = f'{size / 1024:.1f} MB' if size >= 1024 else f'{max(1, round(size))} KB'
         level = character.names(self.var('game_dir', 'app').get(), self.var('language', 'app').get()).word(
             character.LEVEL_TEXT)
         found = saves.backup_characters(item).values()
         who = ', '.join(f'{c.name} ({level} {c.level})' for c in found) if found else ', '.join(item.names)
-        tk.Label(words, text='  ·  '.join([item.created.strftime('%d.%m.%Y %H:%M'), who or _('no characters'), size]),
-                 bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 9), anchor='w', justify='left',
-                 wraplength=px(520)).pack(anchor='w', pady=(px(1), 0))
+        self.wrap_within(tk.Label(words, text='  ·  '.join([item.created.strftime('%d.%m.%Y %H:%M'),
+                                                            who or _('no characters'), size]),
+                                  bg=theme.CARD, fg=theme.TEXT, font=(theme.BODY, 9), anchor='w', justify='left'),
+                         520).pack(fill='x', pady=(px(1), 0))
         links = tk.Frame(words, bg=theme.CARD)
         links.pack(anchor='w', pady=(px(3), 0))
         for title, command in ((_('Rename'), lambda: (state.update(rename=item.path), redraw())),
@@ -1805,8 +1808,9 @@ class SetupMixin:
         self.folder(f, 'cache_dir', _('Cache folder'), _('Choose the cache folder'),
                     _('Shaders, logs and temporary files of this installation. Empty: its user folder ({}), so every '
                       'version and every PC keeps its own shaders, wherever the saves are.').format(L.DATA_DIR / 'user'))
-        where = self.tk.Label(f, text='', bg=L.PANEL, fg=theme.MUTED, font=(theme.BODY, 9), justify='left', anchor='w')
-        where.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 2))
+        where = self.wrap_within(self.tk.Label(f, text='', bg=L.PANEL, fg=theme.MUTED, font=(theme.BODY, 9),
+                                               justify='left', anchor='w'), 560)
+        where.grid(row=self.next_row(f), column=1, sticky='we', pady=(4, 2))
 
         def show_where(*_a):
             settings = {key: self.var(key, 'app').get() for key in ('user_dir', 'cache_dir')}
@@ -1818,7 +1822,7 @@ class SetupMixin:
             elif not settings['cache_dir'] and L.saves_in_other_installation(settings):
                 text += '\n' + _('Your saves folder is in another installation of the port: this one keeps its shaders '
                                   'in its own folder, because another version\'s shaders can break the picture.')
-            where.configure(text=text, wraplength=self.px(560))
+            where.configure(text=text)
         for key in ('user_dir', 'cache_dir'):
             self.var(key, 'app').trace_add('write', lambda *_a: self.root.after_idle(show_where))
         show_where()

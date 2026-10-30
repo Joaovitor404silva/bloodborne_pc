@@ -1356,21 +1356,22 @@ NAV_EXPERT = [('graphics', ('All graphics',)), ('game', ('Game files',)), ('chea
 EXPERT_PAGES = {name for name, _t in NAV_EXPERT} | {'log'}
 
 
-def nav_plan(room, saving, count, group, px, tall=37, short=26, least=22):
+def nav_plan(room, savings, count, group, px, steps=(37, 26, 23, 22)):
     """The side bar's entries for the `room` (pixels) their list has under the full head: (their height in
-    points, whether the head is the compact one, whether the list scrolls). Entries from `short` points up keep
-    the full head; below that the compact head gives `saving` pixels more, for entries from `short` down to
-    `least` points (never taller than with the full head); with less room than even those need, the list
-    scrolls. Each entry takes px(height) and a pixel's gap, `group` is the EXPERT label's (0 in the simple view).
-    The entries had stopped at 26 points before: at 700 pixels high the last ones were behind the Expert view
-    switch."""
-    def tallest(space, most):
-        return next((h for h in range(most, least - 1, -1) if group + count * (px(h) + px(1)) <= space), None)
-    height = tallest(room, tall)
-    if height is not None and height >= short:
-        return height, False, False
-    height = tallest(room + saving, short)
-    return (height, True, False) if height is not None else (least, True, True)
+    points, the head, whether the list scrolls). Head 0 is the full one, 1 has narrower gaps (`savings[0]` pixels
+    more for the list), 2 has no by-line either (`savings[1]`). Each head takes entries from its height in `steps`
+    down to the next one's, never taller than the head before, so more room never makes them flatter; with less
+    room than even the flattest need, the list scrolls. Each entry takes px(height) and a pixel's gap, `group` is
+    the EXPERT label's (0 in the simple view). The entries had stopped at 26 points before: at 700 pixels high
+    the last ones were behind the Expert view switch. The by-line goes last: dropped with the gaps for entries
+    under 26 points, it gave them a point or two and left most of its room empty."""
+    def tallest(space, most, fewest):
+        return next((h for h in range(most, fewest - 1, -1) if group + count * (px(h) + px(1)) <= space), None)
+    for head, (most, fewest) in enumerate(zip(steps, steps[1:])):
+        height = tallest(room + (0, *savings)[head], most, fewest)
+        if height is not None:
+            return height, head, False
+    return steps[-1], len(savings), True
 
 
 class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.SearchMixin, bbport_pad.PadMixin):
@@ -1809,10 +1810,10 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                      variable=self.var('object_motion_cache', 'ini'))
         row = self.next_row(parent)
         button.grid(row=row, column=0, columnspan=2, sticky='w', pady=(8, 0))
-        self.ttk.Label(parent, text=_(
+        self.wrap_within(self.ttk.Label(parent, text=_(
             'May solve general FSR FPS drops; uses extra VRAM. Requires object motion vectors. '
-            'Applies at next game start.'), style='Muted.TLabel', wraplength=self.px(640),
-            justify='left').grid(row=row + 1, column=0, columnspan=2, sticky='w', padx=(26, 0))
+            'Applies at next game start.'), style='Muted.TLabel', justify='left', anchor='w'), 640).grid(
+            row=row + 1, column=0, columnspan=2, sticky='we', padx=(26, 0))
         self.index_entry(button, _('Motion-vector cache (experimental)'), key='object_motion_cache')
 
         def refresh(*_args):
@@ -2000,7 +2001,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.byline = tk.Label(side, text=_('by Super Medo') + f'  ·  v{VERSION_TEXT}' +
                                ('\n' + _('co-op test build') if COOP_TEST else ''),
                                bg=BG, fg=MUTED, justify='left', font=(theme.BODY, 9))
-        self.byline.pack(anchor='w', padx=px(22), pady=(px(2), px(8)))
+        self.byline_pads = ((px(2), px(8)), (0, px(4)))  # its gaps under the full head and the narrower ones
+        self.byline.pack(anchor='w', padx=px(22), pady=self.byline_pads[0])
         self.build_search(side)  # bbport_search: settings and help by the player's own words
         self.nav, self.current_page = {}, None
         # Shorter entries on a short screen, so the expert view (13 pages) still fits.
@@ -2014,12 +2016,19 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.nav_list.pack(fill='both', expand=True)
         self.nav_inner = tk.Frame(self.nav_list, bg=BG)
         self.nav_inner.place(x=0, y=0, relwidth=1)
-        self.nav_scrolls, self.nav_offset, self.head_compact = False, 0, False
-        self.nav_arrows = []  # shown while entries lie above or below the list (nav_scroll); a click moves it
-        for glyph, step in (('⌃', -80), ('⌄', 80)):
-            arrow = tk.Label(self.nav_list, text=glyph, bg=BG, fg=MUTED, font=(theme.BODY_SEMI, 9), cursor='hand2')
+        self.nav_scrolls, self.nav_offset, self.nav_head = False, 0, 0
+        # Shown while entries lie above or below the list (nav_scroll): a hairline across its cut edge and a gold
+        # chevron (a link's colour: a click moves the list) in the gutter right of the entries, where it covers no
+        # pill. A small grey caret alone went unseen.
+        self.nav_arrows, self.nav_edges = [], []
+        for glyph, step in (('', -80), ('', 80)):  # ChevronUpMed, ChevronDownMed
+            arrow = tk.Label(self.nav_list, text=glyph, bg=BG, fg=GOLD, font=(theme.ICONS, 8), bd=0, padx=0,
+                             pady=px(3), cursor='hand2')
             arrow.bind('<Button-1>', lambda _e, step=step: self.nav_scroll(px(step)))
+            arrow.bind('<Enter>', lambda _e, arrow=arrow: arrow.configure(fg=theme.GOLD_LIGHT))
+            arrow.bind('<Leave>', lambda _e, arrow=arrow: arrow.configure(fg=GOLD))
             self.nav_arrows.append(arrow)
+            self.nav_edges.append(tk.Frame(self.nav_list, bg=LINE, height=1))
         self.nav_group = tk.Label(self.nav_inner, text=_('EXPERT'), bg=BG, fg=MUTED, font=(theme.BODY_SEMI, 8),
                                   anchor='w')
         for name, title in NAV_SIMPLE + NAV_EXPERT:
@@ -2074,9 +2083,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.mode_switch = ttk.Checkbutton(side, text=_('Expert view'), variable=expert, command=self.toggle_mode,
                                            style='Bar.TCheckbutton')  # drawn on the side bar's colour
         self.mode_switch.pack(side='bottom', anchor='w', padx=px(22), pady=(px(4), px(6)), before=self.search_box)
-        # A short window takes the by-line away and narrows these gaps (their pady: full, compact) before the
+        # A short window narrows these gaps (their pady: full, narrow) and then takes the by-line away before the
         # entries get too flat to read (fit_nav).
-        self.head_pads = [(brand, (px(20), px(4)), (px(8), px(2))), (self.search_box, (0, px(10)), (0, px(6))),
+        self.head_pads =[(brand, (px(20), px(4)), (px(8), px(2))), (self.search_box, (0, px(10)), (0, px(6))),
                           (self.mode_switch, (px(4), px(6)), (px(2), px(3))),
                           (self.community_buttons[1], (px(4), px(14)), (px(4), px(8)))]
         # The list's room changes with the window and with the update notice above the switch.
@@ -2150,32 +2159,34 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def fit_nav(self):
         """The side bar's entries as tall as the window allows, so that every entry and the switch below them
-        stay visible (nav_plan): 37 points, 26 on a short window or a high scaling; shorter still, the by-line
-        goes, the gaps narrow and the entries go down to 22 points. Only where even that is too tall (a 768
-        pixels high screen at 125 %) does the list scroll, with the page shown kept in view."""
+        stay visible (nav_plan): 37 points, 26 on a short window or a high scaling; shorter still, the gaps of
+        the head narrow for entries down to 23 points, and only then does the by-line go, for 22. Only where even
+        that is too tall (a 768 pixels high screen at 125 %, an update notice on the smallest window) does the
+        list scroll, with the page shown kept in view."""
         px = self.px
         try:
             if self.side.winfo_height() < px(200):
                 return  # not laid out yet
             shown = [name for name in self.nav if self.nav[name][0].winfo_manager()]
             group = self.nav_group.winfo_reqheight() + px(8) + px(2) if self.nav_group.winfo_manager() else 0
-            saving = self.byline.winfo_reqheight() + px(2) + px(8) + sum(
-                sum(full) - sum(compact) for _widget, full, compact in self.head_pads)
-            # the room the list would have under the full head, also while the compact one is shown
-            room = self.nav_list.winfo_height() - (saving if self.head_compact else 0)
+            full, narrow = (sum(pads) for pads in self.byline_pads)
+            gaps = full - narrow + sum(sum(wide) - sum(tight) for _widget, wide, tight in self.head_pads)
+            savings = (gaps, gaps + narrow + self.byline.winfo_reqheight())
+            # the room the list would have under the full head, also while another one is shown
+            room = self.nav_list.winfo_height() - (0, *savings)[self.nav_head]
         except self.tk.TclError:
             return
         if not shown:
             return
-        height, compact, self.nav_scrolls = nav_plan(room, saving, len(shown), group, px)
-        if compact != self.head_compact:
-            self.head_compact = compact
-            for widget, full, tight in self.head_pads:
-                widget.pack_configure(pady=tight if compact else full)
-            if compact:
+        height, head, self.nav_scrolls = nav_plan(room, savings, len(shown), group, px)
+        if head != self.nav_head:
+            self.nav_head = head
+            for widget, wide, tight in self.head_pads:
+                widget.pack_configure(pady=tight if head else wide)
+            if head == 2:
                 self.byline.pack_forget()
             else:
-                self.byline.pack(anchor='w', padx=px(22), pady=(px(2), px(8)), after=self.brand)
+                self.byline.pack(anchor='w', padx=px(22), pady=self.byline_pads[head], after=self.brand)
         if height != self.nav_h:
             self.nav_h = height
             self.nav_pills = {'on': self.theme.box(224, height, 8, CARD, LINE, bg=BG),
@@ -2192,7 +2203,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def nav_scroll(self, pixels=0, reveal=None):
         """Moves the side bar's list by `pixels` while it scrolls, so that the entry `reveal` is in view if given;
-        at its top while every entry fits. Small arrows at its right edge say that entries lie above or below."""
+        at its top while every entry fits. A hairline and a chevron at an edge say that entries lie beyond it."""
         offset = most = 0
         try:
             if self.nav_scrolls:
@@ -2210,13 +2221,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if offset != self.nav_offset:
             self.nav_offset = offset
             self.nav_inner.place_configure(y=-offset)
-        # (the last entry's gap below it is no entry)
-        for arrow, more, rely, anchor in ((self.nav_arrows[0], offset > 0, 0, 'ne'),
-                                          (self.nav_arrows[1], offset < most - self.px(2), 1, 'se')):
+        above, below = offset > 0, offset < most - self.px(2)  # the last entry's gap under it is no entry
+        for arrow, edge, more, rely, side in ((self.nav_arrows[0], self.nav_edges[0], above, 0, 'n'),
+                                              (self.nav_arrows[1], self.nav_edges[1], below, 1, 's')):
             if more:
-                arrow.place(relx=1, rely=rely, anchor=anchor)
+                edge.place(x=self.px(12), rely=rely, anchor=side + 'w', width=self.px(224), height=1)
+                arrow.place(relx=1, rely=rely, anchor=side + 'e')
+                edge.lift()
                 arrow.lift()
             else:
+                edge.place_forget()
                 arrow.place_forget()
 
     TITLE_ICONS = {'minimize': '\ue921', 'maximize': '\ue922', 'restore': '\ue923', 'close': '\ue8bb'}
@@ -2756,8 +2770,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                             _('Less ghosting on characters, cloth and weapons; costs about 5–10% FPS.',
                               'Меньше гостинга на персонажах и одежде; стоит около 5–10% FPS.'))
         # Off on some cards whatever the box says (vk_object_motion.cpp): greyed out, with the reason.
-        reason = self.ttk.Label(f, style='Muted.TLabel', wraplength=self.px(640), justify='left')
-        reason.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', padx=(26, 0))
+        reason = self.wrap_within(self.ttk.Label(f, style='Muted.TLabel', justify='left', anchor='w'), 640)
+        reason.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', padx=(26, 0))
         cache = self.motion_cache_check(f)
 
         def refresh_motion():
@@ -2810,8 +2824,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    '2 мс раньше. Немного больше нагрузка на CPU. Новое: выключите, если видите мерцание или '
                    'пропавшие объекты.'))
         # Off on Radeon cards whatever the box says (vk_rasterizer.cpp MaybeSubmitEarly): greyed out, with why.
-        early_reason = self.ttk.Label(f, style='Muted.TLabel', wraplength=self.px(560), justify='left')
-        early_reason.grid(row=self.next_row(f), column=1, sticky='w', pady=(0, 2))
+        early_reason = self.wrap_within(self.ttk.Label(f, style='Muted.TLabel', justify='left', anchor='w'), 560)
+        early_reason.grid(row=self.next_row(f), column=1, sticky='we', pady=(0, 2))
 
         def refresh_early():
             if not early.winfo_exists():
@@ -2850,8 +2864,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'частотой (120 Гц и выше при 60 FPS); иначе генерация приостанавливается. Немного добавляет '
                    'задержку ввода. Меню и ролики не генерируются. DLSS нужна GeForce RTX 40 или новее, иначе '
                    'используется FSR 3.1.'))
-        self.fg401_status = self.ttk.Label(f, wraplength=self.px(640), justify='left', style='Muted.TLabel')
-        self.fg401_status.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 0))
+        self.fg401_status = self.wrap_within(self.ttk.Label(f, justify='left', anchor='w', style='Muted.TLabel'), 640)
+        self.fg401_status.grid(row=self.next_row(f), column=1, sticky='we', pady=(4, 0))
         self.fg401_recheck = ttk.Frame(f)
         self.fg401_recheck.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
         ttk.Button(self.fg401_recheck, text=_('Recheck support'), command=self.recheck_fg401).pack(side='left')
@@ -2868,8 +2882,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                      'Вкл.: не больше кадров, чем показывает монитор (при снятом ограничении FPS генерируется меньше, '
                      'видеокарта меньше нагружена). Выкл.: множитель как выбран.'))
         self.section(f, _('FSR 4 assets', 'Ассеты FSR 4'))
-        self.fsr4_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left', style='Muted.TLabel')
-        self.fsr4_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        self.fsr4_label = self.wrap_within(ttk.Label(f, text='', justify='left', anchor='w', style='Muted.TLabel'), 640)
+        self.fsr4_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we')
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(8, 0))
         self.fsr4_button = ttk.Button(holder, text=_('Download FSR 4 assets', 'Скачать ассеты FSR 4'),
@@ -2884,10 +2898,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                        'в папку fsr4_shaders порта.'), top=6)
         before = set(f.grid_slaves())
         self.section(f, _('FSR 4.1.1 (experimental)', 'FSR 4.1.1 (экспериментально)'))
-        self.fsr411_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left', style='Muted.TLabel')
-        self.fsr411_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
-        self.fsr411_native_label = ttk.Label(f, text='', wraplength=self.px(640), justify='left', style='Muted.TLabel')
-        self.fsr411_native_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w')
+        def muted():
+            return self.wrap_within(ttk.Label(f, text='', justify='left', anchor='w', style='Muted.TLabel'), 640)
+        self.fsr411_label, self.fsr411_native_label = muted(), muted()
+        self.fsr411_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we')
+        self.fsr411_native_label.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we')
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='w', pady=(8, 0))
         self.fsr411_button = ttk.Button(holder, text=_('Download fsr4vk'),
@@ -2913,12 +2928,16 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
     def link_row(self, parent, text, page, link=None, command=None):
         """A muted line with a link to another page (or to `command`)."""
         row = self.ttk.Frame(parent)
-        row.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='w', pady=(4, 0))
-        self.ttk.Label(row, text=text, style='Muted.TLabel').pack(side='left')
+        row.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='we', pady=(4, 0))
+        words = self.ttk.Label(row, text=text, style='Muted.TLabel', justify='left')
+        words.pack(side='left')
         label = self.tk.Label(row, text=(link or _('Open')) + '  ›', bg=PANEL, fg=GOLD, cursor='hand2',
                               font=(theme.BODY_MEDIUM, 9))
         label.pack(side='left', padx=(8, 0))
         label.bind('<Button-1>', lambda _e: command() if command else self.show(page))
+        # The text wraps where the link would no longer fit beside it: a long translation (Russian) cut it off.
+        row.bind('<Configure>', lambda e: words.configure(
+            wraplength=max(self.px(120), e.width - label.winfo_reqwidth() - 8 - self.px(8))))
         return label
 
     def build_game(self):
@@ -2935,14 +2954,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.folder(f, 'dlc_dir', _('DLC folder'), _('Choose the DLC folder'),
                     _('Your add-ons, one folder each named like SPEXPANSIONDLC03 (The Old Hunters). Only '
                       'needed with the base game alone; the Game of the Year edition (CUSA03173) has it.'))
-        dlc = self.tk.Label(f, text='', bg=PANEL, font=(theme.BODY, 9), justify='left', anchor='w')
-        dlc.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 2))
+        dlc = self.wrap_within(self.tk.Label(f, text='', bg=PANEL, font=(theme.BODY, 9), justify='left', anchor='w'),
+                               560)
+        dlc.grid(row=self.next_row(f), column=1, sticky='we', pady=(4, 2))
 
         def dlc_shown(*_a):
             kind, text = dlc_status(self.var('game_dir', 'app').get(), self.var('dlc_dir', 'app').get().strip(),
                                     self.var('user_dir', 'app').get() or DATA_DIR / 'user')
             mark = {'ok': '✓', 'warn': '!', 'none': '–'}[kind]
-            dlc.configure(text=f'{mark}  {text}', wraplength=self.px(560),
+            dlc.configure(text=f'{mark}  {text}',
                           fg={'ok': theme.GOLD_LIGHT, 'warn': theme.AMBER, 'none': MUTED}[kind])
         for key in ('game_dir', 'dlc_dir', 'user_dir'):
             self.var(key, 'app').trace_add('write', lambda *_a: self.root.after_idle(dlc_shown))
@@ -3198,7 +3218,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         show_accounts()
         thd_token.trace_add('write', lambda *_a: show_accounts())  # also forgotten after a refusal
         self.row(f, _('Account'), account, key='thd_online_id')
-        signing = ttk.Label(f, text='', style='Muted.TLabel', justify='left', wraplength=self.px(560))
+        signing = self.wrap_within(ttk.Label(f, text='', style='Muted.TLabel', justify='left', anchor='w'), 560)
         # The code to type on the website, large, with a button that copies it.
         code_box = ttk.Frame(f)
         code_label = ttk.Label(code_box, text='', style='Code.TLabel')
@@ -3236,7 +3256,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                            show_code(), show_accounts(), self.collect()))
             threading.Thread(target=work, daemon=True).start()
         self.row(f, '', ttk.Button(f, text=_('Sign in with Discord'), command=sign_in))
-        signing.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
+        signing.grid(row=self.next_row(f), column=1, sticky='we', pady=(6, 0))
         code_box.grid(row=self.next_row(f), column=1, sticky='w', pady=(4, 0))
         self.check(f, 'bridge_live_map', 'app', _('Show me on the live map'),
                    _("thehuntersdream.com/map shows where players are and which bells ring: the game sends "
@@ -3276,7 +3296,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             npid_var.set('')
             password_var.set('')
             self.collect()
-        discord_line = ttk.Label(f, text='', style='Muted.TLabel', justify='left', wraplength=self.px(560))
+        discord_line = self.wrap_within(ttk.Label(f, text='', style='Muted.TLabel', justify='left', anchor='w'), 560)
 
         def sign_in_discord():
             discord_line.configure(text=_('Starting the sign-in…'))
@@ -3302,9 +3322,9 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         ttk.Button(buttons, text=_('Sign out'), command=sign_out).pack(side='left', padx=(14, 0))
         self.row(f, '', buttons, _('Discord makes your SuperMedo account the first time, named after your '
                                     'Discord name; nothing to remember. Sign in again on any PC.'))
-        discord_line.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
+        discord_line.grid(row=self.next_row(f), column=1, sticky='we', pady=(6, 0))
         self.section(f, _('New SuperMedo account'))
-        sign_up = ttk.Label(f, text='', style='Muted.TLabel', justify='left', wraplength=self.px(560))
+        sign_up = self.wrap_within(ttk.Label(f, text='', style='Muted.TLabel', justify='left', anchor='w'), 560)
         new_npid, new_password, email = (self.tk.StringVar(value='') for _n in range(3))
 
         def create_account():
@@ -3335,7 +3355,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.row(f, _('Email address'), ttk.Entry(f, textvariable=email, width=40),
                  _('Only to make the account.'), key='supermedo_npid')
         self.row(f, '', ttk.Button(f, text=_('Create account'), command=create_account))
-        sign_up.grid(row=self.next_row(f), column=1, sticky='w', pady=(6, 0))
+        sign_up.grid(row=self.next_row(f), column=1, sticky='we', pady=(6, 0))
         group('supermedo')
         self.section(f, _('Game server (messages, bloodstains, ghosts)'))
         community = self.var('online_community', 'app')
@@ -3585,8 +3605,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         middle.pack(side='left', fill='x', expand=True, pady=10)
         tk.Label(middle, text=_(name), bg=CARD, fg=TEXT if earned else MUTED,
                  font=(theme.BODY, 11, 'bold' if earned else 'normal')).pack(anchor='w')
-        tk.Label(middle, text=_(text), bg=CARD, fg=MUTED, font=(theme.BODY, 9), justify='left',
-                 wraplength=self.px(520)).pack(anchor='w', pady=(1, 0))
+        self.wrap_within(tk.Label(middle, text=_(text), bg=CARD, fg=MUTED, font=(theme.BODY, 9), justify='left',
+                                  anchor='w'), 520).pack(fill='x', pady=(1, 0))
 
     def set_trophy_filter(self, name):
         self.trophy_filter = name
@@ -4427,12 +4447,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def version_warning(self, parent):
         """A banner shown while the selected game is not version 1.09 (refresh_status)."""
-        label = self.ttk.Label(parent, style='Warning.TLabel', wraplength=self.px(640), justify='left', text=_(
+        label = self.ttk.Label(parent, style='Warning.TLabel', justify='left', anchor='w', text=_(
             'Your game is version {}: these options are patches for 1.09 and are not applied; the game runs '
             'at 30 FPS. Update the game to 1.09 to use them.',
             'Ваша игра версии {}: эти параметры — патчи для 1.09 и не применяются; игра работает в 30 FPS. '
             'Обновите игру до 1.09, чтобы их использовать.'))
-        label.grid(row=self.next_row(parent), column=0, columnspan=2, sticky='we', pady=(6, 4))
+        self.wrap_within(label, 640).grid(row=self.next_row(parent), column=0, columnspan=2, sticky='we', pady=(6, 4))
         label.template = label.cget('text')
         self.warnings = getattr(self, 'warnings', []) + [label]
 
@@ -4831,8 +4851,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         old = {n: v.get() for n, v in self.mod_vars.items()}
         self.mod_vars = {}
         if not available:
-            ttk.Label(self.mods_frame, text=_('No mods in {} yet.', 'В {} пока нет модов.').format(root),
-                      style='Muted.TLabel').pack(anchor='w')
+            self.wrap_within(ttk.Label(self.mods_frame, text=_('No mods in {} yet.', 'В {} пока нет модов.').format(
+                root), style='Muted.TLabel', justify='left', anchor='w'), 620).pack(fill='x')
         self.mod_rows = []
         for index, name in enumerate(self.mod_order):
             var = tk.BooleanVar(value=old.get(name, name not in profile.get('disabled', [])))
@@ -4844,8 +4864,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                       style='Muted.TLabel').pack(anchor='w', pady=(6, 0))
         # Folders that are not mods are named, with why, instead of left out silently.
         for name, problem in unrecognized(root):
-            ttk.Label(self.mods_frame, text=_('Not loaded: {}: {}', 'Не загружен: {}: {}').format(name, problem),
-                      style='Muted.TLabel', wraplength=self.px(620), justify='left').pack(anchor='w', pady=(4, 0))
+            self.wrap_within(ttk.Label(self.mods_frame, text=_('Not loaded: {}: {}', 'Не загружен: {}: {}').format(
+                name, problem), style='Muted.TLabel', justify='left', anchor='w'), 620).pack(fill='x', pady=(4, 0))
         chosen = load_json(DATA_DIR / 'patches.json', {})
         found = external_patches(Path(self.var('patches_dir', 'app').get() or DATA_DIR / 'patches'), PATCH_VERSION)
         old = {n: v.get() for n, v in self.patch_vars.items()}
@@ -4884,8 +4904,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if name.casefold() == 'dvdroot_ps4':  # a mod extracted bare into the mods folder
             hints.append(tk.Label(row, text=_('Put this in a folder of its own (e.g. mods\\<mod name>\\dvdroot_ps4)',
                                               'Положите его в отдельную папку (например, mods\\<имя мода>\\dvdroot_ps4)'),
-                                  bg=CARD, fg=MUTED, font=(theme.BODY, 9), anchor='w', justify='left',
-                                  wraplength=px(520)))
+                                  bg=CARD, fg=MUTED, font=(theme.BODY, 9), anchor='w', justify='left'))
+            self.wrap_within(hints[0], 520)
             hints[0].pack(side='bottom', fill='x', padx=(px(4), px(10)), pady=(0, px(6)))
         label = tk.Label(row, text=name, bg=CARD, fg=TEXT, font=(theme.BODY, 10), anchor='w', cursor='hand2')
         label.pack(side='left', fill='x', expand=True, padx=(px(4), px(10)))
