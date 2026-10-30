@@ -2645,21 +2645,26 @@ class SetupGuide:
                     button.configure(text=_('Sign in again') if signed else _('Sign in with Discord'),
                                      style='Card.TButton' if signed else 'Card.Accent.TButton')
 
+            def say(text, color):
+                # The answer may come after the guide closed or moved to another step: its line is gone then.
+                if status.winfo_exists():
+                    status.configure(text=text, fg=color)
+
             def sign_in_supermedo():
-                status.configure(text=_('Starting the sign-in…'), fg=theme.MUTED)
+                say(_('Starting the sign-in…'), theme.MUTED)
 
                 def on_page(page):
                     import webbrowser
                     webbrowser.open(page)
-                    app.ui_calls.put(lambda: status.configure(
-                        text=_('Sign in with Discord in the page that opened, then come back here.'), fg=theme.TEXT))
+                    app.ui_calls.put(lambda: say(
+                        _('Sign in with Discord in the page that opened, then come back here.'), theme.TEXT))
 
                 def work():
                     try:
                         name, secret = L.discord_sign_in(L.COMMUNITY_SERVER, on_page)
-                    except (OSError, ValueError, KeyError) as error:
-                        app.ui_calls.put(lambda e=error: status.configure(
-                            text=_('Sign-in failed: {}').format(e), fg=theme.BLOOD_LIGHT))
+                    except Exception as error:  # a broken reply too (BadStatusLine): the line always answers
+                        app.ui_calls.put(lambda e=L.connection_error(error, L.COMMUNITY_SERVER): say(
+                            _('Sign-in failed: {}').format(e), theme.BLOOD_LIGHT))
                         return
                     app.ui_calls.put(lambda: (npid.set(name), password.set(secret), show_supermedo(), app.collect()))
                 import threading
@@ -2681,30 +2686,41 @@ class SetupGuide:
 
             def show():
                 if status.winfo_exists():
+                    code.pack_forget()  # a sign-in's code, done with
                     status.configure(text=_('Signed in as {}').format(thd_id.get()) if thd_token.get() else
                                      _('Not signed in yet'), fg=theme.GOLD_LIGHT if thd_token.get() else theme.AMBER)
                     button.configure(text=_('Sign in again') if thd_token.get() else _('Sign in with Discord'),
                                      style='Card.TButton' if thd_token.get() else 'Card.Accent.TButton')
 
+            def say(text, color, shown_code=None):
+                # The answer may come after the guide closed or moved to another step: its widgets are gone then
+                # (code.pack_forget() on a gone one raised before the sign-in was saved).
+                if not status.winfo_exists():
+                    return
+                status.configure(text=text, fg=color)
+                if shown_code:
+                    code.configure(text=shown_code)
+                    code.pack(anchor='w', pady=(px(4), 0), before=row)
+                else:
+                    code.pack_forget()
+
             def sign_in():
-                status.configure(text=_('Starting the sign-in…'), fg=theme.MUTED)
+                say(_('Starting the sign-in…'), theme.MUTED)
 
                 def on_code(page, text):
-                    app.ui_calls.put(lambda: (status.configure(
-                        text=_('In the page that opened, sign in with Discord and enter this code:'), fg=theme.TEXT),
-                        code.configure(text=text), code.pack(anchor='w', pady=(px(4), 0), before=row)))
+                    app.ui_calls.put(lambda: say(
+                        _('In the page that opened, sign in with Discord and enter this code:'), theme.TEXT, text))
                     import webbrowser
                     webbrowser.open(page)
 
                 def work():
                     try:
                         name, token = L.thd_sign_in(on_code)
-                    except (OSError, ValueError) as error:
-                        app.ui_calls.put(lambda e=error: status.configure(
-                            text=_('Sign-in failed: {}').format(e), fg=theme.BLOOD_LIGHT))
+                    except Exception as error:  # a broken reply too (BadStatusLine): the line always answers
+                        app.ui_calls.put(lambda e=L.connection_error(error, L.COMMUNITY_SERVER): say(
+                            _('Sign-in failed: {}').format(e), theme.BLOOD_LIGHT))
                         return
-                    app.ui_calls.put(lambda: (thd_id.set(name), thd_token.set(token), code.pack_forget(), show(),
-                                              app.collect()))
+                    app.ui_calls.put(lambda: (thd_id.set(name), thd_token.set(token), show(), app.collect()))
                 import threading
                 threading.Thread(target=work, daemon=True).start()
             button = ttk.Button(row, text=_('Sign in with Discord'), style='Card.Accent.TButton', command=sign_in)
