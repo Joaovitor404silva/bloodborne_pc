@@ -26,21 +26,26 @@ class ReadinessTests(unittest.TestCase):
             self.assertEqual(len(texts),len(family.KEYS))
 
     def test_automatic_recommendations_use_the_same_verified_route_order(self):
+        """An FSR 4 recommendation becomes the first supported FSR 4.1 method; any other stays (R84: fsr4vk also
+        runs on a GeForce RTX, whose recommendation is DLSS)."""
         import bbport_setup as setup
         ui=types.SimpleNamespace(rating=object(), app={}, display_size=lambda:(1920,1080),
             current_settings=lambda:{}, var=lambda *_:types.SimpleNamespace(get=lambda:'balanced'),
-            fsr411_support=None)
-        for mask in range(16):
-            states=[dict(supported=bool(mask&(1<<i))) for i in range(4)]
-            with patch.object(setup.hardware,'outputs',return_value={'1080p':'1920x1080'}), \
-                 patch.object(setup.hardware,'recommended_class',return_value='1080p'), \
-                 patch.object(setup.hardware,'profile',return_value=[('ini','upscaler','fsr3','quality')]), \
-                 patch.object(family,'method_statuses',return_value=states):
-                _res,_output,entries=setup.SetupMixin.recommended(ui)
-            values={key:value for _store,key,value,_why in entries}
-            selected=next((i for i in range(4) if states[i]['supported']),None)
-            if selected is None:self.assertEqual(values['upscaler'],'fsr3')
-            else:self.assertEqual((values['upscaler'],values['fsr411_backend']),family.ROUTES[selected][:2])
+            fsr411_support=None, set_by_hand=lambda *_a, **_k: False)
+        for upscaler in ('fsr4', 'fsr3', 'dlss', 'off'):
+            for mask in range(16):
+                states=[dict(supported=bool(mask&(1<<i))) for i in range(4)]
+                with patch.object(setup.hardware,'outputs',return_value={'1080p':'1920x1080'}), \
+                     patch.object(setup.hardware,'recommended_class',return_value='1080p'), \
+                     patch.object(setup.hardware,'profile',return_value=[('ini','upscaler',upscaler,'quality')]), \
+                     patch.object(family,'method_statuses',return_value=states):
+                    _res,_output,entries=setup.SetupMixin.recommended(ui)
+                values={key:value for _store,key,value,_why in entries}
+                selected=next((i for i in range(4) if states[i]['supported']),None)
+                if selected is None or upscaler != 'fsr4':
+                    self.assertEqual(values['upscaler'],upscaler)
+                    self.assertNotIn('fsr411_backend',values)
+                else:self.assertEqual((values['upscaler'],values['fsr411_backend']),family.ROUTES[selected][:2])
 
     def test_ranked_routes_and_remembered_selection_over_all_masks(self):
         for mask in range(16):
@@ -71,6 +76,23 @@ class ReadinessTests(unittest.TestCase):
                 values,_=launcher.load_ini()
                 self.assertEqual((values['upscaler'],values['fsr411_backend']),('fsr412','vk'))
                 self.assertEqual(path.read_bytes(),before)
+
+    def test_a_new_ini_on_an_fsr_4_method_has_sharpening_off(self):
+        """R81: the FSR 4.1 method the launcher picks for a new bbport.ini sharpens by itself."""
+        with tempfile.TemporaryDirectory() as temp, \
+             patch.object(launcher, 'ini_path', return_value=Path(temp)/'bbport.ini'), \
+             patch.object(family, 'query', return_value={}), \
+             patch.object(launcher.bbport_fsr411, 'default_backend', return_value='vk'):
+            path = Path(temp)/'bbport.ini'
+            with patch.object(family, 'method_statuses', return_value=[dict(supported=True)]+[dict(supported=False)]*3):
+                values, _ = launcher.load_ini()
+                self.assertEqual((values['upscaler'], values['sharpen']), ('fsr412', '0'))
+                path.write_text('sharpen=1\n', encoding='utf-8')  # the player's own
+                self.assertEqual(launcher.load_ini()[0]['sharpen'], '1')
+            path.unlink()
+            with patch.object(family, 'method_statuses', return_value=[dict(supported=False)]*4):
+                values, _ = launcher.load_ini()
+                self.assertEqual((values['upscaler'], values['sharpen']), ('fsr3', '1'))
 
     def test_runtime_environment_shared_initialization_and_overrides(self):
         with patch.object(runtime,'discover',return_value={'vulkan':'new-vk.dll','dx12':'new-dx.dll'}):

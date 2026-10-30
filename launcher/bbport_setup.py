@@ -193,7 +193,12 @@ class SetupMixin:
         return out
 
     def recommended(self, res=None):
-        """(resolution class, output, [(store, key, value, why)]) for this PC, or None before the rating."""
+        """(resolution class, output, [(store, key, value, why)]) for this PC, or None before the rating.
+
+        FSR 4 becomes the best FSR 4.1 method this PC supports. Only FSR 4: fsr4vk runs on a GeForce RTX
+        and a Radeon RX 6000 as well, and put in for every upscaler it took the place of DLSS (a new RTX card
+        stayed on FSR after its goal was chosen, R84), of FSR 3.1 on slower cards and of "off" on Intel
+        graphics. Sharpening the player switched on again by hand stays (FSR 4's entry for it is left out)."""
         if not self.rating:
             return None
         available = hardware.outputs(*self.display_size())
@@ -201,15 +206,18 @@ class SetupMixin:
         output = available.get(res, '1920x1080')
         entries = hardware.profile(self.rating, res, output, self.current_settings(),
                                    self.var('goal', 'app').get())
-        capabilities = getattr(self, 'fsr411_support', None)
-        states = L.bbport_fsr41.method_statuses(L.PORT_DIR, L.DATA_DIR, capabilities,
-            L.fetch_fsr4vk, L.bbport_fsr411.environment(L.PORT_DIR, self.app))
-        route = L.bbport_fsr41.preferred_route(states)
-        if route is not None:
-            version, backend, title, _role = L.bbport_fsr41.ROUTES[route]
-            entries = [(store, key, version if key == 'upscaler' else value, why)
-                       for store, key, value, why in entries]
-            entries.append(('ini', 'fsr411_backend', backend, _('FSR 4.1 Settings') + ': ' + title))
+        if ('ini', 'upscaler', 'fsr4') in [entry[:3] for entry in entries]:
+            capabilities = getattr(self, 'fsr411_support', None)
+            states = L.bbport_fsr41.method_statuses(L.PORT_DIR, L.DATA_DIR, capabilities,
+                L.fetch_fsr4vk, L.bbport_fsr411.environment(L.PORT_DIR, self.app))
+            route = L.bbport_fsr41.preferred_route(states)
+            if route is not None:
+                version, backend, title, _role = L.bbport_fsr41.ROUTES[route]
+                entries = [(store, key, version if key == 'upscaler' else value, why)
+                           for store, key, value, why in entries]
+                entries.append(('ini', 'fsr411_backend', backend, _('FSR 4.1 Settings') + ': ' + title))
+        if self.set_by_hand('sharpen'):
+            entries = [entry for entry in entries if entry[1] != 'sharpen']
         return res, output, entries
 
     def differences(self):
@@ -225,11 +233,19 @@ class SetupMixin:
         if remember_undo:
             now = self.current_settings()
             self.app['auto_undo'] = {key: now.get(key) for _s, key, _v, _w in entries}
+        before = self.app.get('auto_applied') or {}
         self.apply_settings({(store, key): value for store, key, value, _why in entries})
         # The settings as the profile left them: one that differs at a later start was changed by
         # hand (here or in the game's menu, which writes bbport.ini), and automatic settings keep it.
-        self.app['auto_applied'] = self.current_settings()
+        # One of the player's own the profile left alone (sharpening switched on again with FSR 4,
+        # left out by recommended) keeps its earlier record: else the next goal took it for automatic.
+        applied, touched = self.current_settings(), {key for _store, key, _value, _why in entries}
+        for key, value in before.items():
+            if key in applied and key not in touched and not same_setting(applied[key], value):
+                applied[key] = value
+        self.app['auto_applied'] = applied
         self.remember_hardware(hardware.signature(self.gpu_line, self.cpu, self.ram))
+        self.app['auto_applied_hw'] = self.app.get('auto_hw', '')  # what they were made for (set_by_hand)
         for view in list(self.rating_views):
             try:
                 view()
@@ -269,6 +285,29 @@ class SetupMixin:
         applied, now = self.app.get('auto_applied') or {}, self.current_settings()
         return [key for _store, key, _value, _why in entries
                 if key not in applied or not same_setting(now.get(key), applied[key])]
+
+    def set_by_hand(self, key, this_card=False):
+        """Whether the player changed a setting (in the launcher or in the game's menu) since a profile was last
+        applied; not when nothing says what was applied. With this_card only a change made for the graphics card
+        of now: a profile applied for another card (an AMD iGPU before the GeForce's driver was installed) makes
+        an upscaler chosen then no choice for this one, where DLSS may run."""
+        applied = self.app.get('auto_applied') or {}
+        if key not in applied:
+            return False
+        made_for, now = (hardware.signature_parts(self.app.get(name, '')) for name in ('auto_applied_hw', 'auto_hw'))
+        if this_card and made_for and now and not hardware.same_card(made_for[:2], now[:2]):
+            return False
+        return not same_setting(self.current_settings().get(key), applied[key])
+
+    def goal_entries(self, entries):
+        """A profile as a goal applies it. The goal is about frame rate and detail: an upscaler the player chose by
+        hand for this card since the last automatic choice stays, and sharpening goes off only with an FSR 4
+        upscaler. A new card's upscaler follows its recommendation (R84: DLSS on a GeForce RTX)."""
+        if not self.set_by_hand('upscaler', this_card=True):
+            return entries
+        kept = self.var('upscaler', 'ini').get()
+        return [entry for entry in entries if entry[1] not in ('upscaler', 'fsr411_backend')
+                and not (entry[1] == 'sharpen' and kept not in hardware.FSR4_FAMILY)]
 
     def auto_settings(self):
         """At start, once the PC is rated: new hardware with automatic settings on → the settings for
@@ -357,8 +396,9 @@ class SetupMixin:
                      font=(theme.BODY_MEDIUM, 9)).pack(side='left', padx=(px(14), 0), pady=(px(3), 0))
             tk.Label(body, text=_('Derived from the requirements and the hardware check on bbport.de for your PC at '
                                   '{} ({}). Chromatic aberration, depth of field, motion blur and sharpening are '
-                                  'taste and stay as you set them.').format(output.replace('x', ' × '),
-                                                                  _(hardware.LEVELS[self.rating.levels[res]])),
+                                  'taste and stay as you set them; only with FSR 4, which sharpens by itself, '
+                                  'sharpening goes off.').format(output.replace('x', ' × '),
+                                                                 _(hardware.LEVELS[self.rating.levels[res]])),
                      bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9), justify='left',
                      wraplength=px(700)).pack(anchor='w', pady=(px(4), px(8)))
             grid = tk.Frame(body, bg=theme.CARD)

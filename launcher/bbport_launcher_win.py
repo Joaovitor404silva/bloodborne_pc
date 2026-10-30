@@ -246,6 +246,7 @@ import bbport_lang_vram  # noqa: E402,F401 (the video memory warning's switch)
 import bbport_lang_latency  # noqa: E402,F401 (the low latency options)
 import bbport_lang_gpu  # noqa: E402,F401 (a graphics card Windows has and Vulkan does not see)
 import bbport_lang_ready  # noqa: E402,F401 (the start's other prerequisites: runtime, folders, firewall)
+import bbport_lang_audit8  # noqa: E402,F401 (sharpening with FSR 4, achievements from another installation)
 import bbport_lang_news  # noqa: E402,F401 (the What's new window)
 import bbport_lang_readouts  # noqa: E402,F401 (the FPS counter's lines)
 # Last of the texts: it builds bbport_lang's tables (table()) to add its own, so a module registering
@@ -393,9 +394,12 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'setup_done': False, 'gpu_override': '',
                 # Graphics settings made for the hardware (bbport_setup.auto_settings): on/off, the
                 # hardware they were made for, and what they replaced (Undo); the settings right
-                # after they were applied (a later difference is the player's own) and the graphics
-                # cards this PC has shown (a laptop's two are no new hardware when they take turns).
-                'auto_graphics': True, 'auto_hw': '', 'auto_undo': {}, 'auto_applied': {}, 'auto_gpus': [],
+                # after they were applied (a later difference is the player's own) and the hardware
+                # they were applied for (an upscaler chosen for another card is no choice for a new
+                # one); the graphics cards this PC has shown (a laptop's two are no new hardware when
+                # they take turns).
+                'auto_graphics': True, 'auto_hw': '', 'auto_undo': {}, 'auto_applied': {}, 'auto_applied_hw': '',
+                'auto_gpus': [],
                 'bench_goal': '60',  # the performance test's frame rate goal
                 'eboot_check': {},
                 # The launcher's view: simple (the pages a player needs) or expert (every page); empty
@@ -675,6 +679,8 @@ def load_ini(legacy_settings=None):
             backend=values['fsr411_backend'] if 'fsr411_backend' in present else None)
         if choice is not None:
             values['upscaler'], values['fsr411_backend'] = bbport_fsr41.ROUTES[choice][:2]
+            if 'sharpen' not in present:  # FSR 4 sharpens by itself (hardware.SHARPEN_WITH_FSR4)
+                values['sharpen'] = '0'
     if 'fsr411_backend' not in present:
         if 'upscaler' in present and values['upscaler'] in ('fsr411', 'fsr412'):
             env = bbport_fsr411.environment(PORT_DIR, legacy_settings or {})
@@ -2525,11 +2531,11 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
     def set_goal(self, goal):
         """The player chose a goal: the settings for this PC and that goal, at once (Undo on
-        Picture & performance)."""
+        Picture & performance); an upscaler chosen by hand for this card stays (goal_entries)."""
         self.var('goal', 'app').set(goal)
         chosen = self.recommended()
         if chosen:
-            self.apply_profile(chosen[2])
+            self.apply_profile(self.goal_entries(chosen[2]))
         self.show_goal()
         self.refresh_status()
 
@@ -2634,7 +2640,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'game restarts it). On: change output and preset in the game without a restart, at a cost.',
                    'Выкл.: разрешения кроме 1080p задаются патчем при запуске (быстрее). Вкл.: менять в игре '
                    'без перезапуска, но медленнее.'))
-        self.check(f, 'sharpen', 'ini', _('Sharpening (RCAS)', 'Резкость (RCAS)'))
+        self.check(f, 'sharpen', 'ini', _('Sharpening (RCAS)', 'Резкость (RCAS)'),
+                   _('Off with FSR 4: it sharpens by itself, and sharpening on top of it brings flaws along edges.'))
         holder = ttk.Frame(f)
         ttk.Scale(holder, from_=0.0, to=2.0, variable=self.var('sharpness', 'ini'), length=300).pack(side='left')
         value = ttk.Label(holder, width=5)

@@ -669,6 +669,9 @@ def low_end(rating):
 # (laptops, noise, power).
 GOALS = ('smooth', 'balanced', 'quiet')
 GOAL_FPS = {'smooth': 120, 'balanced': 60, 'quiet': 60}  # the performance test's frame rate goal
+# The upscalers of the FSR 4 family (4.0 and the 4.1 methods): they sharpen by themselves.
+FSR4_FAMILY = ('fsr4', 'fsr411', 'fsr412')
+SHARPEN_WITH_FSR4 = 'FSR 4 sharpens by itself: sharpening on top of it brings flaws along edges.'
 
 
 def step_preset(preset, steps):
@@ -681,7 +684,8 @@ def profile(rating, res, output, current=None, goal='smooth'):
     the requirements and the website's check, for the player's goal: [(store, key, value, why)].
 
     Taste stays the player's: chromatic aberration, depth of field, motion blur and sharpening are not touched,
-    screen-space reflections (not in the original) are only switched off when the card has no room
+    except sharpening with FSR 4, which sharpens by itself (RCAS on top of it left flaws along edges with
+    FSR 4.1.2), screen-space reflections (not in the original) are only switched off when the card has no room
     for them, and frame generation (input latency) is only switched off where it cannot work well.
     `current` ({key: value}) is what is set now, for those two."""
     # level: the frame rate to expect (frame rate cap, frame generation); picture: what the card can
@@ -708,6 +712,8 @@ def profile(rating, res, output, current=None, goal='smooth'):
     else:
         add('ini', 'upscaler', upscaler, {'dlss': 'DLSS on a GeForce RTX.', 'fsr4': 'FSR 4 on a Radeon RX 7000/9000.',
                                           'fsr3': 'FSR 3.1: FSR 4 is slow below the Radeon RX 7000/9000.'}[upscaler])
+        if upscaler == 'fsr4':
+            add('ini', 'sharpen', False, SHARPEN_WITH_FSR4)
     if four_gb:
         add('ini', 'preset', '3', 'The website\'s settings for 4 GB cards: Performance.')
     elif upscaler == 'off':
