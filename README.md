@@ -19,8 +19,8 @@ https://nativeretro.com/
 ## Features
 
 - **Online play (beta):** messages, bloodstains and wandering ghosts from other hunters through
-  [The Hunter's Dream](https://thehuntersdream.com), and bells and summons through a shadNet
-  server (shadPS4's public one by default).
+  [SuperMedo Server](https://bbport.de/server/), and bells and summons through a shadNet
+  server (SupermMedos's public one by default).
 - **Launcher with every setting in one window**, in 13 languages: English, Arabic, Russian,
   Spanish, Portuguese, French, German, Italian, Polish, Turkish, Chinese, Japanese, Korean.
 - **Guided first start:** five steps check your game files (a clean 1.09 `eboot.bin`, a complete
