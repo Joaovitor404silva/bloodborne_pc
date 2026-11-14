@@ -41,6 +41,12 @@ int bbgpu_text_input_poll(char *out_utf8, uint64_t size);
 void bbgpu_text_input_cancel(void);
 /* 1 while the in-game settings menu is open: the game's pad input is held neutral. */
 int bbgpu_overlay_captures_input(void);
+/* AgentLink (gpu/shim/bbport_agent.cpp, docs/AGENT_HOST.md): the GPU thread publishes the main
+ * camera once per frame; the pad code takes the agent's command (AGL_B_* buttons, sticks -1..1)
+ * while it is fresh. Returns 0 when there is none. */
+void bbgpu_agent_camera(const float *view, const float *inv_view, const float *proj,
+                        uint32_t render_w, uint32_t render_h);
+int bbgpu_agent_command(uint32_t *buttons, float stick[4]);
 /* PC Settings in the game's System menu (gpu/shim/bbport_pc_menu.cpp, scripts/pc_menu.py): the
  * game image, then its System menu's request for the line ("bb:o"); `list` points at the menu's
  * line list, which the call may replace. */

@@ -1250,6 +1250,7 @@ from bbport_lang_exit import TRANSLATIONS as EXIT_TRANSLATIONS  # noqa: E402
 from bbport_lang_window import TRANSLATIONS as WINDOW_TRANSLATIONS  # noqa: E402
 from bbport_lang_relay import TRANSLATIONS as RELAY_TRANSLATIONS  # noqa: E402
 from bbport_lang_lod import TRANSLATIONS as LOD_TRANSLATIONS  # noqa: E402
+from bbport_lang_rt import TRANSLATIONS as RT_TRANSLATIONS  # noqa: E402
 
 EXTRA_TRANSLATIONS = {
     'zh': {
@@ -1301,4 +1302,5 @@ def table(language):
         _tables[language].update(WINDOW_TRANSLATIONS.get(language, {}))
         _tables[language].update(RELAY_TRANSLATIONS.get(language, {}))
         _tables[language].update(LOD_TRANSLATIONS.get(language, {}))
+        _tables[language].update(RT_TRANSLATIONS.get(language, {}))
     return _tables[language]

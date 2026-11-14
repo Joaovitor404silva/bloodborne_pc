@@ -9,6 +9,7 @@
 #include "common/assert.h"
 #include "common/logging/log.h"
 #include "sdl_window.h"
+#include "video_core/renderer_vulkan/rt/rt_toggle.h"
 #include "bbport_mouse.h"
 #include "bbport_overlay.h"
 #include "bbport_prompts.h"
@@ -278,6 +279,13 @@ bool WindowSDL::PollEvents() {
                 reload_requested.store(true, std::memory_order_relaxed);
                 continue;
             }
+            if (scancode == SDL_SCANCODE_F9) {
+                static const bool recording = std::getenv("BB_PAD_RECORD") != nullptr;
+                if (!recording) {
+                    Vulkan::Rt::ToggleEffects();
+                }
+                continue;
+            }
         }
         if (event.type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
             window_focused = true;
@@ -398,8 +406,15 @@ bool WindowSDL::PollEvents() {
     return is_open;
 }
 
+extern "C" int bbgpu_agent_wants_camera_hook(void);
+
 void WindowSDL::UpdateMouseCamera() {
     Core::BloodborneCam& cam = Core::BloodborneCam::Instance();
+    static bool probe_tried = false; // AgentLink: one attempt once the game draws a camera
+    if (!probe_tried && bbgpu_agent_wants_camera_hook()) {
+        probe_tried = true;
+        cam.SetProbe(true);
+    }
     const bool wanted = cam.IsConfigured() && mouse_mode_available.load(std::memory_order_relaxed) &&
                         mouse_mode_on.load(std::memory_order_relaxed);
     if (!wanted) {

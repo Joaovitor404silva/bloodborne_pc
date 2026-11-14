@@ -66,6 +66,10 @@ static int live_resolution_suits(VkPhysicalDevice device) {
     fprintf(stderr, "GPU: %s, %s, %llu MiB: live resolution changes %s\n", props.deviceName,
             discrete ? "discrete" : "integrated or other", (unsigned long long)(memory >> 20),
             suits ? "on" : "off (startup resolution patch)");
+    fprintf(stderr, "GPU ray tracing: ray query %s, opacity micromaps %s, cluster acceleration structures %s\n",
+            has_extension(device, "VK_KHR_ray_query") ? "yes" : "no",
+            has_extension(device, "VK_EXT_opacity_micromap") ? "yes" : "no",
+            has_extension(device, "VK_NV_cluster_acceleration_structure") ? "yes" : "no");
     return suits;
 }
 

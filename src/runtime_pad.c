@@ -892,6 +892,22 @@ static void touch_ids(PadData *d) {
     d->touch_held_time=d->touch_count ? (uint32_t)(d->timestamp-since) : 0;
 }
 void bbgpu_input_note_read(void); /* gpu/shim/bbgpu.cpp: input freshness log */
+/* AgentLink (docs/AGENT_HOST.md): agentd's fresh command, AGL_B_* bits in DualShock order. */
+static void agent_merge(PadData *d) {
+    static const uint32_t ps[16]={BTN_CROSS,BTN_CIRCLE,BTN_SQUARE,BTN_TRIANGLE,BTN_L1,BTN_R1,BTN_L2,BTN_R2,
+                                  BTN_L3,BTN_R3,BTN_OPTIONS,BTN_TOUCHPAD,BTN_UP,BTN_DOWN,BTN_LEFT,BTN_RIGHT};
+    uint32_t b; float s[4];
+    if (!bbgpu_agent_command(&b,s)) return;
+    for (int i=0;i<16;++i) if (b&(1u<<i)) d->buttons|=ps[i];
+    if (b&(1u<<6)) d->l2=255;
+    if (b&(1u<<7)) d->r2=255;
+    uint8_t *axes[4]={&d->left_x,&d->left_y,&d->right_x,&d->right_y};
+    for (int i=0;i<4;++i) {
+        if (s[i]==0.0f) continue; /* 0 leaves the player's own stick */
+        float v=128.0f+s[i]*127.5f;
+        *axes[i]=(uint8_t)(v<0 ? 0 : v>255 ? 255 : v);
+    }
+}
 static void sample(PadData *d) {
     bbgpu_input_note_read();
     reload_config_if_requested();
@@ -907,6 +923,7 @@ static void sample(PadData *d) {
     if (injected.buttons & BTN_R2) d->r2=255;
     uint8_t *axes[4]={&d->left_x,&d->left_y,&d->right_x,&d->right_y};
     for (int i=0;i<4;++i) if (injected.stick[i]>=0) *axes[i]=(uint8_t)injected.stick[i];
+    agent_merge(d);
     touch_ids(d);
     if (hold_after_capture) {
         if (d->buttons) d->buttons=0;

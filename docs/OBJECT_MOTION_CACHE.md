@@ -26,6 +26,11 @@ The [recorded sewer comparison](FSR411_WINDOWS.md#cache-only-ab-in-the-sewer-sep
 measures the original cache benefit. LRU/retirement improves replacement handling;
 it does not establish another steady-scene FPS gain.
 
+Some scenes alternate full- and half-resolution object-motion targets within a
+frame. The tested sewer view alternated 2560x1440 and 1280x720. The
+single-target path reallocates on each size change. It used to finish the GPU
+first (about half the frame rate in the sewer); since 2026-11-07 it frees the
+old target once the GPU has passed it, and runs as fast as the cache there.
 For direct engine launches, `BB_OBJECT_MOTION_CACHE=1` enables reuse. Unset, `0`
 and other values select the single-target path. The startup log confirms
 `Object motion: target cache on` or `off`; launcher-managed starts derive the

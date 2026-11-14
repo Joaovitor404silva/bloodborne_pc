@@ -17,6 +17,10 @@
 #include "video_core/renderer_vulkan/vk_shader_util.h"
 #include "video_core/texture_cache/texture_cache.h"
 
+// AgentLink (gpu/shim/bbport_agent.cpp): the main camera of each frame for agentd.
+extern "C" void bbgpu_agent_camera(const float* view, const float* inv_view, const float* proj,
+                                   uint32_t render_w, uint32_t render_h);
+
 namespace Vulkan {
 
 namespace {
@@ -313,6 +317,10 @@ void CameraMotion::OnConstants(const float* data) {
     current.proj = {data[52], data[57], data[62], data[63]};
     current.valid = current.proj[0] != 0.0f && current.proj[1] != 0.0f;
     const std::array<u32, 2> size{u32(data[4]), u32(data[5])};
+    if (current.valid) {
+        bbgpu_agent_camera(current.view.data(), current.inv_view.data(), current.proj.data(),
+                           size[0], size[1]);
+    }
     if (size != render_size) {
         std::printf("Camera motion: scene render size %ux%u\n", size[0], size[1]);
         render_size = size;

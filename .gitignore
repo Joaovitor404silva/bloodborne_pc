@@ -28,7 +28,8 @@ patches.json
 !launcher/bloodborne.png
 !launcher/assets/*.png
 # IDE/session-local
-.claude/
+.claude/*
+!.claude/skills/
 .vscode/
 benchmarks/
 

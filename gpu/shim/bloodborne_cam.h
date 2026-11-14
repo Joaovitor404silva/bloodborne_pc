@@ -44,6 +44,10 @@ public:
     /// without it, which left the flag at its last value and mouse motion went nowhere.
     [[nodiscard]] bool IsLockedOn() const noexcept;
 
+    /// Window thread: keeps the camera update hooked without direct mode (AgentLink reads the
+    /// camera's pivot through it; docs/AGENT_HOST.md). Returns whether the hook is in place.
+    bool SetProbe(bool on);
+
     /// Mouse sampler thread: gathers relative motion for the next camera update.
     void OnMouseMotion(float xrel, float yrel);
     /// The game's thread, from the camera hook: turns `camera` by the gathered motion.
@@ -59,7 +63,12 @@ private:
     BloodborneCam& operator=(const BloodborneCam&) = delete;
 
     bool InitializeAddresses();
+    bool InstallJump();
+    void RemoveJump();
     void TurnDrawnPosition(uintptr_t camera, float turnPitch, float turnYaw);
+
+    bool m_jumpInstalled = false; ///< window thread only
+    bool m_probe = false;         ///< window thread only
 
     std::atomic<bool> m_enabled{false};
     std::atomic<bool> m_configured{false};

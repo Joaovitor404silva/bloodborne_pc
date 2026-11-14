@@ -47,6 +47,17 @@ VERSION = '1.9.8.6'
 # offered as its update.
 BETA = 0
 VERSION_TEXT = f'{VERSION} beta {BETA}' if BETA else VERSION
+# Path tracing fork (github.com/Joaovitor404silva/bloodborne-pc-path-tracing) of SuperMedo's port: its release
+# tags are windows-v<VERSION>-<RT_VERSION>, and updates come from that repository, so an update never puts back
+# an engine without path tracing.
+RT_VERSION = 'pt2.3'
+RT_REPO = 'Joaovitor404silva/bloodborne-pc-path-tracing'
+# Path tracing on by default (the variables the pt2 installer wrote into Extra variables); Extra variables
+# still override each one, e.g. BB_RT=0.
+RT_ENV = {'BB_RT': '1', 'BB_RT_DIRECT': '1', 'BB_RT_GI': '1', 'BB_RT_COMPACT': '0', 'BB_RT_REFIT_BUDGET': '0',
+          'BB_RT_FILL_LIGHT': 'off', 'BB_HDR_GAMMA': '0', 'BB_RT_FILL_ENCLOSED': '0.1', 'BB_RT_SKIN_ALPHA': '1',
+          'BB_RT_FX_FOG': '0', 'BB_RT_FX_FOG_G': '0', 'BB_RT_GI_LAST_BOUNCE_CACHE': '1', 'BB_RT_GI_SER': '1',
+          'BB_RT_GI_PIPELINE': '1', 'BB_RT_RESTIR_GI': '1', 'BB_RT_DLSS_RR': '0', 'BB_RT_KEEP_GI': '1'}
 BETA_PAGE = 'https://github.com/Bloodborne-Port-supermedo/bbport-supermedo/releases'
 # The port's Discord application (discord.com/developers: its Application ID; an art asset named
 # "bloodborne" is the picture). Empty: no Discord status, and its setting is not shown.
@@ -87,11 +98,11 @@ def saves_user_dir(s):
     its own characters (run.py COOP_SAVES), apart from the normal ones it would change."""
     user = Path(s.get('user_dir') or DATA_DIR / 'user')
     return user / saves.COOP_SAVES if plays_seamless(s) else user
-RELEASES_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases/latest'
-RELEASES_PAGE = 'https://github.com/Supermedo/bloodborne_pc/releases/latest'
+RELEASES_API = f'https://api.github.com/repos/{RT_REPO}/releases/latest'
+RELEASES_PAGE = f'https://github.com/{RT_REPO}/releases/latest'
 # The community site (install guide, FAQ, forum), linked from the side bar.
 COMMUNITY_SITE = 'https://bbport.de/'
-RELEASES_LIST_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases?per_page=100'
+RELEASES_LIST_API = f'https://api.github.com/repos/{RT_REPO}/releases?per_page=100'
 # The betas (pre-releases v<VERSION>-beta.<N>): a beta asks here too, for the next one (update_to_offer).
 BETAS_API = 'https://api.github.com/repos/emurphy04/bloodborne_pc/releases?per_page=30'
 # The oldest version Advanced > Other versions offers: older ones cannot read today's settings. (A copy of
@@ -420,6 +431,9 @@ INI_DEFAULTS = {'upscaler': 'fsr3', 'preset': '1', 'sharpen': '1', 'sharpness': 
                 **{key: '1' if on else '0' for key, _t, on in EFFECTS + EXTRAS + CHEATS + TWEAKS}}
 APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'), 'user_dir': '', 'cache_dir': '',
                 'dlc_dir': '',
+                # Path tracing fork: Picture & performance > Path tracing (rt_environment).
+                'rt_on': True, 'rt_gi': '1.0', 'rt_reflect': '1.0', 'rt_shadow': '0.75',
+                'rt_gi_mode': 'auto', 'rt_reflect_mode': 'auto', 'rt_shadow_mode': 'auto',
                 'mods_dir': '', 'mods_enabled': True, 'patches_dir': '', 'language': '1',
                 'voice_language': 'auto',
                 'player_name': '', 'fullscreen': False, 'exclusive_fullscreen': False,
@@ -1397,6 +1411,7 @@ def game_environment(s, graphics=None):
                       ('vk_validation', 'BB_VK_VALIDATION')):
         if s[key]:
             env[name] = '1'
+    env.update(rt_environment(s))
     for item in str(s['extra_env']).split():
         if '=' in item:
             key, value = item.split('=', 1)
@@ -1984,6 +1999,82 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.index_entry(widget, title, hint, key or self.setting_key_of(widget), mark=label)
         return widget
 
+    def path_tracing_section(self, f):
+        """Path tracing fork: the switch and strengths (rt_environment), from the next start."""
+        ttk = self.ttk
+        self.section(f, _('Path tracing'))
+        on = self.check(f, 'rt_on', 'app', _('Path tracing'),
+                        _('Ray-traced moonlight, bounce light, shadows and reflections. Needs a GeForce RTX or '
+                          'Radeon RX 6000 or newer. In game, F9 switches it off and on to compare (about 3 seconds '
+                          'while the exposure adjusts).'))
+        widgets = []
+        names = {mode: _(mode.capitalize()) for mode in RT_MODES}
+        for key, _name, title, lo, hi, hint in RT_SLIDERS:
+            holder = ttk.Frame(f)
+            var = self.var(key, 'app')
+            mode_var = self.var(f'{key}_mode', 'app')
+            preset = ttk.Combobox(holder, state='readonly', width=13, values=[names[m] for m in RT_MODES])
+            preset.pack(side='left', padx=(0, 10))
+            scale = ttk.Scale(holder, from_=lo, to=hi, variable=var, length=260)
+            scale.pack(side='left')
+            value = ttk.Label(holder, width=5)
+            value.pack(side='left', padx=10)
+            busy = []  # a preset moving the slider is not a hand-made (custom) change
+
+            def show(*_a, var=var, value=value, mode_var=mode_var, preset=preset, key=key, busy=busy):
+                try:
+                    value.configure(text=f'{float(var.get()):.2f}')
+                except (ValueError, self.tk.TclError):
+                    pass
+                if not busy and mode_var.get() != 'custom' and preset.winfo_exists():
+                    current = rt_strength({key: var.get(), f'{key}_mode': mode_var.get()}, key)
+                    try:
+                        moved = abs(float(var.get()) - current) > 0.005
+                    except (ValueError, self.tk.TclError):
+                        moved = False
+                    if moved:
+                        mode_var.set('custom')
+
+            def pick(*_a, var=var, mode_var=mode_var, preset=preset, key=key, busy=busy):
+                mode = RT_MODES[preset.current()] if preset.current() >= 0 else 'auto'
+                busy.append(1)
+                try:
+                    mode_var.set(mode)
+                    if mode != 'custom':
+                        var.set(f'{rt_strength({f"{key}_mode": mode}, key):.2f}')
+                finally:
+                    busy.clear()
+
+            def sync(*_a, mode_var=mode_var, preset=preset):
+                mode = mode_var.get() if mode_var.get() in RT_MODES else 'auto'
+                if preset.winfo_exists():
+                    preset.current(RT_MODES.index(mode))
+            preset.bind('<<ComboboxSelected>>', pick)
+            mode_var.trace_add('write', sync)
+            sync()
+            if mode_var.get() != 'custom':  # the slider shows what the preset uses
+                busy.append(1)
+                var.set(f'{rt_strength({f"{key}_mode": mode_var.get()}, key):.2f}')
+                busy.clear()
+            var.trace_add('write', show)
+            show()
+            self.row(f, _(title), holder, _(hint))
+            widgets += [preset, scale]
+
+        def refresh(*_a):
+            for widget in widgets:
+                if widget.winfo_exists():
+                    on = self.vars['rt_on'].get()
+                    if isinstance(widget, ttk.Combobox):
+                        widget.configure(state='readonly' if on else 'disabled')
+                    else:
+                        widget.state(['!disabled' if on else 'disabled'])
+        self.vars['rt_on'].trace_add('write', refresh)
+        refresh()
+        self.note(f, _('Changes apply at the next start of the game. Extra variables (Advanced > Diagnostics) '
+                       'still override these, e.g. BB_RT_GI_STRENGTH=1.3.'), top=6)
+        return on
+
     def check(self, parent, key, store, title, hint=None):
         ttk = self.ttk
         r = self.next_row(parent)
@@ -2140,6 +2231,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         tk.Label(words, text='BLOODBORNE', bg=BG, fg=theme.TEXT_STRONG, font=(theme.HEAD_BOLD, 14)).pack(anchor='w')
         tk.Label(words, text='PC PORT', bg=BG, fg=GOLD, font=(theme.HEAD, 8)).pack(anchor='w')
         self.byline = tk.Label(side, text=_('by Super Medo') + f'  ·  v{VERSION_TEXT}' +
+                               f'\nPath tracing {RT_VERSION} (fork)' +
                                ('\n' + _('co-op test build') if COOP_TEST else ''),
                                bg=BG, fg=MUTED, justify='left', font=(theme.BODY, 9))
         self.byline_pads = ((px(2), px(8)), (0, px(4)))  # its gaps under the full head and the narrower ones
@@ -2892,6 +2984,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.version_warning(f)
         self.link_row(f, _('Fullscreen, HDR and the taste effects are on Picture & performance.'),
                       'picture')
+        self.path_tracing_section(f)
         self.section(f, _('Upscaling', 'Апскейлинг'), top=4)
         self.row(f, _('Upscaler', 'Апскейлер'), self.choice(f, 'upscaler', 'ini', UPSCALERS),
                  _("Temporal upscaling with the game's own motion vectors. FSR 4 needs its files (below) and "
@@ -7056,14 +7149,64 @@ def version_tuple(text):
     return tuple(int(number) for number in re.findall(r'\d+', text or ''))
 
 
+RT_SLIDERS = (('rt_gi', 'BB_RT_GI_STRENGTH', 'Bounce light', 0.0, 2.0,
+                'Light bouncing off walls and floors into the shadows.'),
+               ('rt_reflect', 'BB_RT_REFLECT_STRENGTH', 'Reflections', 0.0, 2.0,
+                'Traced reflections on water, puddles, glass and polished stone.'),
+               ('rt_shadow', 'BB_RT_SHADOW_STRENGTH', 'Shadows', 0.0, 1.5,
+                'How dark the traced shadows of the moon and lamps are.'))
+# Each strength's presets (setting <key>_mode); 'auto' is the fork's recommended value (APP_DEFAULTS), which a
+# later version may retune, and 'custom' is the slider.
+RT_PRESETS = {'rt_gi': {'low': 0.6, 'medium': 1.0, 'high': 1.4},
+              'rt_reflect': {'low': 0.5, 'medium': 1.0, 'high': 1.5},
+              'rt_shadow': {'low': 0.5, 'medium': 0.75, 'high': 1.0}}
+RT_MODES = ('auto', 'low', 'medium', 'high', 'custom')
+
+
+def rt_strength(s, key):
+    """The strength a start uses for one Path tracing slider: its preset, or the slider for 'custom'."""
+    _key, _name, _title, lo, hi, _hint = next(row for row in RT_SLIDERS if row[0] == key)
+    mode = s.get(f'{key}_mode', 'auto')
+    try:
+        if mode == 'custom':
+            return min(hi, max(lo, float(s.get(key, APP_DEFAULTS[key]))))
+    except (TypeError, ValueError):
+        pass
+    return RT_PRESETS[key].get(mode, float(APP_DEFAULTS[key]))
+
+
+def rt_environment(s):
+    """The path tracing variables of a start: RT_ENV with the Path tracing section's strengths, or only
+    BB_RT=0 with it switched off. Extra variables still override each one (game_environment)."""
+    if not s.get('rt_on', True):
+        return {'BB_RT': '0'}
+    env = dict(RT_ENV)
+    for key, name, *_rest in RT_SLIDERS:
+        env[name] = f'{rt_strength(s, key):.2f}'
+    return env
+
+
+FORK_TAG = re.compile(r'windows-v(\d+(?:\.\d+)*)-pt(\d+(?:\.\d+)*)')
+
+
 def latest_release():
-    """(version, zip URL, page URL) of the newest GitHub release."""
-    request = urllib.request.Request(RELEASES_API, headers={'Accept': 'application/vnd.github+json',
-                                                            'User-Agent': 'bbport-launcher'})
+    """(version, zip URL, page URL) of the newest full release of the path tracing fork: a tag
+    windows-v<VERSION>-pt<N> with a game package. The repository also holds the mod-only releases (pt2.3,
+    ...: no Bloodborne.exe), which never count. (None, None, None) when there is none."""
+    request = urllib.request.Request(RELEASES_LIST_API, headers={'Accept': 'application/vnd.github+json',
+                                                                 'User-Agent': 'bbport-launcher'})
     with bbport_tls.urlopen(request, timeout=15) as response:
-        release = json.load(response)
-    version = '.'.join(re.findall(r'\d+', release['tag_name']))
-    return version, game_zip(release), release.get('html_url') or RELEASES_PAGE
+        releases = json.load(response)
+    best = None
+    for release in releases:
+        found = FORK_TAG.fullmatch(release.get('tag_name', ''))
+        if release.get('draft') or release.get('prerelease') or not found:
+            continue
+        url = game_zip(release)
+        version = f'{found[1]}-pt{found[2]}'
+        if url and (best is None or version_tuple(version) > version_tuple(best[0])):
+            best = (version, url, release.get('html_url') or RELEASES_PAGE)
+    return best or (None, None, None)
 
 
 def newer_beta():
@@ -7095,7 +7238,7 @@ def update_to_offer():
     failure = None
     try:
         version, url, page = latest_release()
-        newer = version_tuple(version) > version_tuple(VERSION)
+        newer = version is not None and version_tuple(version) > version_tuple(f'{VERSION}-{RT_VERSION}')
         if newer or (BETA and version_tuple(version) == version_tuple(VERSION)):
             return version, url, page
     except Exception as error:

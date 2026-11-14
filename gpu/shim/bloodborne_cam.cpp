@@ -15,6 +15,9 @@
 #include <windows.h>
 #endif
 
+// AgentLink (bbport_agent.cpp): the camera's pivot and lock-on flag, once per camera update.
+extern "C" void bbgpu_agent_pivot(uintptr_t camera, intptr_t image_offset);
+
 // The camera hook (Windows): the game's camera update jumps here with the camera in r13, just
 // before it loads the camera's pitch. The stub stamps the camera and applies the mouse motion
 // gathered since the last update (bbcam_apply), then runs the two loads it replaced. Applying
@@ -321,6 +324,76 @@ bool BloodborneCam::InitializeAddresses() {
 #endif
 }
 
+// The jump into bbcam_stub alone changes nothing the game sees: the stub runs the two loads it
+// replaced, and Apply turns nothing while direct mode is off. The NOPs are direct mode's part.
+bool BloodborneCam::InstallJump() {
+    if (m_jumpInstalled) {
+        return true;
+    }
+#ifdef _WIN32
+    static const u8 kExpectedMain[CAM_MAIN_LEN] = {
+        0xC4, 0xC1, 0x7A, 0x10, 0x85, 0x40, 0x01, 0x00, 0x00,
+        0xC4, 0xC1, 0x7A, 0x10, 0x8D, 0x50, 0x01, 0x00, 0x00
+    };
+    if (!InitializeAddresses()) {
+        LOG_WARNING(Core, "Mouse camera: camera code not found (game 1.09 needed); using the stick mode");
+        return false;
+    }
+    // Only hook code that still looks like the original camera update.
+    if (std::memcmp(reinterpret_cast<const void*>(m_addrCamMain), kExpectedMain, CAM_MAIN_LEN) != 0) {
+        LOG_WARNING(Core, "Mouse camera: camera code changed; using the stick mode");
+        return false;
+    }
+    std::memcpy(m_camMainOrig, reinterpret_cast<const void*>(m_addrCamMain), CAM_MAIN_LEN);
+    bbcam_return = static_cast<uintptr_t>(m_addrCamMain + CAM_MAIN_LEN);
+    m_trampoline = bbcam_stub;
+    DWORD old_protect = 0;
+    if (!SetRW(m_addrCamMain, CAM_MAIN_LEN, &old_protect)) {
+        LOG_ERROR(Core, "Mouse camera: camera code not writable");
+        return false;
+    }
+    WriteJump(m_addrCamMain, reinterpret_cast<uintptr_t>(m_trampoline), CAM_MAIN_LEN);
+    RestoreProtect(m_addrCamMain, CAM_MAIN_LEN, old_protect);
+    Flush(m_addrCamMain, CAM_MAIN_LEN);
+    m_jumpInstalled = true;
+    return true;
+#else
+    return false;
+#endif
+}
+
+void BloodborneCam::RemoveJump() {
+#ifdef _WIN32
+    if (!m_jumpInstalled) {
+        return;
+    }
+    DWORD old_protect = 0;
+    if (SetRW(m_addrCamMain, CAM_MAIN_LEN, &old_protect)) {
+        std::memcpy(reinterpret_cast<void*>(m_addrCamMain), m_camMainOrig, CAM_MAIN_LEN);
+        RestoreProtect(m_addrCamMain, CAM_MAIN_LEN, old_protect);
+        Flush(m_addrCamMain, CAM_MAIN_LEN);
+        m_jumpInstalled = false;
+    }
+#endif
+}
+
+bool BloodborneCam::SetProbe(bool on) {
+    if (on == m_probe) {
+        return m_jumpInstalled;
+    }
+    if (on) {
+        if (!InstallJump()) {
+            return false;
+        }
+        m_probe = true;
+        LOG_INFO(Core, "Mouse camera: camera hook kept for AgentLink");
+        return true;
+    }
+    m_probe = false;
+    if (!m_enabled.load(std::memory_order_relaxed)) RemoveJump();
+    return false;
+}
+
 bool BloodborneCam::SetEnabled(bool enabled) {
     if (enabled == m_enabled.load(std::memory_order_relaxed)) {
         return enabled;
@@ -330,11 +403,6 @@ bool BloodborneCam::SetEnabled(bool enabled) {
     static const u8 NOP9[CAM_NOP_LEN] = {
         0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90
     };
-    static const u8 kExpectedMain[CAM_MAIN_LEN] = {
-        0xC4, 0xC1, 0x7A, 0x10, 0x85, 0x40, 0x01, 0x00, 0x00,
-        0xC4, 0xC1, 0x7A, 0x10, 0x8D, 0x50, 0x01, 0x00, 0x00
-    };
-
     DWORD old_protect = 0;
 
     if (!enabled) {
@@ -342,11 +410,7 @@ bool BloodborneCam::SetEnabled(bool enabled) {
         m_enabled.store(false, std::memory_order_release);
         m_lockedOn.store(false, std::memory_order_relaxed);
         if (m_addressesResolved) {
-            if (SetRW(m_addrCamMain, CAM_MAIN_LEN, &old_protect)) {
-                std::memcpy(reinterpret_cast<void*>(m_addrCamMain), m_camMainOrig, CAM_MAIN_LEN);
-                RestoreProtect(m_addrCamMain, CAM_MAIN_LEN, old_protect);
-                Flush(m_addrCamMain, CAM_MAIN_LEN);
-            }
+            if (!m_probe) RemoveJump();
             for (int i = 0; i < 4; ++i) {
                 if (SetRW(m_addrCamNop[i], CAM_NOP_LEN, &old_protect)) {
                     std::memcpy(reinterpret_cast<void*>(m_addrCamNop[i]), m_camNopOrig[i], CAM_NOP_LEN);
@@ -359,40 +423,21 @@ bool BloodborneCam::SetEnabled(bool enabled) {
         return false;
     }
 
-    if (!InitializeAddresses()) {
-        LOG_WARNING(Core, "Mouse camera: camera code not found (game 1.09 needed); using the stick mode");
-        return false;
-    }
-
-    // Only hook code that still looks like the original camera update.
-    if (std::memcmp(reinterpret_cast<const void*>(m_addrCamMain), kExpectedMain, CAM_MAIN_LEN) != 0) {
-        LOG_WARNING(Core, "Mouse camera: camera code changed; using the stick mode");
+    if (!InstallJump()) {
         return false;
     }
     for (int i = 0; i < 4; ++i) {
         if (!CanAccess(m_addrCamNop[i], CAM_NOP_LEN, false)) {
             LOG_WARNING(Core, "Mouse camera: camera code not readable; using the stick mode");
+            if (!m_probe) RemoveJump();
             return false;
         }
     }
-
-    std::memcpy(m_camMainOrig, reinterpret_cast<const void*>(m_addrCamMain), CAM_MAIN_LEN);
     for (int i = 0; i < 4; ++i) {
         std::memcpy(m_camNopOrig[i], reinterpret_cast<const void*>(m_addrCamNop[i]), CAM_NOP_LEN);
     }
-
-    bbcam_return = static_cast<uintptr_t>(m_addrCamMain + CAM_MAIN_LEN);
-    m_trampoline = bbcam_stub;
     m_pendingX.store(0.0f, std::memory_order_relaxed);
     m_pendingY.store(0.0f, std::memory_order_relaxed);
-
-    if (!SetRW(m_addrCamMain, CAM_MAIN_LEN, &old_protect)) {
-        LOG_ERROR(Core, "Mouse camera: camera code not writable");
-        return false;
-    }
-    WriteJump(m_addrCamMain, reinterpret_cast<uintptr_t>(m_trampoline), CAM_MAIN_LEN);
-    RestoreProtect(m_addrCamMain, CAM_MAIN_LEN, old_protect);
-    Flush(m_addrCamMain, CAM_MAIN_LEN);
 
     for (int i = 0; i < 4; ++i) {
         if (SetRW(m_addrCamNop[i], CAM_NOP_LEN, &old_protect)) {
@@ -450,6 +495,7 @@ extern "C" void bbcam_apply(uintptr_t camera) {
 
 void BloodborneCam::Apply(uintptr_t pitch) {
     m_lastApplyMs.store(NowMs(), std::memory_order_relaxed);
+    bbgpu_agent_pivot(pitch, m_cameraOffset);
     if (!m_enabled.load(std::memory_order_acquire)) {
         return;
     }

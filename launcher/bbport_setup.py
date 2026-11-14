@@ -1807,6 +1807,8 @@ class SetupMixin:
                                  'the in-game menu (Insert or L3+R3) changes the same values.'))
         card = ttk.Frame(f, style='Card.TFrame', padding=(px(22), px(16)))
         card.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(px(10), 0))
+        if hasattr(self, 'path_tracing_section'):  # path tracing fork: under the card, before the rest
+            self.path_tracing_section(f)
         body = tk.Frame(card, bg=theme.CARD)
         body.pack(fill='both', expand=True)
         head = tk.Frame(body, bg=theme.CARD)

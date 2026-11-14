@@ -56,7 +56,7 @@ class DriverProviderTests(unittest.TestCase):
         self.assertEqual(env['BB_GPU_USER_DIR'],'old-cache')
         self.assertNotIn('BB_TEST_AMD_VK_RUNTIME',env)
         self.assertEqual(launcher.CONFIG_FILE,Path(os.environ.get('APPDATA',Path.home()))/'bbport-launcher/settings.json')
-        self.assertTrue(launcher.APP_DEFAULTS['check_updates'])
+        self.assertFalse(launcher.APP_DEFAULTS['check_updates'])  # the path tracing build: upstream lacks it
         with patch.dict(os.environ,{'BB_CONFIG':'chosen.ini'}):
             self.assertEqual(launcher.ini_path(),Path('chosen.ini'))
 
